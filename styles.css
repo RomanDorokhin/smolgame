@@ -608,13 +608,20 @@ textarea.field-input{
 
 .profile-avatar{
   width:72px;height:72px;
+  min-width:72px;
+  min-height:72px;
+  max-width:72px;
+  max-height:72px;
+  aspect-ratio:1/1;
   border-radius:50%;
   background:linear-gradient(135deg,var(--accent),var(--accent2));
   display:flex;align-items:center;justify-content:center;
   font-size:28px;
   font-weight:800;
-  flex-shrink:0;
+  flex:0 0 72px;
+  overflow:hidden;
 }
+.profile-avatar img{width:100%;height:100%;object-fit:cover;}
 
 .profile-stats{
   display:flex;
@@ -969,3 +976,113 @@ body.is-admin .admin-only{display:block;}
 .admin-btn.delete{background:rgba(255,152,0,0.16);border-color:rgba(255,152,0,0.35);}
 .admin-btn:active{opacity:0.7;}
 .admin-empty{color:var(--muted);font-size:13px;text-align:center;padding:20px 0;}
+
+@media (max-width: 640px) {
+  :root{--nav-h:64px;}
+
+  #topbar{
+    padding:calc(var(--safe-top) + 8px) 12px 8px;
+    background:linear-gradient(180deg,rgba(0,0,0,0.35) 0%,transparent 100%);
+  }
+
+  .logo{font-size:19px;}
+
+  #side-actions{
+    right:10px;
+    bottom:calc(var(--safe-bottom) + var(--nav-h) + 24px);
+    gap:15px;
+  }
+
+  .action-icon{
+    width:48px;
+    height:48px;
+    font-size:21px;
+  }
+
+  .action-label{
+    max-width:62px;
+    font-size:11px;
+    line-height:1.05;
+    text-align:center;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+
+  #game-info{
+    right:74px;
+    padding:18px 12px calc(var(--safe-bottom) + var(--nav-h) + 12px);
+    gap:7px;
+  }
+
+  .author-avatar{width:38px;height:38px;font-size:15px;}
+  .author-name{max-width:38vw;font-size:15px;}
+  .follow-btn{font-size:12px;padding:7px 11px;}
+  .game-title{font-size:13px;}
+  .game-badge{font-size:10px;padding:3px 9px;}
+
+  #bottom-nav{
+    height:calc(var(--safe-bottom) + var(--nav-h));
+    padding:0 4px var(--safe-bottom);
+  }
+
+  .nav-item{min-width:0;padding:6px 8px;flex:1;}
+  .nav-item .nav-icon{font-size:24px;}
+  .nav-item .nav-label{font-size:10px;}
+
+  #profile-screen,#author-screen,#search-screen,#upload-screen{
+    width:100vw;
+    max-width:none;
+  }
+
+  .profile-header{
+    padding:calc(var(--safe-top) + 16px) 16px 18px;
+  }
+
+  .profile-top{
+    align-items:center;
+    gap:14px;
+    margin-bottom:16px;
+  }
+
+  .profile-avatar{
+    width:76px;
+    height:76px;
+    min-width:76px;
+    min-height:76px;
+    max-width:76px;
+    max-height:76px;
+    flex-basis:76px;
+    font-size:26px;
+  }
+
+  .profile-stats{
+    flex:1;
+    justify-content:space-around;
+    gap:8px;
+  }
+
+  .stat-num{font-size:20px;}
+  .stat-lbl{font-size:10px;}
+  .profile-name{font-size:22px;}
+
+  .games-grid,.search-results{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:10px;
+    padding-left:10px;
+    padding-right:10px;
+  }
+
+  .game-card{border-radius:16px;}
+  .game-card-thumb{aspect-ratio:1/1.1;font-size:40px;}
+  .delete-game-btn{width:34px;height:34px;}
+}
+
+@media (max-width: 380px) {
+  #side-actions{right:8px;gap:12px;}
+  .action-icon{width:44px;height:44px;font-size:19px;}
+  .action-label{font-size:10px;max-width:54px;}
+  #game-info{right:64px;padding-left:10px;}
+  .author-avatar{width:34px;height:34px;}
+  .author-name{max-width:32vw;font-size:14px;}
+  .follow-btn{padding:6px 9px;}
+}

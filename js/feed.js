@@ -196,6 +196,7 @@ function isOverlayOpen() {
 
 function beginSwipe(y) {
   if (isOverlayOpen() || GAMES.length < 2) return false;
+  window.scrollTo?.(0, 0);
   touchStartY = y;
   touchStartTime = Date.now();
   touchMoved = false;
@@ -236,11 +237,27 @@ document.addEventListener('DOMContentLoaded', () => {
   if (touchLayer) {
     touchLayer.addEventListener('pointerdown', e => {
       if (!beginSwipe(e.clientY)) return;
+      e.preventDefault();
       touchLayer.setPointerCapture?.(e.pointerId);
     });
-    touchLayer.addEventListener('pointermove', e => moveSwipe(e.clientY));
-    touchLayer.addEventListener('pointerup', e => endSwipe(e.clientY));
+    touchLayer.addEventListener('pointermove', e => {
+      if (!touching) return;
+      e.preventDefault();
+      moveSwipe(e.clientY);
+    });
+    touchLayer.addEventListener('pointerup', e => {
+      if (!touching) return;
+      e.preventDefault();
+      endSwipe(e.clientY);
+    });
     touchLayer.addEventListener('pointercancel', cancelSwipe);
+    touchLayer.addEventListener('wheel', e => {
+      if (isOverlayOpen() || GAMES.length < 2) return;
+      e.preventDefault();
+      if (Math.abs(e.deltaY) < 24) return;
+      goTo(e.deltaY > 0 ? window.currentIdx + 1 : window.currentIdx - 1);
+      hideHint();
+    }, { passive: false });
   }
 
   document.addEventListener('touchstart', e => {
@@ -250,8 +267,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
   document.addEventListener('touchmove', e => {
     if (e.target.closest('#touch-layer')) return;
+    if (touching) e.preventDefault();
     moveSwipe(e.touches[0].clientY);
-  }, { passive: true });
+  }, { passive: false });
 
   document.addEventListener('touchend', e => {
     if (e.target.closest('#touch-layer')) return;
