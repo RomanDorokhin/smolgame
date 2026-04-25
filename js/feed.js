@@ -202,13 +202,13 @@ function beginSwipe(y) {
   touchMoved = false;
   touching = true;
   document.getElementById('touch-layer')?.classList.add('dragging');
-  setIframePointerEvents('none');
+  // moved to moveSwipe
   return true;
 }
 
 function moveSwipe(y) {
   if (!touching) return;
-  if (Math.abs(y - touchStartY) > 10) touchMoved = true;
+  if (Math.abs(y - touchStartY) > 10) { touchMoved = true; setIframePointerEvents('none'); }
 }
 
 function endSwipe(y) {
