@@ -1,6 +1,21 @@
 async function bootstrap() {
-  await loadGames();
-  jumpToStartParamGame();
+  try {
+    const data = await API.feed();
+    window.GAMES = Array.isArray(data?.games) ? data.games : [];
+  } catch(e) {
+    window.GAMES = [];
+  }
+  
+  const empty = document.getElementById('empty-state');
+  const feed = document.getElementById('feed');
+  
+  if (window.GAMES.length === 0) {
+    if (empty) empty.classList.add('show');
+    return;
+  }
+  
+  if (empty) empty.classList.remove('show');
+  renderFeed();
 }
 
 function jumpToStartParamGame() {
