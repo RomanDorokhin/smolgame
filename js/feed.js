@@ -29,12 +29,14 @@ function renderFeed() {
     document.getElementById('side-actions').style.display = 'none';
     document.getElementById('game-info').style.display = 'none';
     document.getElementById('swipe-hint').style.display = 'none';
+    document.getElementById('touch-layer').style.display = 'none';
     return;
   }
 
   document.getElementById('empty-state').classList.remove('show');
   document.getElementById('side-actions').style.display = '';
   document.getElementById('game-info').style.display = '';
+  document.getElementById('touch-layer').style.display = '';
 
   GAMES.forEach((g, i) => {
     const slide = document.createElement('div');
@@ -188,39 +190,75 @@ function setIframePointerEvents(value) {
   document.querySelectorAll('.slide-game').forEach(f => f.style.pointerEvents = value);
 }
 
+function isOverlayOpen() {
+  return Boolean(document.querySelector('#upload-screen.open, #profile-screen.open, #search-screen.open, #author-screen.open, #onboarding-screen.open'));
+}
+
+function beginSwipe(y) {
+  if (isOverlayOpen() || GAMES.length < 2) return false;
+  touchStartY = y;
+  touchStartTime = Date.now();
+  touchMoved = false;
+  touching = true;
+  document.getElementById('touch-layer')?.classList.add('dragging');
+  setIframePointerEvents('none');
+  return true;
+}
+
+function moveSwipe(y) {
+  if (!touching) return;
+  if (Math.abs(y - touchStartY) > 10) touchMoved = true;
+}
+
+function endSwipe(y) {
+  if (!touching) return;
+  touching = false;
+  document.getElementById('touch-layer')?.classList.remove('dragging');
+  setIframePointerEvents('auto');
+  if (!touchMoved) return;
+  const dy = touchStartY - y;
+  const duration = Math.max(1, Date.now() - touchStartTime);
+  const velocity = Math.abs(dy) / duration;
+  if (Math.abs(dy) > 55 || velocity > 0.3) {
+    goTo(dy > 0 ? window.currentIdx + 1 : window.currentIdx - 1);
+    hideHint();
+  }
+}
+
+function cancelSwipe() {
+  touching = false;
+  document.getElementById('touch-layer')?.classList.remove('dragging');
+  setIframePointerEvents('auto');
+}
+
 document.addEventListener('DOMContentLoaded', () => {
+  const touchLayer = document.getElementById('touch-layer');
+  if (touchLayer) {
+    touchLayer.addEventListener('pointerdown', e => {
+      if (!beginSwipe(e.clientY)) return;
+      touchLayer.setPointerCapture?.(e.pointerId);
+    });
+    touchLayer.addEventListener('pointermove', e => moveSwipe(e.clientY));
+    touchLayer.addEventListener('pointerup', e => endSwipe(e.clientY));
+    touchLayer.addEventListener('pointercancel', cancelSwipe);
+  }
+
   document.addEventListener('touchstart', e => {
-    if (document.querySelector('#upload-screen.open, #profile-screen.open, #search-screen.open, #author-screen.open, #onboarding-screen.open')) return;
-    touchStartY = e.touches[0].clientY;
-    touchStartTime = Date.now();
-    touchMoved = false;
-    touching = true;
-    setIframePointerEvents('none');
+    if (e.target.closest('#touch-layer')) return;
+    beginSwipe(e.touches[0].clientY);
   }, { passive: true });
 
   document.addEventListener('touchmove', e => {
-    if (!touching) return;
-    if (Math.abs(e.touches[0].clientY - touchStartY) > 10) touchMoved = true;
+    if (e.target.closest('#touch-layer')) return;
+    moveSwipe(e.touches[0].clientY);
   }, { passive: true });
 
   document.addEventListener('touchend', e => {
-    if (!touching) return;
-    touching = false;
-    setIframePointerEvents('auto');
-    if (!touchMoved) return;
-    const dy = touchStartY - e.changedTouches[0].clientY;
-    const duration = Math.max(1, Date.now() - touchStartTime);
-    const velocity = Math.abs(dy) / duration;
-    if (Math.abs(dy) > 55 || velocity > 0.3) {
-      goTo(dy > 0 ? window.currentIdx + 1 : window.currentIdx - 1);
-      hideHint();
-    }
+    if (e.target.closest('#touch-layer')) return;
+    endSwipe(e.changedTouches[0].clientY);
   }, { passive: true });
 
-  document.addEventListener('touchcancel', () => {
-    touching = false;
-    setIframePointerEvents('auto');
-  }, { passive: true });
+  document.addEventListener('touchcancel', cancelSwipe, { passive: true });
 });
 
 document.addEventListener('keydown', e => {
