@@ -236,17 +236,32 @@ document.addEventListener('DOMContentLoaded', () => {
   const touchLayer = document.getElementById('touch-layer');
   if (touchLayer) {
     touchLayer.addEventListener('pointerdown', e => {
-      if (!beginSwipe(e.clientY)) return;
-      e.preventDefault();
-      touchLayer.setPointerCapture?.(e.pointerId);
+      touchStartY = e.clientY;
+      touchStartTime = Date.now();
+      touchMoved = false;
+      touching = true;
     });
     touchLayer.addEventListener('pointermove', e => {
       if (!touching) return;
-      e.preventDefault();
+      const dy = Math.abs(e.clientY - touchStartY);
+      if (dy > 10) {
+        touchMoved = true;
+        setIframePointerEvents('none');
+        touchLayer.setPointerCapture?.(e.pointerId);
+        e.preventDefault();
+      }
       moveSwipe(e.clientY);
     });
     touchLayer.addEventListener('pointerup', e => {
       if (!touching) return;
+      if (!touchMoved) {
+        // это тап — пропускаем в iframe
+        touching = false;
+        setIframePointerEvents('auto');
+        touchLayer.style.pointerEvents = 'none';
+        setTimeout(() => { touchLayer.style.pointerEvents = 'auto'; }, 100);
+        return;
+      }
       e.preventDefault();
       endSwipe(e.clientY);
     });
