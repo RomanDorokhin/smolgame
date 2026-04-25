@@ -16,10 +16,9 @@ function onSearch(query) {
     return;
   }
 
-  // Экранируем всё, что пришло из API/от авторов. id зашиваем как data-атрибут,
-  // чтобы в onclick не мог попасть " или ' от автора.
+  // Клик ловится делегированным хендлером в events.js по data-action="open-game".
   results.innerHTML = filtered.map(g => `
-    <div class="game-card" data-game-id="${esc(g.id)}" onclick="openGameFromSearch(this.dataset.gameId)">
+    <div class="game-card" data-action="open-game" data-game-id="${esc(g.id)}">
       <div class="game-card-thumb">${esc(g.genreEmoji || '🎮')}</div>
       <div class="game-card-info">
         <div class="game-card-name">${esc(g.title)}</div>

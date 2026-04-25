@@ -21,29 +21,29 @@
   <div class="empty-icon">🎮</div>
   <div class="empty-title">Игр пока нет</div>
   <div class="empty-sub">Будь первым разработчиком.<br>Загрузи свою игру — и она появится в ленте.</div>
-  <button class="empty-btn" onclick="openUpload()">Загрузить игру</button>
+  <button class="empty-btn" data-action="open-upload">Загрузить игру</button>
 </div>
 
 <!-- ══ ТОПБАР ══ -->
 <div id="topbar">
   <div class="logo">smol<span>game</span></div>
   <div class="topbar-right">
-    <div class="icon-btn" onclick="openSearch()">🔍</div>
-    <div class="icon-btn" onclick="openProfile()">👤</div>
+    <div class="icon-btn" data-action="open-search">🔍</div>
+    <div class="icon-btn" data-action="open-profile">👤</div>
   </div>
 </div>
 
 <!-- ══ БОКОВЫЕ ДЕЙСТВИЯ ══ -->
 <div id="side-actions">
-  <div class="action-btn" onclick="toggleLike()">
+  <div class="action-btn" data-action="toggle-like">
     <div class="action-icon" id="likeIcon">🤍</div>
     <div class="action-label" id="likeCount">0</div>
   </div>
-  <div class="action-btn" onclick="shareGame()">
+  <div class="action-btn" data-action="share-game">
     <div class="action-icon">🔗</div>
     <div class="action-label" id="playsCount">0</div>
   </div>
-  <div class="action-btn" onclick="reportGame()">
+  <div class="action-btn" data-action="report-game">
     <div class="action-icon">⚑</div>
     <div class="action-label">Жалоба</div>
   </div>
@@ -53,10 +53,10 @@
 <div id="game-info">
   <div class="game-badge" id="gameBadge">🕹️ Аркада</div>
   <div class="game-title" id="gameTitle">Загрузка...</div>
-  <div class="author-row" onclick="openAuthorProfile()">
+  <div class="author-row" data-action="open-author">
     <div class="author-avatar" id="authorAvatar">?</div>
     <div class="author-name" id="authorName">—</div>
-    <div class="follow-btn" id="followBtn" onclick="event.stopPropagation();toggleFollow()">+ Follow</div>
+    <div class="follow-btn" id="followBtn" data-action="toggle-follow">+ Follow</div>
   </div>
 </div>
 
@@ -71,19 +71,19 @@
 
 <!-- ══ НИЖНИЙ НАВ ══ -->
 <div id="bottom-nav">
-  <div class="nav-item active" id="nav-feed" onclick="switchTab('feed')">
+  <div class="nav-item active" id="nav-feed" data-action="switch-tab" data-tab="feed">
     <div class="nav-icon">🎮</div>
     <div class="nav-label">Лента</div>
   </div>
-  <div class="nav-item" id="nav-search" onclick="switchTab('search')">
+  <div class="nav-item" id="nav-search" data-action="switch-tab" data-tab="search">
     <div class="nav-icon">🔍</div>
     <div class="nav-label">Поиск</div>
   </div>
-  <div class="nav-item" id="nav-upload" onclick="openUpload()">
+  <div class="nav-item" id="nav-upload" data-action="open-upload">
     <div class="nav-icon">➕</div>
     <div class="nav-label">Загрузить</div>
   </div>
-  <div class="nav-item" id="nav-profile" onclick="switchTab('profile')">
+  <div class="nav-item" id="nav-profile" data-action="switch-tab" data-tab="profile">
     <div class="nav-icon">👤</div>
     <div class="nav-label">Профиль</div>
   </div>
@@ -93,17 +93,17 @@
 <div id="upload-screen">
   <div class="screen-header">
     <div class="screen-title">Загрузить игру</div>
-    <div class="close-btn" onclick="closeUpload()">✕</div>
+    <div class="close-btn" data-action="close-upload">✕</div>
   </div>
 
   <!-- Способ загрузки -->
   <div class="upload-methods">
-    <div class="method-card selected" id="method-code" onclick="selectMethod('code')">
+    <div class="method-card selected" id="method-code" data-action="select-method" data-method="code">
       <div class="m-icon">📝</div>
       <div class="m-title">Вставить код</div>
       <div class="m-desc">HTML/JS файл прямо сюда</div>
     </div>
-    <div class="method-card" id="method-url" onclick="selectMethod('url')">
+    <div class="method-card" id="method-url" data-action="select-method" data-method="url">
       <div class="m-icon">🔗</div>
       <div class="m-title">Ссылка</div>
       <div class="m-desc">GitHub Pages или другой хостинг</div>
@@ -114,7 +114,7 @@
   <div class="form-section visible" id="form-code">
     <div class="field-group">
       <div class="field-label">GitHub аккаунт</div>
-      <button class="github-btn" onclick="authGithub()">
+      <button class="github-btn" data-action="auth-github">
         <span>🐙</span> Войти через GitHub
       </button>
       <div style="font-size:12px;color:var(--muted);text-align:center;margin-top:-10px;margin-bottom:16px;">
@@ -137,7 +137,7 @@
       <div class="field-label">Код игры (HTML)</div>
       <textarea class="code-area" placeholder="<!DOCTYPE html>..." id="codeInput"></textarea>
     </div>
-    <button class="submit-btn" onclick="submitGame('code')">🚀 Опубликовать</button>
+    <button class="submit-btn" data-action="submit-game" data-method="code">🚀 Опубликовать</button>
   </div>
 
   <!-- Форма: ссылка -->
@@ -159,7 +159,7 @@
       <div class="field-label">Жанр</div>
       <div class="genre-pills" id="genrePills2"></div>
     </div>
-    <button class="submit-btn" onclick="submitGame('url')">🚀 Отправить на модерацию</button>
+    <button class="submit-btn" data-action="submit-game" data-method="url">🚀 Отправить на модерацию</button>
   </div>
 </div>
 
@@ -168,7 +168,7 @@
   <div class="profile-header">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
       <div class="screen-title">Профиль</div>
-      <div class="close-btn" onclick="closeProfile()">✕</div>
+      <div class="close-btn" data-action="close-profile">✕</div>
     </div>
     <div class="profile-top">
       <div class="profile-avatar" id="profileAvatar">?</div>
@@ -207,11 +207,11 @@
   <div class="search-header">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
       <div class="screen-title">Поиск</div>
-      <div class="close-btn" onclick="closeSearch()">✕</div>
+      <div class="close-btn" data-action="close-search">✕</div>
     </div>
     <div class="search-bar">
       <span class="search-icon">🔍</span>
-      <input type="text" placeholder="Найти игру или автора..." id="searchInput" oninput="onSearch(this.value)">
+      <input type="text" placeholder="Найти игру или автора..." id="searchInput" data-input="search">
     </div>
   </div>
   <div class="genre-scroll" id="genreFilter"></div>
@@ -226,7 +226,7 @@
 <div id="toast"></div>
 
 <!-- ══ SCRIPTS ══ -->
-<!-- Порядок важен: config/utils/telegram → state → модули логики → main. -->
+<!-- Порядок важен: config/utils/telegram → state → модули логики → события → main. -->
 <script src="js/config.js"></script>
 <script src="js/utils.js"></script>
 <script src="js/telegram.js"></script>
@@ -238,6 +238,7 @@
 <script src="js/search.js"></script>
 <script src="js/profile.js"></script>
 <script src="js/screens.js"></script>
+<script src="js/events.js"></script>
 <script src="js/main.js"></script>
 </body>
 </html>
