@@ -53,16 +53,17 @@ body{
 }
 
 /* Чёткая зона игры: между топбаром и инфо-панелью.
-   Игра никогда не перекрывается UI. На десктопе — вертикальная рамка. */
+   Важно: iframe — replaced element, для него height:auto = 150px intrinsic.
+   Поэтому задаём height явным calc, а не полагаемся на top+bottom. */
 .slide-game{
   position:absolute;
   top:var(--game-top);
-  bottom:var(--game-bottom);
   left:50%;
   transform:translateX(-50%);
   width:100%;
   max-width:var(--game-max-width);
-  height:auto;
+  height:calc(100vh - var(--game-top) - var(--game-bottom));
+  height:calc(100dvh - var(--game-top) - var(--game-bottom));
   border:none;
   display:block;
   background:#000;
@@ -71,11 +72,12 @@ body{
 .slide-placeholder{
   position:absolute;
   top:var(--game-top);
-  bottom:var(--game-bottom);
   left:50%;
   transform:translateX(-50%);
   width:100%;
   max-width:var(--game-max-width);
+  height:calc(100vh - var(--game-top) - var(--game-bottom));
+  height:calc(100dvh - var(--game-top) - var(--game-bottom));
   display:flex;
   flex-direction:column;
   align-items:center;
@@ -350,6 +352,7 @@ body{
   left:50%;
   margin-left:calc(var(--game-max-width) / 2 - 8px);
   top:calc(var(--game-top) + (100vh - var(--game-top) - var(--game-bottom))/2);
+  top:calc(var(--game-top) + (100dvh - var(--game-top) - var(--game-bottom))/2);
   transform:translateY(-50%);
   display:flex;
   flex-direction:column;
