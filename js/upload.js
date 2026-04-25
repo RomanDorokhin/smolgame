@@ -38,12 +38,22 @@ async function submitGame(method) {
 
   showToast('🔍 Отправляем...');
   try {
+    const coverInput = document.getElementById('gameImageInput');
+    let imageUrl = null;
+    if (coverInput?.files?.[0]) {
+      const formData = new FormData();
+      formData.append('image', coverInput.files[0]);
+      const uploaded = await API.uploadImage(formData);
+      imageUrl = uploaded?.imageUrl || null;
+    }
+
     await API.submit({
       title: name,
       description: desc,
       genre: genreLabel,
       genreEmoji: genreEmoji,
       url: safeUrl,
+      imageUrl,
     });
     showToast('✅ Отправлено на модерацию!');
     closeUpload();
@@ -52,6 +62,28 @@ async function submitGame(method) {
   }
 }
 
+function previewCover(input) {
+  const preview = document.getElementById('imagePreview');
+  const file = input?.files?.[0];
+  if (!preview) return;
+  if (!file) {
+    preview.innerHTML = '<span>Обложка не выбрана</span>';
+    preview.classList.remove('has-image');
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = () => {
+    preview.innerHTML = `<img src="${esc(reader.result)}" alt="">`;
+    preview.classList.add('has-image');
+  };
+  reader.readAsDataURL(file);
+}
+
 window.selectMethod = selectMethod;
 window.authGithub = authGithub;
 window.submitGame = submitGame;
+window.previewCover = previewCover;
+
+document.addEventListener('change', (ev) => {
+  if (ev.target?.id === 'gameImageInput') previewCover(ev.target);
+});

@@ -14,12 +14,15 @@ const CLICK_ACTIONS = {
   'close-search':   () => closeSearch(),
 
   'toggle-like':    () => toggleLike(),
+  'toggle-bookmark': () => toggleBookmark(),
   'share-game':     () => shareGame(),
   'report-game':    () => reportGame(),
 
   'open-author':    () => openAuthorProfile(),
+  'close-author':   () => closeAuthorScreen(),
 
   'toggle-follow':  (_el, ev) => { ev.stopPropagation(); toggleFollow(); },
+  'toggle-author-follow': (el, ev) => { ev.stopPropagation(); toggleAuthorFollow(el); },
 
   'switch-tab':     (el) => switchTab(el.dataset.tab),
   'select-method':  (el) => selectMethod(el.dataset.method),
@@ -27,9 +30,14 @@ const CLICK_ACTIONS = {
   'submit-game':    (el) => submitGame(el.dataset.method),
 
   'open-game':      (el) => openGameFromSearch(el.dataset.gameId),
+  'delete-game':    (el) => deleteGame(el.dataset.gameId),
 
   'admin-approve':  (el) => adminApproveGame(el.closest('.admin-card')),
   'admin-reject':   (el) => adminRejectGame (el.closest('.admin-card')),
+  'admin-delete':   (el) => adminDeleteGame (el.closest('.admin-card')),
+  'onboarding-next': () => onboardingNext(),
+  'onboarding-finish': () => finishOnboarding(),
+  'image-picker':   (el) => document.getElementById(el.dataset.target)?.click(),
 };
 
 function handleDelegatedClick(ev) {
@@ -47,6 +55,7 @@ function handleDelegatedInput(ev) {
   if (!target) return;
   const kind = target.dataset.input;
   if (kind === 'search') onSearch(target.value);
+  if (kind === 'cover') previewCover(target);
 }
 
 document.addEventListener('click', handleDelegatedClick);

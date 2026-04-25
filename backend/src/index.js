@@ -1,13 +1,13 @@
 import { withCors, preflight, error } from './http.js';
 import {
-  getFeed, getMe, submitGame,
-  toggleLike, toggleFollow, play,
+  getFeed, getMe, checkRegistered, register, submitGame, uploadImage, deleteGame,
+  toggleLike, toggleFollow, toggleBookmark, getUserProfile, getUserGames, play,
   adminPending, adminApprove, adminReject,
 } from './routes.js';
 
 export default {
   async fetch(req, env) {
-    const origin = env.FRONTEND_ORIGIN || '*';
+    const origin = resolveCorsOrigin(req, env);
 
     if (req.method === 'OPTIONS') return preflight(origin);
 
@@ -24,6 +24,14 @@ export default {
   },
 };
 
+function resolveCorsOrigin(req, env) {
+  const requestOrigin = req.headers.get('origin') || '';
+  if (/^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(requestOrigin)) {
+    return requestOrigin;
+  }
+  return env.FRONTEND_ORIGIN || '*';
+}
+
 async function route(req, env, pathname) {
   const m = req.method;
 
@@ -34,14 +42,29 @@ async function route(req, env, pathname) {
 
   if (pathname === '/api/feed'   && m === 'GET')  return getFeed(req, env);
   if (pathname === '/api/me'     && m === 'GET')  return getMe(req, env);
+  if (pathname === '/api/me/registered' && m === 'GET') return checkRegistered(req, env);
+  if (pathname === '/api/register' && m === 'POST') return register(req, env);
   if (pathname === '/api/submit' && m === 'POST') return submitGame(req, env);
+  if (pathname === '/api/upload-image' && m === 'POST') return uploadImage(req, env);
 
   let match;
+  if ((match = pathname.match(/^\/api\/games\/([^/]+)$/))) {
+    if (m === 'DELETE') return deleteGame(req, env, match[1]);
+  }
   if ((match = pathname.match(/^\/api\/games\/([^/]+)\/like$/))) {
     if (m === 'POST' || m === 'DELETE') return toggleLike(req, env, match[1], m);
   }
+  if ((match = pathname.match(/^\/api\/games\/([^/]+)\/bookmark$/))) {
+    if (m === 'POST' || m === 'DELETE') return toggleBookmark(req, env, match[1], m);
+  }
   if ((match = pathname.match(/^\/api\/games\/([^/]+)\/play$/))) {
     if (m === 'POST') return play(req, env, match[1]);
+  }
+  if ((match = pathname.match(/^\/api\/users\/([^/]+)$/))) {
+    if (m === 'GET') return getUserProfile(req, env, match[1]);
+  }
+  if ((match = pathname.match(/^\/api\/users\/([^/]+)\/games$/))) {
+    if (m === 'GET') return getUserGames(req, env, match[1]);
   }
   if ((match = pathname.match(/^\/api\/users\/([^/]+)\/follow$/))) {
     if (m === 'POST' || m === 'DELETE') return toggleFollow(req, env, match[1], m);

@@ -27,10 +27,6 @@
 <!-- ══ ТОПБАР ══ -->
 <div id="topbar">
   <div class="logo">smol<span>game</span></div>
-  <div class="topbar-right">
-    <div class="icon-btn" data-action="open-search">🔍</div>
-    <div class="icon-btn" data-action="open-profile">👤</div>
-  </div>
 </div>
 
 <!-- ══ БОКОВЫЕ ДЕЙСТВИЯ ══ -->
@@ -38,6 +34,10 @@
   <div class="action-btn" data-action="toggle-like">
     <div class="action-icon" id="likeIcon">🤍</div>
     <div class="action-label" id="likeCount">0</div>
+  </div>
+  <div class="action-btn" data-action="toggle-bookmark">
+    <div class="action-icon" id="bookmarkIcon">📑</div>
+    <div class="action-label">Избранное</div>
   </div>
   <div class="action-btn" data-action="share-game">
     <div class="action-icon">🔗</div>
@@ -51,13 +51,13 @@
 
 <!-- ══ ИНФО ОБ ИГРЕ ══ -->
 <div id="game-info">
-  <div class="game-badge" id="gameBadge">🕹️ Аркада</div>
-  <div class="game-title" id="gameTitle">Загрузка...</div>
   <div class="author-row" data-action="open-author">
     <div class="author-avatar" id="authorAvatar">?</div>
     <div class="author-name" id="authorName">—</div>
     <div class="follow-btn" id="followBtn" data-action="toggle-follow">+ Follow</div>
   </div>
+  <div class="game-title" id="gameTitle">Загрузка...</div>
+  <div class="game-badge" id="gameBadge">🕹️ Аркада</div>
 </div>
 
 <!-- ══ ПРОГРЕСС ══ -->
@@ -159,6 +159,14 @@
       <div class="field-label">Жанр</div>
       <div class="genre-pills" id="genrePills2"></div>
     </div>
+    <div class="field-group">
+      <div class="field-label">Обложка игры</div>
+      <label class="image-upload">
+        <input type="file" accept="image/*" id="gameImageInput">
+        <span>Выбрать изображение</span>
+      </label>
+      <div class="image-preview" id="imagePreview">Обложка не выбрана</div>
+    </div>
     <button class="submit-btn" data-action="submit-game" data-method="url">🚀 Отправить на модерацию</button>
   </div>
 </div>
@@ -228,6 +236,46 @@
   </div>
 </div>
 
+<!-- ══ ЭКРАН: АВТОР ══ -->
+<div id="author-screen">
+  <div class="profile-header">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+      <div class="screen-title">Разработчик</div>
+      <div class="close-btn" data-action="close-author">✕</div>
+    </div>
+    <div class="profile-top">
+      <div class="profile-avatar" id="authorProfileAvatar">?</div>
+      <div class="profile-stats">
+        <div class="stat-item">
+          <div class="stat-num" id="authorStatGames">0</div>
+          <div class="stat-lbl">Игр</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-num" id="authorStatFollowers">0</div>
+          <div class="stat-lbl">Подписчики</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-num" id="authorStatLikes">0</div>
+          <div class="stat-lbl">Лайки</div>
+        </div>
+      </div>
+    </div>
+    <div class="profile-name" id="authorProfileName">—</div>
+    <div class="profile-handle" id="authorProfileHandle">@—</div>
+    <button class="author-follow-btn" id="authorFollowBtn" data-action="toggle-author-follow">Подписаться</button>
+  </div>
+  <div class="profile-games-title">Игры автора</div>
+  <div class="games-grid" id="authorGamesGrid"></div>
+</div>
+
+<!-- ══ ЭКРАН: РЕГИСТРАЦИЯ ══ -->
+<div id="onboarding-screen">
+  <div class="onboarding-card">
+    <div class="onboarding-body" id="onboardingBody"></div>
+    <div class="onboarding-footer" id="onboardingFooter"></div>
+  </div>
+</div>
+
 <!-- ══ TOAST ══ -->
 <div id="toast"></div>
 
@@ -238,6 +286,7 @@
 <script src="js/telegram.js"></script>
 <script src="js/state.js"></script>
 <script src="js/api.js"></script>
+<script src="js/onboarding.js"></script>
 <script src="js/feed.js"></script>
 <script src="js/actions.js"></script>
 <script src="js/upload.js"></script>

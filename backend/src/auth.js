@@ -28,14 +28,22 @@ export async function authenticate(req, env) {
 export async function upsertUser(db, user) {
   await db
     .prepare(
-      `INSERT INTO users (id, username, first_name, last_name, photo_url)
-       VALUES (?, ?, ?, ?, ?)
+      `INSERT INTO users (id, username, tg_username, first_name, last_name, photo_url)
+       VALUES (?, ?, ?, ?, ?, ?)
        ON CONFLICT(id) DO UPDATE SET
-         username   = excluded.username,
+         username   = COALESCE(users.site_handle, users.username),
+         tg_username = excluded.tg_username,
          first_name = excluded.first_name,
          last_name  = excluded.last_name,
          photo_url  = excluded.photo_url`
     )
-    .bind(user.id, user.username, user.first_name, user.last_name, user.photo_url)
+    .bind(
+      user.id,
+      user.username,
+      user.username,
+      user.first_name,
+      user.last_name,
+      user.photo_url
+    )
     .run();
 }

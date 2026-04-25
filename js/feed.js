@@ -6,8 +6,10 @@ async function loadGames() {
     // Синхронизируем локальные Set-ы с ответом сервера (он знает истину).
     window.likedSet = new Set(GAMES.filter(g => g.isLiked).map(g => g.id));
     window.followedSet = new Set(GAMES.filter(g => g.isFollowing).map(g => g.authorId));
+    window.bookmarkedSet = new Set(GAMES.filter(g => g.isBookmarked).map(g => g.id));
     saveSet(STORAGE_KEYS.liked, likedSet);
     saveSet(STORAGE_KEYS.followed, followedSet);
+    saveSet(STORAGE_KEYS.bookmarked, bookmarkedSet);
   } catch (e) {
     console.error('feed load failed', e);
     window.GAMES = [];
@@ -42,8 +44,11 @@ function renderFeed() {
 
     const placeholder = document.createElement('div');
     placeholder.className = 'slide-placeholder';
+    const thumbHtml = g.imageUrl
+      ? `<img src="${esc(g.imageUrl)}" class="slide-cover" alt="">`
+      : `<div class="placeholder-icon">${esc(g.genreEmoji || '🎮')}</div>`;
     placeholder.innerHTML = `
-      <div class="placeholder-icon">${esc(g.genreEmoji || '🎮')}</div>
+      ${thumbHtml}
       <div class="placeholder-title">${esc(g.title)}</div>
       <div class="placeholder-sub">Загружаем игру...</div>
       <div class="loader-ring"></div>
@@ -165,6 +170,10 @@ function updateOverlay() {
   const liked = likedSet.has(g.id);
   document.getElementById('likeIcon').textContent = liked ? '❤️' : '🤍';
   document.getElementById('likeCount').textContent = fmtNum(g.likes + (liked ? 1 : 0));
+  const bookmarked = bookmarkedSet.has(g.id);
+  const bookmarkIcon = document.getElementById('bookmarkIcon');
+  bookmarkIcon.textContent = bookmarked ? '🔖' : '📑';
+  bookmarkIcon.classList.toggle('active-bookmark', bookmarked);
   document.getElementById('playsCount').textContent = fmtNum(g.plays);
 
   const following = followedSet.has(g.authorId);
@@ -173,30 +182,44 @@ function updateOverlay() {
   followBtn.classList.toggle('following', following);
 }
 
-let touchStartY = 0, touchMoved = false, touching = false;
+let touchStartY = 0, touchStartTime = 0, touchMoved = false, touching = false;
+
+function setIframePointerEvents(value) {
+  document.querySelectorAll('.slide-game').forEach(f => f.style.pointerEvents = value);
+}
 
 document.addEventListener('DOMContentLoaded', () => {
-  const feed = document.getElementById('feed');
-
-  feed.addEventListener('touchstart', e => {
+  document.addEventListener('touchstart', e => {
+    if (document.querySelector('#upload-screen.open, #profile-screen.open, #search-screen.open, #author-screen.open, #onboarding-screen.open')) return;
     touchStartY = e.touches[0].clientY;
+    touchStartTime = Date.now();
     touchMoved = false;
     touching = true;
+    setIframePointerEvents('none');
   }, { passive: true });
 
-  feed.addEventListener('touchmove', e => {
+  document.addEventListener('touchmove', e => {
+    if (!touching) return;
     if (Math.abs(e.touches[0].clientY - touchStartY) > 10) touchMoved = true;
   }, { passive: true });
 
-  feed.addEventListener('touchend', e => {
+  document.addEventListener('touchend', e => {
     if (!touching) return;
     touching = false;
+    setIframePointerEvents('auto');
     if (!touchMoved) return;
     const dy = touchStartY - e.changedTouches[0].clientY;
-    if (Math.abs(dy) > 55) {
+    const duration = Math.max(1, Date.now() - touchStartTime);
+    const velocity = Math.abs(dy) / duration;
+    if (Math.abs(dy) > 55 || velocity > 0.3) {
       goTo(dy > 0 ? window.currentIdx + 1 : window.currentIdx - 1);
       hideHint();
     }
+  }, { passive: true });
+
+  document.addEventListener('touchcancel', () => {
+    touching = false;
+    setIframePointerEvents('auto');
   }, { passive: true });
 });
 

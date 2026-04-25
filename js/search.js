@@ -3,8 +3,9 @@ function onSearch(query) {
   const filtered = GAMES.filter(g => {
     const q = (query || '').toLowerCase();
     const matchQuery = !q
-      || g.title.toLowerCase().includes(q)
-      || g.authorName.toLowerCase().includes(q);
+      || (g.title || '').toLowerCase().includes(q)
+      || (g.authorName || '').toLowerCase().includes(q)
+      || (g.authorHandle || '').toLowerCase().includes(q);
     const matchGenre = !window.selectedGenre
       || window.selectedGenre === 'Все'
       || g.genre === window.selectedGenre;
@@ -19,7 +20,7 @@ function onSearch(query) {
   // Клик ловится делегированным хендлером в events.js по data-action="open-game".
   results.innerHTML = filtered.map(g => `
     <div class="game-card" data-action="open-game" data-game-id="${esc(g.id)}">
-      <div class="game-card-thumb">${esc(g.genreEmoji || '🎮')}</div>
+      <div class="game-card-thumb">${gameThumbHtml(g)}</div>
       <div class="game-card-info">
         <div class="game-card-name">${esc(g.title)}</div>
         <div class="game-card-stats">❤️ ${fmtNum(g.likes)} · 👁 ${fmtNum(g.plays)}</div>

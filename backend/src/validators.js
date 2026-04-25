@@ -20,9 +20,11 @@ export function validateSubmission(body) {
   const genre = GENRES.has(body.genre) ? body.genre : 'Прочее';
   const genreEmoji = String(body.genreEmoji || '🎮').slice(0, 8);
   const url = safeHttpsUrl(body.url);
+  const imageUrl = body.imageUrl ? safeHttpsUrl(body.imageUrl) : null;
 
   if (!title) return { error: 'Название игры обязательно' };
   if (!url)   return { error: 'Нужна корректная https:// ссылка' };
+  if (body.imageUrl && !imageUrl) return { error: 'Некорректная ссылка на обложку' };
 
-  return { ok: { title, description, genre, genreEmoji, url } };
+  return { ok: { title, description, genre, genreEmoji, url, imageUrl } };
 }

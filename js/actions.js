@@ -67,6 +67,35 @@ function buildGameShareUrl(gameId) {
   return `https://t.me/${bot}?startapp=${param}`;
 }
 
+function toggleBookmark() {
+  if (GAMES.length === 0) return;
+  const g = GAMES[window.currentIdx];
+  const icon = document.getElementById('bookmarkIcon');
+
+  const wasBookmarked = bookmarkedSet.has(g.id);
+  if (wasBookmarked) {
+    bookmarkedSet.delete(g.id);
+    icon.textContent = '📑';
+    icon.classList.remove('active-bookmark');
+    showToast('Убрано из избранного');
+  } else {
+    bookmarkedSet.add(g.id);
+    icon.textContent = '🔖';
+    icon.classList.add('active-bookmark', 'pop');
+    setTimeout(() => icon.classList.remove('pop'), 400);
+    showToast('Добавлено в избранное');
+  }
+  saveSet(STORAGE_KEYS.bookmarked, bookmarkedSet);
+
+  (wasBookmarked ? API.unbookmark(g.id) : API.bookmark(g.id)).catch(err => {
+    if (wasBookmarked) bookmarkedSet.add(g.id); else bookmarkedSet.delete(g.id);
+    saveSet(STORAGE_KEYS.bookmarked, bookmarkedSet);
+    updateOverlay();
+    showToast('⚠️ Не удалось');
+    console.warn('bookmark failed', err);
+  });
+}
+
 async function shareGame() {
   if (GAMES.length === 0) return;
   const g = GAMES[window.currentIdx];
@@ -108,15 +137,20 @@ function reportGame() {
 }
 
 function trackPlay(gameId) {
+  if (!API.play) return;
   API.play(gameId).catch(e => console.warn('play track failed', e));
 }
 
 function openAuthorProfile() {
-  showToast('Профиль автора — скоро');
+  if (GAMES.length === 0) return;
+  const g = GAMES[window.currentIdx];
+  if (!g?.authorId) return;
+  openAuthorScreen(g.authorId);
 }
 
 window.toggleLike = toggleLike;
 window.toggleFollow = toggleFollow;
+window.toggleBookmark = toggleBookmark;
 window.shareGame = shareGame;
 window.reportGame = reportGame;
 window.trackPlay = trackPlay;

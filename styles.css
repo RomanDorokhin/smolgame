@@ -130,14 +130,17 @@ body{
   height:calc(var(--safe-top) + var(--topbar-h));
   padding:var(--safe-top) 14px 0;
   display:flex;
-  justify-content:space-between;
+  justify-content:center;
   align-items:center;
-  background:rgba(8,8,8,0.92);
+  background:rgba(8,8,8,0.28);
   backdrop-filter:blur(16px);
-  border-bottom:1px solid var(--border);
+  pointer-events:none;
 }
 
 .logo{
+  position:absolute;
+  left:50%;
+  transform:translateX(-50%);
   font-family:'Syne',sans-serif;
   font-size:20px;
   font-weight:800;
@@ -210,6 +213,10 @@ body{
   background:rgba(255,45,85,0.25);
   border-color:var(--accent);
 }
+.action-icon.active-bookmark{
+  background:rgba(255,193,7,0.22);
+  border-color:rgba(255,193,7,0.65);
+}
 
 /* Анимация лайка */
 @keyframes likePop{
@@ -248,14 +255,28 @@ body{
 }
 
 .game-badge{
-  display:none;
+  display:inline-flex;
+  align-items:center;
+  width:max-content;
+  gap:4px;
+  background:rgba(255,255,255,0.12);
+  border:1px solid rgba(255,255,255,0.15);
+  backdrop-filter:blur(8px);
+  color:#fff;
+  font-size:9px;
+  font-weight:700;
+  padding:2px 7px;
+  border-radius:20px;
+  text-transform:uppercase;
+  letter-spacing:0.06em;
 }
 
 .game-title{
-  font-family:'Syne',sans-serif;
-  font-size:14px;
-  font-weight:800;
+  font-size:13px;
+  font-weight:600;
   color:#fff;
+  opacity:0.85;
+  text-shadow:0 2px 12px rgba(0,0,0,0.6);
   line-height:1.2;
   white-space:nowrap;
   overflow:hidden;
@@ -265,16 +286,19 @@ body{
 .author-row{
   display:flex;
   align-items:center;
-  gap:6px;
+  gap:8px;
+  font-size:16px;
+  font-weight:600;
+  pointer-events:all;
   cursor:pointer;
 }
 
 .author-avatar{
-  width:18px;height:18px;
+  width:28px;height:28px;
   border-radius:50%;
   background:linear-gradient(135deg,var(--accent),var(--accent2));
   display:flex;align-items:center;justify-content:center;
-  font-size:10px;
+  font-size:12px;
   font-weight:700;
   flex-shrink:0;
   overflow:hidden;
@@ -282,9 +306,10 @@ body{
 .author-avatar img{width:100%;height:100%;object-fit:cover;}
 
 .author-name{
-  font-size:11px;
-  font-weight:500;
-  color:rgba(255,255,255,0.6);
+  font-size:16px;
+  font-weight:600;
+  color:rgba(255,255,255,0.9);
+  flex:1;
   white-space:nowrap;
   overflow:hidden;
   text-overflow:ellipsis;
@@ -292,13 +317,13 @@ body{
 }
 
 .follow-btn{
-  font-size:10px;
+  font-size:13px;
   font-weight:700;
   color:var(--accent);
   background:rgba(255,45,85,0.12);
   border:1px solid rgba(255,45,85,0.3);
-  border-radius:8px;
-  padding:1px 7px;
+  border-radius:16px;
+  padding:6px 12px;
   cursor:pointer;
   transition:all 0.2s;
   white-space:nowrap;
@@ -506,6 +531,34 @@ textarea.field-input{
 }
 .github-btn:active{opacity:0.8;}
 
+.image-upload{
+  width:100%;
+  min-height:110px;
+  background:var(--surface);
+  border:1px dashed rgba(255,255,255,0.22);
+  border-radius:14px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  cursor:pointer;
+  color:var(--muted);
+  font-weight:700;
+}
+.image-upload input{display:none;}
+.image-preview{
+  margin-top:10px;
+  min-height:42px;
+  border-radius:12px;
+  background:rgba(255,255,255,0.04);
+  color:var(--muted);
+  font-size:13px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  overflow:hidden;
+}
+.image-preview img{width:100%;max-height:180px;object-fit:cover;}
+
 .submit-btn{
   width:100%;
   padding:18px;
@@ -547,7 +600,7 @@ textarea.field-input{
 /* ══════════════════════════════
    ЭКРАН: ПРОФИЛЬ
 ══════════════════════════════ */
-#profile-screen{
+#profile-screen,#author-screen{
   position:fixed;
   inset:0;
   z-index:500;
@@ -557,7 +610,7 @@ textarea.field-input{
   overflow-y:auto;
   touch-action:pan-y;
 }
-#profile-screen.open{display:flex;}
+#profile-screen.open,#author-screen.open{display:flex;}
 
 .profile-header{
   padding:calc(var(--safe-top) + 20px) 20px 20px;
@@ -610,6 +663,24 @@ textarea.field-input{
 }
 .profile-badge.dev{color:var(--accent);border-color:rgba(255,45,85,0.3);background:rgba(255,45,85,0.08);}
 
+.author-follow-btn{
+  width:100%;
+  padding:12px;
+  border:none;
+  border-radius:14px;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  color:#fff;
+  font-family:'Space Grotesk',sans-serif;
+  font-size:15px;
+  font-weight:800;
+  cursor:pointer;
+}
+.author-follow-btn.following{
+  background:var(--surface);
+  color:var(--muted);
+  border:1px solid var(--border);
+}
+
 .profile-games-title{
   font-family:'Syne',sans-serif;
   font-size:16px;
@@ -648,6 +719,29 @@ textarea.field-input{
   position:absolute;
   inset:0;
   background:linear-gradient(0deg,rgba(0,0,0,0.5) 0%,transparent 60%);
+}
+.game-card-cover,.slide-cover{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+}
+.slide-cover{
+  position:absolute;
+  inset:0;
+  opacity:0.45;
+}
+.delete-game-btn{
+  position:absolute;
+  right:8px;
+  top:8px;
+  z-index:3;
+  width:34px;
+  height:34px;
+  border:none;
+  border-radius:50%;
+  background:rgba(0,0,0,0.65);
+  color:#fff;
+  cursor:pointer;
 }
 
 .game-card-info{padding:10px 12px 12px;}
@@ -729,6 +823,48 @@ textarea.field-input{
   gap:10px;
   touch-action:pan-y;
   align-content:start;
+}
+
+/* ══════════════════════════════
+   ЭКРАН: РЕГИСТРАЦИЯ
+══════════════════════════════ */
+#onboarding-screen{
+  position:fixed;
+  inset:0;
+  z-index:700;
+  display:none;
+  align-items:center;
+  justify-content:center;
+  padding:24px;
+  background:rgba(0,0,0,0.92);
+}
+#onboarding-screen.open{display:flex;}
+.onboarding-card{
+  width:100%;
+  max-width:420px;
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:22px;
+  padding:22px;
+}
+.onboarding-body{margin:18px 0;}
+.onboarding-step{font-size:12px;color:var(--muted);margin-bottom:8px;}
+.onboarding-title{font-family:'Syne',sans-serif;font-size:20px;font-weight:800;margin-bottom:8px;}
+.onboarding-text{font-size:14px;color:rgba(255,255,255,0.7);line-height:1.45;margin-bottom:14px;}
+.check-row{
+  display:flex;
+  gap:10px;
+  align-items:flex-start;
+  margin-top:14px;
+  font-size:14px;
+  color:rgba(255,255,255,0.82);
+}
+.check-row input{margin-top:2px;}
+.onboarding-blocked{
+  margin-top:14px;
+  color:var(--accent);
+  font-weight:700;
+  font-size:14px;
 }
 
 /* ══════════════════════════════
@@ -849,5 +985,6 @@ body.is-admin .admin-only{display:block;}
 }
 .admin-btn.approve{background:rgba(76,175,80,0.18);border-color:rgba(76,175,80,0.4);}
 .admin-btn.reject{background:rgba(255,45,85,0.15);border-color:rgba(255,45,85,0.35);}
+.admin-btn.delete{background:rgba(255,152,0,0.16);border-color:rgba(255,152,0,0.35);}
 .admin-btn:active{opacity:0.7;}
 .admin-empty{color:var(--muted);font-size:13px;text-align:center;padding:20px 0;}

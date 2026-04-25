@@ -1,4 +1,9 @@
 async function bootstrap() {
+  const needsOnboarding = await checkOnboarding();
+  if (needsOnboarding) {
+    showOnboardingScreen();
+    return;
+  }
   await loadGames();
   jumpToStartParamGame();
 }
@@ -9,9 +14,11 @@ async function bootstrap() {
 function jumpToStartParamGame() {
   let startParam = '';
   try { startParam = Telegram.WebApp.initDataUnsafe?.start_param || ''; } catch (e) {}
-  if (!startParam || !startParam.startsWith('g_')) return;
+  if (!startParam) return;
 
-  const gameId = decodeURIComponent(startParam.slice(2));
+  const gameId = startParam.startsWith('g_')
+    ? decodeURIComponent(startParam.slice(2))
+    : startParam;
   const idx = (window.GAMES || []).findIndex(g => g.id === gameId);
   if (idx >= 0) {
     goTo(idx, true);
@@ -24,3 +31,5 @@ if (document.readyState === 'loading') {
 } else {
   bootstrap();
 }
+
+window.jumpToStartParamGame = jumpToStartParamGame;

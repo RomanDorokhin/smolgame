@@ -17,8 +17,9 @@ function _resolveGuestId() {
 
 window.USER = {
   id: tgUser?.id ? String(tgUser.id) : _resolveGuestId(),
+  tgId: tgUser?.id ? String(tgUser.id) : null,
   name: tgUser ? (tgUser.first_name + (tgUser.last_name ? ' ' + tgUser.last_name : '')) : 'Гость',
-  username: tgUser?.username || 'guest',
+  siteHandle: null,
   avatar: tgUser?.first_name?.[0] || '?',
   isGithubConnected: false,
   githubUsername: null,
@@ -33,6 +34,7 @@ window.USER = {
 //   genre: string,
 //   genreEmoji: string,
 //   url: string,           // ← URL iframe (GitHub Pages)
+//   imageUrl: string,
 //   authorId: string,
 //   authorName: string,
 //   authorHandle: string,
@@ -40,6 +42,7 @@ window.USER = {
 //   likes: number,
 //   plays: number,
 //   isLiked: boolean,
+//   isBookmarked: boolean,
 //   isFollowing: boolean,
 // }
 window.GAMES = [];
@@ -50,12 +53,14 @@ window.slides = [];
 // Ключи локального хранилища — привязаны к юзеру, чтобы на одном устройстве
 // разные аккаунты (гости, tg-юзеры) не делили лайки.
 window.STORAGE_KEYS = {
-  liked:    'smolgame:liked:' + USER.id,
-  followed: 'smolgame:followed:' + USER.id,
+  liked:      'smolgame:liked:' + USER.id,
+  followed:   'smolgame:followed:' + USER.id,
+  bookmarked: 'smolgame:bookmarked:' + USER.id,
 };
 
-window.likedSet    = loadSet(STORAGE_KEYS.liked);
-window.followedSet = loadSet(STORAGE_KEYS.followed);
+window.likedSet      = loadSet(STORAGE_KEYS.liked);
+window.followedSet   = loadSet(STORAGE_KEYS.followed);
+window.bookmarkedSet = loadSet(STORAGE_KEYS.bookmarked);
 
 window.selectedGenre = '';
 window.selectedUploadMethod = 'code';
