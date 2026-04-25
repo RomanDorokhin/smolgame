@@ -16,12 +16,13 @@ function onSearch(query) {
     return;
   }
 
-  // NOTE: базовый шаблон, экранирование данных будет добавлено в security-проходе.
+  // Экранируем всё, что пришло из API/от авторов. id зашиваем как data-атрибут,
+  // чтобы в onclick не мог попасть " или ' от автора.
   results.innerHTML = filtered.map(g => `
-    <div class="game-card" onclick="openGameFromSearch('${g.id}')">
-      <div class="game-card-thumb">${g.genreEmoji || '🎮'}</div>
+    <div class="game-card" data-game-id="${esc(g.id)}" onclick="openGameFromSearch(this.dataset.gameId)">
+      <div class="game-card-thumb">${esc(g.genreEmoji || '🎮')}</div>
       <div class="game-card-info">
-        <div class="game-card-name">${g.title}</div>
+        <div class="game-card-name">${esc(g.title)}</div>
         <div class="game-card-stats">❤️ ${fmtNum(g.likes)} · 👁 ${fmtNum(g.plays)}</div>
       </div>
     </div>

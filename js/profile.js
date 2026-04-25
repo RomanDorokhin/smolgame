@@ -18,9 +18,9 @@ function renderProfile() {
   } else {
     grid.innerHTML = myGames.map(g => `
       <div class="game-card">
-        <div class="game-card-thumb">${g.genreEmoji || '🎮'}</div>
+        <div class="game-card-thumb">${esc(g.genreEmoji || '🎮')}</div>
         <div class="game-card-info">
-          <div class="game-card-name">${g.title}</div>
+          <div class="game-card-name">${esc(g.title)}</div>
           <div class="game-card-stats">❤️ ${fmtNum(g.likes)} · 👁 ${fmtNum(g.plays)}</div>
         </div>
       </div>

@@ -34,8 +34,8 @@ function renderFeed() {
     const placeholder = document.createElement('div');
     placeholder.className = 'slide-placeholder';
     placeholder.innerHTML = `
-      <div class="placeholder-icon">${g.genreEmoji || '🎮'}</div>
-      <div class="placeholder-title">${g.title}</div>
+      <div class="placeholder-icon">${esc(g.genreEmoji || '🎮')}</div>
+      <div class="placeholder-title">${esc(g.title)}</div>
       <div class="placeholder-sub">Загружаем игру...</div>
       <div class="loader-ring"></div>
     `;
@@ -43,10 +43,12 @@ function renderFeed() {
     const iframe = document.createElement('iframe');
     iframe.className = 'slide-game';
     iframe.id = 'iframe-' + i;
-    // Разрешаем скрипты и формы, но блокируем навигацию родителя.
-    // TODO(security): вынести игры на отдельный origin и убрать allow-same-origin.
-    iframe.setAttribute('sandbox', 'allow-scripts allow-forms allow-same-origin');
+    // Игры размещаются на чужом origin (GitHub Pages / Vercel / и т.п.),
+    // поэтому НЕ даём allow-same-origin — иначе песочница теряет смысл.
+    iframe.setAttribute('sandbox', 'allow-scripts allow-forms allow-popups');
     iframe.setAttribute('allow', 'autoplay');
+    iframe.setAttribute('referrerpolicy', 'no-referrer');
+    iframe.setAttribute('loading', 'lazy');
     iframe.style.opacity = '0';
     iframe.style.transition = 'opacity 0.3s';
 
@@ -60,15 +62,34 @@ function renderFeed() {
       placeholder.innerHTML = `
         <div class="placeholder-icon">💔</div>
         <div class="placeholder-title">Не загрузилась</div>
-        <div class="placeholder-sub">${g.url}</div>
+        <div class="placeholder-sub">${esc(g.url)}</div>
       `;
     };
 
+    // Защита на клиенте: в iframe пускаем только http(s) URL.
+    // Сервер всё равно должен проверять при сабмите, но пусть будет второй барьер.
+    const safeUrl = safeHttpUrl(g.url);
+    if (!safeUrl) {
+      placeholder.innerHTML = `
+        <div class="placeholder-icon">⚠️</div>
+        <div class="placeholder-title">${esc(g.title)}</div>
+        <div class="placeholder-sub">Некорректная ссылка</div>
+      `;
+      slide.appendChild(placeholder);
+      feed.appendChild(slide);
+      window.slides.push(slide);
+      const dot = document.createElement('div');
+      dot.className = 'dot' + (i === 0 ? ' active' : '');
+      dot.id = 'dot-' + i;
+      dots.appendChild(dot);
+      return;
+    }
+
     // Ленивая загрузка: только текущий ±1.
     if (Math.abs(i - window.currentIdx) <= 1) {
-      iframe.src = g.url;
+      iframe.src = safeUrl;
     }
-    iframe.dataset.src = g.url;
+    iframe.dataset.src = safeUrl;
 
     slide.appendChild(placeholder);
     slide.appendChild(iframe);
@@ -123,8 +144,11 @@ function updateOverlay() {
   document.getElementById('authorName').textContent = g.authorName;
 
   const avatar = document.getElementById('authorAvatar');
-  if (g.authorAvatar?.startsWith('http')) {
-    avatar.innerHTML = `<img src="${g.authorAvatar}" alt="">`;
+  const avatarUrl = g.authorAvatar && g.authorAvatar.startsWith('http')
+    ? safeHttpUrl(g.authorAvatar)
+    : null;
+  if (avatarUrl) {
+    avatar.innerHTML = `<img src="${esc(avatarUrl)}" alt="" referrerpolicy="no-referrer">`;
   } else {
     avatar.textContent = g.authorAvatar || g.authorName?.[0] || '?';
   }

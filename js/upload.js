@@ -31,10 +31,14 @@ async function submitGame(method) {
     }, 1500);
 
   } else {
-    const url = document.getElementById('urlInput').value.trim();
+    const rawUrl = document.getElementById('urlInput').value.trim();
     const name = document.getElementById('gameNameInput2').value.trim();
-    if (!url || !name) { showToast('⚠️ Заполни ссылку и название'); return; }
-    if (!url.startsWith('http')) { showToast('⚠️ Некорректная ссылка'); return; }
+    if (!rawUrl || !name) { showToast('⚠️ Заполни ссылку и название'); return; }
+    const safeUrl = safeHttpUrl(rawUrl);
+    if (!safeUrl || !safeUrl.startsWith('https://')) {
+      showToast('⚠️ Нужна корректная HTTPS-ссылка');
+      return;
+    }
 
     showToast('🔍 Проверяем ссылку...');
     // TODO: POST /api/games/submit — бэкенд проверяет URL и кладёт в очередь модерации.
