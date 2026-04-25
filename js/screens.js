@@ -9,6 +9,7 @@ function closeUpload() {
 
 function openProfile() {
   renderProfile();
+  loadAdminPending();
   document.getElementById('profile-screen').classList.add('open');
 }
 function closeProfile() {

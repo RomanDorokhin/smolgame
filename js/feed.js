@@ -1,8 +1,17 @@
 async function loadGames() {
-  // TODO: заменить на реальный API запрос
-  // const res = await fetch('https://api.smolgame.io/feed?user_id=' + USER.id);
-  // GAMES = await res.json();
-  window.GAMES = [];
+  try {
+    const data = await API.feed();
+    window.GAMES = Array.isArray(data?.games) ? data.games : [];
+
+    // Синхронизируем локальные Set-ы с ответом сервера (он знает истину).
+    window.likedSet = new Set(GAMES.filter(g => g.isLiked).map(g => g.id));
+    window.followedSet = new Set(GAMES.filter(g => g.isFollowing).map(g => g.authorId));
+    saveSet(STORAGE_KEYS.liked, likedSet);
+    saveSet(STORAGE_KEYS.followed, followedSet);
+  } catch (e) {
+    console.error('feed load failed', e);
+    window.GAMES = [];
+  }
   renderFeed();
 }
 

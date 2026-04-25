@@ -1,0 +1,124 @@
+# SmolGame backend
+
+Cloudflare Workers + D1 (SQLite). Весь API живёт в одном Worker.
+
+## Что нужно один раз
+
+1. **Установи Node.js** (если ещё нет): https://nodejs.org — бери LTS.
+2. **Получи Telegram bot token**:
+   - Открой в Telegram [@BotFather](https://t.me/BotFather)
+   - `/newbot` → имя → username
+   - Он пришлёт строку вида `123456:ABC-DEF...` — это токен, сохрани его.
+   - Потом в `@BotFather`: `/mybots` → выбери бота → Bot Settings → Menu Button → Configure menu button → URL = `https://romandorokhin.github.io/smolgame/`.
+3. **Залогинься в Cloudflare из терминала** (делается один раз):
+
+   ```bash
+   cd backend
+   npm install
+   npx wrangler login
+   ```
+
+   Откроется браузер, жми Allow.
+
+## Первый деплой (один раз)
+
+```bash
+cd backend
+
+# 1) Создать БД в облаке Cloudflare
+npm run db:create
+```
+
+Команда выведет строку вида:
+
+```
+[[d1_databases]]
+binding = "DB"
+database_name = "smolgame"
+database_id = "abcd1234-..."
+```
+
+Скопируй значение `database_id` и вставь в `wrangler.toml` вместо `PASTE_DATABASE_ID_AFTER_CREATE`, сохрани файл.
+
+```bash
+# 2) Накатить схему таблиц
+npm run db:migrate:remote
+
+# 3) Положить секрет бота (НЕ в wrangler.toml, секреты живут отдельно)
+npx wrangler secret put TELEGRAM_BOT_TOKEN
+# Вставь токен от BotFather, Enter.
+
+# 4) Задеплоить
+npm run deploy
+```
+
+В конце wrangler напишет URL, что-то вроде:
+
+```
+https://smolgame.dorokhin731.workers.dev
+```
+
+Если он совпадает с `API_BASE` в `js/api.js` — всё, фронт уже подключён.
+
+Зайди в бота в Telegram, нажми Menu кнопку — откроется мини-апп, лента пустая.
+
+## Что дальше
+
+Просто пилим код.
+
+- Я правлю код → коммит в main → ты в терминале:
+
+  ```bash
+  cd backend
+  npm run deploy
+  ```
+
+  Это занимает ~5 секунд.
+
+- Если изменилась схема БД (добавилась таблица/колонка):
+
+  ```bash
+  npm run db:migrate:remote
+  ```
+
+## Как добавить первую игру
+
+1. Открой мини-апп в Telegram.
+2. Вкладка «Загрузить» → «Ссылка» → вбей любой https URL с игрой.
+3. Нажми «Отправить на модерацию» — игра уйдёт в очередь.
+4. Вкладка «Профиль» — у тебя (админа) будет виден блок «На модерации» с кнопками «Одобрить / Отклонить».
+5. Одобрил → игра появляется в ленте у всех.
+
+## Структура
+
+```
+backend/
+  wrangler.toml      — конфиг Workers + D1 + env-переменные
+  schema.sql         — схема БД
+  package.json       — скрипты (dev / deploy / db:*)
+  src/
+    index.js         — точка входа + роутер
+    http.js          — CORS, JSON-хелперы, генератор id
+    telegram.js      — валидация initData (HMAC-SHA256)
+    auth.js          — authenticate() + upsertUser()
+    validators.js    — валидация submit-payload
+    routes.js        — все эндпоинты (feed, me, submit, like, follow, play, admin/*)
+```
+
+## Эндпоинты
+
+| Метод  | Путь                              | Описание                            |
+|--------|-----------------------------------|-------------------------------------|
+| GET    | `/api/feed`                       | Опубликованные игры (+isLiked/Follow) |
+| GET    | `/api/me`                         | Профиль текущего юзера + статы      |
+| POST   | `/api/submit`                     | Отправить игру на модерацию         |
+| POST   | `/api/games/:id/like`             | Лайк                                |
+| DELETE | `/api/games/:id/like`             | Убрать лайк                         |
+| POST   | `/api/games/:id/play`             | +1 просмотр                         |
+| POST   | `/api/users/:id/follow`           | Подписаться                         |
+| DELETE | `/api/users/:id/follow`           | Отписаться                          |
+| GET    | `/api/admin/pending`              | Очередь модерации (только админ)    |
+| POST   | `/api/admin/approve/:id`          | Одобрить                            |
+| POST   | `/api/admin/reject/:id`           | Отклонить                           |
+
+Все запросы отправляют заголовок `x-telegram-init-data`. Сервер проверяет подпись и достаёт из неё юзера.

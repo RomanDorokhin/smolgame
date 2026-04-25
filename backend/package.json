@@ -1,0 +1,16 @@
+{
+  "name": "smolgame-backend",
+  "version": "0.1.0",
+  "private": true,
+  "description": "SmolGame API on Cloudflare Workers + D1",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "db:create": "wrangler d1 create smolgame",
+    "db:migrate:local": "wrangler d1 execute smolgame --local --file=./schema.sql",
+    "db:migrate:remote": "wrangler d1 execute smolgame --remote --file=./schema.sql"
+  },
+  "devDependencies": {
+    "wrangler": "^3.90.0"
+  }
+}

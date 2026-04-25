@@ -1,0 +1,29 @@
+name = "smolgame"
+main = "src/index.js"
+compatibility_date = "2025-01-01"
+compatibility_flags = ["nodejs_compat"]
+
+# ───────────────────────────────────────────────
+# D1 (sqlite в облаке Cloudflare)
+# database_id заполнится автоматически после `npm run db:create`
+# ───────────────────────────────────────────────
+[[d1_databases]]
+binding = "DB"
+database_name = "smolgame"
+database_id = "PASTE_DATABASE_ID_AFTER_CREATE"
+
+# ───────────────────────────────────────────────
+# Настройки (не секреты, лежат в репе)
+# ───────────────────────────────────────────────
+[vars]
+# Telegram ID админов через запятую (только они видят очередь модерации).
+ADMIN_TG_IDS = "336216597"
+
+# Origin фронтенда для CORS. GitHub Pages = <username>.github.io.
+FRONTEND_ORIGIN = "https://romandorokhin.github.io"
+
+# ───────────────────────────────────────────────
+# Секреты (НЕ здесь, положить отдельной командой!):
+#   npx wrangler secret put TELEGRAM_BOT_TOKEN
+# Токен нужен для валидации initData от Telegram WebApp.
+# ───────────────────────────────────────────────

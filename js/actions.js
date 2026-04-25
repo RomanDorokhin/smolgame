@@ -3,7 +3,9 @@ function toggleLike() {
   const g = GAMES[window.currentIdx];
   const icon = document.getElementById('likeIcon');
 
-  if (likedSet.has(g.id)) {
+  const wasLiked = likedSet.has(g.id);
+  // Оптимистичное обновление UI — откатим если API упадёт.
+  if (wasLiked) {
     likedSet.delete(g.id);
     icon.textContent = '🤍';
     icon.classList.remove('active-like');
@@ -12,12 +14,19 @@ function toggleLike() {
     icon.textContent = '❤️';
     icon.classList.add('active-like', 'pop');
     setTimeout(() => icon.classList.remove('pop'), 400);
-    // TODO: POST /api/like { gameId: g.id, userId: USER.id }
   }
   saveSet(STORAGE_KEYS.liked, likedSet);
-
   document.getElementById('likeCount').textContent =
     fmtNum(g.likes + (likedSet.has(g.id) ? 1 : 0));
+
+  (wasLiked ? API.unlike(g.id) : API.like(g.id)).catch(err => {
+    // Откат.
+    if (wasLiked) likedSet.add(g.id); else likedSet.delete(g.id);
+    saveSet(STORAGE_KEYS.liked, likedSet);
+    updateOverlay();
+    showToast('⚠️ Не удалось, попробуй ещё раз');
+    console.warn('like failed', err);
+  });
 }
 
 function toggleFollow() {
@@ -25,7 +34,8 @@ function toggleFollow() {
   const g = GAMES[window.currentIdx];
   const btn = document.getElementById('followBtn');
 
-  if (followedSet.has(g.authorId)) {
+  const wasFollowing = followedSet.has(g.authorId);
+  if (wasFollowing) {
     followedSet.delete(g.authorId);
     btn.textContent = '+ Follow';
     btn.classList.remove('following');
@@ -35,9 +45,16 @@ function toggleFollow() {
     btn.textContent = '✓ Following';
     btn.classList.add('following');
     showToast('✅ Подписался на ' + g.authorName);
-    // TODO: POST /api/follow { authorId: g.authorId, userId: USER.id }
   }
   saveSet(STORAGE_KEYS.followed, followedSet);
+
+  (wasFollowing ? API.unfollow(g.authorId) : API.follow(g.authorId)).catch(err => {
+    if (wasFollowing) followedSet.add(g.authorId); else followedSet.delete(g.authorId);
+    saveSet(STORAGE_KEYS.followed, followedSet);
+    updateOverlay();
+    showToast('⚠️ Не удалось');
+    console.warn('follow failed', err);
+  });
 }
 
 function shareGame() {
@@ -57,7 +74,7 @@ function reportGame() {
 }
 
 function trackPlay(gameId) {
-  // TODO: POST /api/play { gameId, userId: USER.id }
+  API.play(gameId).catch(e => console.warn('play track failed', e));
 }
 
 function openAuthorProfile() {

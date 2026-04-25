@@ -27,6 +27,9 @@ const CLICK_ACTIONS = {
   'submit-game':    (el) => submitGame(el.dataset.method),
 
   'open-game':      (el) => openGameFromSearch(el.dataset.gameId),
+
+  'admin-approve':  (el) => adminApproveGame(el.closest('.admin-card')),
+  'admin-reject':   (el) => adminRejectGame (el.closest('.admin-card')),
 };
 
 function handleDelegatedClick(ev) {

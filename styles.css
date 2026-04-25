@@ -768,3 +768,47 @@ textarea.field-input{
   color:#fff;font-family:'Syne',sans-serif;font-size:17px;font-weight:800;
   cursor:pointer;
 }
+
+/* ══════════════════════════════
+   ADMIN (видно только админу)
+══════════════════════════════ */
+.admin-only{display:none;}
+body.is-admin .admin-only{display:block;}
+
+.admin-card{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:14px;
+  padding:12px 14px;
+  margin-bottom:10px;
+}
+.admin-card-title{
+  font-weight:700;
+  font-size:15px;
+  margin-bottom:4px;
+  word-break:break-word;
+}
+.admin-card-meta{
+  font-size:12px;
+  color:var(--muted);
+  margin-bottom:10px;
+  word-break:break-all;
+}
+.admin-card-meta a{color:var(--accent);text-decoration:none;}
+.admin-actions{display:flex;gap:8px;}
+.admin-btn{
+  flex:1;
+  padding:10px;
+  border-radius:10px;
+  border:1px solid var(--border);
+  background:var(--surface);
+  color:#fff;
+  font-weight:700;
+  font-size:13px;
+  cursor:pointer;
+  font-family:'Space Grotesk',sans-serif;
+}
+.admin-btn.approve{background:rgba(76,175,80,0.18);border-color:rgba(76,175,80,0.4);}
+.admin-btn.reject{background:rgba(255,45,85,0.15);border-color:rgba(255,45,85,0.35);}
+.admin-btn:active{opacity:0.7;}
+.admin-empty{color:var(--muted);font-size:13px;text-align:center;padding:20px 0;}

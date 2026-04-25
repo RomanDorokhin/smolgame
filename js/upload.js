@@ -17,35 +17,38 @@ function authGithub() {
 
 async function submitGame(method) {
   if (method === 'code') {
-    const name = document.getElementById('gameNameInput').value.trim();
-    const code = document.getElementById('codeInput').value.trim();
-    if (!name || !code) { showToast('⚠️ Заполни название и код'); return; }
-    if (!USER.isGithubConnected) { showToast('⚠️ Сначала войди через GitHub'); return; }
+    // В текущей итерации принимаем только готовые URL. Деплой кода
+    // появится позже (отдельная итерация — GitHub App + деплой репозитория).
+    showToast('⏳ Пока шли ссылку. Код приму позже.');
+    return;
+  }
 
-    showToast('🚀 Публикуем...');
-    // TODO: POST /api/games/deploy — бэкенд создаёт реп, пушит index.html,
-    // включает GitHub Pages, сохраняет URL и возвращает { gameId, url }.
-    setTimeout(() => {
-      showToast('✅ Игра отправлена на модерацию!');
-      closeUpload();
-    }, 1500);
+  const rawUrl = document.getElementById('urlInput').value.trim();
+  const name = document.getElementById('gameNameInput2').value.trim();
+  const desc = document.getElementById('gameDescInput2').value.trim();
+  const genreLabel = selectedGenres.url || 'Прочее';
+  const genreEmoji = (GENRES.find(x => x.label === genreLabel)?.emoji) || '🎮';
 
-  } else {
-    const rawUrl = document.getElementById('urlInput').value.trim();
-    const name = document.getElementById('gameNameInput2').value.trim();
-    if (!rawUrl || !name) { showToast('⚠️ Заполни ссылку и название'); return; }
-    const safeUrl = safeHttpUrl(rawUrl);
-    if (!safeUrl || !safeUrl.startsWith('https://')) {
-      showToast('⚠️ Нужна корректная HTTPS-ссылка');
-      return;
-    }
+  if (!rawUrl || !name) { showToast('⚠️ Заполни ссылку и название'); return; }
+  const safeUrl = safeHttpUrl(rawUrl);
+  if (!safeUrl || !safeUrl.startsWith('https://')) {
+    showToast('⚠️ Нужна корректная HTTPS-ссылка');
+    return;
+  }
 
-    showToast('🔍 Проверяем ссылку...');
-    // TODO: POST /api/games/submit — бэкенд проверяет URL и кладёт в очередь модерации.
-    setTimeout(() => {
-      showToast('✅ Отправлено на модерацию!');
-      closeUpload();
-    }, 1500);
+  showToast('🔍 Отправляем...');
+  try {
+    await API.submit({
+      title: name,
+      description: desc,
+      genre: genreLabel,
+      genreEmoji: genreEmoji,
+      url: safeUrl,
+    });
+    showToast('✅ Отправлено на модерацию!');
+    closeUpload();
+  } catch (e) {
+    showToast('⚠️ ' + (e.message || 'не получилось'));
   }
 }
 
