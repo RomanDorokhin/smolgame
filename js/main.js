@@ -1,13 +1,5 @@
 async function bootstrap() {
-  try {
-    const data = await API.feed();
-    window.GAMES = Array.isArray(data?.games) ? data.games : [];
-    alert('Игр загружено: ' + window.GAMES.length);
-  } catch(e) {
-    alert('Ошибка: ' + e.message);
-    window.GAMES = [];
-  }
-  renderFeed();
+  await loadGames();
   jumpToStartParamGame();
 }
 
