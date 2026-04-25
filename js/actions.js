@@ -57,16 +57,50 @@ function toggleFollow() {
   });
 }
 
-function shareGame() {
+function buildGameShareUrl(gameId) {
+  // Формат Telegram deep-link для mini-app: https://t.me/<bot>?startapp=<param>
+  // Параметр не может содержать / или : — используем префикс g_ + id игры.
+  const param = 'g_' + encodeURIComponent(gameId);
+  const bot = window.BOT_USERNAME || '';
+  const app = window.BOT_APP_NAME || '';
+  if (app) return `https://t.me/${bot}/${app}?startapp=${param}`;
+  return `https://t.me/${bot}?startapp=${param}`;
+}
+
+async function shareGame() {
   if (GAMES.length === 0) return;
   const g = GAMES[window.currentIdx];
-  const text = `🎮 ${g.title} на SmolGame`;
+  const url = buildGameShareUrl(g.id);
+  const text = `🎮 ${g.title} — играй в SmolGame`;
+
+  // 1) Лучший путь в Telegram: нативный share-sheet в чат.
   try {
-    Telegram.WebApp.switchInlineQuery(text);
-  } catch (e) {
+    const shareUrl = 'https://t.me/share/url?url=' + encodeURIComponent(url) +
+                     '&text=' + encodeURIComponent(text);
+    if (window.Telegram?.WebApp?.openTelegramLink) {
+      Telegram.WebApp.openTelegramLink(shareUrl);
+      return;
+    }
+  } catch (e) {}
+
+  // 2) Fallback: Web Share API (вне Telegram, в обычном браузере).
+  try {
+    if (navigator.share) {
+      await navigator.share({ title: g.title, text, url });
+      return;
+    }
+  } catch (e) { /* юзер отменил — не критично */ }
+
+  // 3) Последний fallback — копирование в буфер.
+  try {
+    await navigator.clipboard.writeText(url);
     showToast('🔗 Ссылка скопирована');
+  } catch (e) {
+    showToast('🔗 ' + url);
   }
 }
+
+window.buildGameShareUrl = buildGameShareUrl;
 
 function reportGame() {
   showToast('⚑ Жалоба отправлена');
