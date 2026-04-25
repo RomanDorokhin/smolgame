@@ -315,3 +315,28 @@ window.renderFeed = renderFeed;
 window.goTo = goTo;
 window.updateOverlay = updateOverlay;
 window.hideHint = hideHint;
+
+// ══ PLAY MODE ══
+let playMode = false;
+
+function enterPlayMode() {
+  if (playMode) return;
+  playMode = true;
+  document.body.classList.add('playing');
+  document.getElementById('close-play-btn')?.classList.add('visible');
+  // разрешаем тачи в iframe
+  document.querySelectorAll('.slide-game').forEach(f => {
+    f.style.pointerEvents = 'auto';
+    f.style.touchAction = 'auto';
+  });
+}
+
+function exitPlayMode() {
+  if (!playMode) return;
+  playMode = false;
+  document.body.classList.remove('playing');
+  document.getElementById('close-play-btn')?.classList.remove('visible');
+}
+
+window.enterPlayMode = enterPlayMode;
+window.exitPlayMode = exitPlayMode;

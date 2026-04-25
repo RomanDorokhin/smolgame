@@ -10,7 +10,7 @@ compatibility_flags = ["nodejs_compat"]
 [[d1_databases]]
 binding = "DB"
 database_name = "smolgame"
-database_id = "PASTE_DATABASE_ID_AFTER_CREATE"
+database_id = "bc1e52ac-4a7f-4b2c-bcb8-353269568a24"
 
 # ───────────────────────────────────────────────
 # Настройки (не секреты, лежат в репе)
