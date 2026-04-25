@@ -1,0 +1,190 @@
+async function loadGames() {
+  // TODO: заменить на реальный API запрос
+  // const res = await fetch('https://api.smolgame.io/feed?user_id=' + USER.id);
+  // GAMES = await res.json();
+  window.GAMES = [];
+  renderFeed();
+}
+
+function renderFeed() {
+  const feed = document.getElementById('feed');
+  const dots = document.getElementById('dots');
+  feed.innerHTML = '';
+  dots.innerHTML = '';
+  window.slides = [];
+
+  if (GAMES.length === 0) {
+    document.getElementById('empty-state').classList.add('show');
+    document.getElementById('side-actions').style.display = 'none';
+    document.getElementById('game-info').style.display = 'none';
+    document.getElementById('swipe-hint').style.display = 'none';
+    return;
+  }
+
+  document.getElementById('empty-state').classList.remove('show');
+  document.getElementById('side-actions').style.display = '';
+  document.getElementById('game-info').style.display = '';
+
+  GAMES.forEach((g, i) => {
+    const slide = document.createElement('div');
+    slide.className = 'slide';
+    slide.id = 'slide-' + i;
+    slide.style.transform = `translateY(${i * 100}%)`;
+
+    const placeholder = document.createElement('div');
+    placeholder.className = 'slide-placeholder';
+    placeholder.innerHTML = `
+      <div class="placeholder-icon">${g.genreEmoji || '🎮'}</div>
+      <div class="placeholder-title">${g.title}</div>
+      <div class="placeholder-sub">Загружаем игру...</div>
+      <div class="loader-ring"></div>
+    `;
+
+    const iframe = document.createElement('iframe');
+    iframe.className = 'slide-game';
+    iframe.id = 'iframe-' + i;
+    // Разрешаем скрипты и формы, но блокируем навигацию родителя.
+    // TODO(security): вынести игры на отдельный origin и убрать allow-same-origin.
+    iframe.setAttribute('sandbox', 'allow-scripts allow-forms allow-same-origin');
+    iframe.setAttribute('allow', 'autoplay');
+    iframe.style.opacity = '0';
+    iframe.style.transition = 'opacity 0.3s';
+
+    iframe.onload = () => {
+      iframe.style.opacity = '1';
+      placeholder.classList.add('hidden');
+      trackPlay(g.id);
+    };
+
+    iframe.onerror = () => {
+      placeholder.innerHTML = `
+        <div class="placeholder-icon">💔</div>
+        <div class="placeholder-title">Не загрузилась</div>
+        <div class="placeholder-sub">${g.url}</div>
+      `;
+    };
+
+    // Ленивая загрузка: только текущий ±1.
+    if (Math.abs(i - window.currentIdx) <= 1) {
+      iframe.src = g.url;
+    }
+    iframe.dataset.src = g.url;
+
+    slide.appendChild(placeholder);
+    slide.appendChild(iframe);
+    feed.appendChild(slide);
+    window.slides.push(slide);
+
+    const dot = document.createElement('div');
+    dot.className = 'dot' + (i === 0 ? ' active' : '');
+    dot.id = 'dot-' + i;
+    dots.appendChild(dot);
+  });
+
+  goTo(0, true);
+}
+
+function lazyLoadAround(idx) {
+  GAMES.forEach((g, i) => {
+    if (Math.abs(i - idx) <= 1) {
+      const iframe = document.getElementById('iframe-' + i);
+      if (iframe && !iframe.src && iframe.dataset.src) {
+        iframe.src = iframe.dataset.src;
+      }
+    }
+  });
+}
+
+function goTo(idx, instant = false) {
+  if (GAMES.length === 0) return;
+  window.currentIdx = Math.max(0, Math.min(GAMES.length - 1, idx));
+
+  window.slides.forEach((s, i) => {
+    s.style.transition = instant ? 'none' : 'transform 0.4s cubic-bezier(0.4,0,0.2,1)';
+    s.style.transform = `translateY(${(i - window.currentIdx) * 100}%)`;
+  });
+
+  document.querySelectorAll('.dot').forEach((d, i) =>
+    d.classList.toggle('active', i === window.currentIdx)
+  );
+
+  updateOverlay();
+  lazyLoadAround(window.currentIdx);
+}
+
+function updateOverlay() {
+  if (GAMES.length === 0) return;
+  const g = GAMES[window.currentIdx];
+  if (!g) return;
+
+  document.getElementById('gameBadge').textContent =
+    (g.genreEmoji || '🕹️') + ' ' + (g.genre || 'Игра');
+  document.getElementById('gameTitle').textContent = g.title;
+  document.getElementById('authorName').textContent = g.authorName;
+
+  const avatar = document.getElementById('authorAvatar');
+  if (g.authorAvatar?.startsWith('http')) {
+    avatar.innerHTML = `<img src="${g.authorAvatar}" alt="">`;
+  } else {
+    avatar.textContent = g.authorAvatar || g.authorName?.[0] || '?';
+  }
+
+  const liked = likedSet.has(g.id);
+  document.getElementById('likeIcon').textContent = liked ? '❤️' : '🤍';
+  document.getElementById('likeCount').textContent = fmtNum(g.likes + (liked ? 1 : 0));
+  document.getElementById('playsCount').textContent = fmtNum(g.plays);
+
+  const following = followedSet.has(g.authorId);
+  const followBtn = document.getElementById('followBtn');
+  followBtn.textContent = following ? '✓ Following' : '+ Follow';
+  followBtn.classList.toggle('following', following);
+}
+
+let touchStartY = 0, touchMoved = false, touching = false;
+
+document.addEventListener('DOMContentLoaded', () => {
+  const feed = document.getElementById('feed');
+
+  feed.addEventListener('touchstart', e => {
+    touchStartY = e.touches[0].clientY;
+    touchMoved = false;
+    touching = true;
+  }, { passive: true });
+
+  feed.addEventListener('touchmove', e => {
+    if (Math.abs(e.touches[0].clientY - touchStartY) > 10) touchMoved = true;
+  }, { passive: true });
+
+  feed.addEventListener('touchend', e => {
+    if (!touching) return;
+    touching = false;
+    if (!touchMoved) return;
+    const dy = touchStartY - e.changedTouches[0].clientY;
+    if (Math.abs(dy) > 55) {
+      goTo(dy > 0 ? window.currentIdx + 1 : window.currentIdx - 1);
+      hideHint();
+    }
+  }, { passive: true });
+});
+
+document.addEventListener('keydown', e => {
+  if (['ArrowDown', 'ArrowUp'].includes(e.key)) {
+    e.preventDefault();
+    goTo(e.key === 'ArrowDown' ? window.currentIdx + 1 : window.currentIdx - 1);
+  }
+});
+
+let hintHidden = false;
+function hideHint() {
+  if (hintHidden) return;
+  hintHidden = true;
+  const h = document.getElementById('swipe-hint');
+  h.style.opacity = '0';
+  setTimeout(() => h.style.display = 'none', 500);
+}
+
+window.loadGames = loadGames;
+window.renderFeed = renderFeed;
+window.goTo = goTo;
+window.updateOverlay = updateOverlay;
+window.hideHint = hideHint;
