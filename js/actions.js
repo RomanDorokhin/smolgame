@@ -14,6 +14,7 @@ function toggleLike() {
     setTimeout(() => icon.classList.remove('pop'), 400);
     // TODO: POST /api/like { gameId: g.id, userId: USER.id }
   }
+  saveSet(STORAGE_KEYS.liked, likedSet);
 
   document.getElementById('likeCount').textContent =
     fmtNum(g.likes + (likedSet.has(g.id) ? 1 : 0));
@@ -36,6 +37,7 @@ function toggleFollow() {
     showToast('✅ Подписался на ' + g.authorName);
     // TODO: POST /api/follow { authorId: g.authorId, userId: USER.id }
   }
+  saveSet(STORAGE_KEYS.followed, followedSet);
 }
 
 function shareGame() {

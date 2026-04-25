@@ -33,7 +33,30 @@ function showToast(msg) {
   toastTimer = setTimeout(() => t.classList.remove('show'), 2200);
 }
 
+// Localstorage-хелперы для Set<string>.
+// Тихо падают в no-op, если storage недоступен (приватный режим, квота и т.п.).
+function loadSet(key) {
+  try {
+    const raw = localStorage.getItem(key);
+    if (!raw) return new Set();
+    const arr = JSON.parse(raw);
+    return new Set(Array.isArray(arr) ? arr.map(String) : []);
+  } catch (e) {
+    return new Set();
+  }
+}
+
+function saveSet(key, set) {
+  try {
+    localStorage.setItem(key, JSON.stringify([...set]));
+  } catch (e) {
+    // storage полон/заблокирован — игнор.
+  }
+}
+
 window.fmtNum = fmtNum;
 window.showToast = showToast;
 window.esc = esc;
 window.safeHttpUrl = safeHttpUrl;
+window.loadSet = loadSet;
+window.saveSet = saveSet;

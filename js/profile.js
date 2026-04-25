@@ -5,8 +5,9 @@ function renderProfile() {
 
   const myGames = GAMES.filter(g => g.authorId === USER.id);
   document.getElementById('statGames').textContent = myGames.length;
-  // TODO: заменить на значения из API.
-  document.getElementById('statFollowers').textContent = fmtNum(Math.floor(Math.random() * 100));
+  // Подписчиков считать негде (бэка ещё нет) — показываем прочерк, а не фейк.
+  // TODO: заменить на GET /api/users/:id/stats после появления API.
+  document.getElementById('statFollowers').textContent = '—';
   document.getElementById('statLikes').textContent =
     fmtNum(myGames.reduce((s, g) => s + g.likes, 0));
 
