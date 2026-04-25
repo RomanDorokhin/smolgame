@@ -1,0 +1,1564 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#000000">
+<title>SmolGame</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Syne:wght@700;800&display=swap');
+
+html,body,#root,#feed,.slide{margin:0;padding:0;border:0;width:100%;height:100%;overflow:hidden;}
+
+:root{
+  --accent:#ff2d55;
+  --accent2:#ff6b35;
+  --bg:#080808;
+  --surface:#111;
+  --border:rgba(255,255,255,0.08);
+  --text:#fff;
+  --muted:rgba(255,255,255,0.45);
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;touch-action:none;}
+
+body{
+  background:var(--bg);
+  font-family:'Space Grotesk',sans-serif;
+  color:var(--text);
+  position:fixed;
+  inset:0;
+  overscroll-behavior:none;
+  -webkit-overflow-scrolling:touch;
+}
+
+/* ══════════════════════════════
+   FEED
+══════════════════════════════ */
+#feed{
+  position:fixed;
+  inset:0;
+  overflow:hidden;
+}
+
+.slide{
+  position:absolute;
+  inset:0;
+  will-change:transform;
+  transition:transform 0.4s cubic-bezier(0.4,0,0.2,1);
+}
+
+/* Игра внутри слайда */
+.slide-game{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  border:none;
+  display:block;
+  background:#000;
+}
+
+/* Плейсхолдер пока игра грузится */
+.slide-placeholder{
+  position:absolute;
+  inset:0;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  background:var(--bg);
+  gap:16px;
+  z-index:2;
+  transition:opacity 0.3s;
+}
+.slide-placeholder.hidden{opacity:0;pointer-events:none;}
+
+.placeholder-icon{
+  font-size:56px;
+  animation:breathe 2s ease-in-out infinite;
+}
+@keyframes breathe{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
+
+.placeholder-title{
+  font-family:'Syne',sans-serif;
+  font-size:22px;
+  font-weight:800;
+  color:var(--text);
+}
+.placeholder-sub{
+  font-size:14px;
+  color:var(--muted);
+}
+
+.loader-ring{
+  width:48px;height:48px;
+  border:3px solid var(--border);
+  border-top-color:var(--accent);
+  border-radius:50%;
+  animation:spin 0.8s linear infinite;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ══════════════════════════════
+   OVERLAY UI (поверх игры)
+══════════════════════════════ */
+
+/* Топбар */
+#topbar{
+  position:fixed;
+  top:0;left:0;right:0;
+  z-index:300;
+  padding:calc(var(--safe-top) + 10px) 16px 10px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  background:linear-gradient(180deg,rgba(0,0,0,0.7) 0%,transparent 100%);
+  pointer-events:none;
+}
+
+.logo{
+  font-family:'Syne',sans-serif;
+  font-size:20px;
+  font-weight:800;
+  letter-spacing:-0.3px;
+  background:linear-gradient(135deg,#fff 0%,rgba(255,255,255,0.6) 100%);
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+  background-clip:text;
+}
+.logo span{
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+  background-clip:text;
+}
+
+.topbar-right{
+  display:flex;
+  gap:8px;
+  pointer-events:all;
+}
+
+.icon-btn{
+  width:36px;height:36px;
+  background:rgba(255,255,255,0.1);
+  border:1px solid var(--border);
+  border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:16px;
+  cursor:pointer;
+  backdrop-filter:blur(8px);
+  transition:background 0.2s,transform 0.15s;
+}
+.icon-btn:active{transform:scale(0.88);background:rgba(255,255,255,0.18);}
+
+/* Боковые действия */
+#side-actions{
+  position:fixed;
+  right:12px;
+  bottom:calc(var(--safe-bottom) + 90px);
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:20px;
+  z-index:300;
+}
+
+.action-btn{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:5px;
+  cursor:pointer;
+  user-select:none;
+}
+
+.action-icon{
+  width:48px;height:48px;
+  background:rgba(10,10,10,0.6);
+  border:1px solid var(--border);
+  border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:20px;
+  backdrop-filter:blur(12px);
+  transition:transform 0.15s,background 0.2s,border-color 0.2s;
+  position:relative;
+}
+.action-icon:active{transform:scale(0.85);}
+.action-icon.active-like{
+  background:rgba(255,45,85,0.25);
+  border-color:var(--accent);
+}
+
+/* Анимация лайка */
+@keyframes likePoP{
+  0%{transform:scale(1)}
+  30%{transform:scale(1.4)}
+  60%{transform:scale(0.9)}
+  100%{transform:scale(1)}
+}
+.action-icon.pop{animation:likePop 0.35s ease;}
+
+.action-label{
+  font-size:12px;
+  font-weight:700;
+  color:rgba(255,255,255,0.85);
+  text-shadow:0 1px 6px rgba(0,0,0,0.9);
+}
+
+/* Инфо внизу */
+#game-info{
+  position:fixed;
+  left:0;bottom:0;right:64px;
+  padding:20px 16px calc(var(--safe-bottom) + 80px);
+  background:linear-gradient(0deg,rgba(0,0,0,0.8) 0%,transparent 100%);
+  z-index:300;
+  pointer-events:none;
+}
+
+.game-badge{
+  display:inline-flex;
+  align-items:center;
+  gap:5px;
+  background:rgba(255,255,255,0.12);
+  border:1px solid rgba(255,255,255,0.15);
+  backdrop-filter:blur(8px);
+  color:#fff;
+  font-size:11px;
+  font-weight:700;
+  padding:4px 10px;
+  border-radius:20px;
+  margin-bottom:8px;
+  text-transform:uppercase;
+  letter-spacing:0.06em;
+}
+
+.game-title{
+  font-family:'Syne',sans-serif;
+  font-size:18px;
+  font-weight:800;
+  color:#fff;
+  margin-bottom:4px;
+  text-shadow:0 2px 12px rgba(0,0,0,0.6);
+  line-height:1.2;
+}
+
+.author-row{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  pointer-events:all;
+  cursor:pointer;
+}
+
+.author-avatar{
+  width:26px;height:26px;
+  border-radius:50%;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  display:flex;align-items:center;justify-content:center;
+  font-size:12px;
+  font-weight:700;
+  flex-shrink:0;
+  overflow:hidden;
+}
+.author-avatar img{width:100%;height:100%;object-fit:cover;}
+
+.author-name{
+  font-size:13px;
+  font-weight:600;
+  color:rgba(255,255,255,0.9);
+}
+
+.follow-btn{
+  font-size:12px;
+  font-weight:700;
+  color:var(--accent);
+  background:rgba(255,45,85,0.12);
+  border:1px solid rgba(255,45,85,0.3);
+  border-radius:12px;
+  padding:3px 10px;
+  cursor:pointer;
+  pointer-events:all;
+  transition:all 0.2s;
+}
+.follow-btn.following{
+  color:var(--muted);
+  background:rgba(255,255,255,0.06);
+  border-color:var(--border);
+}
+
+/* ══════════════════════════════
+   НИЖНИЙ НАВ
+══════════════════════════════ */
+#bottom-nav{
+  position:fixed;
+  bottom:0;left:0;right:0;
+  z-index:400;
+  background:rgba(8,8,8,0.92);
+  border-top:1px solid var(--border);
+  backdrop-filter:blur(20px);
+  padding:8px 0 calc(var(--safe-bottom) + 4px);
+  display:flex;
+  justify-content:space-around;
+  align-items:center;
+}
+
+.nav-item{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:3px;
+  cursor:pointer;
+  padding:6px 16px;
+  border-radius:12px;
+  transition:background 0.2s;
+  min-width:60px;
+}
+.nav-item:active{background:rgba(255,255,255,0.06);}
+.nav-item .nav-icon{font-size:22px;transition:transform 0.2s;}
+.nav-item .nav-label{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;transition:color 0.2s;}
+.nav-item.active .nav-label{color:var(--accent);}
+.nav-item.active .nav-icon{transform:scale(1.12);}
+
+/* ══════════════════════════════
+   ПРОГРЕСС ТОЧКИ
+══════════════════════════════ */
+#dots{
+  position:fixed;
+  right:3px;
+  top:50%;
+  transform:translateY(-50%);
+  display:flex;
+  flex-direction:column;
+  gap:5px;
+  z-index:300;
+  pointer-events:none;
+}
+.dot{
+  width:3px;height:3px;
+  border-radius:50%;
+  background:rgba(255,255,255,0.25);
+  transition:all 0.3s;
+}
+.dot.active{background:#fff;height:12px;border-radius:2px;}
+
+/* ══════════════════════════════
+   ЭКРАН: ЗАГРУЗИТЬ ИГРУ
+══════════════════════════════ */
+#upload-screen{
+  position:fixed;
+  inset:0;
+  z-index:500;
+  background:var(--bg);
+  display:none;
+  flex-direction:column;
+  overflow-y:auto;
+  touch-action:pan-y;
+  padding:calc(var(--safe-top) + 60px) 20px calc(var(--safe-bottom) + 20px);
+}
+#upload-screen.open{display:flex;}
+
+.screen-header{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:28px;
+}
+.screen-title{
+  font-family:'Syne',sans-serif;
+  font-size:24px;
+  font-weight:800;
+}
+.close-btn{
+  width:36px;height:36px;
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:18px;
+  cursor:pointer;
+}
+
+.upload-methods{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:12px;
+  margin-bottom:28px;
+}
+
+.method-card{
+  background:var(--surface);
+  border:2px solid var(--border);
+  border-radius:16px;
+  padding:18px 14px;
+  cursor:pointer;
+  text-align:center;
+  transition:border-color 0.2s,background 0.2s;
+}
+.method-card.selected{
+  border-color:var(--accent);
+  background:rgba(255,45,85,0.08);
+}
+.method-card .m-icon{font-size:32px;margin-bottom:8px;}
+.method-card .m-title{font-size:14px;font-weight:700;margin-bottom:4px;}
+.method-card .m-desc{font-size:11px;color:var(--muted);line-height:1.4;}
+
+/* Форма */
+.form-section{display:none;}
+.form-section.visible{display:block;}
+
+.field-group{margin-bottom:18px;}
+.field-label{
+  font-size:12px;
+  font-weight:700;
+  text-transform:uppercase;
+  letter-spacing:0.08em;
+  color:var(--muted);
+  margin-bottom:8px;
+}
+
+.field-input{
+  width:100%;
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:14px 16px;
+  color:#fff;
+  font-family:'Space Grotesk',sans-serif;
+  font-size:15px;
+  outline:none;
+  transition:border-color 0.2s;
+  touch-action:pan-y;
+}
+.field-input:focus{border-color:rgba(255,45,85,0.5);}
+.field-input::placeholder{color:var(--muted);}
+
+textarea.field-input{
+  height:100px;
+  resize:none;
+}
+
+.code-area{
+  width:100%;
+  height:180px;
+  background:#0d0d0d;
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:14px 16px;
+  color:#7fdbca;
+  font-family:'Courier New',monospace;
+  font-size:13px;
+  outline:none;
+  resize:none;
+  transition:border-color 0.2s;
+  touch-action:pan-y;
+}
+.code-area:focus{border-color:rgba(255,45,85,0.5);}
+.code-area::placeholder{color:rgba(255,255,255,0.2);}
+
+.github-btn{
+  width:100%;
+  padding:16px;
+  background:linear-gradient(135deg,#24292e,#3d4450);
+  border:1px solid rgba(255,255,255,0.12);
+  border-radius:14px;
+  color:#fff;
+  font-family:'Space Grotesk',sans-serif;
+  font-size:15px;
+  font-weight:700;
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:10px;
+  margin-bottom:18px;
+  transition:opacity 0.2s;
+}
+.github-btn:active{opacity:0.8;}
+
+.submit-btn{
+  width:100%;
+  padding:18px;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  border:none;
+  border-radius:14px;
+  color:#fff;
+  font-family:'Syne',sans-serif;
+  font-size:18px;
+  font-weight:800;
+  cursor:pointer;
+  transition:opacity 0.2s,transform 0.15s;
+  margin-top:8px;
+}
+.submit-btn:active{opacity:0.85;transform:scale(0.98);}
+.submit-btn:disabled{opacity:0.4;cursor:not-allowed;}
+
+.genre-pills{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+}
+.genre-pill{
+  padding:7px 14px;
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:20px;
+  font-size:13px;
+  font-weight:600;
+  cursor:pointer;
+  transition:all 0.2s;
+}
+.genre-pill.selected{
+  background:rgba(255,45,85,0.15);
+  border-color:var(--accent);
+  color:var(--accent);
+}
+
+/* ══════════════════════════════
+   ЭКРАН: ПРОФИЛЬ
+══════════════════════════════ */
+#profile-screen{
+  position:fixed;
+  inset:0;
+  z-index:500;
+  background:var(--bg);
+  display:none;
+  flex-direction:column;
+  overflow-y:auto;
+  touch-action:pan-y;
+}
+#profile-screen.open{display:flex;}
+
+.profile-header{
+  padding:calc(var(--safe-top) + 20px) 20px 20px;
+  background:linear-gradient(180deg,#111 0%,var(--bg) 100%);
+  border-bottom:1px solid var(--border);
+}
+
+.profile-top{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  margin-bottom:20px;
+}
+
+.profile-avatar{
+  width:72px;height:72px;
+  border-radius:50%;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  display:flex;align-items:center;justify-content:center;
+  font-size:28px;
+  font-weight:800;
+  flex-shrink:0;
+}
+
+.profile-stats{
+  display:flex;
+  gap:24px;
+}
+.stat-item{text-align:center;}
+.stat-num{font-family:'Syne',sans-serif;font-size:22px;font-weight:800;}
+.stat-lbl{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;}
+
+.profile-name{
+  font-family:'Syne',sans-serif;
+  font-size:20px;
+  font-weight:800;
+  margin-bottom:4px;
+}
+.profile-handle{font-size:14px;color:var(--muted);margin-bottom:12px;}
+
+.profile-badges{display:flex;gap:6px;flex-wrap:wrap;}
+.profile-badge{
+  padding:4px 10px;
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:20px;
+  font-size:11px;
+  font-weight:700;
+  color:var(--muted);
+}
+.profile-badge.dev{color:var(--accent);border-color:rgba(255,45,85,0.3);background:rgba(255,45,85,0.08);}
+
+.profile-games-title{
+  font-family:'Syne',sans-serif;
+  font-size:16px;
+  font-weight:800;
+  padding:16px 20px 8px;
+}
+
+.games-grid{
+  padding:0 12px 100px;
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+}
+
+.game-card{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:14px;
+  overflow:hidden;
+  cursor:pointer;
+  transition:transform 0.15s;
+}
+.game-card:active{transform:scale(0.97);}
+
+.game-card-thumb{
+  width:100%;
+  aspect-ratio:9/10;
+  background:linear-gradient(135deg,#1a1a2e,#16213e);
+  display:flex;align-items:center;justify-content:center;
+  font-size:42px;
+  position:relative;
+  overflow:hidden;
+}
+.game-card-thumb::after{
+  content:'';
+  position:absolute;
+  inset:0;
+  background:linear-gradient(0deg,rgba(0,0,0,0.5) 0%,transparent 60%);
+}
+
+.game-card-info{padding:10px 12px 12px;}
+.game-card-name{font-size:13px;font-weight:700;margin-bottom:3px;}
+.game-card-stats{font-size:11px;color:var(--muted);}
+
+/* ══════════════════════════════
+   ЭКРАН: ПОИСК
+══════════════════════════════ */
+#search-screen{
+  position:fixed;
+  inset:0;
+  z-index:500;
+  background:var(--bg);
+  display:none;
+  flex-direction:column;
+  touch-action:pan-y;
+}
+#search-screen.open{display:flex;}
+
+.search-header{
+  padding:calc(var(--safe-top) + 16px) 16px 12px;
+  border-bottom:1px solid var(--border);
+}
+
+.search-bar{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:14px;
+  padding:0 14px;
+}
+.search-bar input{
+  flex:1;
+  background:none;
+  border:none;
+  outline:none;
+  color:#fff;
+  font-family:'Space Grotesk',sans-serif;
+  font-size:15px;
+  padding:14px 0;
+  touch-action:pan-y;
+}
+.search-bar input::placeholder{color:var(--muted);}
+.search-icon{font-size:18px;color:var(--muted);}
+
+.genre-scroll{
+  display:flex;
+  gap:8px;
+  padding:12px 16px;
+  overflow-x:auto;
+  border-bottom:1px solid var(--border);
+  touch-action:pan-x;
+}
+.genre-scroll::-webkit-scrollbar{display:none;}
+
+.genre-tag{
+  flex-shrink:0;
+  padding:7px 16px;
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:20px;
+  font-size:13px;
+  font-weight:600;
+  cursor:pointer;
+  white-space:nowrap;
+  transition:all 0.2s;
+}
+.genre-tag.active{background:var(--accent);border-color:var(--accent);color:#fff;}
+
+.search-results{
+  flex:1;
+  overflow-y:auto;
+  padding:12px 12px 80px;
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+  touch-action:pan-y;
+  align-content:start;
+}
+
+/* ══════════════════════════════
+   TOAST
+══════════════════════════════ */
+#toast{
+  position:fixed;
+  top:80px;
+  left:50%;
+  transform:translateX(-50%) translateY(-10px);
+  background:rgba(20,20,20,0.95);
+  border:1px solid var(--border);
+  backdrop-filter:blur(16px);
+  color:#fff;
+  padding:10px 20px;
+  border-radius:30px;
+  font-size:14px;
+  font-weight:600;
+  z-index:600;
+  opacity:0;
+  transition:all 0.25s;
+  white-space:nowrap;
+  pointer-events:none;
+}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+/* ══════════════════════════════
+   SWIPE HINT
+══════════════════════════════ */
+#swipe-hint{
+  position:fixed;
+  bottom:120px;
+  left:50%;
+  transform:translateX(-50%);
+  z-index:350;
+  text-align:center;
+  pointer-events:none;
+  transition:opacity 0.5s;
+}
+.hint-arrow{
+  font-size:28px;
+  animation:hintBounce 1.4s ease-in-out infinite;
+  display:block;
+}
+@keyframes hintBounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
+.hint-text{font-size:13px;font-weight:600;color:rgba(255,255,255,0.6);margin-top:4px;}
+
+/* ══════════════════════════════
+   ПУСТАЯ ЛЕНТА
+══════════════════════════════ */
+#empty-state{
+  position:fixed;
+  inset:0;
+  display:none;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:16px;
+  text-align:center;
+  padding:40px;
+  z-index:10;
+}
+#empty-state.show{display:flex;}
+.empty-icon{font-size:64px;}
+.empty-title{font-family:'Syne',sans-serif;font-size:24px;font-weight:800;}
+.empty-sub{font-size:15px;color:var(--muted);line-height:1.5;}
+.empty-btn{
+  margin-top:8px;
+  padding:14px 32px;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  border:none;border-radius:14px;
+  color:#fff;font-family:'Syne',sans-serif;font-size:17px;font-weight:800;
+  cursor:pointer;
+}
+</style>
+</head>
+<body>
+
+<!-- ══ FEED ══ -->
+<div id="feed"></div>
+
+<!-- ══ ПУСТАЯ ЛЕНТА ══ -->
+<div id="empty-state">
+  <div class="empty-icon">🎮</div>
+  <div class="empty-title">Игр пока нет</div>
+  <div class="empty-sub">Будь первым разработчиком.<br>Загрузи свою игру — и она появится в ленте.</div>
+  <button class="empty-btn" onclick="openUpload()">Загрузить игру</button>
+</div>
+
+<!-- ══ ТОПБАР ══ -->
+<div id="topbar">
+  <div class="logo">smol<span>game</span></div>
+  <div class="topbar-right">
+    <div class="icon-btn" onclick="openSearch()">🔍</div>
+    <div class="icon-btn" onclick="openProfile()">👤</div>
+  </div>
+</div>
+
+<!-- ══ БОКОВЫЕ ДЕЙСТВИЯ ══ -->
+<div id="side-actions">
+  <div class="action-btn" onclick="toggleLike()">
+    <div class="action-icon" id="likeIcon">🤍</div>
+    <div class="action-label" id="likeCount">0</div>
+  </div>
+  <div class="action-btn" onclick="shareGame()">
+    <div class="action-icon">🔗</div>
+    <div class="action-label" id="playsCount">0</div>
+  </div>
+  <div class="action-btn" onclick="reportGame()">
+    <div class="action-icon">⚑</div>
+    <div class="action-label">Жалоба</div>
+  </div>
+</div>
+
+<!-- ══ ИНФО ОБ ИГРЕ ══ -->
+<div id="game-info">
+  <div class="game-badge" id="gameBadge">🕹️ Аркада</div>
+  <div class="game-title" id="gameTitle">Загрузка...</div>
+  <div class="author-row" onclick="openAuthorProfile()">
+    <div class="author-avatar" id="authorAvatar">?</div>
+    <div class="author-name" id="authorName">—</div>
+    <div class="follow-btn" id="followBtn" onclick="event.stopPropagation();toggleFollow()">+ Follow</div>
+  </div>
+</div>
+
+<!-- ══ ПРОГРЕСС ══ -->
+<div id="dots"></div>
+
+<!-- ══ СВАЙП ПОДСКАЗКА ══ -->
+<div id="swipe-hint">
+  <span class="hint-arrow">☝️</span>
+  <div class="hint-text">свайп вверх</div>
+</div>
+
+<!-- ══ НИЖНИЙ НАВ ══ -->
+<div id="bottom-nav">
+  <div class="nav-item active" id="nav-feed" onclick="switchTab('feed')">
+    <div class="nav-icon">🎮</div>
+    <div class="nav-label">Лента</div>
+  </div>
+  <div class="nav-item" id="nav-search" onclick="switchTab('search')">
+    <div class="nav-icon">🔍</div>
+    <div class="nav-label">Поиск</div>
+  </div>
+  <div class="nav-item" id="nav-upload" onclick="openUpload()">
+    <div class="nav-icon">➕</div>
+    <div class="nav-label">Загрузить</div>
+  </div>
+  <div class="nav-item" id="nav-profile" onclick="switchTab('profile')">
+    <div class="nav-icon">👤</div>
+    <div class="nav-label">Профиль</div>
+  </div>
+</div>
+
+<!-- ══ ЭКРАН: ЗАГРУЗИТЬ ИГРУ ══ -->
+<div id="upload-screen">
+  <div class="screen-header">
+    <div class="screen-title">Загрузить игру</div>
+    <div class="close-btn" onclick="closeUpload()">✕</div>
+  </div>
+
+  <!-- Способ загрузки -->
+  <div class="upload-methods">
+    <div class="method-card selected" id="method-code" onclick="selectMethod('code')">
+      <div class="m-icon">📝</div>
+      <div class="m-title">Вставить код</div>
+      <div class="m-desc">HTML/JS файл прямо сюда</div>
+    </div>
+    <div class="method-card" id="method-url" onclick="selectMethod('url')">
+      <div class="m-icon">🔗</div>
+      <div class="m-title">Ссылка</div>
+      <div class="m-desc">GitHub Pages или другой хостинг</div>
+    </div>
+  </div>
+
+  <!-- Форма: код -->
+  <div class="form-section visible" id="form-code">
+    <div class="field-group">
+      <div class="field-label">GitHub аккаунт</div>
+      <button class="github-btn" onclick="authGithub()">
+        <span>🐙</span> Войти через GitHub
+      </button>
+      <div style="font-size:12px;color:var(--muted);text-align:center;margin-top:-10px;margin-bottom:16px;">
+        Нужно для публикации от твоего имени
+      </div>
+    </div>
+    <div class="field-group">
+      <div class="field-label">Название игры</div>
+      <input class="field-input" type="text" placeholder="Моя крутая игра" id="gameNameInput" maxlength="40">
+    </div>
+    <div class="field-group">
+      <div class="field-label">Описание</div>
+      <textarea class="field-input" placeholder="Пара слов о чём игра..." id="gameDescInput" maxlength="120"></textarea>
+    </div>
+    <div class="field-group">
+      <div class="field-label">Жанр</div>
+      <div class="genre-pills" id="genrePills"></div>
+    </div>
+    <div class="field-group">
+      <div class="field-label">Код игры (HTML)</div>
+      <textarea class="code-area" placeholder="<!DOCTYPE html>..." id="codeInput"></textarea>
+    </div>
+    <button class="submit-btn" onclick="submitGame('code')">🚀 Опубликовать</button>
+  </div>
+
+  <!-- Форма: ссылка -->
+  <div class="form-section" id="form-url">
+    <div class="field-group">
+      <div class="field-label">Ссылка на игру</div>
+      <input class="field-input" type="url" placeholder="https://username.github.io/game" id="urlInput">
+      <div style="font-size:12px;color:var(--muted);margin-top:6px;">GitHub Pages, Vercel, Netlify — любой публичный URL</div>
+    </div>
+    <div class="field-group">
+      <div class="field-label">Название игры</div>
+      <input class="field-input" type="text" placeholder="Моя крутая игра" id="gameNameInput2" maxlength="40">
+    </div>
+    <div class="field-group">
+      <div class="field-label">Описание</div>
+      <textarea class="field-input" placeholder="Пара слов о чём игра..." id="gameDescInput2" maxlength="120"></textarea>
+    </div>
+    <div class="field-group">
+      <div class="field-label">Жанр</div>
+      <div class="genre-pills" id="genrePills2"></div>
+    </div>
+    <button class="submit-btn" onclick="submitGame('url')">🚀 Отправить на модерацию</button>
+  </div>
+</div>
+
+<!-- ══ ЭКРАН: ПРОФИЛЬ ══ -->
+<div id="profile-screen">
+  <div class="profile-header">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+      <div class="screen-title">Профиль</div>
+      <div class="close-btn" onclick="closeProfile()">✕</div>
+    </div>
+    <div class="profile-top">
+      <div class="profile-avatar" id="profileAvatar">?</div>
+      <div class="profile-stats">
+        <div class="stat-item">
+          <div class="stat-num" id="statGames">0</div>
+          <div class="stat-lbl">Игр</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-num" id="statFollowers">0</div>
+          <div class="stat-lbl">Подписчики</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-num" id="statLikes">0</div>
+          <div class="stat-lbl">Лайки</div>
+        </div>
+      </div>
+    </div>
+    <div class="profile-name" id="profileName">Гость</div>
+    <div class="profile-handle" id="profileHandle">@—</div>
+    <div class="profile-badges">
+      <div class="profile-badge">🎮 Игрок</div>
+      <div class="profile-badge dev" id="devBadge" style="display:none">⚡ Разработчик</div>
+    </div>
+  </div>
+  <div class="profile-games-title">Мои игры</div>
+  <div class="games-grid" id="myGamesGrid">
+    <div style="grid-column:1/-1;text-align:center;padding:40px 0;color:var(--muted);font-size:14px;">
+      Ты ещё не загружал игры
+    </div>
+  </div>
+</div>
+
+<!-- ══ ЭКРАН: ПОИСК ══ -->
+<div id="search-screen">
+  <div class="search-header">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+      <div class="screen-title">Поиск</div>
+      <div class="close-btn" onclick="closeSearch()">✕</div>
+    </div>
+    <div class="search-bar">
+      <span class="search-icon">🔍</span>
+      <input type="text" placeholder="Найти игру или автора..." id="searchInput" oninput="onSearch(this.value)">
+    </div>
+  </div>
+  <div class="genre-scroll" id="genreFilter"></div>
+  <div class="search-results" id="searchResults">
+    <div style="grid-column:1/-1;text-align:center;padding:40px 0;color:var(--muted);font-size:14px;">
+      Начни вводить для поиска
+    </div>
+  </div>
+</div>
+
+<!-- ══ TOAST ══ -->
+<div id="toast"></div>
+
+<script>
+// ══════════════════════════════════════════
+// TELEGRAM INIT
+// ══════════════════════════════════════════
+try {
+  Telegram.WebApp.ready();
+  Telegram.WebApp.expand();
+} catch(e) {
+  console.log('Not in Telegram, running in browser');
+}
+
+// Блокировка браузерных жестов
+document.body.addEventListener('touchmove', function(e) {
+  if (e.target === document.body || e.target === document.documentElement) {
+    e.preventDefault();
+  }
+}, { passive: false });
+document.addEventListener('gesturestart', e => e.preventDefault());
+document.addEventListener('gesturechange', e => e.preventDefault());
+
+// ══════════════════════════════════════════
+// СОСТОЯНИЕ ПРИЛОЖЕНИЯ
+// ══════════════════════════════════════════
+
+// Получаем данные юзера из Telegram или дефолт
+let tgUser = null;
+try { tgUser = Telegram.WebApp.initDataUnsafe?.user; } catch(e){}
+
+const USER = {
+  id: tgUser?.id || 'guest_' + Math.random().toString(36).slice(2,8),
+  name: tgUser ? (tgUser.first_name + (tgUser.last_name ? ' '+tgUser.last_name : '')) : 'Гость',
+  username: tgUser?.username || 'guest',
+  avatar: tgUser?.first_name?.[0] || '?',
+  isGithubConnected: false,
+  githubUsername: null,
+};
+
+// База игр — сюда будут добавляться игры из API/бэкенда
+// Структура одной игры:
+// {
+//   id: string,
+//   title: string,
+//   description: string,
+//   genre: string,
+//   genreEmoji: string,
+//   url: string,           // ← URL iframe (GitHub Pages)
+//   authorId: string,
+//   authorName: string,
+//   authorHandle: string,
+//   authorAvatar: string,  // первая буква или URL
+//   likes: number,
+//   plays: number,
+//   isLiked: boolean,
+//   isFollowing: boolean,
+// }
+let GAMES = [];  // ← заполняется из loadGames()
+
+let currentIdx = 0;
+let slides = [];
+let likedSet = new Set();
+let followedSet = new Set();
+let selectedGenre = '';
+let selectedUploadMethod = 'code';
+let selectedGenres = { code: '', url: '' };
+
+const GENRES = [
+  { label:'Аркада', emoji:'🕹️' },
+  { label:'Головоломка', emoji:'🧩' },
+  { label:'Экшен', emoji:'⚔️' },
+  { label:'Казуалка', emoji:'🎯' },
+  { label:'Стратегия', emoji:'♟️' },
+  { label:'Гонки', emoji:'🏎️' },
+  { label:'Платформер', emoji:'🏃' },
+  { label:'Прочее', emoji:'🎲' },
+];
+
+// ══════════════════════════════════════════
+// ЗАГРУЗКА ИГР (заглушка → заменить на API)
+// ══════════════════════════════════════════
+async function loadGames() {
+  // TODO: заменить на реальный API запрос
+  // const res = await fetch('https://api.smolgame.io/feed?user_id=' + USER.id);
+  // GAMES = await res.json();
+
+  // Пока пустой массив — показываем empty state
+  GAMES = [];
+  renderFeed();
+}
+
+// ══════════════════════════════════════════
+// РЕНДЕР ЛЕНТЫ
+// ══════════════════════════════════════════
+function renderFeed() {
+  const feed = document.getElementById('feed');
+  const dots = document.getElementById('dots');
+  feed.innerHTML = '';
+  dots.innerHTML = '';
+  slides = [];
+
+  if (GAMES.length === 0) {
+    document.getElementById('empty-state').classList.add('show');
+    document.getElementById('side-actions').style.display = 'none';
+    document.getElementById('game-info').style.display = 'none';
+    document.getElementById('swipe-hint').style.display = 'none';
+    return;
+  }
+
+  document.getElementById('empty-state').classList.remove('show');
+  document.getElementById('side-actions').style.display = '';
+  document.getElementById('game-info').style.display = '';
+
+  GAMES.forEach((g, i) => {
+    // Слайд
+    const slide = document.createElement('div');
+    slide.className = 'slide';
+    slide.id = 'slide-' + i;
+    slide.style.transform = `translateY(${i * 100}%)`;
+
+    // Плейсхолдер (показывается пока iframe грузится)
+    const placeholder = document.createElement('div');
+    placeholder.className = 'slide-placeholder';
+    placeholder.innerHTML = `
+      <div class="placeholder-icon">${g.genreEmoji || '🎮'}</div>
+      <div class="placeholder-title">${g.title}</div>
+      <div class="placeholder-sub">Загружаем игру...</div>
+      <div class="loader-ring"></div>
+    `;
+
+    // iframe — сама игра
+    const iframe = document.createElement('iframe');
+    iframe.className = 'slide-game';
+    iframe.id = 'iframe-' + i;
+    // Безопасный sandbox — разрешаем скрипты и формы но блокируем навигацию
+    iframe.setAttribute('sandbox', 'allow-scripts allow-forms allow-same-origin');
+    iframe.setAttribute('allow', 'autoplay');
+    iframe.style.opacity = '0';
+    iframe.style.transition = 'opacity 0.3s';
+
+    iframe.onload = () => {
+      iframe.style.opacity = '1';
+      placeholder.classList.add('hidden');
+      // Инкремент просмотров → отправить на бэкенд
+      trackPlay(g.id);
+    };
+
+    iframe.onerror = () => {
+      placeholder.innerHTML = `
+        <div class="placeholder-icon">💔</div>
+        <div class="placeholder-title">Не загрузилась</div>
+        <div class="placeholder-sub">${g.url}</div>
+      `;
+    };
+
+    // Загружаем только текущий и соседние слайды (ленивая загрузка)
+    if (Math.abs(i - currentIdx) <= 1) {
+      iframe.src = g.url;
+    }
+    iframe.dataset.src = g.url;
+
+    slide.appendChild(placeholder);
+    slide.appendChild(iframe);
+    feed.appendChild(slide);
+    slides.push(slide);
+
+    // Dot
+    const dot = document.createElement('div');
+    dot.className = 'dot' + (i === 0 ? ' active' : '');
+    dot.id = 'dot-' + i;
+    dots.appendChild(dot);
+  });
+
+  goTo(0, true);
+}
+
+// Ленивая загрузка соседних iframe
+function lazyLoadAround(idx) {
+  GAMES.forEach((g, i) => {
+    if (Math.abs(i - idx) <= 1) {
+      const iframe = document.getElementById('iframe-' + i);
+      if (iframe && !iframe.src && iframe.dataset.src) {
+        iframe.src = iframe.dataset.src;
+      }
+    }
+  });
+}
+
+// ══════════════════════════════════════════
+// НАВИГАЦИЯ ПО ЛЕНТЕ
+// ══════════════════════════════════════════
+function goTo(idx, instant = false) {
+  if (GAMES.length === 0) return;
+  const prev = currentIdx;
+  currentIdx = Math.max(0, Math.min(GAMES.length - 1, idx));
+
+  slides.forEach((s, i) => {
+    s.style.transition = instant ? 'none' : 'transform 0.4s cubic-bezier(0.4,0,0.2,1)';
+    s.style.transform = `translateY(${(i - currentIdx) * 100}%)`;
+  });
+
+  document.querySelectorAll('.dot').forEach((d, i) => d.classList.toggle('active', i === currentIdx));
+
+  updateOverlay();
+  lazyLoadAround(currentIdx);
+}
+
+function updateOverlay() {
+  if (GAMES.length === 0) return;
+  const g = GAMES[currentIdx];
+  if (!g) return;
+
+  document.getElementById('gameBadge').textContent = (g.genreEmoji || '🕹️') + ' ' + (g.genre || 'Игра');
+  document.getElementById('gameTitle').textContent = g.title;
+  document.getElementById('authorName').textContent = g.authorName;
+  document.getElementById('authorHandle').textContent = '';
+
+  const avatar = document.getElementById('authorAvatar');
+  if (g.authorAvatar?.startsWith('http')) {
+    avatar.innerHTML = `<img src="${g.authorAvatar}" alt="">`;
+  } else {
+    avatar.textContent = g.authorAvatar || g.authorName[0] || '?';
+  }
+
+  const liked = likedSet.has(g.id);
+  document.getElementById('likeIcon').textContent = liked ? '❤️' : '🤍';
+  document.getElementById('likeCount').textContent = fmtNum(g.likes + (liked ? 1 : 0));
+  document.getElementById('playsCount').textContent = fmtNum(g.plays);
+
+  const following = followedSet.has(g.authorId);
+  const followBtn = document.getElementById('followBtn');
+  followBtn.textContent = following ? '✓ Following' : '+ Follow';
+  followBtn.classList.toggle('following', following);
+}
+
+// ══════════════════════════════════════════
+// СВАЙП МЕЖДУ ИГРАМИ
+// ══════════════════════════════════════════
+let touchStartY = 0, touchMoved = false, touching = false;
+
+document.getElementById('feed').addEventListener('touchstart', e => {
+  touchStartY = e.touches[0].clientY;
+  touchMoved = false;
+  touching = true;
+}, { passive: true });
+
+document.getElementById('feed').addEventListener('touchmove', e => {
+  if (Math.abs(e.touches[0].clientY - touchStartY) > 10) touchMoved = true;
+}, { passive: true });
+
+document.getElementById('feed').addEventListener('touchend', e => {
+  if (!touching) return;
+  touching = false;
+  if (!touchMoved) return;
+  const dy = touchStartY - e.changedTouches[0].clientY;
+  if (Math.abs(dy) > 55) {
+    goTo(dy > 0 ? currentIdx + 1 : currentIdx - 1);
+    hideHint();
+  }
+}, { passive: true });
+
+// Клавиатура (десктоп)
+document.addEventListener('keydown', e => {
+  if (['ArrowDown','ArrowUp'].includes(e.key)) {
+    e.preventDefault();
+    goTo(e.key === 'ArrowDown' ? currentIdx + 1 : currentIdx - 1);
+  }
+});
+
+let hintHidden = false;
+function hideHint() {
+  if (hintHidden) return;
+  hintHidden = true;
+  const h = document.getElementById('swipe-hint');
+  h.style.opacity = '0';
+  setTimeout(() => h.style.display = 'none', 500);
+}
+
+// ══════════════════════════════════════════
+// ДЕЙСТВИЯ
+// ══════════════════════════════════════════
+function toggleLike() {
+  if (GAMES.length === 0) return;
+  const g = GAMES[currentIdx];
+  const icon = document.getElementById('likeIcon');
+
+  if (likedSet.has(g.id)) {
+    likedSet.delete(g.id);
+    icon.textContent = '🤍';
+    icon.classList.remove('active-like');
+  } else {
+    likedSet.add(g.id);
+    icon.textContent = '❤️';
+    icon.classList.add('active-like', 'pop');
+    setTimeout(() => icon.classList.remove('pop'), 400);
+    // TODO: POST /api/like { gameId: g.id, userId: USER.id }
+  }
+
+  document.getElementById('likeCount').textContent = fmtNum(g.likes + (likedSet.has(g.id) ? 1 : 0));
+}
+
+function toggleFollow() {
+  if (GAMES.length === 0) return;
+  const g = GAMES[currentIdx];
+  const btn = document.getElementById('followBtn');
+
+  if (followedSet.has(g.authorId)) {
+    followedSet.delete(g.authorId);
+    btn.textContent = '+ Follow';
+    btn.classList.remove('following');
+    showToast('Отписался');
+  } else {
+    followedSet.add(g.authorId);
+    btn.textContent = '✓ Following';
+    btn.classList.add('following');
+    showToast('✅ Подписался на ' + g.authorName);
+    // TODO: POST /api/follow { authorId: g.authorId, userId: USER.id }
+  }
+}
+
+function shareGame() {
+  if (GAMES.length === 0) return;
+  const g = GAMES[currentIdx];
+  const text = `🎮 ${g.title} на SmolGame`;
+  try {
+    Telegram.WebApp.switchInlineQuery(text);
+  } catch(e) {
+    showToast('🔗 Ссылка скопирована');
+  }
+}
+
+function reportGame() {
+  showToast('⚑ Жалоба отправлена');
+  // TODO: POST /api/report { gameId: GAMES[currentIdx].id }
+}
+
+function trackPlay(gameId) {
+  // TODO: POST /api/play { gameId, userId: USER.id }
+}
+
+function openAuthorProfile() {
+  // TODO: открыть профиль автора
+  showToast('Профиль автора — скоро');
+}
+
+// ══════════════════════════════════════════
+// ЗАГРУЗКА ИГРЫ
+// ══════════════════════════════════════════
+function selectMethod(m) {
+  selectedUploadMethod = m;
+  document.getElementById('method-code').classList.toggle('selected', m === 'code');
+  document.getElementById('method-url').classList.toggle('selected', m === 'url');
+  document.getElementById('form-code').classList.toggle('visible', m === 'code');
+  document.getElementById('form-url').classList.toggle('visible', m === 'url');
+}
+
+function authGithub() {
+  // TODO: OAuth redirect
+  // window.location.href = 'https://api.smolgame.io/auth/github?user_id=' + USER.id;
+  showToast('GitHub OAuth — подключается');
+  USER.isGithubConnected = true;
+  USER.githubUsername = 'your-github';
+  document.getElementById('devBadge').style.display = '';
+}
+
+async function submitGame(method) {
+  if (method === 'code') {
+    const name = document.getElementById('gameNameInput').value.trim();
+    const code = document.getElementById('codeInput').value.trim();
+    if (!name || !code) { showToast('⚠️ Заполни название и код'); return; }
+    if (!USER.isGithubConnected) { showToast('⚠️ Сначала войди через GitHub'); return; }
+
+    showToast('🚀 Публикуем...');
+
+    // TODO: POST /api/games/deploy
+    // {
+    //   code: btoa(code),          // base64
+    //   title: name,
+    //   genre: selectedGenres.code,
+    //   userId: USER.id,
+    //   githubToken: <токен из OAuth>
+    // }
+    // Бэкенд:
+    // 1. Создаёт реп на GitHub через API от имени юзера
+    // 2. Пушит index.html
+    // 3. Включает GitHub Pages
+    // 4. Сохраняет в БД: { url, authorId, title, genre }
+    // 5. Возвращает { gameId, url }
+
+    setTimeout(() => {
+      showToast('✅ Игра отправлена на модерацию!');
+      closeUpload();
+    }, 1500);
+
+  } else {
+    const url = document.getElementById('urlInput').value.trim();
+    const name = document.getElementById('gameNameInput2').value.trim();
+    if (!url || !name) { showToast('⚠️ Заполни ссылку и название'); return; }
+    if (!url.startsWith('http')) { showToast('⚠️ Некорректная ссылка'); return; }
+
+    showToast('🔍 Проверяем ссылку...');
+
+    // TODO: POST /api/games/submit
+    // { url, title: name, genre: selectedGenres.url, userId: USER.id }
+    // Бэкенд: проверяет что URL доступен, сохраняет в очередь модерации
+
+    setTimeout(() => {
+      showToast('✅ Отправлено на модерацию!');
+      closeUpload();
+    }, 1500);
+  }
+}
+
+// ══════════════════════════════════════════
+// ЖАНРЫ
+// ══════════════════════════════════════════
+function renderGenrePills(containerId, stateKey) {
+  const el = document.getElementById(containerId);
+  el.innerHTML = '';
+  GENRES.forEach(g => {
+    const pill = document.createElement('div');
+    pill.className = 'genre-pill' + (selectedGenres[stateKey] === g.label ? ' selected' : '');
+    pill.textContent = g.emoji + ' ' + g.label;
+    pill.onclick = () => {
+      selectedGenres[stateKey] = selectedGenres[stateKey] === g.label ? '' : g.label;
+      renderGenrePills(containerId, stateKey);
+    };
+    el.appendChild(pill);
+  });
+}
+
+function renderGenreFilter() {
+  const el = document.getElementById('genreFilter');
+  el.innerHTML = '';
+  [{ label:'Все', emoji:'🎮' }, ...GENRES].forEach(g => {
+    const tag = document.createElement('div');
+    tag.className = 'genre-tag' + (selectedGenre === g.label ? ' active' : '');
+    tag.textContent = g.emoji + ' ' + g.label;
+    tag.onclick = () => {
+      selectedGenre = selectedGenre === g.label ? '' : g.label;
+      renderGenreFilter();
+      onSearch(document.getElementById('searchInput').value);
+    };
+    el.appendChild(tag);
+  });
+}
+
+// ══════════════════════════════════════════
+// ПОИСК
+// ══════════════════════════════════════════
+function onSearch(query) {
+  const results = document.getElementById('searchResults');
+  const filtered = GAMES.filter(g => {
+    const matchQuery = !query || g.title.toLowerCase().includes(query.toLowerCase()) || g.authorName.toLowerCase().includes(query.toLowerCase());
+    const matchGenre = !selectedGenre || selectedGenre === 'Все' || g.genre === selectedGenre;
+    return matchQuery && matchGenre;
+  });
+
+  if (filtered.length === 0) {
+    results.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:40px 0;color:var(--muted);font-size:14px;">Ничего не найдено</div>`;
+    return;
+  }
+
+  results.innerHTML = filtered.map(g => `
+    <div class="game-card" onclick="openGameFromSearch('${g.id}')">
+      <div class="game-card-thumb">${g.genreEmoji || '🎮'}</div>
+      <div class="game-card-info">
+        <div class="game-card-name">${g.title}</div>
+        <div class="game-card-stats">❤️ ${fmtNum(g.likes)} · 👁 ${fmtNum(g.plays)}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function openGameFromSearch(gameId) {
+  const idx = GAMES.findIndex(g => g.id === gameId);
+  if (idx === -1) return;
+  closeSearch();
+  goTo(idx);
+}
+
+// ══════════════════════════════════════════
+// ПРОФИЛЬ
+// ══════════════════════════════════════════
+function renderProfile() {
+  document.getElementById('profileAvatar').textContent = USER.avatar;
+  document.getElementById('profileName').textContent = USER.name;
+  document.getElementById('profileHandle').textContent = '@' + USER.username;
+
+  const myGames = GAMES.filter(g => g.authorId === USER.id);
+  document.getElementById('statGames').textContent = myGames.length;
+  document.getElementById('statFollowers').textContent = fmtNum(Math.floor(Math.random() * 100)); // TODO: из API
+  document.getElementById('statLikes').textContent = fmtNum(myGames.reduce((s, g) => s + g.likes, 0));
+
+  if (USER.isGithubConnected) document.getElementById('devBadge').style.display = '';
+
+  const grid = document.getElementById('myGamesGrid');
+  if (myGames.length === 0) {
+    grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:40px 0;color:var(--muted);font-size:14px;">Ты ещё не загружал игры</div>`;
+  } else {
+    grid.innerHTML = myGames.map(g => `
+      <div class="game-card">
+        <div class="game-card-thumb">${g.genreEmoji || '🎮'}</div>
+        <div class="game-card-info">
+          <div class="game-card-name">${g.title}</div>
+          <div class="game-card-stats">❤️ ${fmtNum(g.likes)} · 👁 ${fmtNum(g.plays)}</div>
+        </div>
+      </div>
+    `).join('');
+  }
+}
+
+// ══════════════════════════════════════════
+// ОТКРЫТИЕ / ЗАКРЫТИЕ ЭКРАНОВ
+// ══════════════════════════════════════════
+function openUpload() {
+  document.getElementById('upload-screen').classList.add('open');
+  renderGenrePills('genrePills', 'code');
+  renderGenrePills('genrePills2', 'url');
+}
+function closeUpload() { document.getElementById('upload-screen').classList.remove('open'); }
+
+function openProfile() {
+  renderProfile();
+  document.getElementById('profile-screen').classList.add('open');
+}
+function closeProfile() { document.getElementById('profile-screen').classList.remove('open'); }
+
+function openSearch() {
+  document.getElementById('search-screen').classList.add('open');
+  renderGenreFilter();
+  onSearch('');
+}
+function closeSearch() { document.getElementById('search-screen').classList.remove('open'); }
+
+function switchTab(tab) {
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('nav-' + tab)?.classList.add('active');
+  if (tab === 'search') openSearch();
+  else if (tab === 'profile') openProfile();
+  else if (tab === 'feed') { closeSearch(); closeProfile(); }
+}
+
+// ══════════════════════════════════════════
+// УТИЛИТЫ
+// ══════════════════════════════════════════
+function fmtNum(n) {
+  if (n >= 1000000) return (n / 1000000).toFixed(1) + 'M';
+  if (n >= 1000) return (n / 1000).toFixed(1) + 'K';
+  return String(n || 0);
+}
+
+let toastTimer;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+// ══════════════════════════════════════════
+// ЗАПУСК
+// ══════════════════════════════════════════
+loadGames();
+</script>
+</body>
+</html>
