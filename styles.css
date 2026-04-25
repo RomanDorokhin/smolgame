@@ -78,7 +78,7 @@ body{
 #feed{background:#000;}
 .slide-placeholder.hidden{opacity:0;pointer-events:none;}
 
-#touch-layer{
+#touch-layer{display:none !important;
   position:fixed;
   top:0;
   left:0;
@@ -95,7 +95,7 @@ body:has(#upload-screen.open) #touch-layer,
 body:has(#profile-screen.open) #touch-layer,
 body:has(#author-screen.open) #touch-layer,
 body:has(#search-screen.open) #touch-layer,
-body:has(#onboarding-screen.open) #touch-layer{
+body:has(#onboarding-screen.open) #touch-layer{display:none !important;
   display:none;
 }
 
