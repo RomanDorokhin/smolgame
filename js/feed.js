@@ -129,7 +129,7 @@ function appendSlides(startIndex, gamesSlice) {
       ${statusBanner}
       ${thumbHtml}
       <div class="placeholder-title">${esc(g.title)}</div>
-      <div class="placeholder-sub">Загружаем игру...</div>
+      <div class="placeholder-sub">Загрузка…</div>
       <div class="loader-ring"></div>
     `;
 

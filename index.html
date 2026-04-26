@@ -8,6 +8,9 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#000000">
 <title>SmolGame</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <link rel="stylesheet" href="styles.css">
 </head>
@@ -17,7 +20,7 @@
   <div class="tg-only-card">
     <div class="tg-only-logo">smol<span>game</span></div>
     <p class="tg-only-title">Открой в Telegram</p>
-    <p class="tg-only-text">SmolGame работает только как мини-приложение: нужен вход через Telegram и кнопка меню бота.</p>
+    <p class="tg-only-text">Открой из Telegram: меню бота → мини-приложение.</p>
   </div>
 </div>
 
@@ -28,7 +31,7 @@
 <div id="empty-state">
   <div class="empty-icon">🎮</div>
   <div class="empty-title">Игр пока нет</div>
-  <div class="empty-sub">Будь первым разработчиком.<br>Загрузи свою игру — и она появится в ленте.</div>
+  <div class="empty-sub">Загрузи игру — она появится в ленте после модерации.</div>
   <button class="empty-btn" data-action="open-upload">Загрузить игру</button>
 </div>
 
@@ -78,7 +81,7 @@
 
 <!-- ══ Узкая зона свайпа ленты (между игрой и блоком с автором) ══ -->
 <div id="swipe-strip" aria-hidden="true">
-  <span class="swipe-strip-hint" id="swipe-hint-label">Свайп вверх — другая игра</span>
+  <span class="swipe-strip-hint" id="swipe-hint-label">Свайп вверх — следующая</span>
 </div>
 
 <!-- ══ НИЖНИЙ НАВ ══ -->
@@ -113,12 +116,12 @@
     <div class="method-card selected" id="method-code" data-action="select-method" data-method="code">
       <div class="m-icon">📝</div>
       <div class="m-title">Вставить код</div>
-      <div class="m-desc">HTML/JS файл прямо сюда</div>
+      <div class="m-desc">Вставить HTML</div>
     </div>
     <div class="method-card" id="method-url" data-action="select-method" data-method="url">
       <div class="m-icon">🔗</div>
       <div class="m-title">Ссылка</div>
-      <div class="m-desc">GitHub Pages или другой хостинг</div>
+      <div class="m-desc">Уже на хостинге</div>
     </div>
   </div>
 
@@ -129,9 +132,7 @@
       <button class="github-btn" data-action="auth-github">
         <span>🐙</span> Войти через GitHub
       </button>
-      <div style="font-size:12px;color:var(--muted);text-align:center;margin-top:-10px;margin-bottom:16px;">
-        Нужно для публикации от твоего имени
-      </div>
+      <div class="field-hint-center">Для публикации от имени GitHub</div>
     </div>
     <div class="field-group">
       <div class="field-label">Название игры</div>
@@ -157,7 +158,7 @@
     <div class="field-group">
       <div class="field-label">Ссылка на игру</div>
       <input class="field-input" type="url" placeholder="https://username.github.io/game" id="urlInput">
-      <div style="font-size:12px;color:var(--muted);margin-top:6px;">GitHub Pages, Vercel, Netlify — любой публичный URL</div>
+      <div class="field-hint">HTTPS, публичный URL</div>
     </div>
     <div class="field-group">
       <div class="field-label">Название игры</div>
@@ -173,8 +174,8 @@
     </div>
     <div class="field-group">
       <div class="field-label">Обложка игры</div>
-      <input class="field-input" type="url" id="coverUrlInput" placeholder="https://… картинка (jpg/png) — можно без файла">
-      <div style="font-size:12px;color:var(--muted);margin:6px 0 10px;">Если на сервере не настроено хранилище, загрузка файла недоступна — используй ссылку или оставь пустым.</div>
+      <input class="field-input" type="url" id="coverUrlInput" placeholder="https://… jpg/png (необязательно)">
+      <div class="field-hint">Без хранилища на сервере — только ссылка или без обложки</div>
       <label class="image-upload">
         <input type="file" accept="image/*" id="gameImageInput">
         <span>Выбрать изображение</span>
@@ -218,7 +219,7 @@
     </div>
     <div id="profile-edit-wrap" class="profile-edit-wrap">
       <div class="profile-edit-fields">
-        <p class="profile-id-readonly">Публичный ID: <strong id="profileSiteHandleRead">—</strong> <span class="profile-id-hint">(задаётся при регистрации)</span></p>
+        <p class="profile-id-readonly">ID: <strong id="profileSiteHandleRead">—</strong> <span class="profile-id-hint">при регистрации</span></p>
         <label class="profile-field">
           <span class="profile-field-lbl">Имя в SmolGame</span>
           <input class="field-input" type="text" id="profileDisplayName" maxlength="60" placeholder="Как тебя видят другие">
@@ -236,7 +237,7 @@
             </label>
             <button type="button" class="profile-text-btn" data-action="reset-profile-photo">Как в Telegram</button>
           </div>
-          <div class="profile-avatar-hint">До 2 МБ. Или оставь фото из Telegram.</div>
+          <div class="profile-avatar-hint">До 2 МБ</div>
         </div>
       </div>
       <button type="button" class="submit-btn profile-save-btn" data-action="save-profile">Сохранить профиль</button>
@@ -255,7 +256,7 @@
   <div class="profile-games-title">Мои игры</div>
   <div class="games-grid" id="myGamesGrid">
     <div style="grid-column:1/-1;text-align:center;padding:40px 0;color:var(--muted);font-size:14px;">
-      Ты ещё не загружал игры
+      Нет игр
     </div>
   </div>
 </div>
@@ -275,7 +276,7 @@
   <div class="genre-scroll" id="genreFilter"></div>
   <div class="search-results" id="searchResults">
     <div style="grid-column:1/-1;text-align:center;padding:40px 0;color:var(--muted);font-size:14px;">
-      Начни вводить для поиска
+      Введи запрос
     </div>
   </div>
 </div>

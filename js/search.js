@@ -13,7 +13,7 @@ function onSearch(query) {
   });
 
   if (filtered.length === 0) {
-    results.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:40px 0;color:var(--muted);font-size:14px;">Ничего не найдено</div>`;
+    results.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:40px 0;color:var(--muted);font-size:14px;">Нет результатов</div>`;
     return;
   }
 

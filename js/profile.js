@@ -74,7 +74,7 @@ async function renderProfile() {
 
   const grid = document.getElementById('myGamesGrid');
   if (myGames.length === 0) {
-    grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:40px 0;color:var(--muted);font-size:14px;">Пока нет игр. Загрузи в разделе «Загрузить».</div>`;
+    grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:40px 0;color:var(--muted);font-size:14px;">Нет игр — вкладка «Загрузить»</div>`;
   } else {
     grid.innerHTML = myGames.map(g => `
       <div class="game-card" data-action="open-game-profile" data-game-id="${esc(g.id)}">

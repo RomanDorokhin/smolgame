@@ -38,7 +38,7 @@ function renderOnboarding() {
     body.innerHTML = `
       <div class="onboarding-step">Шаг 1 из 4</div>
       <div class="onboarding-title">Дата рождения</div>
-      <div class="onboarding-text">Нужно подтвердить возраст перед созданием аккаунта.</div>
+      <div class="onboarding-text">Подтверди возраст.</div>
       <input class="field-input" type="date" id="birthDateInput" value="${esc(onboardingData.dateOfBirth || '')}">
       <label class="check-row" id="parentConsentRow" style="display:none">
         <input type="checkbox" id="parentConsentInput">
@@ -56,7 +56,7 @@ function renderOnboarding() {
     body.innerHTML = `
       <div class="onboarding-step">Шаг 2 из 4</div>
       <div class="onboarding-title">Политика приватности</div>
-      <div class="onboarding-text">Мы используем Telegram initData только для входа, а публично показываем выбранный ID SmolGame.</div>
+      <div class="onboarding-text">Вход через Telegram; публично виден только твой ID SmolGame.</div>
       <label class="check-row">
         <input type="checkbox" id="privacyInput">
         <span>Я принимаю политику конфиденциальности</span>
@@ -70,7 +70,7 @@ function renderOnboarding() {
     body.innerHTML = `
       <div class="onboarding-step">Шаг 3 из 4</div>
       <div class="onboarding-title">Пользовательское соглашение</div>
-      <div class="onboarding-text">Публикуй только свои игры и соблюдай правила платформы.</div>
+      <div class="onboarding-text">Только свои игры и правила площадки.</div>
       <label class="check-row">
         <input type="checkbox" id="tosInput">
         <span>Я принимаю пользовательское соглашение</span>
@@ -83,7 +83,7 @@ function renderOnboarding() {
   body.innerHTML = `
     <div class="onboarding-step">Шаг 4 из 4</div>
     <div class="onboarding-title">Публичный ID</div>
-    <div class="onboarding-text">Это имя будет видно другим пользователям вместо Telegram @username.</div>
+    <div class="onboarding-text">Виден другим вместо @username в Telegram.</div>
     <input class="field-input" type="text" id="siteHandleInput" placeholder="smol_player" maxlength="24" value="${esc(onboardingData.siteHandle || '')}">
   `;
   footer.innerHTML = `<button class="submit-btn" data-action="onboarding-finish">Создать аккаунт</button>`;

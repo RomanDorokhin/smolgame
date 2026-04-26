@@ -50,7 +50,7 @@ async function resolveCoverImageUrl() {
     return { imageUrl: uploaded?.imageUrl || null };
   } catch (e) {
     if (isStorageUnavailableError(e)) {
-      showToast('⚠️ Загрузка файлов не настроена. Укажи ссылку на обложку выше или отправь без обложки.');
+      showToast('⚠️ Файл недоступен — укажи URL обложки или без неё');
       return { imageUrl: null };
     }
     throw e;
@@ -59,7 +59,7 @@ async function resolveCoverImageUrl() {
 
 async function submitGame(method) {
   if (method === 'code') {
-    showToast('⏳ Пока шли ссылку. Код приму позже.');
+    showToast('⏳ По ссылке: вкладка «Ссылка». Вставка кода — позже.');
     return;
   }
 

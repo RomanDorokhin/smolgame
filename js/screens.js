@@ -117,7 +117,7 @@ async function loadAuthorProfile(authorId) {
     const games = Array.isArray(gamesData.games) ? gamesData.games : [];
     const grid = document.getElementById('authorGamesGrid');
     if (games.length === 0) {
-      grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:40px 0;color:var(--muted);font-size:14px;">Игр пока нет</div>`;
+      grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:40px 0;color:var(--muted);font-size:14px;">Нет игр</div>`;
     } else {
       grid.innerHTML = games.map(g => `
         <div class="game-card" data-action="open-game" data-game-id="${esc(g.id)}">

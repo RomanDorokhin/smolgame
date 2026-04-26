@@ -132,7 +132,7 @@ async function shareGame() {
 window.buildGameShareUrl = buildGameShareUrl;
 
 function reportGame() {
-  showToast('⚑ Жалоба пока в разработке — напиши админу бота');
+  showToast('⚑ Жалоба: напиши админу бота');
 }
 
 function trackPlay(gameId) {
