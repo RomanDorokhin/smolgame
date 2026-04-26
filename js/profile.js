@@ -125,9 +125,22 @@ async function saveProfile() {
     }
     showToast('✅ Профиль сохранён');
     if (typeof updateOverlay === 'function') updateOverlay();
+    cancelProfileEdit();
   } catch (e) {
     showToast('⚠️ ' + (e.message || 'не сохранилось'));
   }
+}
+
+function startProfileEdit() {
+  document.getElementById('profile-screen')?.classList.add('profile-edit-active');
+}
+
+function cancelProfileEdit() {
+  document.getElementById('profile-screen')?.classList.remove('profile-edit-active');
+  const dn = document.getElementById('profileDisplayName');
+  const bio = document.getElementById('profileBioInput');
+  if (dn) dn.value = USER.displayName || USER.name || '';
+  if (bio) bio.value = USER.bio || '';
 }
 
 async function resetProfilePhoto() {
@@ -195,6 +208,8 @@ window.deleteGame = deleteGame;
 window.saveProfile = saveProfile;
 window.resetProfilePhoto = resetProfilePhoto;
 window.openGameFromProfile = openGameFromProfile;
+window.startProfileEdit = startProfileEdit;
+window.cancelProfileEdit = cancelProfileEdit;
 
 document.addEventListener('change', ev => {
   if (ev.target?.id === 'profileAvatarInput') onProfileAvatarFileChange(ev);

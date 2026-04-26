@@ -8,12 +8,15 @@ function closeUpload() {
 }
 
 function openProfile() {
+  const screen = document.getElementById('profile-screen');
+  screen?.classList.remove('profile-edit-active');
   renderProfile();
   loadAdminPending();
-  document.getElementById('profile-screen').classList.add('open');
+  screen?.classList.add('open');
 }
 function closeProfile() {
-  document.getElementById('profile-screen').classList.remove('open');
+  const screen = document.getElementById('profile-screen');
+  screen?.classList.remove('open', 'profile-edit-active');
 }
 
 function openSearch() {

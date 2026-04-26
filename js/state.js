@@ -8,7 +8,7 @@ window.USER = {
   siteHandle: null,
   displayName: '',
   bio: '',
-  avatar: tgUser?.first_name?.[0] || '?',
+  avatar: (tgUser?.photo_url && String(tgUser.photo_url).trim()) || tgUser?.first_name?.[0] || '?',
   isGithubConnected: false,
   githubUsername: null,
 };

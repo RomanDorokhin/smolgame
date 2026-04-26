@@ -34,6 +34,8 @@ const CLICK_ACTIONS = {
   'delete-game':    (el, ev) => { ev.stopPropagation(); deleteGame(el.dataset.gameId); },
   'save-profile':   () => saveProfile(),
   'reset-profile-photo': () => resetProfilePhoto(),
+  'profile-start-edit': () => startProfileEdit(),
+  'profile-cancel-edit': () => cancelProfileEdit(),
 
   'admin-approve':  (el) => adminApproveGame(el.closest('.admin-card')),
   'admin-reject':   (el) => adminRejectGame (el.closest('.admin-card')),
