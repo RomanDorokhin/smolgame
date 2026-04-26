@@ -335,6 +335,11 @@ body:has(#onboarding-screen.open) #swipe-strip{
   align-items:center;
   gap:18px;
   z-index:301;
+  /* Иначе колонка перехватывает drag по игре (тетрис и т.п.) в правой части экрана */
+  pointer-events:none;
+}
+#side-actions .action-btn{
+  pointer-events:auto;
 }
 
 .action-btn{
