@@ -20,6 +20,28 @@ async function bootstrap() {
 
   await loadGames();
   await jumpToStartParamGame();
+  handleGithubOAuthReturn();
+}
+
+function handleGithubOAuthReturn() {
+  try {
+    const u = new URL(window.location.href);
+    const g = u.searchParams.get('github');
+    if (!g) return;
+    const msg = u.searchParams.get('message');
+    if (g === 'connected') {
+      showToast('✅ GitHub подключён');
+    } else if (g === 'error') {
+      showToast('⚠️ GitHub: ' + (msg || 'ошибка'));
+    }
+    u.searchParams.delete('github');
+    u.searchParams.delete('message');
+    const qs = u.searchParams.toString();
+    const clean = u.pathname + (qs ? '?' + qs : '') + u.hash;
+    window.history.replaceState({}, '', clean);
+  } catch (e) {
+    /* ignore */
+  }
 }
 
 async function jumpToStartParamGame() {

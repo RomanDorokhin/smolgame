@@ -5,6 +5,7 @@ import {
   toggleLike, toggleFollow, toggleBookmark, getUserProfile, getUserGames, play,
   adminPending, adminApprove, adminReject,
 } from './routes.js';
+import { githubOAuthStart, githubOAuthCallback } from './github-oauth.js';
 
 export default {
   async fetch(req, env) {
@@ -49,6 +50,8 @@ async function route(req, env, pathname) {
   if (pathname === '/api/register' && m === 'POST') return register(req, env);
   if (pathname === '/api/submit' && m === 'POST') return submitGame(req, env);
   if (pathname === '/api/upload-image' && m === 'POST') return uploadImage(req, env);
+  if (pathname === '/api/auth/github/start' && m === 'GET') return githubOAuthStart(req, env);
+  if (pathname === '/auth/github/callback' && m === 'GET') return githubOAuthCallback(req, env);
 
   let match;
   if ((match = pathname.match(/^\/api\/games\/([^/]+)$/))) {

@@ -114,6 +114,8 @@ backend/
 | PATCH  | `/api/me`                         | Имя, bio, публичный ID, фото (JSON)  |
 | GET    | `/api/me/games`                   | Все свои игры (включая pending)     |
 | GET    | `/api/games/:id`                  | Одна игра (для открытия из профиля)  |
+| GET    | `/api/auth/github/start`          | JSON `{ url }` — открыть в браузере (OAuth) |
+| GET    | `/auth/github/callback`          | Callback GitHub (редирект в мини-апп) |
 | POST   | `/api/submit`                     | Отправить игру на модерацию         |
 | POST   | `/api/games/:id/like`             | Лайк                                |
 | DELETE | `/api/games/:id/like`             | Убрать лайк                         |
@@ -125,3 +127,11 @@ backend/
 | POST   | `/api/admin/reject/:id`           | Отклонить                           |
 
 Все запросы отправляют заголовок `x-telegram-init-data`. Сервер проверяет подпись и достаёт из неё юзера.
+
+### GitHub OAuth (привязка аккаунта)
+
+1. [GitHub → Settings → Developer settings → OAuth Apps](https://github.com/settings/developers) → **New OAuth App**.
+2. **Authorization callback URL** = `https://<твой-worker>.workers.dev/auth/github/callback` (тот же хост, что у API; см. `GITHUB_OAUTH_REDIRECT_BASE` в `wrangler.toml`, если Worker на своём домене).
+3. В Cloudflare: `npx wrangler secret put GITHUB_CLIENT_SECRET` и задай **GITHUB_CLIENT_ID** (через `wrangler.toml` [vars] или `wrangler vars put`).
+4. В D1 добавь колонки и таблицу (если база старая): см. комментарии в `schema.sql` — `github_user_id`, `github_login`, таблица `oauth_states`, индекс уникальности по `github_user_id`.
+5. `npm run deploy`. В мини-аппе: «Загрузить» → «Войти через GitHub».

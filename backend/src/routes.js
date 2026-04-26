@@ -92,6 +92,8 @@ export async function getMe(req, env) {
     `SELECT site_handle AS siteHandle,
             display_name AS displayName,
             bio AS bio,
+            github_login AS githubLogin,
+            github_user_id AS githubUserId,
             COALESCE(NULLIF(TRIM(avatar_override_url), ''), photo_url) AS avatarUrl
        FROM users WHERE id = ?`
   ).bind(user.id).first();
@@ -124,6 +126,8 @@ export async function getMe(req, env) {
       telegramName: tgName,
       bio: dbUser?.bio != null ? String(dbUser.bio) : '',
       avatar,
+      isGithubConnected: Boolean(dbUser?.githubUserId),
+      githubUsername: dbUser?.githubLogin || null,
       isAdmin: user.isAdmin === true,
     },
     stats: {

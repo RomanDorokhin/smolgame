@@ -6,13 +6,21 @@ function selectMethod(m) {
   document.getElementById('form-url').classList.toggle('visible', m === 'url');
 }
 
-function authGithub() {
-  // TODO: OAuth redirect
-  // window.location.href = 'https://api.smolgame.io/auth/github?user_id=' + USER.id;
-  showToast('GitHub OAuth — подключается');
-  USER.isGithubConnected = true;
-  USER.githubUsername = 'your-github';
-  document.getElementById('devBadge').style.display = '';
+async function authGithub() {
+  try {
+    const { url } = await API.githubOAuthStart();
+    if (!url) {
+      showToast('⚠️ GitHub OAuth не настроен');
+      return;
+    }
+    try {
+      Telegram.WebApp.openLink(url);
+    } catch (e) {
+      window.location.href = url;
+    }
+  } catch (err) {
+    showToast('⚠️ ' + (err.message || 'не удалось начать вход'));
+  }
 }
 
 async function submitGame(method) {

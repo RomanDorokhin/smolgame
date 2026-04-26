@@ -28,7 +28,7 @@ async function renderProfile() {
   document.getElementById('statFollowers').textContent = '—';
   document.getElementById('statLikes').textContent = '—';
 
-  if (USER.isGithubConnected) document.getElementById('devBadge').style.display = '';
+  document.getElementById('devBadge').style.display = USER.isGithubConnected ? '' : 'none';
 
   let myGames = [];
 
@@ -48,6 +48,8 @@ async function renderProfile() {
       USER.siteHandle = me.user.siteHandle || USER.siteHandle;
       USER.name = me.user.name || USER.name;
       USER.avatar = me.user.avatar || USER.avatar;
+      USER.isGithubConnected = Boolean(me.user.isGithubConnected);
+      USER.githubUsername = me.user.githubUsername || null;
       USER.displayName = me.user.displayName != null ? me.user.displayName : '';
       USER.bio = me.user.bio != null ? me.user.bio : '';
       document.getElementById('profileName').textContent = USER.name;

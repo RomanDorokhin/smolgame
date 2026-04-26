@@ -12,6 +12,8 @@ CREATE TABLE IF NOT EXISTS users (
   display_name TEXT,                     -- публичное имя (иначе Telegram имя)
   bio         TEXT,                      -- короткое описание профиля
   avatar_override_url TEXT,              -- своё фото; иначе photo_url из Telegram
+  github_user_id TEXT,                   -- id пользователя GitHub (уникален)
+  github_login TEXT,                     -- логин @github
   date_of_birth TEXT,
   consented_at INTEGER,
   tos_accepted_at INTEGER,
@@ -21,6 +23,16 @@ CREATE TABLE IF NOT EXISTS users (
 );
 
 CREATE UNIQUE INDEX IF NOT EXISTS idx_users_site_handle ON users(site_handle);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_users_github_user_id ON users(github_user_id) WHERE github_user_id IS NOT NULL;
+
+CREATE TABLE IF NOT EXISTS oauth_states (
+  id          TEXT PRIMARY KEY,
+  user_id     TEXT NOT NULL,
+  created_at  INTEGER NOT NULL,
+  expires_at  INTEGER NOT NULL,
+  FOREIGN KEY (user_id) REFERENCES users(id)
+);
+CREATE INDEX IF NOT EXISTS idx_oauth_states_expires ON oauth_states(expires_at);
 
 -- D1/SQLite не умеет IF NOT EXISTS для ADD COLUMN во всех версиях Wrangler.
 -- Для существующих БД эти ALTER нужно применить один раз вручную, если колонки ещё не добавлены.
@@ -35,6 +47,9 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_users_site_handle ON users(site_handle);
 -- ALTER TABLE users ADD COLUMN display_name TEXT;
 -- ALTER TABLE users ADD COLUMN bio TEXT;
 -- ALTER TABLE users ADD COLUMN avatar_override_url TEXT;
+-- ALTER TABLE users ADD COLUMN github_user_id TEXT;
+-- ALTER TABLE users ADD COLUMN github_login TEXT;
+-- CREATE UNIQUE INDEX IF NOT EXISTS idx_users_github_user_id ON users(github_user_id) WHERE github_user_id IS NOT NULL;
 
 CREATE TABLE IF NOT EXISTS games (
   id           TEXT PRIMARY KEY,          -- nanoid / uuid
