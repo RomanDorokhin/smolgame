@@ -38,6 +38,7 @@ const CLICK_ACTIONS = {
   'onboarding-next': () => onboardingNext(),
   'onboarding-finish': () => finishOnboarding(),
   'image-picker':   (el) => document.getElementById(el.dataset.target)?.click(),
+  'exit-play-mode': () => exitPlayMode(),
 };
 
 function handleDelegatedClick(ev) {

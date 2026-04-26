@@ -34,7 +34,7 @@ function closeAuthorScreen() {
   document.getElementById('author-screen').classList.remove('open');
 }
 function setAvatar(el, avatar) {
-  const avatarUrl = avatar && String(avatar).startsWith('http') ? safeHttpUrl(avatar) : null;
+  const avatarUrl = avatarImgUrl(avatar);
   if (avatarUrl) {
     el.innerHTML = `<img src="${esc(avatarUrl)}" alt="" referrerpolicy="no-referrer">`;
   } else {

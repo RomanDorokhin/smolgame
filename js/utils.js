@@ -24,6 +24,14 @@ function safeHttpUrl(raw) {
   }
 }
 
+/** URL фото профиля (Telegram / CDN) или null, если показываем букву/эмодзи. */
+function avatarImgUrl(avatar) {
+  if (avatar == null || avatar === '') return null;
+  const s = String(avatar).trim();
+  if (!/^https?:\/\//i.test(s)) return null;
+  return safeHttpUrl(s);
+}
+
 let toastTimer;
 function showToast(msg) {
   const t = document.getElementById('toast');
@@ -58,5 +66,6 @@ window.fmtNum = fmtNum;
 window.showToast = showToast;
 window.esc = esc;
 window.safeHttpUrl = safeHttpUrl;
+window.avatarImgUrl = avatarImgUrl;
 window.loadSet = loadSet;
 window.saveSet = saveSet;

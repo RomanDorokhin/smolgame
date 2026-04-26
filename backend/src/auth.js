@@ -33,9 +33,9 @@ export async function upsertUser(db, user) {
        ON CONFLICT(id) DO UPDATE SET
          username   = COALESCE(users.site_handle, users.username),
          tg_username = excluded.tg_username,
-         first_name = excluded.first_name,
-         last_name  = excluded.last_name,
-         photo_url  = excluded.photo_url`
+         first_name = COALESCE(excluded.first_name, users.first_name),
+         last_name  = COALESCE(excluded.last_name, users.last_name),
+         photo_url  = COALESCE(excluded.photo_url, users.photo_url)`
     )
     .bind(
       user.id,

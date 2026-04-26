@@ -62,7 +62,7 @@ async function renderProfile() {
 
 function setProfileAvatar(avatar) {
   const el = document.getElementById('profileAvatar');
-  const avatarUrl = avatar && String(avatar).startsWith('http') ? safeHttpUrl(avatar) : null;
+  const avatarUrl = avatarImgUrl(avatar);
   if (avatarUrl) el.innerHTML = `<img src="${esc(avatarUrl)}" alt="" referrerpolicy="no-referrer">`;
   else el.textContent = avatar || '?';
 }

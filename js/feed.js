@@ -160,9 +160,7 @@ function updateOverlay() {
   document.getElementById('authorName').textContent = g.authorName;
 
   const avatar = document.getElementById('authorAvatar');
-  const avatarUrl = g.authorAvatar && g.authorAvatar.startsWith('http')
-    ? safeHttpUrl(g.authorAvatar)
-    : null;
+  const avatarUrl = avatarImgUrl(g.authorAvatar);
   if (avatarUrl) {
     avatar.innerHTML = `<img src="${esc(avatarUrl)}" alt="" referrerpolicy="no-referrer">`;
   } else {
@@ -184,121 +182,154 @@ function updateOverlay() {
   followBtn.classList.toggle('following', following);
 }
 
-let touchStartY = 0, touchStartTime = 0, touchMoved = false, touching = false;
+const SWIPE_NEXT_PX = 55;
+const SWIPE_PREV_PX = 25;
+const DOUBLE_TAP_MS = 300;
+const MOVE_THRESHOLD_PX = 10;
 
-function setIframePointerEvents(value) {
-  document.querySelectorAll('.slide-game').forEach(f => f.style.pointerEvents = value);
+let touchStartY = 0;
+let touchStartTime = 0;
+let touchMoved = false;
+let touching = false;
+let activePointerId = null;
+let lastTapUpTime = 0;
+
+function isPlayMode() {
+  return document.body.classList.contains('playing');
 }
 
 function isOverlayOpen() {
   return Boolean(document.querySelector('#upload-screen.open, #profile-screen.open, #search-screen.open, #author-screen.open, #onboarding-screen.open'));
 }
 
-function beginSwipe(y) {
-  if (isOverlayOpen() || GAMES.length < 2) return false;
+function clearTelegramSwipePass(touchLayer) {
+  touchLayer?.classList.remove('telegram-swipe-pass');
+}
+
+function feedPointerDown(e, touchLayer) {
+  if (e.pointerType === 'mouse' && e.button !== 0) return;
+  if (isPlayMode() || isOverlayOpen() || GAMES.length === 0) return;
+  if (touchLayer.style.display === 'none') return;
+
   window.scrollTo?.(0, 0);
-  touchStartY = y;
+  touching = true;
+  activePointerId = e.pointerId;
+  touchStartY = e.clientY;
   touchStartTime = Date.now();
   touchMoved = false;
-  touching = true;
-  document.getElementById('touch-layer')?.classList.add('dragging');
-  // moved to moveSwipe
-  return true;
-}
-
-function moveSwipe(y) {
-  if (!touching) return;
-  if (Math.abs(y - touchStartY) > 10) { touchMoved = true; setIframePointerEvents('none'); }
-}
-
-function endSwipe(y) {
-  if (!touching) return;
-  touching = false;
-  document.getElementById('touch-layer')?.classList.remove('dragging');
-  setIframePointerEvents('auto');
-  if (!touchMoved) return;
-  const dy = touchStartY - y;
-  const duration = Math.max(1, Date.now() - touchStartTime);
-  const velocity = Math.abs(dy) / duration;
-  if (Math.abs(dy) > 55 || velocity > 0.3) {
-    goTo(dy > 0 ? window.currentIdx + 1 : window.currentIdx - 1);
-    hideHint();
+  clearTelegramSwipePass(touchLayer);
+  touchLayer.classList.add('dragging');
+  try {
+    touchLayer.setPointerCapture(e.pointerId);
+  } catch (err) {
+    /* setPointerCapture может бросить на старых WebView */
   }
 }
 
-function cancelSwipe() {
+function feedPointerMove(e, touchLayer) {
+  if (!touching || e.pointerId !== activePointerId) return;
+  const y = e.clientY;
+  const deltaFromStart = y - touchStartY;
+
+  if (window.currentIdx === 0 && deltaFromStart > MOVE_THRESHOLD_PX) {
+    const passPid = e.pointerId;
+    try { touchLayer.releasePointerCapture(e.pointerId); } catch (err) {}
+    touching = false;
+    activePointerId = null;
+    touchLayer.classList.remove('dragging');
+    touchLayer.classList.add('telegram-swipe-pass');
+    const onLift = ev => {
+      if (ev.pointerId !== passPid) return;
+      clearTelegramSwipePass(touchLayer);
+      window.removeEventListener('pointerup', onLift, true);
+      window.removeEventListener('pointercancel', onLift, true);
+    };
+    window.addEventListener('pointerup', onLift, true);
+    window.addEventListener('pointercancel', onLift, true);
+    return;
+  }
+
+  if (Math.abs(deltaFromStart) > MOVE_THRESHOLD_PX) {
+    touchMoved = true;
+    e.preventDefault();
+  }
+}
+
+function feedPointerUp(e, touchLayer) {
+  if (!touching || e.pointerId !== activePointerId) return;
   touching = false;
-  document.getElementById('touch-layer')?.classList.remove('dragging');
-  setIframePointerEvents('auto');
+  activePointerId = null;
+  touchLayer.classList.remove('dragging');
+
+  if (touchLayer.classList.contains('telegram-swipe-pass')) {
+    clearTelegramSwipePass(touchLayer);
+    return;
+  }
+
+  const now = Date.now();
+  if (!touchMoved) {
+    if (now - lastTapUpTime <= DOUBLE_TAP_MS) {
+      enterPlayMode();
+      lastTapUpTime = 0;
+    } else {
+      lastTapUpTime = now;
+    }
+    return;
+  }
+
+  lastTapUpTime = 0;
+  const y = e.clientY;
+  const dy = touchStartY - y;
+  const duration = Math.max(1, now - touchStartTime);
+  const velocity = Math.abs(dy) / duration;
+
+  if (dy > 0) {
+    if (dy > SWIPE_NEXT_PX || velocity > 0.35) {
+      goTo(window.currentIdx + 1);
+      hideHint();
+    }
+  } else if (dy < 0 && window.currentIdx > 0) {
+    if (-dy > SWIPE_PREV_PX || velocity > 0.35) {
+      goTo(window.currentIdx - 1);
+      hideHint();
+    }
+  }
+  e.preventDefault();
+}
+
+function feedPointerCancel(e, touchLayer) {
+  if (!touching || e.pointerId !== activePointerId) return;
+  touching = false;
+  activePointerId = null;
+  touchLayer.classList.remove('dragging');
+  clearTelegramSwipePass(touchLayer);
+  if (touchMoved) lastTapUpTime = 0;
 }
 
 document.addEventListener('DOMContentLoaded', () => {
   const touchLayer = document.getElementById('touch-layer');
-  if (touchLayer) {
-    touchLayer.addEventListener('pointerdown', e => {
-      touchStartY = e.clientY;
-      touchStartTime = Date.now();
-      touchMoved = false;
-      touching = true;
-    });
-    touchLayer.addEventListener('pointermove', e => {
-      if (!touching) return;
-      const dy = Math.abs(e.clientY - touchStartY);
-      if (dy > 10) {
-        touchMoved = true;
-        setIframePointerEvents('none');
-        touchLayer.setPointerCapture?.(e.pointerId);
-        e.preventDefault();
-      }
-      moveSwipe(e.clientY);
-    });
-    touchLayer.addEventListener('pointerup', e => {
-      if (!touching) return;
-      if (!touchMoved) {
-        // это тап — пропускаем в iframe
-        touching = false;
-        setIframePointerEvents('auto');
-        touchLayer.style.pointerEvents = 'none';
-        setTimeout(() => { touchLayer.style.pointerEvents = 'auto'; }, 100);
-        return;
-      }
-      e.preventDefault();
-      endSwipe(e.clientY);
-    });
-    touchLayer.addEventListener('pointercancel', cancelSwipe);
-    touchLayer.addEventListener('wheel', e => {
-      if (isOverlayOpen() || GAMES.length < 2) return;
-      e.preventDefault();
-      if (Math.abs(e.deltaY) < 24) return;
-      goTo(e.deltaY > 0 ? window.currentIdx + 1 : window.currentIdx - 1);
-      hideHint();
-    }, { passive: false });
-  }
+  if (!touchLayer) return;
 
-  document.addEventListener('touchstart', e => {
-    if (e.target.closest('#touch-layer')) return;
-    beginSwipe(e.touches[0].clientY);
-  }, { passive: true });
+  touchLayer.addEventListener('pointerdown', e => feedPointerDown(e, touchLayer));
+  touchLayer.addEventListener('pointermove', e => feedPointerMove(e, touchLayer));
+  touchLayer.addEventListener('pointerup', e => feedPointerUp(e, touchLayer));
+  touchLayer.addEventListener('pointercancel', e => feedPointerCancel(e, touchLayer));
 
-  document.addEventListener('touchmove', e => {
-    if (e.target.closest('#touch-layer')) return;
-    if (touching) e.preventDefault();
-    moveSwipe(e.touches[0].clientY);
+  touchLayer.addEventListener('wheel', e => {
+    if (isPlayMode() || isOverlayOpen() || GAMES.length < 2) return;
+    e.preventDefault();
+    if (Math.abs(e.deltaY) < 24) return;
+    goTo(e.deltaY > 0 ? window.currentIdx + 1 : window.currentIdx - 1);
+    hideHint();
   }, { passive: false });
-
-  document.addEventListener('touchend', e => {
-    if (e.target.closest('#touch-layer')) return;
-    endSwipe(e.changedTouches[0].clientY);
-  }, { passive: true });
-
-  document.addEventListener('touchcancel', cancelSwipe, { passive: true });
 });
 
 document.addEventListener('keydown', e => {
-  if (['ArrowDown', 'ArrowUp'].includes(e.key)) {
-    e.preventDefault();
-    goTo(e.key === 'ArrowDown' ? window.currentIdx + 1 : window.currentIdx - 1);
-  }
+  if (!['ArrowDown', 'ArrowUp'].includes(e.key)) return;
+  if (isPlayMode() || isOverlayOpen() || GAMES.length === 0) return;
+  e.preventDefault();
+  if (e.key === 'ArrowDown') goTo(window.currentIdx + 1);
+  else if (window.currentIdx > 0) goTo(window.currentIdx - 1);
 });
 
 let hintHidden = false;
@@ -320,15 +351,10 @@ window.hideHint = hideHint;
 let playMode = false;
 
 function enterPlayMode() {
-  if (playMode) return;
+  if (playMode || GAMES.length === 0 || isOverlayOpen()) return;
   playMode = true;
   document.body.classList.add('playing');
   document.getElementById('close-play-btn')?.classList.add('visible');
-  // разрешаем тачи в iframe
-  document.querySelectorAll('.slide-game').forEach(f => {
-    f.style.pointerEvents = 'auto';
-    f.style.touchAction = 'auto';
-  });
 }
 
 function exitPlayMode() {
@@ -336,6 +362,7 @@ function exitPlayMode() {
   playMode = false;
   document.body.classList.remove('playing');
   document.getElementById('close-play-btn')?.classList.remove('visible');
+  lastTapUpTime = 0;
 }
 
 window.enterPlayMode = enterPlayMode;
