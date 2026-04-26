@@ -23,10 +23,42 @@ async function authGithub() {
   }
 }
 
+function isStorageUnavailableError(e) {
+  const m = String(e?.message || '').toLowerCase();
+  return m.includes('storage') || m.includes('501') || m.includes('not configured');
+}
+
+async function resolveCoverImageUrl() {
+  const coverUrlRaw = document.getElementById('coverUrlInput')?.value?.trim() || '';
+  if (coverUrlRaw) {
+    const u = safeHttpUrl(coverUrlRaw);
+    if (!u || !u.startsWith('https://')) {
+      showToast('⚠️ Некорректная HTTPS-ссылка на обложку');
+      return { error: true };
+    }
+    return { imageUrl: u };
+  }
+
+  const coverInput = document.getElementById('gameImageInput');
+  const file = coverInput?.files?.[0];
+  if (!file) return { imageUrl: null };
+
+  try {
+    const formData = new FormData();
+    formData.append('image', file);
+    const uploaded = await API.uploadImage(formData);
+    return { imageUrl: uploaded?.imageUrl || null };
+  } catch (e) {
+    if (isStorageUnavailableError(e)) {
+      showToast('⚠️ Загрузка файлов не настроена. Укажи ссылку на обложку выше или отправь без обложки.');
+      return { imageUrl: null };
+    }
+    throw e;
+  }
+}
+
 async function submitGame(method) {
   if (method === 'code') {
-    // В текущей итерации принимаем только готовые URL. Деплой кода
-    // появится позже (отдельная итерация — GitHub App + деплой репозитория).
     showToast('⏳ Пока шли ссылку. Код приму позже.');
     return;
   }
@@ -46,14 +78,8 @@ async function submitGame(method) {
 
   showToast('🔍 Отправляем...');
   try {
-    const coverInput = document.getElementById('gameImageInput');
-    let imageUrl = null;
-    if (coverInput?.files?.[0]) {
-      const formData = new FormData();
-      formData.append('image', coverInput.files[0]);
-      const uploaded = await API.uploadImage(formData);
-      imageUrl = uploaded?.imageUrl || null;
-    }
+    const { imageUrl, error } = await resolveCoverImageUrl();
+    if (error) return;
 
     await API.submit({
       title: name,
