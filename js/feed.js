@@ -28,7 +28,7 @@ function renderFeed() {
     document.getElementById('empty-state').classList.add('show');
     document.getElementById('side-actions').style.display = 'none';
     document.getElementById('game-info').style.display = 'none';
-    document.getElementById('swipe-hint').style.display = 'none';
+    document.getElementById('play-cta').style.display = 'none';
     document.getElementById('touch-layer').style.display = 'none';
     return;
   }
@@ -37,6 +37,7 @@ function renderFeed() {
   document.getElementById('side-actions').style.display = '';
   document.getElementById('game-info').style.display = '';
   document.getElementById('touch-layer').style.display = '';
+  document.getElementById('play-cta').style.display = '';
 
   GAMES.forEach((g, i) => {
     const slide = document.createElement('div');
@@ -134,7 +135,9 @@ function lazyLoadAround(idx) {
 
 function goTo(idx, instant = false) {
   if (GAMES.length === 0) return;
+  const prevIdx = window.currentIdx;
   window.currentIdx = Math.max(0, Math.min(GAMES.length - 1, idx));
+  if (prevIdx !== window.currentIdx) resetPlayCtaSub();
 
   window.slides.forEach((s, i) => {
     s.style.transition = instant ? 'none' : 'transform 0.4s cubic-bezier(0.4,0,0.2,1)';
@@ -184,7 +187,6 @@ function updateOverlay() {
 
 const SWIPE_NEXT_PX = 55;
 const SWIPE_PREV_PX = 25;
-const DOUBLE_TAP_MS = 300;
 const MOVE_THRESHOLD_PX = 10;
 
 let touchStartY = 0;
@@ -192,7 +194,6 @@ let touchStartTime = 0;
 let touchMoved = false;
 let touching = false;
 let activePointerId = null;
-let lastTapUpTime = 0;
 
 function isPlayMode() {
   return document.body.classList.contains('playing');
@@ -266,18 +267,9 @@ function feedPointerUp(e, touchLayer) {
     return;
   }
 
-  const now = Date.now();
-  if (!touchMoved) {
-    if (now - lastTapUpTime <= DOUBLE_TAP_MS) {
-      enterPlayMode();
-      lastTapUpTime = 0;
-    } else {
-      lastTapUpTime = now;
-    }
-    return;
-  }
+  if (!touchMoved) return;
 
-  lastTapUpTime = 0;
+  const now = Date.now();
   const y = e.clientY;
   const dy = touchStartY - y;
   const duration = Math.max(1, now - touchStartTime);
@@ -303,7 +295,6 @@ function feedPointerCancel(e, touchLayer) {
   activePointerId = null;
   touchLayer.classList.remove('dragging');
   clearTelegramSwipePass(touchLayer);
-  if (touchMoved) lastTapUpTime = 0;
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -333,12 +324,24 @@ document.addEventListener('keydown', e => {
 });
 
 let hintHidden = false;
+
+function resetPlayCtaSub() {
+  hintHidden = false;
+  const sub = document.getElementById('play-cta-sub');
+  if (sub) {
+    sub.style.display = '';
+    sub.style.opacity = '';
+  }
+}
+
 function hideHint() {
   if (hintHidden) return;
   hintHidden = true;
-  const h = document.getElementById('swipe-hint');
-  h.style.opacity = '0';
-  setTimeout(() => h.style.display = 'none', 500);
+  const sub = document.getElementById('play-cta-sub');
+  if (sub) {
+    sub.style.opacity = '0';
+    setTimeout(() => { sub.style.display = 'none'; }, 400);
+  }
 }
 
 window.loadGames = loadGames;
@@ -362,7 +365,7 @@ function exitPlayMode() {
   playMode = false;
   document.body.classList.remove('playing');
   document.getElementById('close-play-btn')?.classList.remove('visible');
-  lastTapUpTime = 0;
+  resetPlayCtaSub();
 }
 
 window.enterPlayMode = enterPlayMode;
