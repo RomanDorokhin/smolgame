@@ -14,7 +14,7 @@ html,body,#root,#feed,.slide{margin:0;padding:0;border:0;width:100%;height:100%;
   --safe-bottom: env(safe-area-inset-bottom, 0px);
 
   --nav-h: 64px;
-  --info-h: 118px;
+  --info-h: 76px;
   /* Полоска свайпа между iframe и блоком автора — только здесь листаем ленту */
   --swipe-strip-h: 44px;
   --game-bottom: calc(var(--safe-bottom) + var(--nav-h) + var(--info-h) + var(--swipe-strip-h));
@@ -263,61 +263,78 @@ body:has(#onboarding-screen.open) #swipe-strip{
   text-shadow:0 1px 6px rgba(0,0,0,0.9);
   min-width:0;
 }
+.action-label-bookmark-spacer{
+  min-height:10px;
+}
 
 #game-info{
   position:fixed;
   left:0;right:0;
   bottom:calc(var(--safe-bottom) + var(--nav-h));
   height:var(--info-h);
-  padding:12px 16px;
+  padding:10px 14px;
   background:rgba(0,0,0,0.96);
   border-top:1px solid rgba(255,255,255,0.08);
   z-index:300;
   display:flex;
   flex-direction:column;
   justify-content:center;
-  gap:8px;
   overflow:hidden;
   pointer-events:none;
-}
-
-.game-badge{
-  display:inline-flex;
-  align-items:center;
-  width:max-content;
-  gap:5px;
-  background:rgba(255,255,255,0.12);
-  border:1px solid rgba(255,255,255,0.15);
-  backdrop-filter:blur(8px);
-  color:#fff;
-  font-size:11px;
-  font-weight:700;
-  padding:4px 10px;
-  border-radius:20px;
-  text-transform:uppercase;
-  letter-spacing:0.06em;
-}
-
-.game-title{
-  font-size:13px;
-  font-weight:600;
-  color:#fff;
-  opacity:0.85;
-  text-shadow:0 2px 12px rgba(0,0,0,0.6);
-  line-height:1.2;
-  white-space:nowrap;
-  overflow:hidden;
-  text-overflow:ellipsis;
 }
 
 .author-row{
   display:flex;
   align-items:center;
-  gap:8px;
+  gap:10px;
   font-size:16px;
   font-weight:600;
   pointer-events:all;
   cursor:pointer;
+  min-width:0;
+}
+
+.author-block{
+  flex:1;
+  min-width:0;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  gap:2px;
+}
+
+.game-meta-row{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  min-width:0;
+  font-size:12px;
+  font-weight:500;
+  color:rgba(255,255,255,0.5);
+  line-height:1.25;
+}
+
+.game-title-inline{
+  min-width:0;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  color:rgba(255,255,255,0.72);
+}
+
+.game-meta-sep{
+  flex-shrink:0;
+  opacity:0.45;
+}
+
+.game-genre-inline{
+  flex-shrink:0;
+  max-width:42vw;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  text-transform:none;
+  letter-spacing:0.02em;
 }
 
 .author-avatar{
@@ -333,17 +350,18 @@ body:has(#onboarding-screen.open) #swipe-strip{
 .author-avatar img{width:100%;height:100%;object-fit:cover;}
 
 .author-name{
-  font-size:16px;
+  font-size:15px;
   font-weight:600;
-  color:rgba(255,255,255,0.9);
-  flex:1;
+  color:rgba(255,255,255,0.95);
   white-space:nowrap;
   overflow:hidden;
   text-overflow:ellipsis;
-  max-width:46vw;
+  max-width:100%;
+  line-height:1.2;
 }
 
 .follow-btn{
+  flex-shrink:0;
   font-size:13px;
   font-weight:700;
   color:var(--accent);
@@ -995,7 +1013,7 @@ body.is-admin .admin-only{display:block;}
 @media (max-width: 640px) {
   :root{
     --nav-h:64px;
-    --info-h:112px;
+    --info-h:72px;
   }
 
   #topbar{
@@ -1030,16 +1048,14 @@ body.is-admin .admin-only{display:block;}
     right:0;
     bottom:calc(var(--safe-bottom) + var(--nav-h));
     height:var(--info-h);
-    padding:10px 12px;
+    padding:8px 12px;
     background:rgba(0,0,0,0.96);
-    gap:7px;
   }
 
   .author-avatar{width:38px;height:38px;font-size:15px;}
-  .author-name{max-width:38vw;font-size:15px;}
+  .author-name{font-size:14px;}
+  .game-meta-row{font-size:11px;}
   .follow-btn{font-size:12px;padding:7px 11px;}
-  .game-title{font-size:13px;}
-  .game-badge{font-size:10px;padding:3px 9px;}
 
   #bottom-nav{
     height:calc(var(--safe-bottom) + var(--nav-h));
@@ -1099,7 +1115,7 @@ body.is-admin .admin-only{display:block;}
 }
 
 @media (max-width: 380px) {
-  :root{--info-h:104px;}
+  :root{--info-h:68px;}
   #side-actions{right:8px;bottom:calc(var(--game-bottom) + 10px);gap:12px;}
   .action-icon{width:44px;height:44px;font-size:19px;}
   .action-label{font-size:10px;max-width:54px;}

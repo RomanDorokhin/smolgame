@@ -1,9 +1,16 @@
-async function loadGames() {
-  try {
-    const data = await API.feed();
-    window.GAMES = Array.isArray(data?.games) ? data.games : [];
+const FEED_PAGE_SIZE = 15;
 
-    // Синхронизируем локальные Set-ы с ответом сервера (он знает истину).
+window.feedHasMore = true;
+window.feedLoadingMore = false;
+
+async function loadGames() {
+  window.feedHasMore = true;
+  window.feedLoadingMore = false;
+  try {
+    const data = await API.feed({ offset: 0, limit: FEED_PAGE_SIZE });
+    window.GAMES = Array.isArray(data?.games) ? data.games : [];
+    window.feedHasMore = data?.hasMore !== false;
+
     window.likedSet = new Set(GAMES.filter(g => g.isLiked).map(g => g.id));
     window.followedSet = new Set(GAMES.filter(g => g.isFollowing).map(g => g.authorId));
     window.bookmarkedSet = new Set(GAMES.filter(g => g.isBookmarked).map(g => g.id));
@@ -13,8 +20,136 @@ async function loadGames() {
   } catch (e) {
     console.error('feed load failed', e);
     window.GAMES = [];
+    window.feedHasMore = false;
   }
   renderFeed();
+}
+
+function mergeInteractionSetsFromGames(games) {
+  if (!Array.isArray(games)) return;
+  for (const g of games) {
+    if (g.isLiked) likedSet.add(g.id);
+    if (g.isFollowing) followedSet.add(g.authorId);
+    if (g.isBookmarked) bookmarkedSet.add(g.id);
+  }
+  saveSet(STORAGE_KEYS.liked, likedSet);
+  saveSet(STORAGE_KEYS.followed, followedSet);
+  saveSet(STORAGE_KEYS.bookmarked, bookmarkedSet);
+}
+
+async function loadMoreFeed() {
+  if (!feedHasMore || feedLoadingMore || GAMES.length === 0) return;
+  feedLoadingMore = true;
+  try {
+    const data = await API.feed({ offset: GAMES.length, limit: FEED_PAGE_SIZE });
+    const batch = Array.isArray(data?.games) ? data.games : [];
+    window.feedHasMore = typeof data?.hasMore === 'boolean'
+      ? data.hasMore
+      : batch.length >= FEED_PAGE_SIZE;
+
+    const seen = new Set(GAMES.map(g => g.id));
+    const fresh = batch.filter(g => g && g.id && !seen.has(g.id));
+    if (fresh.length === 0) {
+      window.feedHasMore = false;
+      return;
+    }
+
+    mergeInteractionSetsFromGames(fresh);
+    const start = GAMES.length;
+    GAMES.push(...fresh);
+    appendSlides(start, fresh);
+  } catch (e) {
+    console.warn('feed load more failed', e);
+  } finally {
+    feedLoadingMore = false;
+  }
+}
+
+function maybeLoadMoreFeed() {
+  if (!feedHasMore || feedLoadingMore) return;
+  if (window.currentIdx >= GAMES.length - 5) loadMoreFeed();
+}
+
+function appendSlides(startIndex, gamesSlice) {
+  const feed = document.getElementById('feed');
+  const dots = document.getElementById('dots');
+  if (!feed || !dots) return;
+
+  gamesSlice.forEach((g, j) => {
+    const i = startIndex + j;
+    const slide = document.createElement('div');
+    slide.className = 'slide';
+    slide.id = 'slide-' + i;
+    slide.style.transform = `translateY(${(i - window.currentIdx) * 100}%)`;
+
+    const placeholder = document.createElement('div');
+    placeholder.className = 'slide-placeholder';
+    const thumbHtml = g.imageUrl
+      ? `<img src="${esc(g.imageUrl)}" class="slide-cover" alt="">`
+      : `<div class="placeholder-icon">${esc(g.genreEmoji || '🎮')}</div>`;
+    placeholder.innerHTML = `
+      ${thumbHtml}
+      <div class="placeholder-title">${esc(g.title)}</div>
+      <div class="placeholder-sub">Загружаем игру...</div>
+      <div class="loader-ring"></div>
+    `;
+
+    const iframe = document.createElement('iframe');
+    iframe.className = 'slide-game';
+    iframe.id = 'iframe-' + i;
+    iframe.setAttribute('sandbox', 'allow-scripts allow-forms allow-popups');
+    iframe.setAttribute('allow', 'autoplay');
+    iframe.setAttribute('referrerpolicy', 'no-referrer');
+    iframe.setAttribute('loading', 'lazy');
+    iframe.style.opacity = '0';
+    iframe.style.transition = 'opacity 0.3s';
+
+    iframe.onload = () => {
+      iframe.style.opacity = '1';
+      placeholder.classList.add('hidden');
+      trackPlay(g.id);
+    };
+
+    iframe.onerror = () => {
+      placeholder.innerHTML = `
+        <div class="placeholder-icon">💔</div>
+        <div class="placeholder-title">Не загрузилась</div>
+        <div class="placeholder-sub">${esc(g.url)}</div>
+      `;
+    };
+
+    const safeUrl = safeHttpUrl(g.url);
+    if (!safeUrl) {
+      placeholder.innerHTML = `
+        <div class="placeholder-icon">⚠️</div>
+        <div class="placeholder-title">${esc(g.title)}</div>
+        <div class="placeholder-sub">Некорректная ссылка</div>
+      `;
+      slide.appendChild(placeholder);
+      feed.appendChild(slide);
+      window.slides.push(slide);
+      const dot = document.createElement('div');
+      dot.className = 'dot' + (i === window.currentIdx ? ' active' : '');
+      dot.id = 'dot-' + i;
+      dots.appendChild(dot);
+      return;
+    }
+
+    if (Math.abs(i - window.currentIdx) <= 1) {
+      iframe.src = safeUrl;
+    }
+    iframe.dataset.src = safeUrl;
+
+    slide.appendChild(placeholder);
+    slide.appendChild(iframe);
+    feed.appendChild(slide);
+    window.slides.push(slide);
+
+    const dot = document.createElement('div');
+    dot.className = 'dot' + (i === window.currentIdx ? ' active' : '');
+    dot.id = 'dot-' + i;
+    dots.appendChild(dot);
+  });
 }
 
 function renderFeed() {
@@ -37,86 +172,7 @@ function renderFeed() {
   document.getElementById('game-info').style.display = '';
   document.getElementById('swipe-strip').style.display = '';
 
-  GAMES.forEach((g, i) => {
-    const slide = document.createElement('div');
-    slide.className = 'slide';
-    slide.id = 'slide-' + i;
-    slide.style.transform = `translateY(${i * 100}%)`;
-
-    const placeholder = document.createElement('div');
-    placeholder.className = 'slide-placeholder';
-    const thumbHtml = g.imageUrl
-      ? `<img src="${esc(g.imageUrl)}" class="slide-cover" alt="">`
-      : `<div class="placeholder-icon">${esc(g.genreEmoji || '🎮')}</div>`;
-    placeholder.innerHTML = `
-      ${thumbHtml}
-      <div class="placeholder-title">${esc(g.title)}</div>
-      <div class="placeholder-sub">Загружаем игру...</div>
-      <div class="loader-ring"></div>
-    `;
-
-    const iframe = document.createElement('iframe');
-    iframe.className = 'slide-game';
-    iframe.id = 'iframe-' + i;
-    // Игры размещаются на чужом origin (GitHub Pages / Vercel / и т.п.),
-    // поэтому НЕ даём allow-same-origin — иначе песочница теряет смысл.
-    iframe.setAttribute('sandbox', 'allow-scripts allow-forms allow-popups');
-    iframe.setAttribute('allow', 'autoplay');
-    iframe.setAttribute('referrerpolicy', 'no-referrer');
-    iframe.setAttribute('loading', 'lazy');
-    iframe.style.opacity = '0';
-    iframe.style.transition = 'opacity 0.3s';
-
-    iframe.onload = () => {
-      iframe.style.opacity = '1';
-      placeholder.classList.add('hidden');
-      trackPlay(g.id);
-    };
-
-    iframe.onerror = () => {
-      placeholder.innerHTML = `
-        <div class="placeholder-icon">💔</div>
-        <div class="placeholder-title">Не загрузилась</div>
-        <div class="placeholder-sub">${esc(g.url)}</div>
-      `;
-    };
-
-    // Защита на клиенте: в iframe пускаем только http(s) URL.
-    // Сервер всё равно должен проверять при сабмите, но пусть будет второй барьер.
-    const safeUrl = safeHttpUrl(g.url);
-    if (!safeUrl) {
-      placeholder.innerHTML = `
-        <div class="placeholder-icon">⚠️</div>
-        <div class="placeholder-title">${esc(g.title)}</div>
-        <div class="placeholder-sub">Некорректная ссылка</div>
-      `;
-      slide.appendChild(placeholder);
-      feed.appendChild(slide);
-      window.slides.push(slide);
-      const dot = document.createElement('div');
-      dot.className = 'dot' + (i === 0 ? ' active' : '');
-      dot.id = 'dot-' + i;
-      dots.appendChild(dot);
-      return;
-    }
-
-    // Ленивая загрузка: только текущий ±1.
-    if (Math.abs(i - window.currentIdx) <= 1) {
-      iframe.src = safeUrl;
-    }
-    iframe.dataset.src = safeUrl;
-
-    slide.appendChild(placeholder);
-    slide.appendChild(iframe);
-    feed.appendChild(slide);
-    window.slides.push(slide);
-
-    const dot = document.createElement('div');
-    dot.className = 'dot' + (i === 0 ? ' active' : '');
-    dot.id = 'dot-' + i;
-    dots.appendChild(dot);
-  });
-
+  appendSlides(0, GAMES);
   goTo(0, true);
 }
 
@@ -148,6 +204,7 @@ function goTo(idx, instant = false) {
 
   updateOverlay();
   lazyLoadAround(window.currentIdx);
+  maybeLoadMoreFeed();
 }
 
 function updateOverlay() {
@@ -155,9 +212,23 @@ function updateOverlay() {
   const g = GAMES[window.currentIdx];
   if (!g) return;
 
-  document.getElementById('gameBadge').textContent =
-    (g.genreEmoji || '🕹️') + ' ' + (g.genre || 'Игра');
-  document.getElementById('gameTitle').textContent = g.title;
+  const titleEl = document.getElementById('gameTitle');
+  const sepEl = document.getElementById('gameMetaSep');
+  const genreEl = document.getElementById('gameGenreInline');
+
+  titleEl.textContent = g.title || '—';
+
+  const genreText = [g.genreEmoji, g.genre].filter(Boolean).join(' ').trim();
+  if (genreText) {
+    genreEl.textContent = genreText;
+    genreEl.hidden = false;
+    sepEl.hidden = false;
+  } else {
+    genreEl.textContent = '';
+    genreEl.hidden = true;
+    sepEl.hidden = true;
+  }
+
   document.getElementById('authorName').textContent = g.authorName;
 
   const avatar = document.getElementById('authorAvatar');
@@ -339,6 +410,7 @@ function hideSwipeHint() {
 }
 
 window.loadGames = loadGames;
+window.loadMoreFeed = loadMoreFeed;
 window.renderFeed = renderFeed;
 window.goTo = goTo;
 window.updateOverlay = updateOverlay;

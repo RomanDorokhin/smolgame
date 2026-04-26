@@ -6,11 +6,21 @@ import { safeHttpsUrl, validateSubmission } from './validators.js';
 // PUBLIC
 // ──────────────────────────────────────────────────────────────
 
+const FEED_PAGE_DEFAULT = 15;
+const FEED_PAGE_MAX = 40;
+
 export async function getFeed(req, env) {
   const user = await authenticate(req, env);
   const userId = user?.id ?? null;
 
-  // Только опубликованные, новые первыми. limit=50 на первом заходе хватит.
+  const url = new URL(req.url);
+  let offset = Number(url.searchParams.get('offset') || 0);
+  if (!Number.isFinite(offset) || offset < 0) offset = 0;
+  let limit = Number(url.searchParams.get('limit') || FEED_PAGE_DEFAULT);
+  if (!Number.isFinite(limit) || limit < 1) limit = FEED_PAGE_DEFAULT;
+  limit = Math.min(FEED_PAGE_MAX, Math.max(1, Math.floor(limit)));
+
+  // Только опубликованные, новые первыми. Пагинация: ?offset=&limit=
   const { results } = await env.DB.prepare(
     `SELECT g.id, g.title, g.description, g.genre, g.genre_emoji AS genreEmoji,
             g.url, g.image_url AS imageUrl, g.likes, g.plays, g.author_id AS authorId,
@@ -20,8 +30,8 @@ export async function getFeed(req, env) {
        LEFT JOIN users u ON u.id = g.author_id
       WHERE g.status = 'published'
       ORDER BY g.created_at DESC
-      LIMIT 50`
-  ).all();
+      LIMIT ?1 OFFSET ?2`
+  ).bind(limit, offset).all();
 
   let likedSet = new Set();
   let followedSet = new Set();
@@ -62,7 +72,12 @@ export async function getFeed(req, env) {
     isBookmarked: bookmarkedSet.has(g.id),
   }));
 
-  return json({ games });
+  return json({
+    games,
+    offset,
+    limit,
+    hasMore: results.length === limit,
+  });
 }
 
 export async function getMe(req, env) {

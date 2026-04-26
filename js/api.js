@@ -35,7 +35,13 @@ async function apiFetch(path, { method = 'GET', body } = {}) {
 window.API = {
   base: API_BASE,
 
-  feed:         ()         => apiFetch('/api/feed'),
+  feed:         (params = {}) => {
+    const q = new URLSearchParams();
+    if (params.offset != null) q.set('offset', String(params.offset));
+    if (params.limit != null) q.set('limit', String(params.limit));
+    const qs = q.toString();
+    return apiFetch('/api/feed' + (qs ? '?' + qs : ''));
+  },
   me:           ()         => apiFetch('/api/me'),
   register:     (payload)  => apiFetch('/api/register', { method: 'POST', body: payload }),
   checkRegistered: ()      => apiFetch('/api/me/registered'),

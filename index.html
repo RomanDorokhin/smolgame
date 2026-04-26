@@ -37,7 +37,7 @@
   </div>
   <div class="action-btn" data-action="toggle-bookmark">
     <div class="action-icon" id="bookmarkIcon">📑</div>
-    <div class="action-label">Избранное</div>
+    <div class="action-label action-label-bookmark-spacer" aria-hidden="true"></div>
   </div>
   <div class="action-btn" data-action="share-game">
     <div class="action-icon">🔗</div>
@@ -49,15 +49,20 @@
   </div>
 </div>
 
-<!-- ══ ИНФО ОБ ИГРЕ ══ -->
+<!-- ══ ИНФО ОБ ИГРЕ (автор + мета игры в одну линию) ══ -->
 <div id="game-info">
   <div class="author-row" data-action="open-author">
     <div class="author-avatar" id="authorAvatar">?</div>
-    <div class="author-name" id="authorName">—</div>
+    <div class="author-block">
+      <div class="author-name" id="authorName">—</div>
+      <div class="game-meta-row" id="gameMetaRow">
+        <span class="game-title-inline" id="gameTitle">—</span>
+        <span class="game-meta-sep" id="gameMetaSep" hidden>·</span>
+        <span class="game-genre-inline" id="gameGenreInline" hidden></span>
+      </div>
+    </div>
     <div class="follow-btn" id="followBtn" data-action="toggle-follow">+ Follow</div>
   </div>
-  <div class="game-title" id="gameTitle">Загрузка...</div>
-  <div class="game-badge" id="gameBadge">🕹️ Аркада</div>
 </div>
 
 <!-- ══ ПРОГРЕСС ══ -->
