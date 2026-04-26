@@ -22,6 +22,17 @@ html,body,#root,#feed,.slide{margin:0;padding:0;border:0;width:100%;height:100%;
 
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;touch-action:none;}
 
+/* Лента и игры: не наследовать touch-action:none — иначе в iframe ломаются drag/drop (тетрис и т.п.) */
+#feed,
+#feed *,
+.slide,
+.slide *{
+  touch-action:pan-x pan-y;
+}
+iframe.slide-game{
+  touch-action:none;
+}
+
 /* Прокрутка полноэкранных экранов на телефоне: потомки не должны наследовать touch-action:none */
 #profile-screen.open,
 #profile-screen.open *,
@@ -129,12 +140,13 @@ body.tg-only-wall #toast{
 }
 
 .slide-game{
-  touch-action:auto;
+  touch-action:none;
   pointer-events:auto;
   position:absolute;
   top:0;
   left:0;
   width:100%;
+  max-width:100%;
   height:calc(100vh - var(--game-bottom));
   height:calc(100dvh - var(--game-bottom));
   border:none;
@@ -273,7 +285,13 @@ body:has(#onboarding-screen.open) #swipe-strip{
 .logo{
   position:absolute;
   left:50%;
-  transform:translateX(-50%);
+  top:50%;
+  transform:translate(-50%, -50%);
+  display:inline-block;
+  width:max-content;
+  max-width:min(280px, calc(100vw - 48px));
+  white-space:nowrap;
+  text-align:center;
   font-family:'Syne',sans-serif;
   font-size:20px;
   font-weight:800;
