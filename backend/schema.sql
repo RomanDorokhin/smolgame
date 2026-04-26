@@ -50,6 +50,7 @@ CREATE INDEX IF NOT EXISTS idx_oauth_states_expires ON oauth_states(expires_at);
 -- ALTER TABLE users ADD COLUMN github_user_id TEXT;
 -- ALTER TABLE users ADD COLUMN github_login TEXT;
 -- CREATE UNIQUE INDEX IF NOT EXISTS idx_users_github_user_id ON users(github_user_id) WHERE github_user_id IS NOT NULL;
+-- CREATE TABLE IF NOT EXISTS reports (...);
 
 CREATE TABLE IF NOT EXISTS games (
   id           TEXT PRIMARY KEY,          -- nanoid / uuid
@@ -72,6 +73,18 @@ CREATE TABLE IF NOT EXISTS games (
 
 CREATE INDEX IF NOT EXISTS idx_games_status_created  ON games(status, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_games_author          ON games(author_id);
+
+CREATE TABLE IF NOT EXISTS reports (
+  id           TEXT PRIMARY KEY,
+  game_id      TEXT NOT NULL,
+  reporter_id  TEXT NOT NULL,
+  message      TEXT,
+  status       TEXT NOT NULL DEFAULT 'open',
+  created_at   INTEGER NOT NULL DEFAULT (unixepoch()),
+  FOREIGN KEY (game_id) REFERENCES games(id) ON DELETE CASCADE,
+  FOREIGN KEY (reporter_id) REFERENCES users(id)
+);
+CREATE INDEX IF NOT EXISTS idx_reports_status_created ON reports(status, created_at DESC);
 
 CREATE TABLE IF NOT EXISTS likes (
   user_id    TEXT NOT NULL,

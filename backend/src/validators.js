@@ -59,3 +59,9 @@ export function validateProfilePatch(body) {
   if (Object.keys(out).length === 0) return { error: 'Нечего обновить' };
   return { ok: out };
 }
+
+/** POST /api/games/:id/report */
+export function validateReportBody(body) {
+  const message = String(body?.message || '').trim().slice(0, 500);
+  return { ok: { message: message || null } };
+}

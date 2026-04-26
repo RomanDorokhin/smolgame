@@ -1,6 +1,6 @@
 import { json, error, newId } from './http.js';
 import { authenticate, upsertUser } from './auth.js';
-import { safeHttpsUrl, validateSubmission, validateProfilePatch } from './validators.js';
+import { safeHttpsUrl, validateSubmission, validateProfilePatch, validateReportBody } from './validators.js';
 
 // ──────────────────────────────────────────────────────────────
 // PUBLIC
@@ -372,6 +372,7 @@ export async function deleteGame(req, env, gameId) {
 
   await env.DB.prepare(`DELETE FROM likes WHERE game_id = ?`).bind(gameId).run();
   await env.DB.prepare(`DELETE FROM bookmarks WHERE game_id = ?`).bind(gameId).run();
+  await env.DB.prepare(`DELETE FROM reports WHERE game_id = ?`).bind(gameId).run();
   await env.DB.prepare(`DELETE FROM games WHERE id = ?`).bind(gameId).run();
   return json({ ok: true });
 }
@@ -493,6 +494,30 @@ export async function play(req, env, gameId) {
   return json({ ok: true });
 }
 
+export async function reportGame(req, env, gameId) {
+  const user = await authenticate(req, env);
+  if (!user) return error('unauthorized', 401);
+  await upsertUser(env.DB, user);
+
+  const game = await env.DB.prepare(
+    `SELECT id FROM games WHERE id = ? AND status = 'published'`
+  ).bind(gameId).first();
+  if (!game) return error('not found', 404);
+
+  let body;
+  try { body = await req.json(); } catch (e) { body = {}; }
+  const { ok, error: verr } = validateReportBody(body);
+  if (verr) return error(verr);
+
+  const id = newId();
+  await env.DB.prepare(
+    `INSERT INTO reports (id, game_id, reporter_id, message, status, created_at)
+     VALUES (?, ?, ?, ?, 'open', unixepoch())`
+  ).bind(id, gameId, user.id, ok.message).run();
+
+  return json({ ok: true, id });
+}
+
 // ──────────────────────────────────────────────────────────────
 // ADMIN
 // ──────────────────────────────────────────────────────────────
@@ -533,6 +558,35 @@ export async function adminReject(req, env, gameId) {
   await env.DB.prepare(
     `UPDATE games SET status = 'rejected', updated_at = unixepoch() WHERE id = ?`
   ).bind(gameId).run();
+  return json({ ok: true });
+}
+
+export async function adminReports(req, env) {
+  const { resp } = await requireAdmin(req, env);
+  if (resp) return resp;
+
+  const { results } = await env.DB.prepare(
+    `SELECT r.id, r.game_id AS gameId, r.reporter_id AS reporterId, r.message,
+            r.status, r.created_at AS createdAt,
+            g.title AS gameTitle, g.url AS gameUrl
+       FROM reports r
+       JOIN games g ON g.id = r.game_id
+      WHERE r.status = 'open'
+      ORDER BY r.created_at DESC
+      LIMIT 100`
+  ).all();
+
+  return json({ reports: results });
+}
+
+export async function adminDismissReport(req, env, reportId) {
+  const { resp } = await requireAdmin(req, env);
+  if (resp) return resp;
+
+  const res = await env.DB.prepare(
+    `UPDATE reports SET status = 'closed' WHERE id = ? AND status = 'open'`
+  ).bind(reportId).run();
+  if (!res.meta.changes) return error('not found', 404);
   return json({ ok: true });
 }
 

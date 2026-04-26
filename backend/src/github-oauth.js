@@ -25,6 +25,9 @@ export async function githubOAuthStart(req, env) {
 
   await upsertUser(env.DB, user);
 
+  const nowSec = Math.floor(Date.now() / 1000);
+  await env.DB.prepare(`DELETE FROM oauth_states WHERE expires_at < ?`).bind(nowSec).run();
+
   const state = newId() + newId();
   const now = Math.floor(Date.now() / 1000);
   const expires = now + OAUTH_TTL_SEC;
