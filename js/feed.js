@@ -7,24 +7,6 @@ function feedEl() {
   return document.getElementById('feed');
 }
 
-function syncIdxFromScroll() {
-  const el = feedEl();
-  if (!el || GAMES.length === 0) return;
-  const h = el.clientHeight;
-  if (h <= 0) return;
-  const idx = Math.min(GAMES.length - 1, Math.max(0, Math.round(el.scrollTop / h)));
-  if (idx !== window.currentIdx) {
-    window.currentIdx = idx;
-    resetSwipeHint();
-    document.querySelectorAll('.dot').forEach((d, i) =>
-      d.classList.toggle('active', i === window.currentIdx)
-    );
-    updateOverlay();
-    lazyLoadAround(window.currentIdx);
-    maybeLoadMoreFeed();
-  }
-}
-
 async function loadGames() {
   window.feedHasMore = true;
   window.feedLoadingMore = false;
@@ -135,6 +117,7 @@ function appendSlides(startIndex, gamesSlice) {
     const slide = document.createElement('div');
     slide.className = 'slide';
     slide.id = 'slide-' + i;
+    slide.style.top = `${(i - window.currentIdx) * 100}%`;
 
     const placeholder = document.createElement('div');
     placeholder.className = 'slide-placeholder';
@@ -249,18 +232,14 @@ function lazyLoadAround(idx) {
 
 function goTo(idx, instant = false) {
   if (GAMES.length === 0) return;
-  const el = feedEl();
-  if (!el) return;
 
   const prevIdx = window.currentIdx;
   window.currentIdx = Math.max(0, Math.min(GAMES.length - 1, idx));
   if (prevIdx !== window.currentIdx) resetSwipeHint();
 
-  const h = el.clientHeight;
-  const top = window.currentIdx * h;
-  el.scrollTo({
-    top,
-    behavior: instant ? 'auto' : 'smooth',
+  window.slides.forEach((s, i) => {
+    s.style.transition = instant ? 'none' : 'top 0.4s cubic-bezier(0.4,0,0.2,1)';
+    s.style.top = `${(i - window.currentIdx) * 100}%`;
   });
 
   document.querySelectorAll('.dot').forEach((d, i) =>
@@ -428,19 +407,6 @@ function feedPointerCancel(e, strip) {
 
 document.addEventListener('DOMContentLoaded', () => {
   const strip = document.getElementById('swipe-strip');
-  const feed = feedEl();
-  if (feed) {
-    let scrollT = null;
-    feed.addEventListener('scroll', () => {
-      if (scrollT) cancelAnimationFrame(scrollT);
-      scrollT = requestAnimationFrame(() => {
-        scrollT = null;
-        syncIdxFromScroll();
-      });
-    }, { passive: true });
-    feed.addEventListener('scrollend', syncIdxFromScroll, { passive: true });
-  }
-
   if (!strip) return;
 
   strip.addEventListener('pointerdown', e => feedPointerDown(e, strip));
