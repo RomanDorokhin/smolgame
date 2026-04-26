@@ -95,6 +95,12 @@ async function loadAuthorProfile(authorId) {
     setAvatar(document.getElementById('authorProfileAvatar'), user.avatar || '?');
     document.getElementById('authorProfileName').textContent = user.name || 'Аноним';
     document.getElementById('authorProfileHandle').textContent = '@' + (user.siteHandle || user.id || '—');
+    const authorBio = document.getElementById('authorProfileBio');
+    const bioText = (user.bio && String(user.bio).trim()) || '';
+    if (authorBio) {
+      authorBio.textContent = bioText;
+      authorBio.style.display = bioText ? '' : 'none';
+    }
     document.getElementById('authorStatGames').textContent = fmtNum(stats.games);
     document.getElementById('authorStatFollowers').textContent = fmtNum(stats.followers);
     document.getElementById('authorStatLikes').textContent = fmtNum(stats.likes);

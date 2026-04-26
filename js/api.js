@@ -43,6 +43,9 @@ window.API = {
     return apiFetch('/api/feed' + (qs ? '?' + qs : ''));
   },
   me:           ()         => apiFetch('/api/me'),
+  updateMe:     (payload)  => apiFetch('/api/me', { method: 'PATCH', body: payload }),
+  myGames:      ()         => apiFetch('/api/me/games'),
+  game:         (gameId)   => apiFetch(`/api/games/${encodeURIComponent(gameId)}`),
   register:     (payload)  => apiFetch('/api/register', { method: 'POST', body: payload }),
   checkRegistered: ()      => apiFetch('/api/me/registered'),
   submit:       (payload)  => apiFetch('/api/submit', { method: 'POST', body: payload }),

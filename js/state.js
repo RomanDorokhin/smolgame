@@ -20,6 +20,8 @@ window.USER = {
   tgId: tgUser?.id ? String(tgUser.id) : null,
   name: tgUser ? (tgUser.first_name + (tgUser.last_name ? ' ' + tgUser.last_name : '')) : 'Гость',
   siteHandle: null,
+  displayName: '',
+  bio: '',
   avatar: tgUser?.first_name?.[0] || '?',
   isGithubConnected: false,
   githubUsername: null,

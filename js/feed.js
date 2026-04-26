@@ -70,6 +70,39 @@ function maybeLoadMoreFeed() {
   if (window.currentIdx >= GAMES.length - 5) loadMoreFeed();
 }
 
+/** Подставить игру в конец ленты (если её ещё нет) и вернуть индекс. */
+async function injectGameIntoFeed(gameId) {
+  if (!gameId) return window.currentIdx;
+  const existing = GAMES.findIndex(g => g.id === gameId);
+  if (existing >= 0) return existing;
+  try {
+    const data = await API.game(gameId);
+    const game = data?.game;
+    if (!game?.id) return window.currentIdx;
+    const prevLen = GAMES.length;
+    const idx = prevLen;
+    if (game.isLiked) likedSet.add(game.id);
+    if (game.isFollowing && game.authorId) followedSet.add(game.authorId);
+    if (game.isBookmarked) bookmarkedSet.add(game.id);
+    saveSet(STORAGE_KEYS.liked, likedSet);
+    saveSet(STORAGE_KEYS.followed, followedSet);
+    saveSet(STORAGE_KEYS.bookmarked, bookmarkedSet);
+    GAMES.push(game);
+    appendSlides(idx, [game]);
+    if (prevLen === 0) {
+      document.getElementById('empty-state').classList.remove('show');
+      document.getElementById('side-actions').style.display = '';
+      document.getElementById('game-info').style.display = '';
+      document.getElementById('swipe-strip').style.display = '';
+      goTo(0, true);
+    }
+    return idx;
+  } catch (e) {
+    showToast('⚠️ ' + (e.message || 'не удалось открыть игру'));
+    return window.currentIdx;
+  }
+}
+
 function appendSlides(startIndex, gamesSlice) {
   const feed = document.getElementById('feed');
   const dots = document.getElementById('dots');
@@ -87,7 +120,13 @@ function appendSlides(startIndex, gamesSlice) {
     const thumbHtml = g.imageUrl
       ? `<img src="${esc(g.imageUrl)}" class="slide-cover" alt="">`
       : `<div class="placeholder-icon">${esc(g.genreEmoji || '🎮')}</div>`;
+    const statusBanner = g.status === 'pending'
+      ? '<div class="slide-status-banner">На модерации</div>'
+      : g.status === 'rejected'
+        ? '<div class="slide-status-banner slide-status-rejected">Не прошла модерацию</div>'
+        : '';
     placeholder.innerHTML = `
+      ${statusBanner}
       ${thumbHtml}
       <div class="placeholder-title">${esc(g.title)}</div>
       <div class="placeholder-sub">Загружаем игру...</div>
@@ -415,3 +454,4 @@ window.renderFeed = renderFeed;
 window.goTo = goTo;
 window.updateOverlay = updateOverlay;
 window.hideHint = hideSwipeHint;
+window.injectGameIntoFeed = injectGameIntoFeed;

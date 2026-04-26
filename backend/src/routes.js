@@ -1,6 +1,6 @@
 import { json, error, newId } from './http.js';
 import { authenticate, upsertUser } from './auth.js';
-import { safeHttpsUrl, validateSubmission } from './validators.js';
+import { safeHttpsUrl, validateSubmission, validateProfilePatch } from './validators.js';
 
 // ──────────────────────────────────────────────────────────────
 // PUBLIC
@@ -25,7 +25,8 @@ export async function getFeed(req, env) {
     `SELECT g.id, g.title, g.description, g.genre, g.genre_emoji AS genreEmoji,
             g.url, g.image_url AS imageUrl, g.likes, g.plays, g.author_id AS authorId,
             u.site_handle AS authorHandle, u.first_name AS authorFirst, u.last_name AS authorLast,
-            u.photo_url AS authorPhoto
+            u.display_name AS authorDisplayName,
+            COALESCE(NULLIF(TRIM(u.avatar_override_url), ''), u.photo_url) AS authorPhoto
        FROM games g
        LEFT JOIN users u ON u.id = g.author_id
       WHERE g.status = 'published'
@@ -64,7 +65,10 @@ export async function getFeed(req, env) {
     likes: g.likes,
     plays: g.plays,
     authorId: g.authorId,
-    authorName: [g.authorFirst, g.authorLast].filter(Boolean).join(' ') || g.authorHandle || 'Аноним',
+    authorName: (g.authorDisplayName && String(g.authorDisplayName).trim())
+      || [g.authorFirst, g.authorLast].filter(Boolean).join(' ')
+      || g.authorHandle
+      || 'Аноним',
     authorHandle: g.authorHandle || '',
     authorAvatar: g.authorPhoto || (g.authorFirst?.[0] || '?'),
     isLiked: likedSet.has(g.id),
@@ -85,7 +89,11 @@ export async function getMe(req, env) {
   if (!user) return error('unauthorized', 401);
   await upsertUser(env.DB, user);
   const dbUser = await env.DB.prepare(
-    `SELECT site_handle AS siteHandle FROM users WHERE id = ?`
+    `SELECT site_handle AS siteHandle,
+            display_name AS displayName,
+            bio AS bio,
+            COALESCE(NULLIF(TRIM(avatar_override_url), ''), photo_url) AS avatarUrl
+       FROM users WHERE id = ?`
   ).bind(user.id).first();
 
   // Статистика автора.
@@ -97,12 +105,25 @@ export async function getMe(req, env) {
   ).bind(user.id).all();
   const s = stats[0] || {};
 
+  const tgName = [user.first_name, user.last_name].filter(Boolean).join(' ');
+  const displayName = (dbUser?.displayName && String(dbUser.displayName).trim())
+    || tgName
+    || (dbUser?.siteHandle || user.id);
+  const avatar =
+    (dbUser?.avatarUrl && String(dbUser.avatarUrl).trim())
+    || user.photo_url
+    || user.first_name?.[0]
+    || '?';
+
   return json({
     user: {
       id: user.id,
       siteHandle: dbUser?.siteHandle || user.id,
-      name: [user.first_name, user.last_name].filter(Boolean).join(' '),
-      avatar: user.photo_url || user.first_name?.[0] || '?',
+      name: displayName,
+      displayName: (dbUser?.displayName && String(dbUser.displayName).trim()) || '',
+      telegramName: tgName,
+      bio: dbUser?.bio != null ? String(dbUser.bio) : '',
+      avatar,
       isAdmin: user.isAdmin === true,
     },
     stats: {
@@ -111,6 +132,68 @@ export async function getMe(req, env) {
       followers: s.followersCount ?? 0,
     },
   });
+}
+
+export async function updateMe(req, env) {
+  const user = await authenticate(req, env);
+  if (!user) return error('unauthorized', 401);
+  await upsertUser(env.DB, user);
+
+  let body;
+  try { body = await req.json(); } catch (e) { return error('invalid json'); }
+
+  const { ok, error: verr } = validateProfilePatch(body);
+  if (verr) return error(verr);
+
+  if (ok.siteHandle) {
+    const conflict = await env.DB.prepare(
+      `SELECT id FROM users WHERE site_handle = ? AND id <> ?`
+    ).bind(ok.siteHandle, user.id).first();
+    if (conflict) return error('Этот публичный ID уже занят', 409);
+  }
+
+  const sets = [];
+  const vals = [];
+  if (ok.displayName !== undefined) {
+    sets.push('display_name = ?');
+    vals.push(ok.displayName);
+  }
+  if (ok.bio !== undefined) {
+    sets.push('bio = ?');
+    vals.push(ok.bio);
+  }
+  if (ok.siteHandle !== undefined) {
+    sets.push('site_handle = ?');
+    vals.push(ok.siteHandle);
+  }
+  if (ok.clearAvatar) {
+    sets.push('avatar_override_url = NULL');
+  } else if (ok.photoUrl !== undefined) {
+    sets.push('avatar_override_url = ?');
+    vals.push(ok.photoUrl);
+  }
+
+  vals.push(user.id);
+  await env.DB.prepare(
+    `UPDATE users SET ${sets.join(', ')} WHERE id = ?`
+  ).bind(...vals).run();
+
+  return getMe(req, env);
+}
+
+export async function getMyGames(req, env) {
+  const user = await authenticate(req, env);
+  if (!user) return error('unauthorized', 401);
+
+  const { results } = await env.DB.prepare(
+    `SELECT id, title, description, genre, genre_emoji AS genreEmoji,
+            url, image_url AS imageUrl, likes, plays, author_id AS authorId, status
+       FROM games
+      WHERE author_id = ?
+      ORDER BY created_at DESC`
+  ).bind(user.id).all();
+
+  return json({ games: results });
 }
 
 export async function checkRegistered(req, env) {
@@ -202,7 +285,9 @@ export async function uploadImage(req, env) {
   if (file.size > 2 * 1024 * 1024) return error('Максимальный размер изображения — 2 МБ');
 
   const ext = extensionFromType(file.type);
-  const key = `covers/${user.id}/${newId()}.${ext}`;
+  const kind = String(form.get('kind') || 'cover');
+  const subdir = kind === 'avatar' ? 'avatars' : 'covers';
+  const key = `${subdir}/${user.id}/${newId()}.${ext}`;
   await env.IMAGES.put(key, file.stream(), {
     httpMetadata: { contentType: file.type },
   });
@@ -210,6 +295,65 @@ export async function uploadImage(req, env) {
   const base = env.PUBLIC_IMAGE_BASE_URL || env.R2_PUBLIC_URL;
   if (!base) return error('public image URL is not configured', 501);
   return json({ ok: true, imageUrl: `${String(base).replace(/\/$/, '')}/${key}` });
+}
+
+export async function getGameById(req, env, gameId) {
+  const viewer = await authenticate(req, env);
+  const viewerId = viewer?.id ?? null;
+
+  const g = await env.DB.prepare(
+    `SELECT g.id, g.title, g.description, g.genre, g.genre_emoji AS genreEmoji,
+            g.url, g.image_url AS imageUrl, g.likes, g.plays, g.author_id AS authorId,
+            g.status,
+            u.site_handle AS authorHandle, u.first_name AS authorFirst, u.last_name AS authorLast,
+            u.display_name AS authorDisplayName,
+            COALESCE(NULLIF(TRIM(u.avatar_override_url), ''), u.photo_url) AS authorPhoto
+       FROM games g
+       LEFT JOIN users u ON u.id = g.author_id
+      WHERE g.id = ?`
+  ).bind(gameId).first();
+
+  if (!g) return error('not found', 404);
+  if (g.status !== 'published' && g.authorId !== viewerId) return error('not found', 404);
+
+  let isLiked = false;
+  let isFollowing = false;
+  let isBookmarked = false;
+  if (viewerId) {
+    const [likeRow, followRow, bmRow] = await Promise.all([
+      env.DB.prepare(`SELECT 1 FROM likes WHERE user_id = ? AND game_id = ?`).bind(viewerId, gameId).first(),
+      env.DB.prepare(`SELECT 1 FROM follows WHERE user_id = ? AND author_id = ?`).bind(viewerId, g.authorId).first(),
+      env.DB.prepare(`SELECT 1 FROM bookmarks WHERE user_id = ? AND game_id = ?`).bind(viewerId, gameId).first(),
+    ]);
+    isLiked = Boolean(likeRow);
+    isFollowing = Boolean(followRow);
+    isBookmarked = Boolean(bmRow);
+  }
+
+  return json({
+    game: {
+      id: g.id,
+      title: g.title,
+      description: g.description,
+      genre: g.genre,
+      genreEmoji: g.genreEmoji,
+      url: g.url,
+      imageUrl: g.imageUrl,
+      likes: g.likes,
+      plays: g.plays,
+      authorId: g.authorId,
+      authorName: (g.authorDisplayName && String(g.authorDisplayName).trim())
+        || [g.authorFirst, g.authorLast].filter(Boolean).join(' ')
+        || g.authorHandle
+        || 'Аноним',
+      authorHandle: g.authorHandle || '',
+      authorAvatar: g.authorPhoto || (g.authorFirst?.[0] || '?'),
+      isLiked,
+      isFollowing,
+      isBookmarked,
+      status: g.status,
+    },
+  });
 }
 
 export async function deleteGame(req, env, gameId) {
@@ -290,7 +434,9 @@ export async function getUserProfile(req, env, userId) {
   const viewer = await authenticate(req, env);
   const user = await env.DB.prepare(
     `SELECT id, site_handle AS siteHandle, first_name AS firstName,
-            last_name AS lastName, photo_url AS photoUrl
+            last_name AS lastName, photo_url AS photoUrl,
+            display_name AS displayName, bio AS bio,
+            COALESCE(NULLIF(TRIM(avatar_override_url), ''), photo_url) AS avatarUrl
        FROM users WHERE id = ?`
   ).bind(userId).first();
   if (!user) return error('not found', 404);
@@ -319,11 +465,17 @@ export async function getUserProfile(req, env, userId) {
 }
 
 export async function getUserGames(req, env, userId) {
+  const viewer = await authenticate(req, env);
+  const isSelf = viewer && viewer.id === userId;
+  const statusSql = isSelf
+    ? `status IN ('published', 'pending', 'rejected')`
+    : `status = 'published'`;
+
   const { results } = await env.DB.prepare(
     `SELECT id, title, description, genre, genre_emoji AS genreEmoji,
-            url, image_url AS imageUrl, likes, plays, author_id AS authorId
+            url, image_url AS imageUrl, likes, plays, author_id AS authorId, status
        FROM games
-      WHERE author_id = ? AND status='published'
+      WHERE author_id = ? AND ${statusSql}
       ORDER BY created_at DESC`
   ).bind(userId).all();
   return json({ games: results });
@@ -400,11 +552,18 @@ function extensionFromType(type) {
 }
 
 function publicUser(user) {
-  const name = [user.firstName, user.lastName].filter(Boolean).join(' ');
+  const tgName = [user.firstName, user.lastName].filter(Boolean).join(' ');
+  const display = (user.displayName && String(user.displayName).trim()) || tgName;
+  const avatar =
+    (user.avatarUrl && String(user.avatarUrl).trim())
+    || user.photoUrl
+    || user.firstName?.[0]
+    || '?';
   return {
     id: user.id,
     siteHandle: user.siteHandle || user.id,
-    name: name || user.siteHandle || 'Аноним',
-    avatar: user.photoUrl || user.firstName?.[0] || '?',
+    name: display || user.siteHandle || 'Аноним',
+    bio: user.bio != null ? String(user.bio) : '',
+    avatar,
   };
 }

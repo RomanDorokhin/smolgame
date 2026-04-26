@@ -30,7 +30,10 @@ const CLICK_ACTIONS = {
   'submit-game':    (el) => submitGame(el.dataset.method),
 
   'open-game':      (el) => openGameFromSearch(el.dataset.gameId),
-  'delete-game':    (el) => deleteGame(el.dataset.gameId),
+  'open-game-profile': (el) => openGameFromProfile(el.dataset.gameId),
+  'delete-game':    (el, ev) => { ev.stopPropagation(); deleteGame(el.dataset.gameId); },
+  'save-profile':   () => saveProfile(),
+  'reset-profile-photo': () => resetProfilePhoto(),
 
   'admin-approve':  (el) => adminApproveGame(el.closest('.admin-card')),
   'admin-reject':   (el) => adminRejectGame (el.closest('.admin-card')),

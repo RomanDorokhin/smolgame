@@ -9,6 +9,9 @@ CREATE TABLE IF NOT EXISTS users (
   first_name  TEXT,
   last_name   TEXT,
   photo_url   TEXT,
+  display_name TEXT,                     -- публичное имя (иначе Telegram имя)
+  bio         TEXT,                      -- короткое описание профиля
+  avatar_override_url TEXT,              -- своё фото; иначе photo_url из Telegram
   date_of_birth TEXT,
   consented_at INTEGER,
   tos_accepted_at INTEGER,
@@ -29,6 +32,9 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_users_site_handle ON users(site_handle);
 -- ALTER TABLE users ADD COLUMN tos_accepted_at INTEGER;
 -- ALTER TABLE users ADD COLUMN parent_consent INTEGER NOT NULL DEFAULT 0;
 -- ALTER TABLE users ADD COLUMN registered_at INTEGER;
+-- ALTER TABLE users ADD COLUMN display_name TEXT;
+-- ALTER TABLE users ADD COLUMN bio TEXT;
+-- ALTER TABLE users ADD COLUMN avatar_override_url TEXT;
 
 CREATE TABLE IF NOT EXISTS games (
   id           TEXT PRIMARY KEY,          -- nanoid / uuid

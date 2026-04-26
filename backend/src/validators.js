@@ -28,3 +28,34 @@ export function validateSubmission(body) {
 
   return { ok: { title, description, genre, genreEmoji, url, imageUrl } };
 }
+
+const HANDLE_RE = /^[a-z0-9_]{3,24}$/;
+
+/** PATCH /api/me: displayName, bio, siteHandle, photoUrl (optional). */
+export function validateProfilePatch(body) {
+  const out = {};
+  if (body.displayName !== undefined) {
+    const s = String(body.displayName || '').trim().slice(0, 60);
+    if (!s) return { error: 'Имя не может быть пустым' };
+    out.displayName = s;
+  }
+  if (body.bio !== undefined) {
+    out.bio = String(body.bio || '').trim().slice(0, 280);
+  }
+  if (body.siteHandle !== undefined) {
+    const h = String(body.siteHandle || '').trim().toLowerCase();
+    if (!HANDLE_RE.test(h)) return { error: 'Публичный ID: 3-24 символа, латиница, цифры или _' };
+    out.siteHandle = h;
+  }
+  if (body.photoUrl !== undefined) {
+    if (body.photoUrl === null || body.photoUrl === '') {
+      out.clearAvatar = true;
+    } else {
+      const u = safeHttpsUrl(String(body.photoUrl).trim());
+      if (!u) return { error: 'Некорректная ссылка на фото (нужен https://)' };
+      out.photoUrl = u;
+    }
+  }
+  if (Object.keys(out).length === 0) return { error: 'Нечего обновить' };
+  return { ok: out };
+}
