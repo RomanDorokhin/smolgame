@@ -80,7 +80,52 @@ async function adminDeleteGame(card) {
   }
 }
 
+async function loadAdminReports() {
+  if (!document.body.classList.contains('is-admin')) return;
+  const host = document.getElementById('adminReportsList');
+  if (!host) return;
+  host.innerHTML = '<div class="admin-empty">Загрузка...</div>';
+
+  try {
+    const { reports } = await API.admin.reports();
+    if (!reports || reports.length === 0) {
+      host.innerHTML = '<div class="admin-empty">Нет открытых жалоб</div>';
+      return;
+    }
+    host.innerHTML = reports.map(r => `
+      <div class="admin-card" data-report-id="${esc(r.id)}">
+        <div class="admin-card-title">${esc(r.gameTitle || 'Игра')}</div>
+        <div class="admin-card-meta">
+          <a href="${esc(r.gameUrl || '#')}" target="_blank" rel="noopener noreferrer">${esc(r.gameUrl || '')}</a><br>
+          ${r.message ? `<span style="color:var(--text);">${esc(r.message)}</span>` : '<span style="color:var(--muted);">Без текста</span>'}
+        </div>
+        <div class="admin-actions">
+          <button class="admin-btn approve" data-action="admin-dismiss-report">✓ Принято</button>
+        </div>
+      </div>
+    `).join('');
+  } catch (e) {
+    host.innerHTML = `<div class="admin-empty">⚠️ ${esc(e.message || 'ошибка')}</div>`;
+  }
+}
+
+async function adminDismissReport(card) {
+  const id = card?.dataset.reportId;
+  if (!id) return;
+  try {
+    await API.admin.dismissReport(id);
+    card.remove();
+    showToast('✅ Закрыто');
+    const host = document.getElementById('adminReportsList');
+    if (host && host.children.length === 0) loadAdminReports();
+  } catch (e) {
+    showToast('⚠️ ' + (e.message || 'ошибка'));
+  }
+}
+
 window.loadAdminPending = loadAdminPending;
+window.loadAdminReports = loadAdminReports;
 window.adminApproveGame = adminApproveGame;
 window.adminRejectGame = adminRejectGame;
 window.adminDeleteGame = adminDeleteGame;
+window.adminDismissReport = adminDismissReport;

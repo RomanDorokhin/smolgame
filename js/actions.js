@@ -131,8 +131,19 @@ async function shareGame() {
 
 window.buildGameShareUrl = buildGameShareUrl;
 
-function reportGame() {
-  showToast('⚑ Жалоба: напиши админу бота');
+async function submitReportFromScreen() {
+  if (typeof GAMES === 'undefined' || GAMES.length === 0) return;
+  const g = GAMES[window.currentIdx];
+  if (!g?.id) return;
+  const raw = document.getElementById('reportMessageInput')?.value || '';
+  const message = raw.trim().slice(0, 500);
+  try {
+    await API.report(g.id, { message: message || null });
+    showToast('⚑ Жалоба отправлена');
+    if (typeof closeReportScreen === 'function') closeReportScreen();
+  } catch (e) {
+    showToast('⚠️ ' + (e.message || 'не отправилось'));
+  }
 }
 
 function trackPlay(gameId) {
@@ -151,6 +162,6 @@ window.toggleLike = toggleLike;
 window.toggleFollow = toggleFollow;
 window.toggleBookmark = toggleBookmark;
 window.shareGame = shareGame;
-window.reportGame = reportGame;
+window.submitReportFromScreen = submitReportFromScreen;
 window.trackPlay = trackPlay;
 window.openAuthorProfile = openAuthorProfile;

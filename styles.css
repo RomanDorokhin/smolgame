@@ -40,6 +40,8 @@ iframe.slide-game{
 #search-screen.open *:not(.genre-scroll):not(.genre-scroll *),
 #upload-screen.open,
 #upload-screen.open *,
+#report-screen.open,
+#report-screen.open *,
 #onboarding-screen.open,
 #onboarding-screen.open *{
   touch-action:pan-y;
@@ -76,6 +78,7 @@ body.tg-only-wall #dots,
 body.tg-only-wall #swipe-strip,
 body.tg-only-wall #bottom-nav,
 body.tg-only-wall #upload-screen,
+body.tg-only-wall #report-screen,
 body.tg-only-wall #profile-screen,
 body.tg-only-wall #search-screen,
 body.tg-only-wall #author-screen,
@@ -235,6 +238,7 @@ body.tg-only-wall #toast{
 }
 
 body:has(#upload-screen.open) #swipe-strip,
+body:has(#report-screen.open) #swipe-strip,
 body:has(#profile-screen.open) #swipe-strip,
 body:has(#author-screen.open) #swipe-strip,
 body:has(#search-screen.open) #swipe-strip,
@@ -581,6 +585,29 @@ body:has(#onboarding-screen.open) #swipe-strip{
   padding:calc(var(--safe-top) + 60px) 20px calc(var(--safe-bottom) + 20px);
 }
 #upload-screen.open{display:flex;}
+
+/* Экран жалобы (как sheet загрузки) */
+#report-screen{
+  position:fixed;
+  inset:0;
+  z-index:520;
+  background:var(--bg);
+  display:none;
+  flex-direction:column;
+  overflow-y:auto;
+  overflow-x:hidden;
+  -webkit-overflow-scrolling:touch;
+  overscroll-behavior-y:contain;
+  padding:calc(var(--safe-top) + 60px) 20px calc(var(--safe-bottom) + 20px);
+}
+#report-screen.open{display:flex;}
+.report-hint{
+  font-size:15px;
+  color:var(--muted);
+  margin:0 0 18px;
+  line-height:1.35;
+}
+.report-field{margin-bottom:22px;}
 
 .screen-header{
   display:flex;
@@ -1335,7 +1362,7 @@ body.is-admin .admin-only{display:block;}
   .nav-item .nav-icon{font-size:24px;}
   .nav-item .nav-label{font-size:10px;}
 
-  #profile-screen,#author-screen,#search-screen,#upload-screen{
+  #profile-screen,#author-screen,#search-screen,#upload-screen,#report-screen{
     width:100vw;
     max-width:none;
   }

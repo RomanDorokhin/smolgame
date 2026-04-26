@@ -252,6 +252,10 @@
     <div class="profile-games-title">На модерации</div>
     <div id="adminPendingList" style="padding:0 20px 20px;"></div>
   </div>
+  <div class="admin-only">
+    <div class="profile-games-title">Жалобы</div>
+    <div id="adminReportsList" style="padding:0 20px 20px;"></div>
+  </div>
 
   <div class="profile-games-title">Мои игры</div>
   <div class="games-grid" id="myGamesGrid">
@@ -259,6 +263,20 @@
       Нет игр
     </div>
   </div>
+</div>
+
+<!-- ══ ЭКРАН: ЖАЛОБА НА ИГРУ ══ -->
+<div id="report-screen">
+  <div class="screen-header">
+    <div class="screen-title">Жалоба</div>
+    <div class="close-btn" data-action="close-report">✕</div>
+  </div>
+  <p class="report-hint" id="reportGameTitle">—</p>
+  <label class="profile-field report-field">
+    <span class="profile-field-lbl">Что не так (необязательно)</span>
+    <textarea class="field-input" id="reportMessageInput" maxlength="500" rows="4" placeholder="Например: неприемлемый контент, баг, обман…"></textarea>
+  </label>
+  <button type="button" class="submit-btn" data-action="submit-report">Отправить</button>
 </div>
 
 <!-- ══ ЭКРАН: ПОИСК ══ -->

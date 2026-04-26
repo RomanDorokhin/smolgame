@@ -12,6 +12,7 @@ function openProfile() {
   screen?.classList.remove('profile-edit-active');
   renderProfile();
   loadAdminPending();
+  if (typeof loadAdminReports === 'function') loadAdminReports();
   screen?.classList.add('open');
 }
 function closeProfile() {
@@ -35,6 +36,20 @@ function openAuthorScreen(authorId) {
 }
 function closeAuthorScreen() {
   document.getElementById('author-screen').classList.remove('open');
+}
+
+function openReportScreen() {
+  if (typeof GAMES === 'undefined' || GAMES.length === 0) return;
+  const g = GAMES[window.currentIdx];
+  if (!g?.id) return;
+  const titleEl = document.getElementById('reportGameTitle');
+  const msg = document.getElementById('reportMessageInput');
+  if (titleEl) titleEl.textContent = g.title ? `Игра: «${g.title}»` : 'Игра';
+  if (msg) msg.value = '';
+  document.getElementById('report-screen')?.classList.add('open');
+}
+function closeReportScreen() {
+  document.getElementById('report-screen')?.classList.remove('open');
 }
 function setAvatar(el, avatar) {
   const avatarUrl = avatarImgUrl(avatar);
@@ -151,6 +166,8 @@ window.openSearch = openSearch;
 window.closeSearch = closeSearch;
 window.openAuthorScreen = openAuthorScreen;
 window.closeAuthorScreen = closeAuthorScreen;
+window.openReportScreen = openReportScreen;
+window.closeReportScreen = closeReportScreen;
 window.loadAuthorProfile = loadAuthorProfile;
 window.toggleAuthorFollow = toggleAuthorFollow;
 window.switchTab = switchTab;

@@ -3,7 +3,8 @@ import {
   getFeed, getMe, updateMe, getMyGames, checkRegistered, register, submitGame, uploadImage, deleteGame,
   getGameById,
   toggleLike, toggleFollow, toggleBookmark, getUserProfile, getUserGames, play,
-  adminPending, adminApprove, adminReject,
+  reportGame,
+  adminPending, adminApprove, adminReject, adminReports, adminDismissReport,
 } from './routes.js';
 import { githubOAuthStart, githubOAuthCallback } from './github-oauth.js';
 
@@ -67,6 +68,9 @@ async function route(req, env, pathname) {
   if ((match = pathname.match(/^\/api\/games\/([^/]+)\/play$/))) {
     if (m === 'POST') return play(req, env, match[1]);
   }
+  if ((match = pathname.match(/^\/api\/games\/([^/]+)\/report$/))) {
+    if (m === 'POST') return reportGame(req, env, match[1]);
+  }
   if ((match = pathname.match(/^\/api\/users\/([^/]+)$/))) {
     if (m === 'GET') return getUserProfile(req, env, match[1]);
   }
@@ -83,6 +87,10 @@ async function route(req, env, pathname) {
   }
   if ((match = pathname.match(/^\/api\/admin\/reject\/([^/]+)$/)) && m === 'POST') {
     return adminReject(req, env, match[1]);
+  }
+  if (pathname === '/api/admin/reports' && m === 'GET') return adminReports(req, env);
+  if ((match = pathname.match(/^\/api\/admin\/reports\/([^/]+)\/dismiss$/)) && m === 'POST') {
+    return adminDismissReport(req, env, match[1]);
   }
 
   return error('not found', 404);

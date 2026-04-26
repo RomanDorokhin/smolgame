@@ -63,6 +63,8 @@ window.API = {
   userGames:    (userId)   => apiFetch(`/api/users/${encodeURIComponent(userId)}/games`),
 
   play:         (gameId)   => apiFetch(`/api/games/${encodeURIComponent(gameId)}/play`, { method: 'POST' }),
+  report:       (gameId, payload) =>
+    apiFetch(`/api/games/${encodeURIComponent(gameId)}/report`, { method: 'POST', body: payload }),
 
   githubOAuthStart: () => apiFetch('/api/auth/github/start'),
 
@@ -71,5 +73,8 @@ window.API = {
     approve:    (gameId)   => apiFetch(`/api/admin/approve/${encodeURIComponent(gameId)}`, { method: 'POST' }),
     reject:     (gameId)   => apiFetch(`/api/admin/reject/${encodeURIComponent(gameId)}`,  { method: 'POST' }),
     delete:     (gameId)   => apiFetch(`/api/games/${encodeURIComponent(gameId)}`, { method: 'DELETE' }),
+    reports:    ()         => apiFetch('/api/admin/reports'),
+    dismissReport: (reportId) =>
+      apiFetch(`/api/admin/reports/${encodeURIComponent(reportId)}/dismiss`, { method: 'POST' }),
   },
 };

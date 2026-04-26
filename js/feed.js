@@ -309,7 +309,7 @@ let touching = false;
 let activePointerId = null;
 
 function isOverlayOpen() {
-  return Boolean(document.querySelector('#upload-screen.open, #profile-screen.open, #search-screen.open, #author-screen.open, #onboarding-screen.open'));
+  return Boolean(document.querySelector('#upload-screen.open, #report-screen.open, #profile-screen.open, #search-screen.open, #author-screen.open, #onboarding-screen.open'));
 }
 
 function clearTelegramSwipePass(el) {
