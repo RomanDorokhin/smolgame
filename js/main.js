@@ -19,18 +19,30 @@ async function bootstrap() {
   }
 
   await loadGames();
-  jumpToStartParamGame();
+  await jumpToStartParamGame();
 }
 
-function jumpToStartParamGame() {
+async function jumpToStartParamGame() {
   let startParam = '';
   try { startParam = Telegram.WebApp.initDataUnsafe?.start_param || ''; } catch (e) {}
   if (!startParam) return;
   const gameId = startParam.startsWith('g_')
     ? decodeURIComponent(startParam.slice(2))
     : startParam;
-  const idx = (window.GAMES || []).findIndex(g => g.id === gameId);
-  if (idx >= 0) { goTo(idx, true); hideHint(); }
+  let idx = (window.GAMES || []).findIndex(g => g.id === gameId);
+  if (idx >= 0) {
+    goTo(idx, true);
+    hideHint();
+    return;
+  }
+  if (typeof injectGameIntoFeed === 'function') {
+    await injectGameIntoFeed(gameId);
+    idx = (window.GAMES || []).findIndex(g => g.id === gameId);
+    if (idx >= 0) {
+      goTo(idx, true);
+      hideHint();
+    }
+  }
 }
 
 if (document.readyState === 'loading') {

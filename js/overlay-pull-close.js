@@ -37,6 +37,8 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!t) return;
       const screen = closestOverlayScreen(e.target);
       if (!screen || !screen.classList.contains('open')) return;
+      if (screen.id === 'profile-screen' && screen.classList.contains('profile-edit-active')) return;
+      if (e.target.closest('#profile-edit-wrap')) return;
       if (t.clientY > PULL_HANDLE_ZONE) return;
       startY = t.clientY;
       pulling = true;

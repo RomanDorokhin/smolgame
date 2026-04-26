@@ -17,7 +17,6 @@ function onSearch(query) {
     return;
   }
 
-  // Клик ловится делегированным хендлером в events.js по data-action="open-game".
   results.innerHTML = filtered.map(g => `
     <div class="game-card" data-action="open-game" data-game-id="${esc(g.id)}">
       <div class="game-card-thumb">${gameThumbHtml(g)}</div>
@@ -29,11 +28,16 @@ function onSearch(query) {
   `).join('');
 }
 
-function openGameFromSearch(gameId) {
-  const idx = GAMES.findIndex(g => g.id === gameId);
-  if (idx === -1) return;
+async function openGameFromSearch(gameId) {
+  if (!gameId) return;
   closeSearch();
-  goTo(idx);
+  if (typeof switchTab === 'function') switchTab('feed');
+  let idx = GAMES.findIndex(g => g.id === gameId);
+  if (idx === -1 && typeof injectGameIntoFeed === 'function') {
+    await injectGameIntoFeed(gameId);
+    idx = GAMES.findIndex(g => g.id === gameId);
+  }
+  if (idx >= 0 && typeof goTo === 'function') goTo(idx, false);
 }
 
 window.onSearch = onSearch;
