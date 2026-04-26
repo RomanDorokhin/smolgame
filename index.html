@@ -13,6 +13,14 @@
 </head>
 <body>
 
+<div id="tg-only-wall" class="tg-only-wall" hidden>
+  <div class="tg-only-card">
+    <div class="tg-only-logo">smol<span>game</span></div>
+    <p class="tg-only-title">Открой в Telegram</p>
+    <p class="tg-only-text">SmolGame работает только как мини-приложение: нужен вход через Telegram и кнопка меню бота.</p>
+  </div>
+</div>
+
 <!-- ══ FEED ══ -->
 <div id="feed"></div>
 
@@ -202,18 +210,12 @@
     <div class="profile-name" id="profileName">Гость</div>
     <div class="profile-handle" id="profileHandle">@—</div>
     <p class="profile-bio" id="profileBio"></p>
-    <div id="profile-guest-note" class="profile-guest-note" style="display:none">
-      Войди через Telegram, чтобы редактировать профиль и видеть свои игры на сервере.
-    </div>
     <div id="profile-edit-wrap" class="profile-edit-wrap">
       <div class="profile-edit-fields">
+        <p class="profile-id-readonly">Публичный ID: <strong id="profileSiteHandleRead">—</strong> <span class="profile-id-hint">(задаётся при регистрации)</span></p>
         <label class="profile-field">
           <span class="profile-field-lbl">Имя в SmolGame</span>
           <input class="field-input" type="text" id="profileDisplayName" maxlength="60" placeholder="Как тебя видят другие">
-        </label>
-        <label class="profile-field">
-          <span class="profile-field-lbl">Публичный ID</span>
-          <input class="field-input profile-handle-input" type="text" id="profileSiteHandle" maxlength="24" placeholder="smol_player" autocomplete="username">
         </label>
         <label class="profile-field">
           <span class="profile-field-lbl">О себе</span>
@@ -321,6 +323,7 @@
 <script src="js/config.js"></script>
 <script src="js/utils.js"></script>
 <script src="js/telegram.js"></script>
+<script src="js/tg-gate.js"></script>
 <script src="js/state.js"></script>
 <script src="js/api.js"></script>
 <script src="js/onboarding.js"></script>
@@ -333,6 +336,7 @@
 <script src="js/admin.js"></script>
 <script src="js/screens.js"></script>
 <script src="js/events.js"></script>
+<script src="js/overlay-pull-close.js"></script>
 <script src="js/main.js"></script>
 </body>
 </html>

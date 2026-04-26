@@ -1,4 +1,23 @@
 async function bootstrap() {
+  if (typeof hasTelegramInitData === 'function' && !hasTelegramInitData()) {
+    if (typeof showTelegramOnlyWall === 'function') showTelegramOnlyWall();
+    return;
+  }
+  if (typeof hideTelegramOnlyWall === 'function') hideTelegramOnlyWall();
+
+  let needOnboarding = false;
+  if (typeof checkOnboarding === 'function') {
+    try {
+      needOnboarding = await checkOnboarding();
+    } catch (e) {
+      console.warn('onboarding check failed', e);
+    }
+  }
+
+  if (needOnboarding && typeof showOnboardingScreen === 'function') {
+    showOnboardingScreen();
+  }
+
   await loadGames();
   jumpToStartParamGame();
 }

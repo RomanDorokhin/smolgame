@@ -32,6 +32,72 @@ body{
   -webkit-overflow-scrolling:touch;
 }
 
+/* Только Telegram Mini App */
+.tg-only-wall{
+  position:fixed;
+  inset:0;
+  z-index:20000;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:24px;
+  background:var(--bg);
+}
+.tg-only-wall[hidden]{display:none !important;}
+body.tg-only-wall #feed,
+body.tg-only-wall #empty-state,
+body.tg-only-wall #topbar,
+body.tg-only-wall #side-actions,
+body.tg-only-wall #game-info,
+body.tg-only-wall #dots,
+body.tg-only-wall #swipe-strip,
+body.tg-only-wall #bottom-nav,
+body.tg-only-wall #upload-screen,
+body.tg-only-wall #profile-screen,
+body.tg-only-wall #search-screen,
+body.tg-only-wall #author-screen,
+body.tg-only-wall #onboarding-screen,
+body.tg-only-wall #toast{
+  visibility:hidden !important;
+  pointer-events:none !important;
+}
+.tg-only-card{
+  max-width:340px;
+  text-align:center;
+  padding:28px 22px;
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:20px;
+}
+.tg-only-logo{
+  font-family:'Syne',sans-serif;
+  font-size:22px;
+  font-weight:800;
+  margin-bottom:16px;
+  background:linear-gradient(135deg,#fff 0%,rgba(255,255,255,0.6) 100%);
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+  background-clip:text;
+}
+.tg-only-logo span{
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+  background-clip:text;
+}
+.tg-only-title{
+  font-family:'Syne',sans-serif;
+  font-size:18px;
+  font-weight:800;
+  margin:0 0 10px;
+}
+.tg-only-text{
+  margin:0;
+  font-size:14px;
+  line-height:1.5;
+  color:var(--muted);
+}
+
 /* ══════════════════════════════
    FEED
 ══════════════════════════════ */
@@ -729,22 +795,19 @@ textarea.field-input{
 }
 .profile-bio:empty{display:none;}
 
-.profile-guest-note{
-  font-size:13px;
-  color:var(--muted);
-  line-height:1.4;
-  margin-bottom:16px;
-  padding:12px;
-  background:var(--surface);
-  border:1px solid var(--border);
-  border-radius:12px;
-}
-
 .profile-edit-wrap{
   margin-bottom:16px;
   padding-top:4px;
   border-top:1px solid var(--border);
 }
+.profile-id-readonly{
+  font-size:13px;
+  color:var(--muted);
+  margin:0 0 10px;
+  line-height:1.4;
+}
+.profile-id-readonly strong{color:var(--text);font-weight:700;}
+.profile-id-hint{font-size:11px;color:rgba(255,255,255,0.35);}
 .profile-edit-fields{
   display:flex;
   flex-direction:column;

@@ -14,27 +14,15 @@ function gameStatusBadgeHtml(status) {
   return '';
 }
 
-function isTelegramUser() {
-  return Boolean(USER.tgId);
-}
-
 async function renderProfile() {
-  const guestNote = document.getElementById('profile-guest-note');
-  const editWrap = document.getElementById('profile-edit-wrap');
   const bioRead = document.getElementById('profileBio');
+  const handleRead = document.getElementById('profileSiteHandleRead');
 
   setProfileAvatar(USER.avatar);
-  document.getElementById('profileName').textContent = USER.name;
-  document.getElementById('profileHandle').textContent = '@' + (USER.siteHandle || USER.name);
+  document.getElementById('profileName').textContent = USER.name || '—';
+  document.getElementById('profileHandle').textContent = '@' + (USER.siteHandle || USER.id || '—');
+  if (handleRead) handleRead.textContent = USER.siteHandle || USER.id || '—';
   bioRead.textContent = '';
-
-  if (!isTelegramUser()) {
-    guestNote.style.display = '';
-    editWrap.style.display = 'none';
-  } else {
-    guestNote.style.display = 'none';
-    editWrap.style.display = '';
-  }
 
   document.getElementById('statGames').textContent = '—';
   document.getElementById('statFollowers').textContent = '—';
@@ -44,50 +32,42 @@ async function renderProfile() {
 
   let myGames = [];
 
-  if (isTelegramUser()) {
-    try {
-      const me = await API.me();
-      if (me?.stats) {
-        document.getElementById('statGames').textContent = me.stats.games;
-        document.getElementById('statLikes').textContent = fmtNum(me.stats.likes);
-        document.getElementById('statFollowers').textContent = fmtNum(me.stats.followers);
-      }
-      if (me?.user?.isAdmin) {
-        document.body.classList.add('is-admin');
-      } else {
-        document.body.classList.remove('is-admin');
-      }
-      if (me?.user) {
-        USER.siteHandle = me.user.siteHandle || USER.siteHandle;
-        USER.name = me.user.name || USER.name;
-        USER.avatar = me.user.avatar || USER.avatar;
-        USER.displayName = me.user.displayName != null ? me.user.displayName : '';
-        USER.bio = me.user.bio != null ? me.user.bio : '';
-        document.getElementById('profileName').textContent = USER.name;
-        document.getElementById('profileHandle').textContent = '@' + (USER.siteHandle || USER.name);
-        bioRead.textContent = USER.bio || '';
-        setProfileAvatar(USER.avatar);
-        document.getElementById('profileDisplayName').value = USER.displayName || USER.name || '';
-        document.getElementById('profileSiteHandle').value = USER.siteHandle || '';
-        document.getElementById('profileBioInput').value = USER.bio || '';
-      }
-    } catch (e) {
-      console.warn('profile /me failed', e);
+  try {
+    const me = await API.me();
+    if (me?.stats) {
+      document.getElementById('statGames').textContent = me.stats.games;
+      document.getElementById('statLikes').textContent = fmtNum(me.stats.likes);
+      document.getElementById('statFollowers').textContent = fmtNum(me.stats.followers);
     }
+    if (me?.user?.isAdmin) {
+      document.body.classList.add('is-admin');
+    } else {
+      document.body.classList.remove('is-admin');
+    }
+    if (me?.user) {
+      USER.siteHandle = me.user.siteHandle || USER.siteHandle;
+      USER.name = me.user.name || USER.name;
+      USER.avatar = me.user.avatar || USER.avatar;
+      USER.displayName = me.user.displayName != null ? me.user.displayName : '';
+      USER.bio = me.user.bio != null ? me.user.bio : '';
+      document.getElementById('profileName').textContent = USER.name;
+      document.getElementById('profileHandle').textContent = '@' + (USER.siteHandle || USER.id || '—');
+      if (handleRead) handleRead.textContent = USER.siteHandle || USER.id || '—';
+      bioRead.textContent = USER.bio || '';
+      setProfileAvatar(USER.avatar);
+      document.getElementById('profileDisplayName').value = USER.displayName || USER.name || '';
+      document.getElementById('profileBioInput').value = USER.bio || '';
+    }
+  } catch (e) {
+    console.warn('profile /me failed', e);
+  }
 
-    try {
-      const { games } = await API.myGames();
-      myGames = Array.isArray(games) ? games : [];
-    } catch (e) {
-      console.warn('profile my games failed', e);
-      myGames = GAMES.filter(g => g.authorId === USER.id);
-    }
-  } else {
+  try {
+    const { games } = await API.myGames();
+    myGames = Array.isArray(games) ? games : [];
+  } catch (e) {
+    console.warn('profile my games failed', e);
     myGames = GAMES.filter(g => g.authorId === USER.id);
-    document.getElementById('statGames').textContent = myGames.length;
-    document.getElementById('statLikes').textContent =
-      fmtNum(myGames.reduce((s, g) => s + (g.likes || 0), 0));
-    document.getElementById('statFollowers').textContent = '—';
   }
 
   const grid = document.getElementById('myGamesGrid');
@@ -99,7 +79,7 @@ async function renderProfile() {
         <div class="game-card-thumb">
           ${gameStatusBadgeHtml(g.status)}
           ${gameThumbHtml(g)}
-          ${isTelegramUser() ? `<button type="button" class="delete-game-btn" data-action="delete-game" data-game-id="${esc(g.id)}">🗑</button>` : ''}
+          <button type="button" class="delete-game-btn" data-action="delete-game" data-game-id="${esc(g.id)}">🗑</button>
         </div>
         <div class="game-card-info">
           <div class="game-card-name">${esc(g.title)}</div>
@@ -118,25 +98,16 @@ function setProfileAvatar(avatar) {
 }
 
 async function saveProfile() {
-  if (!isTelegramUser()) {
-    showToast('⚠️ Нужен Telegram');
-    return;
-  }
   const displayName = document.getElementById('profileDisplayName').value.trim();
-  const siteHandle = document.getElementById('profileSiteHandle').value.trim().toLowerCase();
   const bio = document.getElementById('profileBioInput').value.trim();
 
   if (!displayName) {
     showToast('⚠️ Укажи имя');
     return;
   }
-  if (!/^[a-z0-9_]{3,24}$/.test(siteHandle)) {
-    showToast('⚠️ Публичный ID: 3–24 символа, a-z, 0-9, _');
-    return;
-  }
 
   try {
-    const me = await API.updateMe({ displayName, siteHandle, bio });
+    const me = await API.updateMe({ displayName, bio });
     if (me?.user) {
       USER.name = me.user.name || USER.name;
       USER.siteHandle = me.user.siteHandle || USER.siteHandle;
@@ -144,11 +115,12 @@ async function saveProfile() {
       USER.displayName = me.user.displayName != null ? me.user.displayName : '';
       USER.bio = me.user.bio != null ? me.user.bio : '';
       document.getElementById('profileName').textContent = USER.name;
-      document.getElementById('profileHandle').textContent = '@' + (USER.siteHandle || USER.name);
+      document.getElementById('profileHandle').textContent = '@' + (USER.siteHandle || USER.id || '—');
+      const handleRead = document.getElementById('profileSiteHandleRead');
+      if (handleRead) handleRead.textContent = USER.siteHandle || USER.id || '—';
       document.getElementById('profileBio').textContent = USER.bio || '';
       setProfileAvatar(USER.avatar);
       document.getElementById('profileDisplayName').value = USER.displayName || USER.name || '';
-      document.getElementById('profileSiteHandle').value = USER.siteHandle || '';
       document.getElementById('profileBioInput').value = USER.bio || '';
     }
     showToast('✅ Профиль сохранён');
@@ -159,7 +131,6 @@ async function saveProfile() {
 }
 
 async function resetProfilePhoto() {
-  if (!isTelegramUser()) return;
   try {
     const me = await API.updateMe({ photoUrl: null });
     if (me?.user) {
@@ -176,7 +147,7 @@ async function resetProfilePhoto() {
 async function onProfileAvatarFileChange(ev) {
   const input = ev.target;
   const file = input?.files?.[0];
-  if (!file || !isTelegramUser()) return;
+  if (!file) return;
   try {
     const formData = new FormData();
     formData.append('image', file);
