@@ -15,7 +15,9 @@ html,body,#root,#feed,.slide{margin:0;padding:0;border:0;width:100%;height:100%;
 
   --nav-h: 64px;
   --info-h: 118px;
-  --game-bottom: calc(var(--safe-bottom) + var(--nav-h) + var(--info-h));
+  /* Полоска свайпа между iframe и блоком автора — только здесь листаем ленту */
+  --swipe-strip-h: 44px;
+  --game-bottom: calc(var(--safe-bottom) + var(--nav-h) + var(--info-h) + var(--swipe-strip-h));
 }
 
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;touch-action:none;}
@@ -47,8 +49,8 @@ body{
 }
 
 .slide-game{
-  touch-action:none;
-  pointer-events:none;
+  touch-action:auto;
+  pointer-events:auto;
   position:absolute;
   top:0;
   left:0;
@@ -58,10 +60,6 @@ body{
   border:none;
   display:block;
   background:#000;
-}
-body.playing .slide-game{
-  touch-action:auto;
-  pointer-events:auto;
 }
 
 .slide-placeholder{
@@ -84,28 +82,47 @@ body.playing .slide-game{
 #feed{background:#000;}
 .slide-placeholder.hidden{opacity:0;pointer-events:none;}
 
-#touch-layer{
+#swipe-strip{
   position:fixed;
-  top:0;
   left:0;
   right:0;
-  bottom:var(--game-bottom);
-  z-index:260;
+  bottom:calc(var(--safe-bottom) + var(--nav-h) + var(--info-h));
+  height:var(--swipe-strip-h);
+  z-index:310;
+  display:flex;
+  align-items:center;
+  justify-content:center;
   pointer-events:auto;
-  background:transparent;
   touch-action:none;
+  background:linear-gradient(180deg, rgba(0,0,0,0.08) 0%, rgba(0,0,0,0.55) 100%);
+  border-top:1px solid rgba(255,255,255,0.1);
+  backdrop-filter:blur(10px);
+  -webkit-backdrop-filter:blur(10px);
 }
 
-#touch-layer.dragging{z-index:360;}
+#swipe-strip.dragging{z-index:315;}
+
 /* На первом слайде свайп вниз — не перехватывать, чтобы сработал жест закрытия Telegram */
-#touch-layer.telegram-swipe-pass{
+#swipe-strip.telegram-swipe-pass{
   pointer-events:none !important;
 }
-body:has(#upload-screen.open) #touch-layer,
-body:has(#profile-screen.open) #touch-layer,
-body:has(#author-screen.open) #touch-layer,
-body:has(#search-screen.open) #touch-layer,
-body:has(#onboarding-screen.open) #touch-layer{
+
+.swipe-strip-hint{
+  font-size:11px;
+  font-weight:500;
+  letter-spacing:0.04em;
+  text-transform:uppercase;
+  color:rgba(255,255,255,0.38);
+  user-select:none;
+  pointer-events:none;
+  transition:opacity 0.35s ease;
+}
+
+body:has(#upload-screen.open) #swipe-strip,
+body:has(#profile-screen.open) #swipe-strip,
+body:has(#author-screen.open) #swipe-strip,
+body:has(#search-screen.open) #swipe-strip,
+body:has(#onboarding-screen.open) #swipe-strip{
   display:none;
 }
 
@@ -903,75 +920,6 @@ textarea.field-input{
 #toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
 
 /* ══════════════════════════════
-   PLAY CTA (лента — один тап «Играть»)
-══════════════════════════════ */
-#play-cta{
-  position:fixed;
-  left:0;
-  right:0;
-  top:0;
-  bottom:var(--game-bottom);
-  z-index:265;
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  justify-content:center;
-  gap:14px;
-  pointer-events:none;
-  transition:opacity 0.35s ease, visibility 0.35s;
-}
-#play-cta .feed-play-btn{
-  pointer-events:auto;
-}
-.feed-play-btn{
-  appearance:none;
-  border:none;
-  cursor:pointer;
-  font-family:'Space Grotesk',sans-serif;
-  font-size:16px;
-  font-weight:600;
-  letter-spacing:0.04em;
-  text-transform:uppercase;
-  padding:14px 40px;
-  border-radius:999px;
-  color:rgba(255,255,255,0.92);
-  background:rgba(255,255,255,0.14);
-  border:1px solid rgba(255,255,255,0.22);
-  backdrop-filter:blur(14px);
-  -webkit-backdrop-filter:blur(14px);
-  box-shadow:0 4px 24px rgba(0,0,0,0.35);
-  transition:transform 0.15s ease, background 0.2s ease, border-color 0.2s ease;
-}
-.feed-play-btn:active{
-  transform:scale(0.96);
-  background:rgba(255,255,255,0.22);
-}
-.play-cta-sub{
-  font-size:11px;
-  font-weight:500;
-  color:rgba(255,255,255,0.42);
-  letter-spacing:0.03em;
-  transition:opacity 0.35s ease;
-}
-
-/* В режиме просмотра ленты UI чуть тише — игра и кнопка в фокусе */
-body:not(.playing) #topbar,
-body:not(.playing) #side-actions,
-body:not(.playing) #game-info,
-body:not(.playing) #dots,
-body:not(.playing) #bottom-nav{
-  opacity:0.55;
-  transition:opacity 0.35s ease;
-}
-body.playing #topbar,
-body.playing #side-actions,
-body.playing #game-info,
-body.playing #dots,
-body.playing #bottom-nav{
-  opacity:1;
-}
-
-/* ══════════════════════════════
    ПУСТАЯ ЛЕНТА
 ══════════════════════════════ */
 #empty-state{
@@ -1159,103 +1107,4 @@ body.is-admin .admin-only{display:block;}
   .author-avatar{width:34px;height:34px;}
   .author-name{max-width:32vw;font-size:14px;}
   .follow-btn{padding:6px 9px;}
-}
-
-/* ══ PLAY MODE ══ */
-.slide-game-wrap {
-  position:absolute;
-  top:0; left:0; right:0;
-  height:calc(100dvh - var(--game-bottom));
-  transition:all 0.35s cubic-bezier(0.4,0,0.2,1);
-  z-index:1;
-}
-
-/* превью — игра затемнена, уменьшена */
-.slide-game-wrap.preview {
-  transform:scale(0.88) translateY(8px);
-  border-radius:24px;
-  overflow:hidden;
-  filter:brightness(0.45);
-}
-
-/* кнопка играть */
-.play-btn {
-  position:absolute;
-  top:50%; left:50%;
-  transform:translate(-50%,-50%);
-  z-index:10;
-  background:rgba(255,255,255,0.95);
-  color:#000;
-  font-size:17px;
-  font-weight:800;
-  padding:14px 36px;
-  border-radius:50px;
-  border:none;
-  cursor:pointer;
-  display:flex;
-  align-items:center;
-  gap:8px;
-  box-shadow:0 8px 32px rgba(0,0,0,0.4);
-  transition:transform 0.15s;
-  font-family:'Space Grotesk',sans-serif;
-  letter-spacing:-0.3px;
-}
-.play-btn:active { transform:translate(-50%,-50%) scale(0.94); }
-.play-btn.hidden { display:none; }
-
-/* кнопка закрыть */
-.close-btn {
-  position:fixed;
-  top:calc(var(--safe-top) + 10px);
-  right:12px;
-  z-index:520;
-  width:40px; height:40px;
-  border-radius:50%;
-  background:rgba(0,0,0,0.55);
-  border:1px solid rgba(255,255,255,0.28);
-  color:#fff;
-  font-size:18px;
-  line-height:1;
-  font-weight:500;
-  cursor:pointer;
-  display:none;
-  align-items:center;
-  justify-content:center;
-  backdrop-filter:blur(12px);
-  -webkit-backdrop-filter:blur(12px);
-  box-shadow:0 4px 20px rgba(0,0,0,0.45);
-  transition:opacity 0.2s, transform 0.15s, background 0.2s, border-color 0.2s;
-}
-.close-btn:active{
-  transform:scale(0.92);
-  background:rgba(255,255,255,0.18);
-  border-color:rgba(255,255,255,0.45);
-}
-.close-btn.visible {
-  display:flex;
-}
-
-/* фулскрин режим */
-body.playing .slide-game-wrap.preview {
-  transform:none;
-  border-radius:0;
-  filter:none;
-}
-body.playing #touch-layer { pointer-events:none; }
-body.playing .play-btn { display:none; }
-body.playing #play-cta{
-  opacity:0;
-  visibility:hidden;
-  pointer-events:none;
-}
-/* В режиме игры касания только в iframe; оверлей ленты не перехватывает */
-body.playing #side-actions,
-body.playing #game-info,
-body.playing #bottom-nav,
-body.playing #dots,
-body.playing #topbar{
-  pointer-events:none;
-}
-body.playing #close-play-btn{
-  pointer-events:auto;
 }

@@ -15,7 +15,6 @@
 
 <!-- ══ FEED ══ -->
 <div id="feed"></div>
-<button type="button" class="close-btn" id="close-play-btn" data-action="exit-play-mode">✕</button>
 
 <!-- ══ ПУСТАЯ ЛЕНТА ══ -->
 <div id="empty-state">
@@ -64,13 +63,9 @@
 <!-- ══ ПРОГРЕСС ══ -->
 <div id="dots"></div>
 
-<!-- ══ СЛОЙ ДЛЯ СВАЙПА ПОВЕРХ IFRAME ══ -->
-<div id="touch-layer"></div>
-
-<!-- ══ КНОПКА «ИГРАТЬ» (над touch-layer, один тап) ══ -->
-<div id="play-cta">
-  <button type="button" class="feed-play-btn" data-action="enter-play-mode">Играть</button>
-  <div class="play-cta-sub" id="play-cta-sub">Свайп — другая игра</div>
+<!-- ══ Узкая зона свайпа ленты (между игрой и блоком с автором) ══ -->
+<div id="swipe-strip" aria-hidden="true">
+  <span class="swipe-strip-hint" id="swipe-hint-label">Свайп вверх — другая игра</span>
 </div>
 
 <!-- ══ НИЖНИЙ НАВ ══ -->

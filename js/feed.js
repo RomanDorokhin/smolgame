@@ -28,16 +28,14 @@ function renderFeed() {
     document.getElementById('empty-state').classList.add('show');
     document.getElementById('side-actions').style.display = 'none';
     document.getElementById('game-info').style.display = 'none';
-    document.getElementById('play-cta').style.display = 'none';
-    document.getElementById('touch-layer').style.display = 'none';
+    document.getElementById('swipe-strip').style.display = 'none';
     return;
   }
 
   document.getElementById('empty-state').classList.remove('show');
   document.getElementById('side-actions').style.display = '';
   document.getElementById('game-info').style.display = '';
-  document.getElementById('touch-layer').style.display = '';
-  document.getElementById('play-cta').style.display = '';
+  document.getElementById('swipe-strip').style.display = '';
 
   GAMES.forEach((g, i) => {
     const slide = document.createElement('div');
@@ -137,7 +135,7 @@ function goTo(idx, instant = false) {
   if (GAMES.length === 0) return;
   const prevIdx = window.currentIdx;
   window.currentIdx = Math.max(0, Math.min(GAMES.length - 1, idx));
-  if (prevIdx !== window.currentIdx) resetPlayCtaSub();
+  if (prevIdx !== window.currentIdx) resetSwipeHint();
 
   window.slides.forEach((s, i) => {
     s.style.transition = instant ? 'none' : 'transform 0.4s cubic-bezier(0.4,0,0.2,1)';
@@ -195,22 +193,18 @@ let touchMoved = false;
 let touching = false;
 let activePointerId = null;
 
-function isPlayMode() {
-  return document.body.classList.contains('playing');
-}
-
 function isOverlayOpen() {
   return Boolean(document.querySelector('#upload-screen.open, #profile-screen.open, #search-screen.open, #author-screen.open, #onboarding-screen.open'));
 }
 
-function clearTelegramSwipePass(touchLayer) {
-  touchLayer?.classList.remove('telegram-swipe-pass');
+function clearTelegramSwipePass(el) {
+  el?.classList.remove('telegram-swipe-pass');
 }
 
-function feedPointerDown(e, touchLayer) {
+function feedPointerDown(e, strip) {
   if (e.pointerType === 'mouse' && e.button !== 0) return;
-  if (isPlayMode() || isOverlayOpen() || GAMES.length === 0) return;
-  if (touchLayer.style.display === 'none') return;
+  if (isOverlayOpen() || GAMES.length === 0) return;
+  if (strip.style.display === 'none') return;
 
   window.scrollTo?.(0, 0);
   touching = true;
@@ -218,30 +212,30 @@ function feedPointerDown(e, touchLayer) {
   touchStartY = e.clientY;
   touchStartTime = Date.now();
   touchMoved = false;
-  clearTelegramSwipePass(touchLayer);
-  touchLayer.classList.add('dragging');
+  clearTelegramSwipePass(strip);
+  strip.classList.add('dragging');
   try {
-    touchLayer.setPointerCapture(e.pointerId);
+    strip.setPointerCapture(e.pointerId);
   } catch (err) {
     /* setPointerCapture может бросить на старых WebView */
   }
 }
 
-function feedPointerMove(e, touchLayer) {
+function feedPointerMove(e, strip) {
   if (!touching || e.pointerId !== activePointerId) return;
   const y = e.clientY;
   const deltaFromStart = y - touchStartY;
 
   if (window.currentIdx === 0 && deltaFromStart > MOVE_THRESHOLD_PX) {
     const passPid = e.pointerId;
-    try { touchLayer.releasePointerCapture(e.pointerId); } catch (err) {}
+    try { strip.releasePointerCapture(e.pointerId); } catch (err) {}
     touching = false;
     activePointerId = null;
-    touchLayer.classList.remove('dragging');
-    touchLayer.classList.add('telegram-swipe-pass');
+    strip.classList.remove('dragging');
+    strip.classList.add('telegram-swipe-pass');
     const onLift = ev => {
       if (ev.pointerId !== passPid) return;
-      clearTelegramSwipePass(touchLayer);
+      clearTelegramSwipePass(strip);
       window.removeEventListener('pointerup', onLift, true);
       window.removeEventListener('pointercancel', onLift, true);
     };
@@ -256,14 +250,14 @@ function feedPointerMove(e, touchLayer) {
   }
 }
 
-function feedPointerUp(e, touchLayer) {
+function feedPointerUp(e, strip) {
   if (!touching || e.pointerId !== activePointerId) return;
   touching = false;
   activePointerId = null;
-  touchLayer.classList.remove('dragging');
+  strip.classList.remove('dragging');
 
-  if (touchLayer.classList.contains('telegram-swipe-pass')) {
-    clearTelegramSwipePass(touchLayer);
+  if (strip.classList.contains('telegram-swipe-pass')) {
+    clearTelegramSwipePass(strip);
     return;
   }
 
@@ -278,69 +272,69 @@ function feedPointerUp(e, touchLayer) {
   if (dy > 0) {
     if (dy > SWIPE_NEXT_PX || velocity > 0.35) {
       goTo(window.currentIdx + 1);
-      hideHint();
+      hideSwipeHint();
     }
   } else if (dy < 0 && window.currentIdx > 0) {
     if (-dy > SWIPE_PREV_PX || velocity > 0.35) {
       goTo(window.currentIdx - 1);
-      hideHint();
+      hideSwipeHint();
     }
   }
   e.preventDefault();
 }
 
-function feedPointerCancel(e, touchLayer) {
+function feedPointerCancel(e, strip) {
   if (!touching || e.pointerId !== activePointerId) return;
   touching = false;
   activePointerId = null;
-  touchLayer.classList.remove('dragging');
-  clearTelegramSwipePass(touchLayer);
+  strip.classList.remove('dragging');
+  clearTelegramSwipePass(strip);
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-  const touchLayer = document.getElementById('touch-layer');
-  if (!touchLayer) return;
+  const strip = document.getElementById('swipe-strip');
+  if (!strip) return;
 
-  touchLayer.addEventListener('pointerdown', e => feedPointerDown(e, touchLayer));
-  touchLayer.addEventListener('pointermove', e => feedPointerMove(e, touchLayer));
-  touchLayer.addEventListener('pointerup', e => feedPointerUp(e, touchLayer));
-  touchLayer.addEventListener('pointercancel', e => feedPointerCancel(e, touchLayer));
+  strip.addEventListener('pointerdown', e => feedPointerDown(e, strip));
+  strip.addEventListener('pointermove', e => feedPointerMove(e, strip));
+  strip.addEventListener('pointerup', e => feedPointerUp(e, strip));
+  strip.addEventListener('pointercancel', e => feedPointerCancel(e, strip));
 
-  touchLayer.addEventListener('wheel', e => {
-    if (isPlayMode() || isOverlayOpen() || GAMES.length < 2) return;
+  strip.addEventListener('wheel', e => {
+    if (isOverlayOpen() || GAMES.length < 2) return;
     e.preventDefault();
     if (Math.abs(e.deltaY) < 24) return;
     goTo(e.deltaY > 0 ? window.currentIdx + 1 : window.currentIdx - 1);
-    hideHint();
+    hideSwipeHint();
   }, { passive: false });
 });
 
 document.addEventListener('keydown', e => {
   if (!['ArrowDown', 'ArrowUp'].includes(e.key)) return;
-  if (isPlayMode() || isOverlayOpen() || GAMES.length === 0) return;
+  if (isOverlayOpen() || GAMES.length === 0) return;
   e.preventDefault();
   if (e.key === 'ArrowDown') goTo(window.currentIdx + 1);
   else if (window.currentIdx > 0) goTo(window.currentIdx - 1);
 });
 
-let hintHidden = false;
+let swipeHintHidden = false;
 
-function resetPlayCtaSub() {
-  hintHidden = false;
-  const sub = document.getElementById('play-cta-sub');
-  if (sub) {
-    sub.style.display = '';
-    sub.style.opacity = '';
+function resetSwipeHint() {
+  swipeHintHidden = false;
+  const label = document.getElementById('swipe-hint-label');
+  if (label) {
+    label.style.display = '';
+    label.style.opacity = '';
   }
 }
 
-function hideHint() {
-  if (hintHidden) return;
-  hintHidden = true;
-  const sub = document.getElementById('play-cta-sub');
-  if (sub) {
-    sub.style.opacity = '0';
-    setTimeout(() => { sub.style.display = 'none'; }, 400);
+function hideSwipeHint() {
+  if (swipeHintHidden) return;
+  swipeHintHidden = true;
+  const label = document.getElementById('swipe-hint-label');
+  if (label) {
+    label.style.opacity = '0';
+    setTimeout(() => { label.style.display = 'none'; }, 400);
   }
 }
 
@@ -348,25 +342,4 @@ window.loadGames = loadGames;
 window.renderFeed = renderFeed;
 window.goTo = goTo;
 window.updateOverlay = updateOverlay;
-window.hideHint = hideHint;
-
-// ══ PLAY MODE ══
-let playMode = false;
-
-function enterPlayMode() {
-  if (playMode || GAMES.length === 0 || isOverlayOpen()) return;
-  playMode = true;
-  document.body.classList.add('playing');
-  document.getElementById('close-play-btn')?.classList.add('visible');
-}
-
-function exitPlayMode() {
-  if (!playMode) return;
-  playMode = false;
-  document.body.classList.remove('playing');
-  document.getElementById('close-play-btn')?.classList.remove('visible');
-  resetPlayCtaSub();
-}
-
-window.enterPlayMode = enterPlayMode;
-window.exitPlayMode = exitPlayMode;
+window.hideHint = hideSwipeHint;
