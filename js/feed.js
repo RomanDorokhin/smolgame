@@ -3,6 +3,28 @@ const FEED_PAGE_SIZE = 15;
 window.feedHasMore = true;
 window.feedLoadingMore = false;
 
+function feedEl() {
+  return document.getElementById('feed');
+}
+
+function syncIdxFromScroll() {
+  const el = feedEl();
+  if (!el || GAMES.length === 0) return;
+  const h = el.clientHeight;
+  if (h <= 0) return;
+  const idx = Math.min(GAMES.length - 1, Math.max(0, Math.round(el.scrollTop / h)));
+  if (idx !== window.currentIdx) {
+    window.currentIdx = idx;
+    resetSwipeHint();
+    document.querySelectorAll('.dot').forEach((d, i) =>
+      d.classList.toggle('active', i === window.currentIdx)
+    );
+    updateOverlay();
+    lazyLoadAround(window.currentIdx);
+    maybeLoadMoreFeed();
+  }
+}
+
 async function loadGames() {
   window.feedHasMore = true;
   window.feedLoadingMore = false;
@@ -104,7 +126,7 @@ async function injectGameIntoFeed(gameId) {
 }
 
 function appendSlides(startIndex, gamesSlice) {
-  const feed = document.getElementById('feed');
+  const feed = feedEl();
   const dots = document.getElementById('dots');
   if (!feed || !dots) return;
 
@@ -113,7 +135,6 @@ function appendSlides(startIndex, gamesSlice) {
     const slide = document.createElement('div');
     slide.className = 'slide';
     slide.id = 'slide-' + i;
-    slide.style.transform = `translateY(${(i - window.currentIdx) * 100}%)`;
 
     const placeholder = document.createElement('div');
     placeholder.className = 'slide-placeholder';
@@ -192,7 +213,7 @@ function appendSlides(startIndex, gamesSlice) {
 }
 
 function renderFeed() {
-  const feed = document.getElementById('feed');
+  const feed = feedEl();
   const dots = document.getElementById('dots');
   feed.innerHTML = '';
   dots.innerHTML = '';
@@ -228,13 +249,18 @@ function lazyLoadAround(idx) {
 
 function goTo(idx, instant = false) {
   if (GAMES.length === 0) return;
+  const el = feedEl();
+  if (!el) return;
+
   const prevIdx = window.currentIdx;
   window.currentIdx = Math.max(0, Math.min(GAMES.length - 1, idx));
   if (prevIdx !== window.currentIdx) resetSwipeHint();
 
-  window.slides.forEach((s, i) => {
-    s.style.transition = instant ? 'none' : 'transform 0.4s cubic-bezier(0.4,0,0.2,1)';
-    s.style.transform = `translateY(${(i - window.currentIdx) * 100}%)`;
+  const h = el.clientHeight;
+  const top = window.currentIdx * h;
+  el.scrollTo({
+    top,
+    behavior: instant ? 'auto' : 'smooth',
   });
 
   document.querySelectorAll('.dot').forEach((d, i) =>
@@ -316,7 +342,6 @@ function feedPointerDown(e, strip) {
   if (isOverlayOpen() || GAMES.length === 0) return;
   if (strip.style.display === 'none') return;
 
-  window.scrollTo?.(0, 0);
   touching = true;
   activePointerId = e.pointerId;
   touchStartY = e.clientY;
@@ -403,6 +428,19 @@ function feedPointerCancel(e, strip) {
 
 document.addEventListener('DOMContentLoaded', () => {
   const strip = document.getElementById('swipe-strip');
+  const feed = feedEl();
+  if (feed) {
+    let scrollT = null;
+    feed.addEventListener('scroll', () => {
+      if (scrollT) cancelAnimationFrame(scrollT);
+      scrollT = requestAnimationFrame(() => {
+        scrollT = null;
+        syncIdxFromScroll();
+      });
+    }, { passive: true });
+    feed.addEventListener('scrollend', syncIdxFromScroll, { passive: true });
+  }
+
   if (!strip) return;
 
   strip.addEventListener('pointerdown', e => feedPointerDown(e, strip));
