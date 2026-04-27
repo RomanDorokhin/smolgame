@@ -987,6 +987,7 @@ textarea.field-input{
 #form-code .code-area{min-height:220px;height:min(42vh,320px);}
 #btn-code-tab-advance{margin-top:14px;width:100%;}
 .github-reauth-btn{margin-top:8px;}
+.gh-paste-strip{margin-bottom:12px;padding:10px 12px;border-radius:12px;background:rgba(255,255,255,0.06);font-size:14px;line-height:1.45;}
 .upload-wizard-step{margin-bottom:8px;}
 .upload-wizard-hint{
   font-size:14px;

@@ -66,9 +66,21 @@ async function handleGithubOAuthReturn() {
     if (typeof refreshUploadCapabilities === 'function') {
       await refreshUploadCapabilities();
     }
-    const upload = document.getElementById('upload-screen');
-    if (g === 'connected' && upload?.classList.contains('open') && typeof selectMethod === 'function') {
-      await selectMethod('code');
+    if (g === 'connected') {
+      if (typeof openUpload === 'function') openUpload();
+      if (typeof selectMethod === 'function') await selectMethod('code');
+      if (
+        typeof window.USER !== 'undefined' &&
+        !window.USER.isPremium &&
+        window.USER.isGithubConnected &&
+        window.USER.hasGithubPublishToken &&
+        typeof openGithubUploadModal === 'function'
+      ) {
+        openGithubUploadModal();
+        if (typeof showToast === 'function') {
+          showToast('Вставь HTML в окне или вкладка «Файлы»');
+        }
+      }
     }
   } catch (e) {
     /* ignore */
