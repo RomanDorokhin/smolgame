@@ -2,6 +2,19 @@
 
 Cloudflare Workers + D1 (SQLite). Весь API живёт в одном Worker.
 
+## Миграции D1 без клона репы на компьютере (GitHub Actions)
+
+В корне репозитория есть workflow **«D1 migrate (remote)»**.
+
+1. GitHub репозитория → **Settings** → **Secrets and variables** → **Actions** → **New repository secret**:
+   - **`CLOUDFLARE_API_TOKEN`** — [Create API token](https://dash.cloudflare.com/profile/api-tokens) с правами на **D1 Edit** (и при необходимости **Workers**).
+   - **`CLOUDFLARE_ACCOUNT_ID`** — на [Cloudflare Dashboard](https://dash.cloudflare.com/) справа в блоке **Account ID** (Overview).
+2. **Actions** → слева **D1 migrate (remote)** → **Run workflow** → выбери файл (например `0002_oauth_states.sql`) → **Run workflow**.
+
+Команда внутри — то же самое, что локально: `wrangler d1 execute smolgame --remote --file=...`.
+
+---
+
 ## Что нужно один раз
 
 1. **Установи Node.js** (если ещё нет): https://nodejs.org — бери LTS.
