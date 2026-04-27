@@ -344,16 +344,43 @@ const GET_ME_SQL_VARIANTS = [
      FROM users WHERE id = ?`,
 ];
 
-/** Всегда читает привязку GitHub отдельно — основной GET_ME_SQL_VARIANTS может быть без этих колонок. */
+/**
+ * Читает привязку GitHub отдельно (GET_ME_SQL_VARIANTS может быть без этих колонок).
+ * D1/SQLite иногда отдают ключи в snake_case — нормализуем.
+ */
+function normalizeGithubLinkRow(raw) {
+  if (!raw || typeof raw !== 'object') return null;
+  const uid =
+    raw.githubUserId ??
+    raw.github_user_id ??
+    raw.GITHUB_USER_ID ??
+    null;
+  const login =
+    raw.githubLogin ??
+    raw.github_login ??
+    raw.GITHUB_LOGIN ??
+    null;
+  const enc =
+    raw.githubAccessTokenEnc ??
+    raw.github_access_token_enc ??
+    raw.GITHUB_ACCESS_TOKEN_ENC ??
+    null;
+  return {
+    githubUserId: uid != null && String(uid).trim() !== '' ? String(uid) : null,
+    githubLogin: login != null && String(login).trim() !== '' ? String(login) : null,
+    githubAccessTokenEnc: enc != null && String(enc).trim() !== '' ? String(enc) : null,
+  };
+}
+
 async function fetchGithubLinkRow(db, userId) {
   const tries = [
-    `SELECT github_user_id AS githubUserId, github_login AS githubLogin, github_access_token_enc AS githubAccessTokenEnc
-       FROM users WHERE id = ?`,
-    `SELECT github_user_id AS githubUserId, github_login AS githubLogin FROM users WHERE id = ?`,
+    `SELECT github_user_id, github_login, github_access_token_enc FROM users WHERE id = ?`,
+    `SELECT github_user_id, github_login FROM users WHERE id = ?`,
   ];
   for (const sql of tries) {
     try {
-      return await db.prepare(sql).bind(userId).first();
+      const raw = await db.prepare(sql).bind(userId).first();
+      return normalizeGithubLinkRow(raw);
     } catch (e) {
       if (!isMissingColumnError(e)) throw e;
     }
@@ -375,10 +402,9 @@ export async function getMe(req, env) {
 
   const ghRow = await fetchGithubLinkRow(env.DB, user.id);
   if (ghRow) {
-    dbUser.githubUserId = ghRow.githubUserId ?? null;
-    dbUser.githubLogin = ghRow.githubLogin ?? null;
-    dbUser.githubAccessTokenEnc =
-      ghRow.githubAccessTokenEnc !== undefined ? ghRow.githubAccessTokenEnc : null;
+    dbUser.githubUserId = ghRow.githubUserId;
+    dbUser.githubLogin = ghRow.githubLogin;
+    dbUser.githubAccessTokenEnc = ghRow.githubAccessTokenEnc;
   }
 
   // Статистика автора (одна строка — надёжнее .first(), чем .all()[0] в D1).
