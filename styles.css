@@ -70,7 +70,6 @@ body{
 body.tg-only-wall #feed,
 body.tg-only-wall #feed-transition,
 body.tg-only-wall #empty-state,
-body.tg-only-wall #topbar,
 body.tg-only-wall #side-actions,
 body.tg-only-wall #game-info,
 body.tg-only-wall #dots,
@@ -228,12 +227,6 @@ body.tg-only-wall #toast{
   border:2px solid rgba(255,255,255,0.12);
   border-top-color:rgba(255,45,85,0.75);
   animation:spin 0.75s linear infinite;
-}
-
-body.feed-nav-animating #topbar{
-  opacity:0;
-  visibility:hidden;
-  transition:opacity 0.18s ease, visibility 0s linear 0.18s;
 }
 
 .slide-status-banner{
@@ -442,18 +435,6 @@ body:has(#onboarding-screen.open) #swipe-strip{
 /* ══════════════════════════════
    OVERLAY UI (поверх игры)
 ══════════════════════════════ */
-
-#topbar{
-  position:fixed;
-  top:0;left:0;right:0;
-  z-index:300;
-  padding:calc(var(--safe-top) + 10px) 16px 10px;
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  background:linear-gradient(180deg,rgba(0,0,0,0.45) 0%,transparent 100%);
-  pointer-events:none;
-}
 
 .logo{
   position:absolute;
@@ -1455,13 +1436,6 @@ body.is-admin .admin-only{display:block;}
     --nav-h:64px;
     --info-h:72px;
   }
-
-  #topbar{
-    padding:calc(var(--safe-top) + 8px) 12px 8px;
-    background:linear-gradient(180deg,rgba(0,0,0,0.35) 0%,transparent 100%);
-  }
-
-  .logo{font-size:19px;}
 
   #side-actions{
     right:10px;

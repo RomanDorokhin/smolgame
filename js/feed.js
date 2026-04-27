@@ -213,7 +213,6 @@ function renderFeed() {
       ft.classList.remove('feed-transition--show');
       ft.setAttribute('hidden', '');
     }
-    document.body.classList.remove('feed-nav-animating');
     clearTimeout(feedTransHideT1);
     clearTimeout(feedTransHideT2);
     return;
@@ -256,7 +255,6 @@ function showBetweenGamesLogoOverlay() {
   const el = document.getElementById('feed-transition');
   if (!el) return;
   el.removeAttribute('hidden');
-  document.body.classList.add('feed-nav-animating');
   requestAnimationFrame(() => {
     requestAnimationFrame(() => el.classList.add('feed-transition--show'));
   });
@@ -266,7 +264,6 @@ function showBetweenGamesLogoOverlay() {
     el.classList.remove('feed-transition--show');
     feedTransHideT2 = setTimeout(() => {
       el.setAttribute('hidden', '');
-      document.body.classList.remove('feed-nav-animating');
     }, FEED_LOGO_FADEOUT_MS);
   }, FEED_LOGO_OVERLAY_MS);
 }
