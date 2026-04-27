@@ -15,6 +15,26 @@ function redirect(url) {
   return Response.redirect(url, 302);
 }
 
+function pickOauthTelegramUserId(raw) {
+  if (!raw || typeof raw !== 'object') return '';
+  for (const k of ['user_id', 'USER_ID', 'userId', 'UserId', 'USERID']) {
+    const v = raw[k];
+    if (v != null && String(v).trim() !== '') return String(v).trim();
+  }
+  return '';
+}
+
+function countRunMeta(r) {
+  if (!r || typeof r !== 'object') return 0;
+  const m = r.meta;
+  if (!m || typeof m !== 'object') return 0;
+  const c = m.changes;
+  if (typeof c === 'number' && c >= 0) return c;
+  const w = m.rows_written;
+  if (typeof w === 'number' && w >= 0) return w;
+  return 0;
+}
+
 /**
  * GET /api/auth/github/start — JSON { url } для открытия в браузере (избегаем fetch-follow на GitHub).
  */
@@ -61,7 +81,10 @@ export async function githubOAuthStart(req, env) {
   /* read:user + repo — для будущего «залить в репозиторий пользователя»; сейчас callback сохраняет только профиль */
   u.searchParams.set('scope', 'read:user repo');
 
-  return json({ url: u.toString() });
+  return json({
+    url: u.toString(),
+    githubCallbackUrl: redirectUri,
+  });
 }
 
 /**
@@ -89,14 +112,13 @@ export async function githubOAuthCallback(req, env) {
     `SELECT user_id FROM oauth_states WHERE id = ? AND expires_at > ?`
   ).bind(state, Math.floor(Date.now() / 1000)).first();
 
-  const telegramUserId =
-    rawState?.user_id ??
-    rawState?.userId ??
-    rawState?.USER_ID ??
-    null;
-  const tgUid = telegramUserId != null ? String(telegramUserId).trim() : '';
+  const tgUid = pickOauthTelegramUserId(rawState);
 
   if (!tgUid) {
+    console.error('githubOAuthCallback: empty oauth row', {
+      stateLen: state?.length,
+      rawKeys: rawState ? Object.keys(rawState) : null,
+    });
     return back(`?github=error&message=${encodeURIComponent('Сессия истекла — попробуй снова')}`);
   }
 
@@ -158,6 +180,9 @@ export async function githubOAuthCallback(req, env) {
   }
 
   const enc = await encryptGithubToken(accessToken, githubClientSecret(env));
+  if (!enc) {
+    console.warn('githubOAuthCallback: encryptGithubToken returned empty (check GITHUB_CLIENT_SECRET on Worker)');
+  }
 
   let wrote = 0;
   try {
@@ -165,19 +190,19 @@ export async function githubOAuthCallback(req, env) {
       const r = await env.DB.prepare(
         `UPDATE users SET github_user_id = ?, github_login = ?, github_access_token_enc = ? WHERE id = ?`
       ).bind(ghId, ghLogin, enc, tgUid).run();
-      wrote = Number(r?.meta?.changes ?? 0);
+      wrote = countRunMeta(r);
     } else {
       const r = await env.DB.prepare(
         `UPDATE users SET github_user_id = ?, github_login = ? WHERE id = ?`
       ).bind(ghId, ghLogin, tgUid).run();
-      wrote = Number(r?.meta?.changes ?? 0);
+      wrote = countRunMeta(r);
     }
   } catch (e) {
     if (isMissingColumnError(e)) {
       const r = await env.DB.prepare(
         `UPDATE users SET github_user_id = ?, github_login = ? WHERE id = ?`
       ).bind(ghId, ghLogin, tgUid).run();
-      wrote = Number(r?.meta?.changes ?? 0);
+      wrote = countRunMeta(r);
     } else {
       throw e;
     }
@@ -193,17 +218,35 @@ export async function githubOAuthCallback(req, env) {
       )
         .bind(...(enc ? [ghId, ghLogin, enc, tgUid] : [ghId, ghLogin, tgUid]))
         .run();
-      wrote = Number(r2?.meta?.changes ?? 0);
+      wrote = countRunMeta(r2);
     } catch (e2) {
       console.error('githubOAuthCallback retry upsert', e2);
     }
   }
 
-  if (!wrote) {
-    console.error('githubOAuthCallback: UPDATE users changed 0 rows', { tgUid, ghId });
+  let verify = null;
+  try {
+    verify = await env.DB.prepare(`SELECT github_user_id AS g FROM users WHERE id = ?`)
+      .bind(tgUid)
+      .first();
+  } catch (e) {
+    /* ignore */
+  }
+  const verifyId = verify?.g ?? verify?.github_user_id ?? null;
+  const linked = verifyId != null && String(verifyId) === String(ghId);
+
+  if (!wrote && linked) {
+    wrote = 1;
+  }
+
+  if (!wrote && !linked) {
+    console.error('githubOAuthCallback: no row updated', { tgUid, ghId, rawStateKeys: rawState ? Object.keys(rawState) : null });
+    const base = workerOrigin(req, env);
     return back(
       `?github=error&message=${encodeURIComponent(
-        'Не нашли строку пользователя в базе. Открой мини-апп из бота ещё раз и повтори вход через GitHub.'
+        'GitHub вернулся, но запись в базу не прошла. В GitHub OAuth App укажи Callback: ' +
+          base +
+          '/auth/github/callback и снова «Войти через GitHub».'
       )}`
     );
   }
