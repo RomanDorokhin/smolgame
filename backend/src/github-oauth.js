@@ -1,9 +1,67 @@
 import { authenticate, upsertUser } from './auth.js';
-import { json, error, newId } from './http.js';
+import { json, error } from './http.js';
 import { encryptGithubToken } from './github-token-crypto.js';
 import { isMissingColumnError } from './db-errors.js';
 
 const OAUTH_TTL_SEC = 600;
+
+async function hmacSha256Base64Url(secret, message) {
+  const enc = new TextEncoder();
+  const keyRaw = await crypto.subtle.digest('SHA-256', enc.encode(String(secret || '')));
+  const key = await crypto.subtle.importKey('raw', keyRaw, { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+  const sig = await crypto.subtle.sign('HMAC', key, enc.encode(message));
+  const bytes = new Uint8Array(sig);
+  let bin = '';
+  for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+  return btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+
+function utf8ToBase64Url(s) {
+  const bytes = new TextEncoder().encode(s);
+  let bin = '';
+  for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+  return btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+
+function base64UrlToUtf8(b64) {
+  const pad = b64.length % 4 === 0 ? 0 : 4 - (b64.length % 4);
+  const s = b64.replace(/-/g, '+').replace(/_/g, '/') + '='.repeat(pad);
+  const bin = atob(s);
+  const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  return new TextDecoder().decode(bytes);
+}
+
+/** state = base64url(JSON).sig — не зависит от D1 oauth_states (устраняет «Сессия истекла» без записи в БД). */
+async function buildSignedGithubState(env, telegramUserId) {
+  const secret = githubClientSecret(env);
+  const now = Math.floor(Date.now() / 1000);
+  const inner = JSON.stringify({ u: String(telegramUserId), exp: now + OAUTH_TTL_SEC });
+  const payload = utf8ToBase64Url(inner);
+  const sig = await hmacSha256Base64Url(secret, payload);
+  return `${payload}.${sig}`;
+}
+
+async function verifySignedGithubState(env, state) {
+  const secret = githubClientSecret(env);
+  if (!secret || !state || typeof state !== 'string') return null;
+  const dot = state.indexOf('.');
+  if (dot < 1) return null;
+  const payload = state.slice(0, dot);
+  const sig = state.slice(dot + 1);
+  const expected = await hmacSha256Base64Url(secret, payload);
+  if (sig !== expected) return null;
+  let obj;
+  try {
+    obj = JSON.parse(base64UrlToUtf8(payload));
+  } catch (e) {
+    return null;
+  }
+  const uid = obj?.u != null ? String(obj.u).trim() : '';
+  const exp = Number(obj?.exp);
+  if (!uid || !exp || Math.floor(Date.now() / 1000) > exp) return null;
+  return uid;
+}
 
 function workerOrigin(req, env) {
   const base = String(env.GITHUB_OAUTH_REDIRECT_BASE || '').trim().replace(/\/$/, '');
@@ -13,15 +71,6 @@ function workerOrigin(req, env) {
 
 function redirect(url) {
   return Response.redirect(url, 302);
-}
-
-function pickOauthTelegramUserId(raw) {
-  if (!raw || typeof raw !== 'object') return '';
-  for (const k of ['user_id', 'USER_ID', 'userId', 'UserId', 'USERID']) {
-    const v = raw[k];
-    if (v != null && String(v).trim() !== '') return String(v).trim();
-  }
-  return '';
 }
 
 function countRunMeta(r) {
@@ -64,13 +113,15 @@ export async function githubOAuthStart(req, env) {
 
   await upsertUser(env.DB, user);
 
-  const state = newId() + newId();
-  const now = Math.floor(Date.now() / 1000);
-  const expires = now + OAUTH_TTL_SEC;
+  const cs = githubClientSecret(env);
+  if (!cs) {
+    return error(
+      'На Worker не задан секрет GITHUB_CLIENT_SECRET (GitHub OAuth App → Client secrets → скопировать в Cloudflare: wrangler secret put GITHUB_CLIENT_SECRET)',
+      503
+    );
+  }
 
-  await env.DB.prepare(
-    `INSERT INTO oauth_states (id, user_id, created_at, expires_at) VALUES (?, ?, ?, ?)`
-  ).bind(state, user.id, now, expires).run();
+  const state = await buildSignedGithubState(env, user.id);
 
   const origin = workerOrigin(req, env);
   const redirectUri = `${origin}/auth/github/callback`;
@@ -105,18 +156,26 @@ export async function githubOAuthCallback(req, env) {
     return back(`?github=error&message=${encodeURIComponent('Нет code или state')}`);
   }
 
-  const rawState = await env.DB.prepare(
-    `SELECT user_id FROM oauth_states WHERE id = ? AND expires_at > ?`
-  ).bind(state, Math.floor(Date.now() / 1000)).first();
-
-  const tgUid = pickOauthTelegramUserId(rawState);
+  let tgUid = await verifySignedGithubState(env, state);
 
   if (!tgUid) {
-    console.error('githubOAuthCallback: empty oauth row', {
-      stateLen: state?.length,
-      rawKeys: rawState ? Object.keys(rawState) : null,
-    });
-    return back(`?github=error&message=${encodeURIComponent('Сессия истекла — попробуй снова')}`);
+    try {
+      const rawState = await env.DB.prepare(
+        `SELECT user_id FROM oauth_states WHERE id = ? AND expires_at > ?`
+      ).bind(state, Math.floor(Date.now() / 1000)).first();
+      const fromDb =
+        rawState?.user_id ??
+        rawState?.userId ??
+        null;
+      if (fromDb != null) tgUid = String(fromDb).trim();
+    } catch (e) {
+      /* oauth_states может отсутствовать */
+    }
+  }
+
+  if (!tgUid) {
+    console.error('githubOAuthCallback: invalid state', { stateLen: state?.length });
+    return back(`?github=error&message=${encodeURIComponent('Сессия истекла — открой вход через GitHub снова из мини-аппа')}`);
   }
 
   const clientId = githubClientId(env);
@@ -237,7 +296,7 @@ export async function githubOAuthCallback(req, env) {
   }
 
   if (!wrote && !linked) {
-    console.error('githubOAuthCallback: no row updated', { tgUid, ghId, rawStateKeys: rawState ? Object.keys(rawState) : null });
+    console.error('githubOAuthCallback: no row updated', { tgUid, ghId });
     const base = workerOrigin(req, env);
     return back(
       `?github=error&message=${encodeURIComponent(
@@ -248,7 +307,11 @@ export async function githubOAuthCallback(req, env) {
     );
   }
 
-  await env.DB.prepare(`DELETE FROM oauth_states WHERE id = ?`).bind(state).run();
+  try {
+    await env.DB.prepare(`DELETE FROM oauth_states WHERE id = ?`).bind(state).run();
+  } catch (e) {
+    /* legacy table optional */
+  }
 
   return back('?github=connected');
 }

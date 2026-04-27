@@ -169,6 +169,8 @@ backend/
 | GET    | `/api/auth/github/start`          | JSON `{ url }` — открыть в браузере (OAuth) |
 | GET    | `/auth/github/callback`          | Callback GitHub, затем редирект на `/auth/github/done` |
 | GET    | `/auth/github/done`              | HTML с ссылкой `t.me/...` в Telegram (не GitHub Pages) |
+
+OAuth `state` подписывается HMAC (`GITHUB_CLIENT_SECRET`) и содержит Telegram id — не зависит от таблицы `oauth_states` в D1.
 | POST   | `/api/submit`                     | Отправить игру на модерацию         |
 | POST   | `/api/games/:id/like`             | Лайк                                |
 | DELETE | `/api/games/:id/like`             | Убрать лайк                         |
