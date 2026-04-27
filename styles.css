@@ -1,12 +1,20 @@
 html,body,#root,#feed,.slide{margin:0;padding:0;border:0;width:100%;height:100%;overflow:hidden;}
 
 :root{
-  /* Палитра: глубокий графит + сапфир/циан (спокойный «первый эшелон», не красный) */
-  --accent:#5b8def;
-  --accent2:#22c1d6;
-  --accent-rgb:91,141,239;
-  --accent2-rgb:34,193,214;
-  --accent-soft:rgba(91,141,239,0.12);
+  /* Акцент — приглушённый стальной (не «электрический» голубой): ссылки, лайк, бейджи */
+  --accent:#8b9aac;
+  --accent2:#6a7a8c;
+  --accent-rgb:139,154,172;
+  --accent2-rgb:106,122,140;
+  --accent-soft:rgba(139,154,172,0.1);
+  /* Главные кнопки: нейтральный графит — не отвлекает от игр и контента */
+  --cta-bg:linear-gradient(180deg,#2f323a 0%,#22252c 55%,#1a1c22 100%);
+  --cta-bg-solid:#282b34;
+  --cta-border:rgba(255,255,255,0.11);
+  --cta-highlight:rgba(255,255,255,0.05);
+  /* Вордмарк / марка: чуть теплее серебра */
+  --brand-1:#9eb0c8;
+  --brand-2:#6f7d92;
   --bg:#0a0b0e;
   --surface:#13141a;
   --surface-elevated:#1c1e26;
@@ -41,7 +49,7 @@ html,body,#root,#feed,.slide{margin:0;padding:0;border:0;width:100%;height:100%;
 .sg-icon--sm{width:20px;height:20px;}
 .sg-icon--nav{width:24px;height:24px;}
 .sg-icon--heart path{vector-effect:non-scaling-stroke;}
-.sg-icon--heart-filled{color:var(--accent);}
+.sg-icon--heart-filled{color:rgba(200,210,222,0.95);}
 .action-icon .sg-icon{width:24px;height:24px;}
 
 .sg-mini-stat{display:inline-flex;align-items:center;gap:5px;vertical-align:middle;}
@@ -84,7 +92,7 @@ html,body,#root,#feed,.slide{margin:0;padding:0;border:0;width:100%;height:100%;
   min-width:12px;
 }
 .upload-steps-dot.done{background:rgba(255,255,255,0.28);}
-.upload-steps-dot.current{background:linear-gradient(90deg,var(--accent),var(--accent2));}
+.upload-steps-dot.current{background:linear-gradient(90deg,rgba(255,255,255,0.38),rgba(255,255,255,0.14));}
 
 /* ══════════════════════════════
    BUTTONS — единый язык контролов (Telegram-like)
@@ -112,14 +120,19 @@ html,body,#root,#feed,.slide{margin:0;padding:0;border:0;width:100%;height:100%;
 
 .sg-btn--primary{
   padding:var(--btn-pad-y) var(--btn-pad-x);
-  border:none;
+  border:1px solid var(--cta-border);
   color:#fff;
   font-family:'Syne',sans-serif;
   font-weight:800;
   font-size:17px;
-  background:linear-gradient(135deg,var(--accent),var(--accent2));
-  box-shadow:0 1px 0 rgba(255,255,255,0.1) inset;
+  background:var(--cta-bg);
+  box-shadow:
+    0 1px 0 var(--cta-highlight) inset,
+    0 10px 28px rgba(0,0,0,0.35);
   border-radius:var(--btn-radius-lg);
+}
+.sg-btn--primary:active:not(:disabled){
+  background:linear-gradient(180deg,#3a3e48 0%,#262930 100%);
 }
 
 .sg-btn--secondary{
@@ -176,8 +189,8 @@ html,body,#root,#feed,.slide{margin:0;padding:0;border:0;width:100%;height:100%;
 .feed-coach-fab[hidden]{display:none !important;}
 
 #swipe-strip.swipe-strip--coach{
-  border-top-color:rgba(var(--accent-rgb),0.22);
-  box-shadow:0 -1px 0 rgba(var(--accent-rgb),0.1);
+  border-top-color:rgba(255,255,255,0.12);
+  box-shadow:0 -1px 0 rgba(255,255,255,0.06);
 }
 #swipe-strip.swipe-strip--coach .swipe-strip-handle-h{
   animation:swipeCoachPulse 2.2s ease-in-out infinite;
@@ -300,7 +313,7 @@ body.tg-only-wall #app-boot-splash{
   box-shadow:
     0 0 0 1px rgba(255,255,255,0.07),
     0 10px 40px rgba(0,0,0,0.45),
-    0 0 32px rgba(var(--accent-rgb),0.12);
+    0 0 24px rgba(0,0,0,0.5);
   overflow:hidden;
 }
 .sg-brand-mark svg{
@@ -330,7 +343,7 @@ body.tg-only-wall #app-boot-splash{
 .sg-brand-word-muted{color:rgba(255,255,255,0.42);}
 .sg-brand-word-accent{
   margin-left:1px;
-  background:linear-gradient(135deg,var(--accent) 0%,var(--accent2) 100%);
+  background:linear-gradient(135deg,var(--brand-1) 0%,var(--brand-2) 100%);
   -webkit-background-clip:text;
   -webkit-text-fill-color:transparent;
   background-clip:text;
@@ -347,7 +360,7 @@ body.tg-only-wall #app-boot-splash{
   height:36px;
   border-radius:50%;
   border:2px solid rgba(255,255,255,0.12);
-  border-top-color:rgba(var(--accent-rgb),0.75);
+  border-top-color:rgba(255,255,255,0.55);
   animation:spin 0.75s linear infinite;
 }
 
@@ -515,13 +528,13 @@ body.tg-only-wall #toast{
   0%{opacity:0;transform:scale(0.88) translate3d(0,8px,0);}
   100%{opacity:1;transform:scale(1) translate3d(0,0,0);}
 }
-.feed-transition-logo{filter:drop-shadow(0 6px 28px rgba(var(--accent-rgb),0.15));}
+.feed-transition-logo{filter:drop-shadow(0 6px 24px rgba(0,0,0,0.4));}
 .feed-transition-ring{
   width:34px;
   height:34px;
   border-radius:50%;
   border:2px solid rgba(255,255,255,0.12);
-  border-top-color:rgba(var(--accent-rgb),0.75);
+  border-top-color:rgba(255,255,255,0.5);
   animation:spin 0.75s linear infinite;
 }
 
@@ -801,7 +814,7 @@ body:has(#feed-nav-tip-overlay.feed-nav-tip-visible) #feed-coach-fab{
 .loader-ring{
   width:48px;height:48px;
   border:3px solid var(--border);
-  border-top-color:var(--accent);
+  border-top-color:rgba(255,255,255,0.45);
   border-radius:50%;
   animation:spin 0.8s linear infinite;
 }
@@ -972,7 +985,7 @@ body:has(#feed-nav-tip-overlay.feed-nav-tip-visible) #feed-coach-fab{
 .author-avatar{
   width:42px;height:42px;
   border-radius:50%;
-  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  background:linear-gradient(160deg,#2a2d36 0%,#1c1e25 100%);
   display:flex;align-items:center;justify-content:center;
   font-size:16px;
   font-weight:700;
@@ -997,19 +1010,21 @@ body:has(#feed-nav-tip-overlay.feed-nav-tip-visible) #feed-coach-fab{
   font-size:13px;
   font-weight:700;
   color:#fff;
-  background:linear-gradient(135deg,var(--accent),var(--accent2));
-  border:none;
+  background:var(--cta-bg);
+  border:1px solid var(--cta-border);
   border-radius:16px;
   padding:8px 14px;
   cursor:pointer;
-  transition:all 0.2s;
+  transition:background 0.2s, border-color 0.2s, opacity 0.2s;
   white-space:nowrap;
   line-height:1.4;
+  box-shadow:0 1px 0 var(--cta-highlight) inset;
 }
 .follow-btn.following{
   color:var(--muted);
   background:var(--surface-elevated);
   border:1px solid var(--border);
+  box-shadow:none;
 }
 
 /* ══════════════════════════════
@@ -1079,7 +1094,7 @@ body:has(#feed-nav-tip-overlay.feed-nav-tip-visible) #feed-coach-fab{
   background:rgba(255,255,255,0.25);
   transition:all 0.3s;
 }
-.dot.active{background:rgba(255,255,255,0.9);height:12px;border-radius:2px;box-shadow:0 0 0 1px rgba(var(--accent-rgb),0.22);}
+.dot.active{background:rgba(255,255,255,0.9);height:12px;border-radius:2px;box-shadow:0 0 0 1px rgba(255,255,255,0.1);}
 
 /* ══════════════════════════════
    ЭКРАН: ЗАГРУЗИТЬ ИГРУ
@@ -1395,19 +1410,25 @@ textarea.field-input{
 .submit-btn{
   width:100%;
   padding:var(--btn-pad-y) var(--btn-pad-x);
-  background:linear-gradient(135deg,var(--accent),var(--accent2));
-  border:none;
+  background:var(--cta-bg);
+  border:1px solid var(--cta-border);
   border-radius:var(--btn-radius-lg);
   color:#fff;
   font-family:'Syne',sans-serif;
   font-size:17px;
   font-weight:800;
   cursor:pointer;
-  transition:opacity 0.18s ease,transform 0.14s ease;
+  transition:opacity 0.18s ease,transform 0.14s ease, background 0.18s ease;
   margin-top:8px;
-  box-shadow:0 1px 0 rgba(255,255,255,0.1) inset;
+  box-shadow:
+    0 1px 0 var(--cta-highlight) inset,
+    0 8px 24px rgba(0,0,0,0.28);
 }
-.submit-btn:active:not(:disabled){opacity:0.9;transform:scale(0.985);}
+.submit-btn:active:not(:disabled){
+  opacity:0.95;
+  transform:scale(0.985);
+  background:linear-gradient(180deg,#3a3e48 0%,#23262d 100%);
+}
 .submit-btn:disabled{opacity:0.4;cursor:not-allowed;}
 
 .genre-pills{
@@ -1426,8 +1447,8 @@ textarea.field-input{
   transition:all 0.2s;
 }
 .genre-pill.selected{
-  background:var(--accent-soft);
-  border-color:rgba(var(--accent-rgb),0.38);
+  background:rgba(255,255,255,0.1);
+  border-color:rgba(255,255,255,0.2);
   color:rgba(255,255,255,0.95);
 }
 
@@ -1475,7 +1496,7 @@ textarea.field-input{
   max-height:72px;
   aspect-ratio:1/1;
   border-radius:50%;
-  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  background:linear-gradient(160deg,#2a2d36 0%,#1c1e25 100%);
   display:flex;align-items:center;justify-content:center;
   font-size:28px;
   font-weight:800;
@@ -1540,10 +1561,10 @@ textarea.field-input{
   transition:opacity 0.18s ease, transform 0.14s ease, background 0.18s ease;
 }
 .profile-edit-toggle-btn.primary{
-  border:none;
-  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  border:1px solid var(--cta-border);
+  background:var(--cta-bg);
   color:#fff;
-  box-shadow:0 1px 0 rgba(255,255,255,0.08) inset;
+  box-shadow:0 1px 0 var(--cta-highlight) inset, 0 6px 20px rgba(0,0,0,0.2);
 }
 .profile-edit-toggle-btn:active{opacity:0.92;transform:scale(0.985);}
 
@@ -1617,16 +1638,16 @@ textarea.field-input{
 .author-follow-btn{
   width:100%;
   padding:13px 14px;
-  border:none;
+  border:1px solid var(--cta-border);
   border-radius:var(--btn-radius-lg);
-  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  background:var(--cta-bg);
   color:#fff;
   font-family:'Syne',sans-serif;
   font-size:16px;
   font-weight:800;
   cursor:pointer;
-  transition:opacity 0.18s ease, transform 0.14s ease;
-  box-shadow:0 1px 0 rgba(255,255,255,0.08) inset;
+  transition:opacity 0.18s ease, transform 0.14s ease, background 0.18s ease;
+  box-shadow:0 1px 0 var(--cta-highlight) inset, 0 8px 24px rgba(0,0,0,0.25);
 }
 .author-follow-btn:active:not(:disabled){transform:scale(0.985);}
 .author-follow-btn.following{
@@ -1993,14 +2014,15 @@ textarea.field-input{
 .empty-btn{
   margin-top:8px;
   padding:var(--btn-pad-y) 28px;
-  background:linear-gradient(135deg,var(--accent),var(--accent2));
-  border:none;border-radius:var(--btn-radius-lg);
+  background:var(--cta-bg);
+  border:1px solid var(--cta-border);
+  border-radius:var(--btn-radius-lg);
   color:#fff;font-family:'Syne',sans-serif;font-size:17px;font-weight:800;
   cursor:pointer;
-  box-shadow:0 1px 0 rgba(255,255,255,0.1) inset;
-  transition:opacity 0.18s ease, transform 0.14s ease;
+  box-shadow:0 1px 0 var(--cta-highlight) inset, 0 8px 24px rgba(0,0,0,0.25);
+  transition:opacity 0.18s ease, transform 0.14s ease, background 0.18s ease;
 }
-.empty-btn:active{transform:scale(0.985);opacity:0.92;}
+.empty-btn:active{transform:scale(0.985);opacity:0.95;}
 
 /* ══════════════════════════════
    ADMIN (видно только админу)
