@@ -6,6 +6,7 @@ import {
   adminPending, adminApprove, adminReject,
 } from './routes.js';
 import { githubOAuthStart, githubOAuthCallback } from './github-oauth.js';
+import { githubOAuthDonePage } from './github-oauth-done.js';
 import { submitHtmlGame, serveHostedGame } from './hosted-games.js';
 import { publishGameToGithub } from './github-publish.js';
 
@@ -63,6 +64,7 @@ async function route(req, env, pathname) {
   if (pathname === '/api/auth/github/start' && m === 'GET') return githubOAuthStart(req, env);
   if (pathname === '/api/auth/github/unlink' && m === 'POST') return githubUnlink(req, env);
   if (pathname === '/auth/github/callback' && m === 'GET') return githubOAuthCallback(req, env);
+  if (pathname === '/auth/github/done' && m === 'GET') return githubOAuthDonePage(req, env);
 
   let match;
   if ((match = pathname.match(/^\/api\/games\/([^/]+)$/))) {

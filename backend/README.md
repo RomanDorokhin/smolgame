@@ -167,7 +167,8 @@ backend/
 | GET    | `/api/me/games`                   | Все свои игры (включая pending)     |
 | GET    | `/api/games/:id`                  | Одна игра (для открытия из профиля)  |
 | GET    | `/api/auth/github/start`          | JSON `{ url }` — открыть в браузере (OAuth) |
-| GET    | `/auth/github/callback`          | Callback GitHub (редирект в мини-апп) |
+| GET    | `/auth/github/callback`          | Callback GitHub, затем редирект на `/auth/github/done` |
+| GET    | `/auth/github/done`              | HTML с ссылкой `t.me/...` в Telegram (не GitHub Pages) |
 | POST   | `/api/submit`                     | Отправить игру на модерацию         |
 | POST   | `/api/games/:id/like`             | Лайк                                |
 | DELETE | `/api/games/:id/like`             | Убрать лайк                         |

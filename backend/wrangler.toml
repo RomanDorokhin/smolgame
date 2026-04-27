@@ -23,8 +23,12 @@ PREMIUM_TG_IDS = "336216597"
 
 # Origin фронтенда для CORS. GitHub Pages = <username>.github.io.
 FRONTEND_ORIGIN = "https://romandorokhin.github.io"
-# Путь мини-аппа на GitHub Pages (редирект после GitHub OAuth).
+# Путь мини-аппа на GitHub Pages.
 GITHUB_APP_PATH = "/smolgame"
+# После GitHub OAuth браузер попадает на Worker /auth/github/done — там ссылка в Telegram (должен совпадать с js/config.js BOT_USERNAME).
+TELEGRAM_BOT_USERNAME = "smolgame_bot"
+# Если мини-апп заведён как t.me/bot/shortname — укажи shortname (иначе только кнопка Menu у бота).
+# TELEGRAM_MINI_APP_SHORT_NAME = ""
 # GitHub OAuth App → Client ID (публичный). ОБЯЗАТЕЛЬНО держи здесь: иначе `wrangler deploy`
 # сотрёт переменные, заданные только в Dashboard, и вход через GitHub сломается.
 GITHUB_CLIENT_ID = "Ov23linmpKR0Bab5Fogn"

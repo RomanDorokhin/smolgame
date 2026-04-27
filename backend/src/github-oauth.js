@@ -95,12 +95,9 @@ export async function githubOAuthCallback(req, env) {
   const code = url.searchParams.get('code');
   const state = url.searchParams.get('state');
   const err = url.searchParams.get('error');
-  const originBase = String(env.FRONTEND_ORIGIN || '').replace(/\/$/, '');
-  const appPath = String(env.GITHUB_APP_PATH || '/smolgame').replace(/\/$/, '');
-  const pathPrefix = appPath.startsWith('/') ? appPath : `/${appPath}`;
-  const appRoot = `${originBase}${pathPrefix}/`;
-
-  const back = qs => redirect(`${appRoot.replace(/\/?$/, '/')}${qs}`);
+  /** После OAuth редирект на страницу Worker — там рабочая ссылка t.me (GitHub Pages даёт «мёртвый» URL на десктопе). */
+  const doneBase = `${workerOrigin(req, env)}/auth/github/done`;
+  const back = qs => redirect(`${doneBase}${qs}`);
 
   if (err) return back(`?github=error&message=${encodeURIComponent(err)}`);
 
