@@ -98,6 +98,8 @@ async function injectGameIntoFeed(gameId) {
       document.getElementById('side-actions').style.display = '';
       document.getElementById('game-info').style.display = '';
       document.getElementById('swipe-strip').style.display = '';
+      const edge = document.getElementById('swipe-edge-zone');
+      if (edge) edge.style.display = '';
       goTo(0, true);
     }
     return idx;
@@ -207,6 +209,8 @@ function renderFeed() {
     document.getElementById('side-actions').style.display = 'none';
     document.getElementById('game-info').style.display = 'none';
     document.getElementById('swipe-strip').style.display = 'none';
+    const edgeEmpty = document.getElementById('swipe-edge-zone');
+    if (edgeEmpty) edgeEmpty.style.display = 'none';
     return;
   }
 
@@ -214,6 +218,8 @@ function renderFeed() {
   document.getElementById('side-actions').style.display = '';
   document.getElementById('game-info').style.display = '';
   document.getElementById('swipe-strip').style.display = '';
+  const edgeShow = document.getElementById('swipe-edge-zone');
+  if (edgeShow) edgeShow.style.display = '';
 
   appendSlides(0, GAMES);
   goTo(0, true);
@@ -230,12 +236,42 @@ function lazyLoadAround(idx) {
   });
 }
 
+function hapticFeedNav() {
+  try {
+    Telegram?.WebApp?.HapticFeedback?.impactOccurred?.('light');
+  } catch (e) { /* ignore */ }
+}
+
+function flashFeedSlideChange() {
+  document.body.classList.remove('feed-slide-flash');
+  void document.body.offsetWidth;
+  document.body.classList.add('feed-slide-flash');
+  setTimeout(() => document.body.classList.remove('feed-slide-flash'), 400);
+}
+
+function updateFeedNavArrows() {
+  const prevBtn = document.querySelector('[data-action="feed-nav-prev"]');
+  const nextBtn = document.querySelector('[data-action="feed-nav-next"]');
+  const edge = document.getElementById('swipe-edge-zone');
+  const n = GAMES.length;
+  const i = window.currentIdx;
+  if (prevBtn) prevBtn.disabled = n < 2 || i <= 0;
+  if (nextBtn) nextBtn.disabled = n < 2 || i >= n - 1;
+  if (edge) edge.style.pointerEvents = n < 2 ? 'none' : '';
+}
+
 function goTo(idx, instant = false) {
   if (GAMES.length === 0) return;
 
   const prevIdx = window.currentIdx;
   window.currentIdx = Math.max(0, Math.min(GAMES.length - 1, idx));
-  if (prevIdx !== window.currentIdx) resetSwipeHint();
+  if (prevIdx !== window.currentIdx) {
+    resetSwipeHint();
+    if (!instant) {
+      hapticFeedNav();
+      flashFeedSlideChange();
+    }
+  }
 
   window.slides.forEach((s, i) => {
     s.style.transition = instant ? 'none' : 'top 0.4s cubic-bezier(0.4,0,0.2,1)';
@@ -249,6 +285,7 @@ function goTo(idx, instant = false) {
   updateOverlay();
   lazyLoadAround(window.currentIdx);
   maybeLoadMoreFeed();
+  updateFeedNavArrows();
 }
 
 function updateOverlay() {
@@ -309,47 +346,63 @@ let touching = false;
 let activePointerId = null;
 
 function isOverlayOpen() {
-  return Boolean(document.querySelector('#upload-screen.open, #profile-screen.open, #search-screen.open, #author-screen.open, #onboarding-screen.open'));
+  return Boolean(document.querySelector(
+    '#upload-screen.open, #report-screen.open, #profile-screen.open, #search-screen.open, #author-screen.open, #onboarding-screen.open, #feed-nav-tip-overlay.feed-nav-tip-visible'
+  ));
 }
 
-function clearTelegramSwipePass(el) {
-  el?.classList.remove('telegram-swipe-pass');
+function swipeNavEls() {
+  const strip = document.getElementById('swipe-strip');
+  const edge = document.getElementById('swipe-edge-zone');
+  return { strip, edge };
 }
 
-function feedPointerDown(e, strip) {
+function clearTelegramSwipePass() {
+  swipeNavEls().strip?.classList.remove('telegram-swipe-pass');
+  swipeNavEls().edge?.classList.remove('telegram-swipe-pass');
+}
+
+let swipeDragHost = null;
+
+function feedPointerDown(e, dragHost) {
   if (e.pointerType === 'mouse' && e.button !== 0) return;
   if (isOverlayOpen() || GAMES.length === 0) return;
-  if (strip.style.display === 'none') return;
+  const strip = document.getElementById('swipe-strip');
+  if (strip?.style.display === 'none') return;
 
   touching = true;
   activePointerId = e.pointerId;
+  swipeDragHost = dragHost;
   touchStartY = e.clientY;
   touchStartTime = Date.now();
   touchMoved = false;
-  clearTelegramSwipePass(strip);
-  strip.classList.add('dragging');
+  clearTelegramSwipePass();
+  dragHost.classList.add('dragging');
   try {
-    strip.setPointerCapture(e.pointerId);
+    dragHost.setPointerCapture(e.pointerId);
   } catch (err) {
     /* setPointerCapture может бросить на старых WebView */
   }
 }
 
-function feedPointerMove(e, strip) {
-  if (!touching || e.pointerId !== activePointerId) return;
+function feedPointerMove(e, dragHost) {
+  if (!touching || e.pointerId !== activePointerId || dragHost !== swipeDragHost) return;
   const y = e.clientY;
   const deltaFromStart = y - touchStartY;
 
   if (window.currentIdx === 0 && deltaFromStart > MOVE_THRESHOLD_PX) {
     const passPid = e.pointerId;
-    try { strip.releasePointerCapture(e.pointerId); } catch (err) {}
+    try { dragHost.releasePointerCapture(e.pointerId); } catch (err) {}
     touching = false;
     activePointerId = null;
-    strip.classList.remove('dragging');
-    strip.classList.add('telegram-swipe-pass');
+    swipeDragHost = null;
+    dragHost.classList.remove('dragging');
+    const { strip, edge } = swipeNavEls();
+    strip?.classList.add('telegram-swipe-pass');
+    edge?.classList.add('telegram-swipe-pass');
     const onLift = ev => {
       if (ev.pointerId !== passPid) return;
-      clearTelegramSwipePass(strip);
+      clearTelegramSwipePass();
       window.removeEventListener('pointerup', onLift, true);
       window.removeEventListener('pointercancel', onLift, true);
     };
@@ -364,14 +417,15 @@ function feedPointerMove(e, strip) {
   }
 }
 
-function feedPointerUp(e, strip) {
-  if (!touching || e.pointerId !== activePointerId) return;
+function feedPointerUp(e, dragHost) {
+  if (!touching || e.pointerId !== activePointerId || dragHost !== swipeDragHost) return;
   touching = false;
   activePointerId = null;
-  strip.classList.remove('dragging');
+  swipeDragHost = null;
+  dragHost.classList.remove('dragging');
 
-  if (strip.classList.contains('telegram-swipe-pass')) {
-    clearTelegramSwipePass(strip);
+  if (dragHost.classList.contains('telegram-swipe-pass')) {
+    clearTelegramSwipePass();
     return;
   }
 
@@ -397,22 +451,30 @@ function feedPointerUp(e, strip) {
   e.preventDefault();
 }
 
-function feedPointerCancel(e, strip) {
-  if (!touching || e.pointerId !== activePointerId) return;
+function feedPointerCancel(e, dragHost) {
+  if (!touching || e.pointerId !== activePointerId || dragHost !== swipeDragHost) return;
   touching = false;
   activePointerId = null;
-  strip.classList.remove('dragging');
-  clearTelegramSwipePass(strip);
+  swipeDragHost = null;
+  dragHost.classList.remove('dragging');
+  clearTelegramSwipePass();
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-  const strip = document.getElementById('swipe-strip');
+  const { strip, edge } = swipeNavEls();
   if (!strip) return;
 
   strip.addEventListener('pointerdown', e => feedPointerDown(e, strip));
   strip.addEventListener('pointermove', e => feedPointerMove(e, strip));
   strip.addEventListener('pointerup', e => feedPointerUp(e, strip));
   strip.addEventListener('pointercancel', e => feedPointerCancel(e, strip));
+
+  if (edge) {
+    edge.addEventListener('pointerdown', e => feedPointerDown(e, edge));
+    edge.addEventListener('pointermove', e => feedPointerMove(e, edge));
+    edge.addEventListener('pointerup', e => feedPointerUp(e, edge));
+    edge.addEventListener('pointercancel', e => feedPointerCancel(e, edge));
+  }
 
   strip.addEventListener('wheel', e => {
     if (isOverlayOpen() || GAMES.length < 2) return;

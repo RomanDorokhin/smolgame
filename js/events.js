@@ -18,6 +18,10 @@ const CLICK_ACTIONS = {
   'share-game':     () => shareGame(),
   'report-game':    () => reportGame(),
 
+  'feed-nav-prev':  () => feedNavPrev(),
+  'feed-nav-next':  () => feedNavNext(),
+  'dismiss-feed-nav-tip': () => dismissFeedNavTip(),
+
   'open-author':    () => openAuthorProfile(),
   'close-author':   () => closeAuthorScreen(),
 

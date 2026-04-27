@@ -18,6 +18,7 @@ window.STORAGE_KEYS = {
   liked:      'smolgame:liked:' + (USER.id || 'anon'),
   followed:   'smolgame:followed:' + (USER.id || 'anon'),
   bookmarked: 'smolgame:bookmarked:' + (USER.id || 'anon'),
+  feedNavTip: 'smolgame:feedNavTip:' + (USER.id || 'anon'),
 };
 
 window.likedSet      = loadSet(STORAGE_KEYS.liked);

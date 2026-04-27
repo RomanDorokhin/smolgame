@@ -14,7 +14,7 @@ html,body,#root,#feed,.slide{margin:0;padding:0;border:0;width:100%;height:100%;
   --nav-h: 64px;
   --info-h: 76px;
   /* Полоска свайпа между iframe и блоком автора — только здесь листаем ленту */
-  --swipe-strip-h: 44px;
+  --swipe-strip-h: 52px;
   --game-bottom: calc(var(--safe-bottom) + var(--nav-h) + var(--info-h) + var(--swipe-strip-h));
 }
 
@@ -73,7 +73,9 @@ body.tg-only-wall #topbar,
 body.tg-only-wall #side-actions,
 body.tg-only-wall #game-info,
 body.tg-only-wall #dots,
+body.tg-only-wall #swipe-edge-zone,
 body.tg-only-wall #swipe-strip,
+body.tg-only-wall #feed-nav-tip-overlay,
 body.tg-only-wall #bottom-nav,
 body.tg-only-wall #upload-screen,
 body.tg-only-wall #profile-screen,
@@ -198,6 +200,19 @@ body.tg-only-wall #toast{
   color:#ffb4c0;
 }
 
+/* Левый край — только свайп ленты, iframe по центру не трогаем */
+#swipe-edge-zone{
+  position:fixed;
+  left:0;
+  top:calc(var(--safe-top) + 48px);
+  width:22px;
+  bottom:calc(var(--safe-bottom) + var(--nav-h) + var(--info-h) + var(--swipe-strip-h));
+  z-index:305;
+  pointer-events:auto;
+  touch-action:none;
+  background:linear-gradient(90deg, rgba(0,0,0,0.22) 0%, transparent 100%);
+}
+
 #swipe-strip{
   position:fixed;
   left:0;
@@ -208,37 +223,160 @@ body.tg-only-wall #toast{
   display:flex;
   align-items:center;
   justify-content:center;
+  gap:10px;
+  padding:0 10px;
+  box-sizing:border-box;
   pointer-events:auto;
   touch-action:none;
-  background:linear-gradient(180deg, rgba(0,0,0,0.08) 0%, rgba(0,0,0,0.55) 100%);
-  border-top:1px solid rgba(255,255,255,0.1);
-  backdrop-filter:blur(10px);
-  -webkit-backdrop-filter:blur(10px);
+  background:linear-gradient(180deg, rgba(0,0,0,0.02) 0%, rgba(0,0,0,0.62) 100%);
+  border-top:1px solid rgba(255,255,255,0.12);
+  backdrop-filter:blur(12px);
+  -webkit-backdrop-filter:blur(12px);
 }
 
-#swipe-strip.dragging{z-index:315;}
+#swipe-strip.dragging,
+#swipe-edge-zone.dragging{z-index:315;}
 
 /* На первом слайде свайп вниз — не перехватывать, чтобы сработал жест закрытия Telegram */
-#swipe-strip.telegram-swipe-pass{
+#swipe-strip.telegram-swipe-pass,
+#swipe-edge-zone.telegram-swipe-pass{
   pointer-events:none !important;
 }
 
+.swipe-strip-mid{
+  flex:1;
+  min-width:0;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:5px;
+  pointer-events:none;
+}
+
+.swipe-strip-handle{
+  width:36px;
+  height:4px;
+  border-radius:999px;
+  background:rgba(255,255,255,0.35);
+  box-shadow:0 0 0 1px rgba(0,0,0,0.2);
+}
+
 .swipe-strip-hint{
-  font-size:11px;
-  font-weight:500;
-  letter-spacing:0.04em;
+  font-size:10px;
+  font-weight:600;
+  letter-spacing:0.06em;
   text-transform:uppercase;
-  color:rgba(255,255,255,0.38);
+  color:rgba(255,255,255,0.48);
   user-select:none;
   pointer-events:none;
   transition:opacity 0.35s ease;
+  text-align:center;
+  line-height:1.2;
 }
 
+.feed-nav-arrow{
+  flex-shrink:0;
+  width:38px;
+  height:38px;
+  border-radius:50%;
+  border:1px solid rgba(255,255,255,0.18);
+  background:rgba(12,12,12,0.75);
+  color:rgba(255,255,255,0.88);
+  font-size:16px;
+  font-weight:700;
+  line-height:1;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  cursor:pointer;
+  touch-action:manipulation;
+  -webkit-tap-highlight-color:transparent;
+  transition:transform 0.15s, background 0.2s, border-color 0.2s;
+}
+.feed-nav-arrow:active{
+  transform:scale(0.92);
+  background:rgba(255,45,85,0.2);
+  border-color:rgba(255,45,85,0.45);
+}
+.feed-nav-arrow:disabled{
+  opacity:0.35;
+  pointer-events:none;
+}
+
+body.feed-slide-flash #feed{
+  animation:feedSlideFlash 0.38s ease-out;
+}
+@keyframes feedSlideFlash{
+  0%{ box-shadow:inset 0 0 0 0 rgba(255,45,85,0); }
+  35%{ box-shadow:inset 0 0 28px 2px rgba(255,45,85,0.22); }
+  100%{ box-shadow:inset 0 0 0 0 rgba(255,45,85,0); }
+}
+
+/* Одноразовая подсказка ленты */
+.feed-nav-tip-overlay{
+  position:fixed;
+  inset:0;
+  z-index:480;
+  display:none;
+  align-items:center;
+  justify-content:center;
+  padding:24px;
+  background:rgba(0,0,0,0.55);
+  backdrop-filter:blur(4px);
+  -webkit-backdrop-filter:blur(4px);
+  pointer-events:none;
+}
+.feed-nav-tip-overlay.feed-nav-tip-visible{
+  display:flex;
+  pointer-events:auto;
+}
+.feed-nav-tip-card{
+  max-width:320px;
+  width:100%;
+  padding:22px 20px;
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:18px;
+  box-shadow:0 16px 48px rgba(0,0,0,0.5);
+}
+.feed-nav-tip-title{
+  font-family:'Syne',sans-serif;
+  font-size:18px;
+  font-weight:800;
+  margin:0 0 10px;
+}
+.feed-nav-tip-text{
+  margin:0 0 18px;
+  font-size:14px;
+  line-height:1.45;
+  color:rgba(255,255,255,0.72);
+}
+.feed-nav-tip-btn{
+  width:100%;
+  padding:14px;
+  border:none;
+  border-radius:12px;
+  font-size:15px;
+  font-weight:700;
+  cursor:pointer;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  color:#fff;
+}
+.feed-nav-tip-btn:active{opacity:0.9;}
+
 body:has(#upload-screen.open) #swipe-strip,
+body:has(#upload-screen.open) #swipe-edge-zone,
+body:has(#report-screen.open) #swipe-strip,
+body:has(#report-screen.open) #swipe-edge-zone,
 body:has(#profile-screen.open) #swipe-strip,
+body:has(#profile-screen.open) #swipe-edge-zone,
 body:has(#author-screen.open) #swipe-strip,
+body:has(#author-screen.open) #swipe-edge-zone,
 body:has(#search-screen.open) #swipe-strip,
-body:has(#onboarding-screen.open) #swipe-strip{
+body:has(#search-screen.open) #swipe-edge-zone,
+body:has(#onboarding-screen.open) #swipe-strip,
+body:has(#onboarding-screen.open) #swipe-edge-zone{
   display:none;
 }
 

@@ -79,9 +79,26 @@
 <!-- ══ ПРОГРЕСС ══ -->
 <div id="dots"></div>
 
-<!-- ══ Узкая зона свайпа ленты (между игрой и блоком с автором) ══ -->
+<!-- Левый край: запасной свайп ленты (не перекрывает центр игры) -->
+<div id="swipe-edge-zone" aria-hidden="true"></div>
+
+<!-- ══ Зона свайпа ленты (между игрой и блоком с автором) + стрелки ══ -->
 <div id="swipe-strip" aria-hidden="true">
-  <span class="swipe-strip-hint" id="swipe-hint-label">Свайп вверх — следующая</span>
+  <button type="button" class="feed-nav-arrow feed-nav-arrow-prev" data-action="feed-nav-prev" aria-label="Предыдущая игра">↑</button>
+  <div class="swipe-strip-mid">
+    <span class="swipe-strip-handle" aria-hidden="true"></span>
+    <span class="swipe-strip-hint" id="swipe-hint-label">Свайп вверх — следующая</span>
+  </div>
+  <button type="button" class="feed-nav-arrow feed-nav-arrow-next" data-action="feed-nav-next" aria-label="Следующая игра">↓</button>
+</div>
+
+<!-- Одноразовая подсказка по ленте -->
+<div id="feed-nav-tip-overlay" class="feed-nav-tip-overlay">
+  <div class="feed-nav-tip-card">
+    <p class="feed-nav-tip-title">Как листать ленту</p>
+    <p class="feed-nav-tip-text">Полоска внизу, стрелки по бокам или узкий <strong>левый край</strong> экрана. Играть — в центре.</p>
+    <button type="button" class="feed-nav-tip-btn" data-action="dismiss-feed-nav-tip">Понятно</button>
+  </div>
 </div>
 
 <!-- ══ НИЖНИЙ НАВ ══ -->
@@ -335,6 +352,7 @@
 <script src="js/api.js"></script>
 <script src="js/onboarding.js"></script>
 <script src="js/feed.js"></script>
+<script src="js/feed-nav-tip.js"></script>
 <script src="js/actions.js"></script>
 <script src="js/upload.js"></script>
 <script src="js/genres.js"></script>
