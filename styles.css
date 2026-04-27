@@ -58,24 +58,31 @@ html,body,#root,#feed,.slide{margin:0;padding:0;border:0;width:100%;height:100%;
 
 .feed-nav-arrow .sg-icon{width:18px;height:18px;}
 
-/* Иконки жанров (inline SVG, currentColor) */
+/* Иконки жанров: яркие оттенки на тёмном фоне */
 .sg-genre-ic{
   display:inline-block;
   vertical-align:middle;
   flex-shrink:0;
-  color:rgba(255,255,255,0.55);
 }
 .sg-genre-ic--xs{width:13px;height:13px;}
 .sg-genre-ic--sm{width:17px;height:17px;}
-.sg-genre-ic--md{width:26px;height:26px;color:rgba(255,255,255,0.5);}
+.sg-genre-ic--md{width:26px;height:26px;}
 .sg-genre-ic--lg{width:30px;height:30px;}
-.sg-genre-ic--hero{width:52px;height:52px;color:rgba(255,255,255,0.28);}
+.sg-genre-ic--hero{width:52px;height:52px;opacity:0.95;}
 .sg-genre-ic--inline{
   width:16px;height:16px;
   margin:0 5px 0 4px;
   vertical-align:-3px;
-  color:rgba(255,255,255,0.45);
 }
+.sg-genre--all{color:#8eb4e8;}
+.sg-genre--arcade{color:#5dd4f0;}
+.sg-genre--puzzle{color:#c9a6ff;}
+.sg-genre--action{color:#ff7a7a;}
+.sg-genre--casual{color:#7ee0a8;}
+.sg-genre--strategy{color:#f0c86a;}
+.sg-genre--racing{color:#ff9f5a;}
+.sg-genre--platform{color:#8cd5ff;}
+.sg-genre--other{color:#b0b8c8;}
 .upload-genre-line{
   display:flex;
   align-items:center;
@@ -97,13 +104,16 @@ html,body,#root,#feed,.slide{margin:0;padding:0;border:0;width:100%;height:100%;
   display:inline-flex;
   align-items:center;
   gap:5px;
-  max-width:46vw;
+  max-width:48vw;
+  color:rgba(200,210,225,0.88);
+  font-weight:600;
+  font-size:12px;
+  letter-spacing:0.01em;
 }
 .game-genre-inline .sg-genre-ic--md{
-  width:15px;
-  height:15px;
+  width:16px;
+  height:16px;
   flex-shrink:0;
-  opacity:0.75;
 }
 .game-genre-label{min-width:0;overflow:hidden;text-overflow:ellipsis;}
 
@@ -113,7 +123,7 @@ html,body,#root,#feed,.slide{margin:0;padding:0;border:0;width:100%;height:100%;
   justify-content:center;
   font-size:0;
 }
-.placeholder-icon.sg-placeholder-genre .sg-genre-ic--md{width:56px;height:56px;color:rgba(255,255,255,0.35);}
+.placeholder-icon.sg-placeholder-genre .sg-genre-ic--md{width:56px;height:56px;opacity:0.55;}
 
 .game-card-thumb-placeholder{
   display:flex;
@@ -123,7 +133,7 @@ html,body,#root,#feed,.slide{margin:0;padding:0;border:0;width:100%;height:100%;
   height:100%;
   font-size:0;
 }
-.game-card-thumb-placeholder .sg-genre-ic--md{width:48px;height:48px;color:rgba(255,255,255,0.22);}
+.game-card-thumb-placeholder .sg-genre-ic--md{width:48px;height:48px;opacity:0.45;}
 
 .upload-steps{
   display:flex;
@@ -1048,8 +1058,8 @@ body:has(#feed-nav-tip-overlay.feed-nav-tip-visible) #feed-coach-fab{
   min-width:0;
   font-size:12px;
   font-weight:500;
-  color:rgba(255,255,255,0.5);
-  line-height:1.25;
+  color:rgba(255,255,255,0.55);
+  line-height:1.3;
 }
 
 .game-title-inline{
@@ -1057,22 +1067,13 @@ body:has(#feed-nav-tip-overlay.feed-nav-tip-visible) #feed-coach-fab{
   white-space:nowrap;
   overflow:hidden;
   text-overflow:ellipsis;
-  color:rgba(255,255,255,0.72);
+  color:rgba(245,247,252,0.92);
+  font-weight:600;
 }
 
 .game-meta-sep{
   flex-shrink:0;
-  opacity:0.45;
-}
-
-.game-genre-inline{
-  flex-shrink:0;
-  max-width:42vw;
-  white-space:nowrap;
-  overflow:hidden;
-  text-overflow:ellipsis;
-  text-transform:none;
-  letter-spacing:0.02em;
+  opacity:0.55;
 }
 
 .author-avatar{
@@ -1602,9 +1603,16 @@ textarea.field-input{
   display:flex;
   gap:24px;
 }
-.stat-item{text-align:center;}
-.stat-num{font-family:'Syne',sans-serif;font-size:22px;font-weight:800;}
-.stat-lbl{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;}
+.stat-item{text-align:center;min-width:52px;}
+.stat-num{
+  font-family:'Space Grotesk','SF Pro Text',system-ui,sans-serif;
+  font-size:21px;
+  font-weight:700;
+  font-variant-numeric:tabular-nums;
+  letter-spacing:-0.02em;
+  color:rgba(255,255,255,0.96);
+}
+.stat-lbl{font-size:10px;color:rgba(255,255,255,0.38);text-transform:uppercase;letter-spacing:0.08em;font-weight:600;}
 
 .profile-name{
   font-family:'Syne',sans-serif;
@@ -1612,7 +1620,13 @@ textarea.field-input{
   font-weight:800;
   margin-bottom:4px;
 }
-.profile-handle{font-size:14px;color:var(--muted);margin-bottom:8px;}
+.profile-handle{
+  font-size:13px;
+  color:rgba(163,184,212,0.72);
+  margin-bottom:8px;
+  font-variant-numeric:tabular-nums;
+  letter-spacing:0.02em;
+}
 
 .profile-bio{
   font-size:14px;

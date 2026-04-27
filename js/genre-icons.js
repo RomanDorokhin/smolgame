@@ -56,7 +56,7 @@ function genreIconKeyFromStored(stored, genreLabel) {
  */
 function genreIconSvg(key, sizeClass) {
   const k = key in _ICONS ? key : DEFAULT_KEY;
-  const cls = 'sg-genre-ic' + (sizeClass ? ' ' + sizeClass : '');
+  const cls = 'sg-genre-ic sg-genre--' + k + (sizeClass ? ' ' + sizeClass : '');
   return _ICONS[k](cls);
 }
 
