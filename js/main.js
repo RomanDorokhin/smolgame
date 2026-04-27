@@ -1,17 +1,6 @@
 async function bootstrap() {
   if (typeof hasTelegramInitData === 'function' && !hasTelegramInitData()) {
     if (typeof hideBootSplash === 'function') hideBootSplash();
-    try {
-      const u = new URL(window.location.href);
-      const gh = u.searchParams.get('github');
-      if ((gh === 'connected' || gh === 'error') && typeof showGithubOAuthBrowserWall === 'function') {
-        const msg = u.searchParams.get('message');
-        showGithubOAuthBrowserWall(gh, msg);
-        return;
-      }
-    } catch (e) {
-      /* ignore */
-    }
     if (typeof showTelegramOnlyWall === 'function') showTelegramOnlyWall();
     return;
   }
@@ -80,18 +69,6 @@ async function handleGithubOAuthReturn() {
     if (g === 'connected') {
       if (typeof openUpload === 'function') openUpload();
       if (typeof selectMethod === 'function') await selectMethod('code');
-      if (
-        typeof window.USER !== 'undefined' &&
-        !window.USER.isPremium &&
-        window.USER.isGithubConnected &&
-        window.USER.hasGithubPublishToken &&
-        typeof openGithubUploadModal === 'function'
-      ) {
-        openGithubUploadModal();
-        if (typeof showToast === 'function') {
-          showToast('Вставь HTML в окне или вкладка «Файлы»');
-        }
-      }
     }
   } catch (e) {
     /* ignore */

@@ -90,6 +90,8 @@ npm run db:migrate:remote:github-token
 
 После миграции пользователь должен **ещё раз** пройти «Войти через GitHub», чтобы токен записался в базу.
 
+**Отвязать GitHub:** в мини-аппе кнопка вызывает `POST /api/auth/github/unlink` (очищает `github_user_id`, `github_login`, `github_access_token_enc`).
+
 Если в D1 в таблице `users` **нет** колонок `github_user_id` и `github_login` (старая база), OAuth не сможет сохранить привязку — выполни:
 
 ```bash

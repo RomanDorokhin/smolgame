@@ -104,6 +104,7 @@ window.API = {
   play:         (gameId)   => apiFetch(`/api/games/${encodeURIComponent(gameId)}/play`, { method: 'POST' }),
 
   githubOAuthStart: () => apiFetch('/api/auth/github/start'),
+  githubUnlink: () => apiFetch('/api/auth/github/unlink', { method: 'POST' }),
 
   admin: {
     pending:    ()         => apiFetch('/api/admin/pending'),

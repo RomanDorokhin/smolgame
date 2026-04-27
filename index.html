@@ -14,7 +14,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <!-- ?v= сбрасывает кэш WebView Telegram после правок JS/CSS (меняй при каждом релизе фронта). -->
-<link rel="stylesheet" href="styles.css?v=20260437">
+<link rel="stylesheet" href="styles.css?v=20260438">
 </head>
 <body>
 
@@ -25,16 +25,10 @@
 </div>
 
 <div id="tg-only-wall" class="tg-only-wall" hidden>
-  <div id="tg-only-panel-default" class="tg-only-card">
+  <div class="tg-only-card">
     <div class="tg-only-logo">smol<span>game</span></div>
     <p class="tg-only-title">Открой в Telegram</p>
     <p class="tg-only-text">Открой из Telegram: меню бота → мини-приложение.</p>
-  </div>
-  <div id="tg-only-panel-github" class="tg-only-card" hidden>
-    <div class="tg-only-logo">smol<span>game</span></div>
-    <p class="tg-only-title" id="tg-only-github-title">GitHub</p>
-    <p class="tg-only-text" id="tg-only-github-text"></p>
-    <a class="submit-btn tg-only-telegram-btn" id="tg-only-open-telegram" href="#" rel="noopener">Открыть в Telegram</a>
   </div>
 </div>
 
@@ -221,54 +215,43 @@
       <button type="button" class="github-btn" id="btn-github-primary" data-action="auth-github">
         <span>🐙</span> <span id="btn-github-primary-label">Войти через GitHub</span>
       </button>
-      <button type="button" class="profile-text-btn github-reauth-btn" id="btn-github-reauth" data-action="auth-github" hidden>
-        Сменить аккаунт GitHub
+      <button type="button" class="profile-text-btn github-reauth-btn" id="btn-github-unlink" data-action="github-unlink" hidden>
+        Отвязать GitHub
       </button>
-      <div class="field-hint-center" id="github-connect-hint">Привяжи GitHub — появится «Загрузить на GitHub»</div>
-      <button type="button" class="submit-btn github-upload-btn" id="btn-github-upload" data-action="open-github-upload-modal" hidden>
-        <span>🐙</span> Загрузить на GitHub
-      </button>
+      <div class="field-hint-center" id="github-connect-hint">Привяжи GitHub — здесь появится поле для кода</div>
     </div>
 
-    <div id="github-upload-modal" class="github-upload-modal" hidden aria-hidden="true">
-      <div class="github-upload-modal__backdrop" data-action="close-github-upload-modal"></div>
-      <div class="github-upload-modal__sheet" role="dialog" aria-labelledby="github-upload-modal-title">
-        <div class="github-upload-modal__head">
-          <span id="github-upload-modal-title">Загрузка на твой GitHub</span>
-          <button type="button" class="github-upload-modal__close" data-action="close-github-upload-modal" aria-label="Закрыть">×</button>
-        </div>
-        <div class="github-upload-modal__body">
-          <p class="upload-wizard-hint">Код попадёт в <strong>новый репозиторий</strong> на твоём аккаунте, включим GitHub Pages и дадим ссылку.</p>
-          <div class="github-input-mode">
-            <button type="button" class="profile-text-btn github-mode-btn selected" data-action="github-upload-set-mode" data-mode="paste">Вставить код</button>
-            <button type="button" class="profile-text-btn github-mode-btn" data-action="github-upload-set-mode" data-mode="files">Файлы</button>
-          </div>
-          <div id="github-upload-paste-panel">
-            <div class="field-group">
-              <div class="field-label">HTML (одна страница)</div>
-              <textarea class="code-area" placeholder="<!DOCTYPE html>..." id="githubPasteHtml"></textarea>
-            </div>
-          </div>
-          <div id="github-upload-files-panel" hidden>
-            <div class="field-group">
-              <div class="field-label">Файлы (до 20, пути латиницей)</div>
-              <label class="image-upload">
-                <input type="file" id="githubMultiFiles" multiple>
-                <span>Выбрать файлы</span>
-              </label>
-              <div class="github-files-list" id="githubFilesList"></div>
-            </div>
-          </div>
-          <button type="button" class="submit-btn" data-action="github-upload-submit">Отправить на GitHub</button>
-          <div class="github-upload-result" id="githubUploadResult" hidden></div>
+    <div id="github-inline-upload" class="github-inline-upload" hidden>
+      <p class="upload-wizard-hint github-inline-upload__lead">
+        Код уйдёт в <strong>новый репозиторий</strong> на твоём GitHub, включим Pages. Потом ниже — название и модерация.
+      </p>
+      <div class="github-input-mode">
+        <button type="button" class="profile-text-btn github-mode-btn selected" data-action="github-upload-set-mode" data-mode="paste">Вставить код</button>
+        <button type="button" class="profile-text-btn github-mode-btn" data-action="github-upload-set-mode" data-mode="files">Файлы</button>
+      </div>
+      <div id="github-upload-paste-panel">
+        <div class="field-group">
+          <div class="field-label">HTML (одна страница)</div>
+          <textarea class="code-area" placeholder="<!DOCTYPE html>..." id="githubPasteHtml"></textarea>
         </div>
       </div>
+      <div id="github-upload-files-panel" hidden>
+        <div class="field-group">
+          <div class="field-label">Файлы (до 20, пути латиницей, нужен index.html)</div>
+          <label class="image-upload">
+            <input type="file" id="githubMultiFiles" multiple>
+            <span>Выбрать файлы</span>
+          </label>
+          <div class="github-files-list" id="githubFilesList"></div>
+        </div>
+      </div>
+      <button type="button" class="submit-btn github-inline-submit" data-action="github-upload-submit">Отправить на GitHub</button>
+      <div class="github-upload-result" id="githubUploadResult" hidden></div>
     </div>
 
     <div id="code-branch-connect" class="code-upload-branch">
       <p class="upload-wizard-hint">
-        Без премиума код не хранится на SmolGame: привяжи <strong>GitHub</strong> ниже, нажми <strong>«Загрузить на GitHub»</strong>
-        — мы создадим репозиторий, включим Pages и откроем мастер отправки на модерацию.
+        Привяжи <strong>GitHub</strong> ниже — здесь появится поле: вставить HTML или выбрать файлы. Мы создадим репозиторий и включим Pages, дальше мастер отправки на модерацию.
       </p>
       <p class="upload-wizard-hint" style="font-size:13px;color:rgba(255,255,255,0.55)">
         Премиум: отдельно доступен хостинг HTML на сервере SmolGame (R2).
@@ -344,7 +327,7 @@
 
     <div id="code-branch-github" class="code-upload-branch" hidden>
     <p class="upload-wizard-hint gh-paste-strip">
-      HTML или несколько файлов — в окне по кнопке <strong>«Загрузить на GitHub»</strong> выше. После отправки вернёшься сюда для названия и модерации.
+      После отправки кода на GitHub (форма выше) здесь — ссылка на игру, название и отправка на модерацию.
     </p>
     <div id="gh-code-wizard-step1" class="upload-wizard-step">
       <p class="upload-wizard-hint" id="gh-code-wizard-step1-hint">Шаг 1 из 5 — код уже в твоём репозитории на GitHub.</p>
@@ -594,26 +577,26 @@
 
 <!-- ══ SCRIPTS ══ -->
 <!-- Порядок важен: config/utils/telegram → state → api → модули логики → события → main. -->
-<script src="js/config.js?v=20260437"></script>
-<script src="js/utils.js?v=20260437"></script>
-<script src="js/telegram.js?v=20260437"></script>
-<script src="js/tg-gate.js?v=20260437"></script>
-<script src="js/boot-splash.js?v=20260437"></script>
-<script src="js/state.js?v=20260437"></script>
-<script src="js/api.js?v=20260437"></script>
-<script src="js/onboarding.js?v=20260437"></script>
-<script src="js/help-screens.js?v=20260437"></script>
-<script src="js/feed.js?v=20260437"></script>
-<script src="js/feed-nav-tip.js?v=20260437"></script>
-<script src="js/actions.js?v=20260437"></script>
-<script src="js/upload.js?v=20260437"></script>
-<script src="js/genres.js?v=20260437"></script>
-<script src="js/search.js?v=20260437"></script>
-<script src="js/profile.js?v=20260437"></script>
-<script src="js/admin.js?v=20260437"></script>
-<script src="js/screens.js?v=20260437"></script>
-<script src="js/events.js?v=20260437"></script>
-<script src="js/overlay-pull-close.js?v=20260437"></script>
-<script src="js/main.js?v=20260437"></script>
+<script src="js/config.js?v=20260438"></script>
+<script src="js/utils.js?v=20260438"></script>
+<script src="js/telegram.js?v=20260438"></script>
+<script src="js/tg-gate.js?v=20260438"></script>
+<script src="js/boot-splash.js?v=20260438"></script>
+<script src="js/state.js?v=20260438"></script>
+<script src="js/api.js?v=20260438"></script>
+<script src="js/onboarding.js?v=20260438"></script>
+<script src="js/help-screens.js?v=20260438"></script>
+<script src="js/feed.js?v=20260438"></script>
+<script src="js/feed-nav-tip.js?v=20260438"></script>
+<script src="js/actions.js?v=20260438"></script>
+<script src="js/upload.js?v=20260438"></script>
+<script src="js/genres.js?v=20260438"></script>
+<script src="js/search.js?v=20260438"></script>
+<script src="js/profile.js?v=20260438"></script>
+<script src="js/admin.js?v=20260438"></script>
+<script src="js/screens.js?v=20260438"></script>
+<script src="js/events.js?v=20260438"></script>
+<script src="js/overlay-pull-close.js?v=20260438"></script>
+<script src="js/main.js?v=20260438"></script>
 </body>
 </html>

@@ -19,7 +19,7 @@ function updateGithubUploadUi() {
     if (USER.isPremium) {
       desc.textContent = 'Премиум: хостинг на SmolGame';
     } else if (USER.isGithubConnected && USER.hasGithubPublishToken) {
-      desc.textContent = 'На твой GitHub + Pages';
+      desc.textContent = 'Код → твой GitHub + Pages';
     } else {
       desc.textContent = 'GitHub или премиум';
     }
@@ -27,30 +27,32 @@ function updateGithubUploadUi() {
   const hint = document.getElementById('github-connect-hint');
   if (hint) {
     if (!USER.isGithubConnected) {
-      hint.textContent = 'Привяжи GitHub — появится «Загрузить на GitHub»';
+      hint.textContent = 'Привяжи GitHub — ниже появится поле для кода или файлов.';
     } else if (!USER.hasGithubPublishToken) {
       hint.textContent =
-        'GitHub привязан, но токен не сохранён: в D1 выполни миграцию github_access_token_enc и снова войди через GitHub.';
+        'Токен не сохранён: проверь миграцию D1 (github_access_token_enc) и снова нажми «Войти через GitHub».';
     } else {
-      hint.textContent = 'Готово — нажми «Загрузить на GitHub», чтобы создать репозиторий с игрой.';
+      hint.textContent = 'Готово — вставь HTML или выбери файлы и отправь на GitHub.';
     }
   }
   const btnLabel = document.getElementById('btn-github-primary-label');
   if (btnLabel) {
-    btnLabel.textContent = USER.isGithubConnected ? 'GitHub привязан ✓' : 'Войти через GitHub';
+    btnLabel.textContent = USER.isGithubConnected ? 'Сменить аккаунт GitHub' : 'Войти через GitHub';
   }
   const primary = document.getElementById('btn-github-primary');
   const done = USER.isGithubConnected && USER.hasGithubPublishToken;
   if (primary) {
-    primary.hidden = Boolean(done);
+    primary.hidden = false;
   }
-  const reauth = document.getElementById('btn-github-reauth');
-  if (reauth) {
-    reauth.hidden = !done;
+  const unlinkBtn = document.getElementById('btn-github-unlink');
+  if (unlinkBtn) {
+    unlinkBtn.hidden = !USER.isGithubConnected;
   }
-  const uploadBtn = document.getElementById('btn-github-upload');
-  if (uploadBtn) {
-    uploadBtn.hidden = !done;
+  const inline = document.getElementById('github-inline-upload');
+  if (inline) {
+    const showInline = !USER.isPremium && done;
+    if (showInline) inline.removeAttribute('hidden');
+    else inline.setAttribute('hidden', '');
   }
 }
 
@@ -85,6 +87,21 @@ async function selectMethod(m) {
   }
 }
 
+async function githubUnlink() {
+  if (typeof hasTelegramInitData === 'function' && !hasTelegramInitData()) {
+    showToast('⚠️ Открой мини-апп из Telegram-бота');
+    return;
+  }
+  try {
+    await API.githubUnlink();
+    await refreshUploadCapabilities();
+    if (typeof selectMethod === 'function') await selectMethod('code');
+    showToast('✅ GitHub отвязан');
+  } catch (e) {
+    showToast('⚠️ ' + (e?.message || 'не удалось'));
+  }
+}
+
 async function authGithub() {
   try {
     const { url } = await API.githubOAuthStart();
@@ -104,15 +121,7 @@ async function authGithub() {
 
 let _githubUploadMode = 'paste';
 
-function openGithubUploadModal() {
-  if (!USER.isGithubConnected || !USER.hasGithubPublishToken) {
-    showToast('⚠️ Сначала привяжи GitHub');
-    return;
-  }
-  const m = document.getElementById('github-upload-modal');
-  if (!m) return;
-  m.removeAttribute('hidden');
-  m.setAttribute('aria-hidden', 'false');
+function resetGithubInlineForm() {
   githubUploadSetMode('paste');
   const ta = document.getElementById('githubPasteHtml');
   if (ta) ta.value = '';
@@ -125,13 +134,6 @@ function openGithubUploadModal() {
     res.hidden = true;
     res.innerHTML = '';
   }
-}
-
-function closeGithubUploadModal() {
-  const m = document.getElementById('github-upload-modal');
-  if (!m) return;
-  m.setAttribute('hidden', '');
-  m.setAttribute('aria-hidden', 'true');
 }
 
 function githubUploadSetMode(mode) {
@@ -234,7 +236,7 @@ async function githubUploadSubmit() {
     const out = await API.githubPublishGame({ files });
     showToast(out?.pagesReady ? '✅ GitHub Pages отвечает' : '✅ Репозиторий создан, Pages могут подняться через минуту');
     window._ghPublishedPlayUrl = out.pagesUrl || '';
-    closeGithubUploadModal();
+    resetGithubInlineForm();
     if (typeof selectMethod === 'function') await selectMethod('code');
     if (!USER.isPremium) beginGhCodeWizardAfterPublish(out);
   } catch (e) {
@@ -325,7 +327,7 @@ function ghCodeWizardNext() {
     const playUrl = document.getElementById('ghCodeWizardPagesUrl')?.value?.trim() || '';
     const u = normalizeToHttpsUrl(playUrl);
     if (!u || !/github\.io/i.test(u)) {
-      showToast('⚠️ Сначала загрузи игру на GitHub (кнопка «Загрузить на GitHub»)');
+      showToast('⚠️ Сначала отправь код на GitHub (форма выше)');
       return;
     }
     window._ghPublishedPlayUrl = u;
@@ -773,8 +775,7 @@ window.codeWizardNext = codeWizardNext;
 window.codeWizardBack = codeWizardBack;
 window.codeWizardCancel = codeWizardCancel;
 window.codeWizardPublish = codeWizardPublish;
-window.openGithubUploadModal = openGithubUploadModal;
-window.closeGithubUploadModal = closeGithubUploadModal;
+window.githubUnlink = githubUnlink;
 window.githubUploadSetMode = githubUploadSetMode;
 window.githubUploadSubmit = githubUploadSubmit;
 window.resetGhCodeWizard = resetGhCodeWizard;
@@ -788,4 +789,5 @@ document.addEventListener('change', (ev) => {
   if (ev.target?.id === 'gameImageInput') previewCover(ev.target);
   if (ev.target?.id === 'codeWizardCoverFile') previewCodeWizardCover(ev.target);
   if (ev.target?.id === 'ghCodeWizardCoverFile') previewGhCodeWizardCover(ev.target);
+  if (ev.target?.id === 'githubMultiFiles') onGithubMultiFilesChange(ev.target);
 });

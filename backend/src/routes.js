@@ -445,6 +445,31 @@ export async function updateMe(req, env) {
   return getMe(req, env);
 }
 
+/** POST /api/auth/github/unlink — снять привязку GitHub и удалить сохранённый токен. */
+export async function githubUnlink(req, env) {
+  const user = await authenticate(req, env);
+  if (!user) return error('unauthorized', 401);
+  try {
+    await env.DB.prepare(
+      `UPDATE users SET github_user_id = NULL, github_login = NULL, github_access_token_enc = NULL WHERE id = ?`
+    )
+      .bind(user.id)
+      .run();
+  } catch (e) {
+    if (!isMissingColumnError(e)) throw e;
+    try {
+      await env.DB.prepare(
+        `UPDATE users SET github_user_id = NULL, github_login = NULL WHERE id = ?`
+      )
+        .bind(user.id)
+        .run();
+    } catch (e2) {
+      if (!isMissingColumnError(e2)) throw e2;
+    }
+  }
+  return json({ ok: true });
+}
+
 export async function getMyGames(req, env) {
   const user = await authenticate(req, env);
   if (!user) return error('unauthorized', 401);

@@ -1,6 +1,6 @@
 import { withCors, preflight, error } from './http.js';
 import {
-  getFeed, getMe, updateMe, getMyGames, checkRegistered, register, submitGame, uploadImage, deleteGame,
+  getFeed, getMe, updateMe, githubUnlink, getMyGames, checkRegistered, register, submitGame, uploadImage, deleteGame,
   getGameById,
   toggleLike, toggleFollow, toggleBookmark, getUserProfile, getUserGames, play,
   adminPending, adminApprove, adminReject,
@@ -61,6 +61,7 @@ async function route(req, env, pathname) {
   if (pathname === '/api/github/publish-game' && m === 'POST') return publishGameToGithub(req, env);
   if (pathname === '/api/upload-image' && m === 'POST') return uploadImage(req, env);
   if (pathname === '/api/auth/github/start' && m === 'GET') return githubOAuthStart(req, env);
+  if (pathname === '/api/auth/github/unlink' && m === 'POST') return githubUnlink(req, env);
   if (pathname === '/auth/github/callback' && m === 'GET') return githubOAuthCallback(req, env);
 
   let match;
