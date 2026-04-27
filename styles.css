@@ -16,8 +16,6 @@ html,body,#root,#feed,.slide{margin:0;padding:0;border:0;width:100%;height:100%;
   /* Полоска свайпа между iframe и блоком автора — только здесь листаем ленту */
   --swipe-strip-h: 52px;
   --game-bottom: calc(var(--safe-bottom) + var(--nav-h) + var(--info-h) + var(--swipe-strip-h));
-  /* Справа под колонку лайк/шаринг/жалоба — на мобилке iframe уже, кнопки не ловят touch над полем */
-  --feed-actions-gutter: 0px;
 }
 
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;touch-action:none;}
@@ -161,8 +159,7 @@ body.tg-only-wall #toast{
   position:absolute;
   top:0;
   left:0;
-  right:var(--feed-actions-gutter);
-  width:auto;
+  width:100%;
   max-width:100%;
   height:calc(100vh - var(--game-bottom));
   height:calc(100dvh - var(--game-bottom));
@@ -175,8 +172,7 @@ body.tg-only-wall #toast{
   position:absolute;
   top:0;
   left:0;
-  right:var(--feed-actions-gutter);
-  width:auto;
+  width:100%;
   height:calc(100vh - var(--game-bottom));
   height:calc(100dvh - var(--game-bottom));
   display:flex;
@@ -524,12 +520,19 @@ body:has(#onboarding-screen.open) #swipe-strip{
   align-items:center;
   gap:10px;
   z-index:350;
+  /* Тачи ловят только .action-icon — пустое место колонки уходит в iframe (нет «залипания») */
   pointer-events:none;
   padding-right:max(0px, env(safe-area-inset-right, 0px));
 }
-#side-actions .action-btn{
+#side-actions .action-icon{
   pointer-events:auto;
   touch-action:manipulation;
+  cursor:pointer;
+}
+#side-actions .action-label{
+  pointer-events:auto;
+  touch-action:manipulation;
+  cursor:pointer;
 }
 
 .action-btn{
@@ -537,8 +540,9 @@ body:has(#onboarding-screen.open) #swipe-strip{
   flex-direction:column;
   align-items:center;
   gap:5px;
-  cursor:pointer;
+  cursor:default;
   user-select:none;
+  pointer-events:none;
 }
 
 .action-icon{
@@ -573,6 +577,7 @@ body:has(#onboarding-screen.open) #swipe-strip{
   color:rgba(255,255,255,0.85);
   text-shadow:0 1px 6px rgba(0,0,0,0.9);
   min-width:0;
+  pointer-events:none;
 }
 #game-info{
   position:fixed;
@@ -1577,10 +1582,9 @@ body.is-admin .admin-only{display:block;}
   :root{
     --nav-h:64px;
     --info-h:72px;
-    /* Жёлоб под вертикальные кнопки + safe area — iframe не под ними, touch уходит в игру */
-    --feed-actions-gutter:calc(76px + max(0px, env(safe-area-inset-right, 0px)));
   }
 
+  /* Как TikTok: колонка поверх видео (игры), только в зоне canvas — тачи мимо кругов в игру */
   #side-actions{
     top:calc(env(safe-area-inset-top, 0px) + 8px);
     bottom:calc(var(--game-bottom) + 12px);
@@ -1590,8 +1594,8 @@ body.is-admin .admin-only{display:block;}
     justify-content:center;
     align-items:center;
     gap:14px;
-    width:64px;
-    max-width:64px;
+    width:auto;
+    max-width:none;
     padding-right:0;
   }
 
@@ -1602,16 +1606,12 @@ body.is-admin .admin-only{display:block;}
   }
 
   .action-label{
-    max-width:60px;
-    font-size:10px;
+    max-width:62px;
+    font-size:11px;
     line-height:1.05;
     text-align:center;
     overflow:hidden;
     text-overflow:ellipsis;
-  }
-
-  #dots{
-    right:calc(var(--feed-actions-gutter) + 6px);
   }
 
   #game-info{
@@ -1685,11 +1685,8 @@ body.is-admin .admin-only{display:block;}
 }
 
 @media (max-width: 380px) {
-  :root{
-    --info-h:68px;
-    --feed-actions-gutter:calc(70px + max(0px, env(safe-area-inset-right, 0px)));
-  }
-  #side-actions{right:max(4px, env(safe-area-inset-right, 0px));gap:12px;width:58px;max-width:58px;}
+  :root{--info-h:68px;}
+  #side-actions{right:max(4px, env(safe-area-inset-right, 0px));gap:12px;}
   .action-icon{width:44px;height:44px;font-size:19px;}
   .action-label{font-size:10px;max-width:54px;}
   #game-info{right:0;padding-left:10px;}
