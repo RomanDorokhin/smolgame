@@ -373,7 +373,7 @@ function ghCodeWizardBack() {
 
 function ghCodeWizardCancel() {
   resetGhCodeWizard();
-  if (typeof selectMethod === 'function') selectMethod('url');
+  if (typeof selectMethod === 'function') selectMethod('github');
   showToast('Черновик сброшен');
 }
 
