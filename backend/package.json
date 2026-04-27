@@ -8,7 +8,8 @@
     "deploy": "wrangler deploy",
     "db:create": "wrangler d1 create smolgame",
     "db:migrate:local": "wrangler d1 execute smolgame --local --file=./schema.sql",
-    "db:migrate:remote": "wrangler d1 execute smolgame --remote --file=./schema.sql"
+    "db:migrate:remote": "wrangler d1 execute smolgame --remote --file=./schema.sql",
+    "db:migrate:remote:game-columns": "wrangler d1 execute smolgame --remote --file=./migrations/0001_add_game_columns.sql"
   },
   "devDependencies": {
     "wrangler": "^3.90.0"

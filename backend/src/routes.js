@@ -268,10 +268,22 @@ export async function submitGame(req, env) {
   if (verr) return error(verr);
 
   const id = newId();
-  await env.DB.prepare(
-    `INSERT INTO games (id, title, description, genre, genre_emoji, url, image_url, author_id, status)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending')`
-  ).bind(id, ok.title, ok.description, ok.genre, ok.genreEmoji, ok.url, ok.imageUrl, user.id).run();
+  try {
+    await env.DB.prepare(
+      `INSERT INTO games (id, title, description, genre, genre_emoji, url, image_url, author_id, status)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending')`
+    ).bind(id, ok.title, ok.description, ok.genre, ok.genreEmoji, ok.url, ok.imageUrl, user.id).run();
+  } catch (e) {
+    console.error('submitGame', e);
+    const msg = String(e?.message || e || '');
+    if (/no such column/i.test(msg)) {
+      return error(
+        'База на сервере без нужных колонок — админу: выполни миграцию D1 (файл migrations/0001_add_game_columns.sql).',
+        503
+      );
+    }
+    return error('Не удалось сохранить игру. Попробуй позже.', 500);
+  }
 
   return json({ ok: true, id, status: 'pending' });
 }

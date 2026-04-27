@@ -26,7 +26,10 @@ async function apiFetch(path, { method = 'GET', body } = {}) {
   let data = null;
   try { data = await resp.json(); } catch (e) {}
   if (!resp.ok) {
-    const msg = data?.error || resp.statusText || 'request failed';
+    let msg = data?.error || resp.statusText || 'request failed';
+    if (resp.status >= 500 || msg === 'internal') {
+      msg = 'Сервер временно недоступен. Попробуй позже.';
+    }
     throw new Error(msg);
   }
   return data;
