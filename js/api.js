@@ -42,6 +42,12 @@ async function apiFetch(path, { method = 'GET', body } = {}) {
     if (resp.status === 401) {
       msg =
         'Вход из Telegram не подтверждён. Открой только из бота. Если из бота — токен на Worker должен быть от ЭТОГО бота: npx wrangler secret put TELEGRAM_BOT_TOKEN';
+    } else if (resp.status === 404) {
+      const low = String(msg || '').toLowerCase();
+      if (!raw || low === 'not found' || low === 'request failed') {
+        msg =
+          'На Worker нет этого API (404). Чаще всего не задеплоена последняя версия: в папке backend выполни git pull и npm run deploy.';
+      }
     } else if (resp.status === 409) {
       // оставляем текст от API (например профиль в БД)
     } else if (resp.status === 503) {
