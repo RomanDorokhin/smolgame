@@ -21,7 +21,8 @@ export default {
       return withCors(resp, origin);
     } catch (e) {
       console.error('unhandled', e);
-      return withCors(error('internal', 500), origin);
+      const msg = String(e?.message || e || 'internal').trim().slice(0, 240);
+      return withCors(error(msg || 'internal', 500), origin);
     }
   },
 };

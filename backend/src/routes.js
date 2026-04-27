@@ -474,7 +474,18 @@ export async function submitGame(req, env) {
       );
     }
 
-    await upsertUser(env.DB, user);
+    try {
+      await upsertUser(env.DB, user);
+    } catch (e) {
+      console.error('submitGame upsertUser', e);
+      const m = String(e?.message || e || '').trim().slice(0, 200);
+      return error(
+        m
+          ? `Не удалось обновить профиль в базе: ${m}. Открой мини-апп из бота заново или напиши админу.`
+          : 'Не удалось обновить профиль в базе. Открой мини-апп из бота заново.',
+        500
+      );
+    }
 
     let body;
     try { body = await req.json(); } catch (e) { return error('invalid json'); }
@@ -483,11 +494,14 @@ export async function submitGame(req, env) {
     if (verr) return error(verr);
 
     const id = newId();
+    const desc = ok.description ?? '';
+    const emoji = ok.genreEmoji ?? '🎮';
+    const img = ok.imageUrl == null ? null : ok.imageUrl;
     try {
       await env.DB.prepare(
         `INSERT INTO games (id, title, description, genre, genre_emoji, url, image_url, author_id, status)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending')`
-      ).bind(id, ok.title, ok.description, ok.genre, ok.genreEmoji, ok.url, ok.imageUrl, user.id).run();
+      ).bind(id, ok.title, desc, ok.genre, emoji, ok.url, img, user.id).run();
     } catch (e) {
       console.error('submitGame insert', e);
       const msg = String(e?.message || e || '');
@@ -502,7 +516,7 @@ export async function submitGame(req, env) {
           await env.DB.prepare(
             `INSERT INTO games (id, title, description, genre, url, author_id, status)
              VALUES (?, ?, ?, ?, ?, ?, 'pending')`
-          ).bind(id, ok.title, ok.description, ok.genre, ok.url, user.id).run();
+          ).bind(id, ok.title, desc, ok.genre, ok.url, user.id).run();
         } catch (e2) {
           console.error('submitGame legacy insert', e2);
           const m2 = String(e2?.message || e2 || '');
