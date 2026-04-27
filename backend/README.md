@@ -109,6 +109,10 @@ https://smolgame.dorokhin731.workers.dev
   npm run db:migrate:remote:oauth
   ```
 
+- **Без ноутбука / без `cd backend`:** в GitHub репозитория → **Actions** → workflow **«D1 migrate (remote)»** → **Run workflow** → в списке выбери **`0003_github_access_token.sql`** (нужны секреты `CLOUDFLARE_API_TOKEN` и `CLOUDFLARE_ACCOUNT_ID` в Settings → Secrets). Либо **D1 → Console** в Cloudflare и вручную: `ALTER TABLE users ADD COLUMN github_access_token_enc TEXT;`
+
+- Колонка для зашифрованного GitHub-токена (после мержа фичи «заливка на GitHub»): `npm run db:migrate:remote:github-token` (тот же SQL-файл).
+
 ## Как добавить первую игру
 
 1. Открой мини-апп в Telegram.

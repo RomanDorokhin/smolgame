@@ -17,6 +17,7 @@ on:
         default: "0002_oauth_states.sql"
         type: choice
         options:
+          - "0003_github_access_token.sql"
           - "0002_oauth_states.sql"
           - "0001_add_game_columns.sql"
 
