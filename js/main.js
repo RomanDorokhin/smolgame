@@ -1,6 +1,17 @@
 async function bootstrap() {
   if (typeof hasTelegramInitData === 'function' && !hasTelegramInitData()) {
     if (typeof hideBootSplash === 'function') hideBootSplash();
+    try {
+      const u = new URL(window.location.href);
+      const gh = u.searchParams.get('github');
+      if ((gh === 'connected' || gh === 'error') && typeof showGithubOAuthBrowserWall === 'function') {
+        const msg = u.searchParams.get('message');
+        showGithubOAuthBrowserWall(gh, msg);
+        return;
+      }
+    } catch (e) {
+      /* ignore */
+    }
     if (typeof showTelegramOnlyWall === 'function') showTelegramOnlyWall();
     return;
   }

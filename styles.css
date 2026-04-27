@@ -183,6 +183,12 @@ body.tg-only-wall #toast{
   line-height:1.5;
   color:var(--muted);
 }
+.tg-only-telegram-btn{
+  display:inline-block;
+  margin-top:18px;
+  text-decoration:none;
+  box-sizing:border-box;
+}
 
 /* ══════════════════════════════
    FEED
