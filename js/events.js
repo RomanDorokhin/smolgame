@@ -14,7 +14,6 @@ const CLICK_ACTIONS = {
   'close-search':   () => closeSearch(),
 
   'toggle-like':    () => toggleLike(),
-  'toggle-bookmark': () => toggleBookmark(),
   'share-game':     () => shareGame(),
   'report-game':    () => reportGame(),
 

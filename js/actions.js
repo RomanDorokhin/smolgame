@@ -4,28 +4,40 @@ function toggleLike() {
   const icon = document.getElementById('likeIcon');
 
   const wasLiked = likedSet.has(g.id);
-  // Оптимистичное обновление UI — откатим если API упадёт.
+  // Лайк = и избранное: оба набора и оба API держим вместе.
   if (wasLiked) {
     likedSet.delete(g.id);
+    bookmarkedSet.delete(g.id);
     icon.textContent = '🤍';
     icon.classList.remove('active-like');
   } else {
     likedSet.add(g.id);
+    bookmarkedSet.add(g.id);
     icon.textContent = '❤️';
     icon.classList.add('active-like', 'pop');
     setTimeout(() => icon.classList.remove('pop'), 400);
   }
   saveSet(STORAGE_KEYS.liked, likedSet);
+  saveSet(STORAGE_KEYS.bookmarked, bookmarkedSet);
   document.getElementById('likeCount').textContent =
     fmtNum(g.likes + (likedSet.has(g.id) ? 1 : 0));
 
-  (wasLiked ? API.unlike(g.id) : API.like(g.id)).catch(err => {
-    // Откат.
-    if (wasLiked) likedSet.add(g.id); else likedSet.delete(g.id);
+  const req = wasLiked
+    ? Promise.all([API.unlike(g.id), API.unbookmark(g.id)])
+    : Promise.all([API.like(g.id), API.bookmark(g.id)]);
+  req.catch(err => {
+    if (wasLiked) {
+      likedSet.add(g.id);
+      bookmarkedSet.add(g.id);
+    } else {
+      likedSet.delete(g.id);
+      bookmarkedSet.delete(g.id);
+    }
     saveSet(STORAGE_KEYS.liked, likedSet);
+    saveSet(STORAGE_KEYS.bookmarked, bookmarkedSet);
     updateOverlay();
     showToast('⚠️ Не удалось, попробуй ещё раз');
-    console.warn('like failed', err);
+    console.warn('like/bookmark failed', err);
   });
 }
 
@@ -65,35 +77,6 @@ function buildGameShareUrl(gameId) {
   const app = window.BOT_APP_NAME || '';
   if (app) return `https://t.me/${bot}/${app}?startapp=${param}`;
   return `https://t.me/${bot}?startapp=${param}`;
-}
-
-function toggleBookmark() {
-  if (GAMES.length === 0) return;
-  const g = GAMES[window.currentIdx];
-  const icon = document.getElementById('bookmarkIcon');
-
-  const wasBookmarked = bookmarkedSet.has(g.id);
-  if (wasBookmarked) {
-    bookmarkedSet.delete(g.id);
-    icon.textContent = '📑';
-    icon.classList.remove('active-bookmark');
-    showToast('Убрано из избранного');
-  } else {
-    bookmarkedSet.add(g.id);
-    icon.textContent = '🔖';
-    icon.classList.add('active-bookmark', 'pop');
-    setTimeout(() => icon.classList.remove('pop'), 400);
-    showToast('Добавлено в избранное');
-  }
-  saveSet(STORAGE_KEYS.bookmarked, bookmarkedSet);
-
-  (wasBookmarked ? API.unbookmark(g.id) : API.bookmark(g.id)).catch(err => {
-    if (wasBookmarked) bookmarkedSet.add(g.id); else bookmarkedSet.delete(g.id);
-    saveSet(STORAGE_KEYS.bookmarked, bookmarkedSet);
-    updateOverlay();
-    showToast('⚠️ Не удалось');
-    console.warn('bookmark failed', err);
-  });
 }
 
 async function shareGame() {
@@ -149,7 +132,6 @@ function openAuthorProfile() {
 
 window.toggleLike = toggleLike;
 window.toggleFollow = toggleFollow;
-window.toggleBookmark = toggleBookmark;
 window.shareGame = shareGame;
 window.reportGame = reportGame;
 window.trackPlay = trackPlay;

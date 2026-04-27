@@ -18,6 +18,10 @@ async function loadGames() {
     window.likedSet = new Set(GAMES.filter(g => g.isLiked).map(g => g.id));
     window.followedSet = new Set(GAMES.filter(g => g.isFollowing).map(g => g.authorId));
     window.bookmarkedSet = new Set(GAMES.filter(g => g.isBookmarked).map(g => g.id));
+    for (const g of GAMES) {
+      if (g.isLiked) bookmarkedSet.add(g.id);
+      if (g.isBookmarked) likedSet.add(g.id);
+    }
     saveSet(STORAGE_KEYS.liked, likedSet);
     saveSet(STORAGE_KEYS.followed, followedSet);
     saveSet(STORAGE_KEYS.bookmarked, bookmarkedSet);
@@ -32,7 +36,10 @@ async function loadGames() {
 function mergeInteractionSetsFromGames(games) {
   if (!Array.isArray(games)) return;
   for (const g of games) {
-    if (g.isLiked) likedSet.add(g.id);
+    if (g.isLiked) {
+      likedSet.add(g.id);
+      bookmarkedSet.add(g.id);
+    }
     if (g.isFollowing) followedSet.add(g.authorId);
     if (g.isBookmarked) bookmarkedSet.add(g.id);
   }
@@ -85,7 +92,10 @@ async function injectGameIntoFeed(gameId) {
     if (!game?.id) return window.currentIdx;
     const prevLen = GAMES.length;
     const idx = prevLen;
-    if (game.isLiked) likedSet.add(game.id);
+    if (game.isLiked) {
+      likedSet.add(game.id);
+      bookmarkedSet.add(game.id);
+    }
     if (game.isFollowing && game.authorId) followedSet.add(game.authorId);
     if (game.isBookmarked) bookmarkedSet.add(game.id);
     saveSet(STORAGE_KEYS.liked, likedSet);
@@ -343,10 +353,6 @@ function updateOverlay() {
   const liked = likedSet.has(g.id);
   document.getElementById('likeIcon').textContent = liked ? '❤️' : '🤍';
   document.getElementById('likeCount').textContent = fmtNum(g.likes + (liked ? 1 : 0));
-  const bookmarked = bookmarkedSet.has(g.id);
-  const bookmarkIcon = document.getElementById('bookmarkIcon');
-  bookmarkIcon.textContent = bookmarked ? '🔖' : '📑';
-  bookmarkIcon.classList.toggle('active-bookmark', bookmarked);
   document.getElementById('playsCount').textContent = fmtNum(g.plays);
 
   const following = followedSet.has(g.authorId);
