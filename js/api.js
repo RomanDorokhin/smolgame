@@ -41,16 +41,21 @@ async function apiFetch(path, { method = 'GET', body } = {}) {
 
     if (resp.status === 401) {
       msg =
-        'Вход в Telegram не подтверждён. Открой мини-апп из бота (не из браузера). Если уже из бота — на Worker должен быть секрет TELEGRAM_BOT_TOKEN от этого же бота (npx wrangler secret put TELEGRAM_BOT_TOKEN).';
+        'Вход из Telegram не подтверждён. Открой только из бота. Если из бота — токен на Worker должен быть от ЭТОГО бота: npx wrangler secret put TELEGRAM_BOT_TOKEN';
     } else if (resp.status === 409) {
       // оставляем текст от API (например профиль в БД)
+    } else if (resp.status === 503) {
+      // оставляем текст от API (например нет TELEGRAM_BOT_TOKEN)
     } else {
       const vague =
         !raw ||
         String(raw).trim() === '' ||
         String(raw).toLowerCase() === 'internal';
       if (vague && (resp.status >= 500 || String(msg).toLowerCase() === 'internal')) {
-        msg = `Ошибка API (${resp.status}). Обычно это не ссылка на игру, а сбой на Worker или базе — обнови деплой (git pull + npx wrangler deploy) и логи в Cloudflare.`;
+        msg =
+          'Не сохранилось (ошибка ' +
+          resp.status +
+          '). Ссылка на игру тут ни при чём — смотри Cloudflare → Workers → smolgame → Logs. Обнови Worker: git pull && npx wrangler deploy';
       }
     }
     throw new Error(msg);

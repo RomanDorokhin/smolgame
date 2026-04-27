@@ -374,8 +374,24 @@ export async function register(req, env) {
 
 export async function submitGame(req, env) {
   try {
+    const initHeader = String(req.headers.get('x-telegram-init-data') || '').trim();
     const user = await authenticate(req, env);
-    if (!user) return error('unauthorized', 401);
+    if (!user) {
+      if (!initHeader) {
+        return error('Нет данных входа из Telegram. Открой мини-апп только из бота, не из обычного браузера.', 401);
+      }
+      const token = env.TELEGRAM_BOT_TOKEN;
+      if (!token || !String(token).trim()) {
+        return error(
+          'Нет TELEGRAM_BOT_TOKEN на Worker. Владельцу: npx wrangler secret put TELEGRAM_BOT_TOKEN (токен этого бота).',
+          503
+        );
+      }
+      return error(
+        'Вход из Telegram не подтверждён (initData). Чаще всего: токен на Worker от другого бота. Закрой мини-апп и открой снова.',
+        401
+      );
+    }
 
     await upsertUser(env.DB, user);
 
