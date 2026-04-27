@@ -79,24 +79,21 @@
 <!-- ══ ПРОГРЕСС ══ -->
 <div id="dots"></div>
 
-<!-- Левый край: запасной свайп ленты (не перекрывает центр игры) -->
-<div id="swipe-edge-zone" aria-hidden="true"></div>
-
-<!-- ══ Зона свайпа ленты (между игрой и блоком с автором) + стрелки ══ -->
+<!-- ══ Зона ленты: только здесь горизонтальный свайп (как карточки), не трогаем игру ══ -->
 <div id="swipe-strip" aria-hidden="true">
-  <button type="button" class="feed-nav-arrow feed-nav-arrow-prev" data-action="feed-nav-prev" aria-label="Предыдущая игра">↑</button>
+  <button type="button" class="feed-nav-arrow feed-nav-arrow-prev" data-action="feed-nav-prev" aria-label="Предыдущая игра">←</button>
   <div class="swipe-strip-mid">
-    <span class="swipe-strip-handle" aria-hidden="true"></span>
-    <span class="swipe-strip-hint" id="swipe-hint-label">Свайп вверх — следующая</span>
+    <span class="swipe-strip-handle swipe-strip-handle-h" aria-hidden="true"></span>
+    <span class="swipe-strip-hint" id="swipe-hint-label">Влево — дальше · вправо — назад</span>
   </div>
-  <button type="button" class="feed-nav-arrow feed-nav-arrow-next" data-action="feed-nav-next" aria-label="Следующая игра">↓</button>
+  <button type="button" class="feed-nav-arrow feed-nav-arrow-next" data-action="feed-nav-next" aria-label="Следующая игра">→</button>
 </div>
 
 <!-- Одноразовая подсказка по ленте -->
 <div id="feed-nav-tip-overlay" class="feed-nav-tip-overlay">
   <div class="feed-nav-tip-card">
     <p class="feed-nav-tip-title">Как листать ленту</p>
-    <p class="feed-nav-tip-text">Полоска внизу, стрелки по бокам или узкий <strong>левый край</strong> экрана. Играть — в центре.</p>
+    <p class="feed-nav-tip-text">Внизу полоска: <strong>свайп влево</strong> — следующая игра, <strong>вправо</strong> — предыдущая. Играть — в центре экрана.</p>
     <button type="button" class="feed-nav-tip-btn" data-action="dismiss-feed-nav-tip">Понятно</button>
   </div>
 </div>

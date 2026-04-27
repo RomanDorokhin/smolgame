@@ -98,8 +98,6 @@ async function injectGameIntoFeed(gameId) {
       document.getElementById('side-actions').style.display = '';
       document.getElementById('game-info').style.display = '';
       document.getElementById('swipe-strip').style.display = '';
-      const edge = document.getElementById('swipe-edge-zone');
-      if (edge) edge.style.display = '';
       goTo(0, true);
     }
     return idx;
@@ -209,8 +207,6 @@ function renderFeed() {
     document.getElementById('side-actions').style.display = 'none';
     document.getElementById('game-info').style.display = 'none';
     document.getElementById('swipe-strip').style.display = 'none';
-    const edgeEmpty = document.getElementById('swipe-edge-zone');
-    if (edgeEmpty) edgeEmpty.style.display = 'none';
     return;
   }
 
@@ -218,8 +214,6 @@ function renderFeed() {
   document.getElementById('side-actions').style.display = '';
   document.getElementById('game-info').style.display = '';
   document.getElementById('swipe-strip').style.display = '';
-  const edgeShow = document.getElementById('swipe-edge-zone');
-  if (edgeShow) edgeShow.style.display = '';
 
   appendSlides(0, GAMES);
   goTo(0, true);
@@ -252,12 +246,10 @@ function flashFeedSlideChange() {
 function updateFeedNavArrows() {
   const prevBtn = document.querySelector('[data-action="feed-nav-prev"]');
   const nextBtn = document.querySelector('[data-action="feed-nav-next"]');
-  const edge = document.getElementById('swipe-edge-zone');
   const n = GAMES.length;
   const i = window.currentIdx;
   if (prevBtn) prevBtn.disabled = n < 2 || i <= 0;
   if (nextBtn) nextBtn.disabled = n < 2 || i >= n - 1;
-  if (edge) edge.style.pointerEvents = n < 2 ? 'none' : '';
 }
 
 function goTo(idx, instant = false) {
@@ -335,12 +327,14 @@ function updateOverlay() {
   followBtn.classList.toggle('following', following);
 }
 
-const SWIPE_NEXT_PX = 55;
-/** Свайп вниз — предыдущая игра: порог ниже, чем у Telegram на закрытие mini-app */
-const SWIPE_PREV_PX = 12;
-const SWIPE_PREV_VELOCITY = 0.2;
+/** Горизонт в полоске: влево = следующая, вправо = предыдущая (как карточки) */
+const SWIPE_HORIZ_PX = 48;
+const SWIPE_HORIZ_VELOCITY = 0.28;
 const MOVE_THRESHOLD_PX = 10;
+/** Жест «вниз» в полоске на первом слайде — отдать закрытию Telegram */
+const TELEGRAM_PASS_DOWN_PX = 14;
 
+let touchStartX = 0;
 let touchStartY = 0;
 let touchStartTime = 0;
 let touchMoved = false;
@@ -353,15 +347,12 @@ function isOverlayOpen() {
   ));
 }
 
-function swipeNavEls() {
-  const strip = document.getElementById('swipe-strip');
-  const edge = document.getElementById('swipe-edge-zone');
-  return { strip, edge };
+function swipeNavStrip() {
+  return document.getElementById('swipe-strip');
 }
 
 function clearTelegramSwipePass() {
-  swipeNavEls().strip?.classList.remove('telegram-swipe-pass');
-  swipeNavEls().edge?.classList.remove('telegram-swipe-pass');
+  swipeNavStrip()?.classList.remove('telegram-swipe-pass');
 }
 
 let swipeDragHost = null;
@@ -375,6 +366,7 @@ function feedPointerDown(e, dragHost) {
   touching = true;
   activePointerId = e.pointerId;
   swipeDragHost = dragHost;
+  touchStartX = e.clientX;
   touchStartY = e.clientY;
   touchStartTime = Date.now();
   touchMoved = false;
@@ -389,19 +381,18 @@ function feedPointerDown(e, dragHost) {
 
 function feedPointerMove(e, dragHost) {
   if (!touching || e.pointerId !== activePointerId || dragHost !== swipeDragHost) return;
-  const y = e.clientY;
-  const deltaFromStart = y - touchStartY;
+  const dx = e.clientX - touchStartX;
+  const dy = e.clientY - touchStartY;
+  const verticalDominant = Math.abs(dy) > Math.abs(dx) * 1.15;
 
-  if (window.currentIdx === 0 && deltaFromStart > MOVE_THRESHOLD_PX) {
+  if (window.currentIdx === 0 && verticalDominant && dy > TELEGRAM_PASS_DOWN_PX) {
     const passPid = e.pointerId;
     try { dragHost.releasePointerCapture(e.pointerId); } catch (err) {}
     touching = false;
     activePointerId = null;
     swipeDragHost = null;
     dragHost.classList.remove('dragging');
-    const { strip, edge } = swipeNavEls();
-    strip?.classList.add('telegram-swipe-pass');
-    edge?.classList.add('telegram-swipe-pass');
+    swipeNavStrip()?.classList.add('telegram-swipe-pass');
     const onLift = ev => {
       if (ev.pointerId !== passPid) return;
       clearTelegramSwipePass();
@@ -413,7 +404,10 @@ function feedPointerMove(e, dragHost) {
     return;
   }
 
-  if (Math.abs(deltaFromStart) > MOVE_THRESHOLD_PX) {
+  if (
+    Math.abs(dx) > MOVE_THRESHOLD_PX ||
+    Math.abs(dy) > MOVE_THRESHOLD_PX
+  ) {
     touchMoved = true;
     e.preventDefault();
   }
@@ -434,20 +428,24 @@ function feedPointerUp(e, dragHost) {
   if (!touchMoved) return;
 
   const now = Date.now();
+  const x = e.clientX;
   const y = e.clientY;
+  const dx = touchStartX - x;
   const dy = touchStartY - y;
   const duration = Math.max(1, now - touchStartTime);
-  const velocity = Math.abs(dy) / duration;
+  const vHoriz = Math.abs(dx) / duration;
 
-  if (dy > 0) {
-    if (dy > SWIPE_NEXT_PX || velocity > 0.35) {
+  const horizontalIntent = Math.abs(dx) >= Math.abs(dy) * 0.85;
+
+  if (horizontalIntent) {
+    if (dx > SWIPE_HORIZ_PX || (dx > 22 && vHoriz > SWIPE_HORIZ_VELOCITY)) {
       goTo(window.currentIdx + 1);
       hideSwipeHint();
-    }
-  } else if (dy < 0 && window.currentIdx > 0) {
-    if (-dy > SWIPE_PREV_PX || velocity > SWIPE_PREV_VELOCITY) {
-      goTo(window.currentIdx - 1);
-      hideSwipeHint();
+    } else if (dx < -SWIPE_HORIZ_PX || (dx < -22 && vHoriz > SWIPE_HORIZ_VELOCITY)) {
+      if (window.currentIdx > 0) {
+        goTo(window.currentIdx - 1);
+        hideSwipeHint();
+      }
     }
   }
   e.preventDefault();
@@ -463,7 +461,7 @@ function feedPointerCancel(e, dragHost) {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-  const { strip, edge } = swipeNavEls();
+  const strip = swipeNavStrip();
   if (!strip) return;
 
   strip.addEventListener('pointerdown', e => feedPointerDown(e, strip));
@@ -471,28 +469,31 @@ document.addEventListener('DOMContentLoaded', () => {
   strip.addEventListener('pointerup', e => feedPointerUp(e, strip));
   strip.addEventListener('pointercancel', e => feedPointerCancel(e, strip));
 
-  if (edge) {
-    edge.addEventListener('pointerdown', e => feedPointerDown(e, edge));
-    edge.addEventListener('pointermove', e => feedPointerMove(e, edge));
-    edge.addEventListener('pointerup', e => feedPointerUp(e, edge));
-    edge.addEventListener('pointercancel', e => feedPointerCancel(e, edge));
-  }
-
   strip.addEventListener('wheel', e => {
     if (isOverlayOpen() || GAMES.length < 2) return;
     e.preventDefault();
-    if (Math.abs(e.deltaY) < 24) return;
-    goTo(e.deltaY > 0 ? window.currentIdx + 1 : window.currentIdx - 1);
+    const absX = Math.abs(e.deltaX);
+    const absY = Math.abs(e.deltaY);
+    if (absX >= absY) {
+      if (absX < 18) return;
+      if (e.deltaX < 0) goTo(window.currentIdx + 1);
+      else if (window.currentIdx > 0) goTo(window.currentIdx - 1);
+    } else {
+      if (absY < 24) return;
+      goTo(e.deltaY > 0 ? window.currentIdx + 1 : window.currentIdx - 1);
+    }
     hideSwipeHint();
   }, { passive: false });
 });
 
 document.addEventListener('keydown', e => {
-  if (!['ArrowDown', 'ArrowUp'].includes(e.key)) return;
+  if (!['ArrowDown', 'ArrowUp', 'ArrowLeft', 'ArrowRight'].includes(e.key)) return;
   if (isOverlayOpen() || GAMES.length === 0) return;
   e.preventDefault();
-  if (e.key === 'ArrowDown') goTo(window.currentIdx + 1);
-  else if (window.currentIdx > 0) goTo(window.currentIdx - 1);
+  if (e.key === 'ArrowDown' || e.key === 'ArrowRight') goTo(window.currentIdx + 1);
+  else if ((e.key === 'ArrowUp' || e.key === 'ArrowLeft') && window.currentIdx > 0) {
+    goTo(window.currentIdx - 1);
+  }
 });
 
 let swipeHintHidden = false;

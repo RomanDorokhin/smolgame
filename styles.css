@@ -73,7 +73,6 @@ body.tg-only-wall #topbar,
 body.tg-only-wall #side-actions,
 body.tg-only-wall #game-info,
 body.tg-only-wall #dots,
-body.tg-only-wall #swipe-edge-zone,
 body.tg-only-wall #swipe-strip,
 body.tg-only-wall #feed-nav-tip-overlay,
 body.tg-only-wall #bottom-nav,
@@ -200,19 +199,6 @@ body.tg-only-wall #toast{
   color:#ffb4c0;
 }
 
-/* Левый край — только свайп ленты, iframe по центру не трогаем */
-#swipe-edge-zone{
-  position:fixed;
-  left:0;
-  top:calc(var(--safe-top) + 48px);
-  width:22px;
-  bottom:calc(var(--safe-bottom) + var(--nav-h) + var(--info-h) + var(--swipe-strip-h));
-  z-index:305;
-  pointer-events:auto;
-  touch-action:none;
-  background:linear-gradient(90deg, rgba(0,0,0,0.22) 0%, transparent 100%);
-}
-
 #swipe-strip{
   position:fixed;
   left:0;
@@ -234,12 +220,10 @@ body.tg-only-wall #toast{
   -webkit-backdrop-filter:blur(12px);
 }
 
-#swipe-strip.dragging,
-#swipe-edge-zone.dragging{z-index:315;}
+#swipe-strip.dragging{z-index:315;}
 
-/* На первом слайде свайп вниз — не перехватывать, чтобы сработал жест закрытия Telegram */
-#swipe-strip.telegram-swipe-pass,
-#swipe-edge-zone.telegram-swipe-pass{
+/* На первом слайде вертикальный жест вниз в полоске — отдать закрытию Telegram */
+#swipe-strip.telegram-swipe-pass{
   pointer-events:none !important;
 }
 
@@ -260,6 +244,10 @@ body.tg-only-wall #toast{
   border-radius:999px;
   background:rgba(255,255,255,0.35);
   box-shadow:0 0 0 1px rgba(0,0,0,0.2);
+}
+.swipe-strip-handle-h{
+  width:44px;
+  height:5px;
 }
 
 .swipe-strip-hint{
@@ -366,17 +354,11 @@ body.feed-slide-flash #feed{
 .feed-nav-tip-btn:active{opacity:0.9;}
 
 body:has(#upload-screen.open) #swipe-strip,
-body:has(#upload-screen.open) #swipe-edge-zone,
 body:has(#report-screen.open) #swipe-strip,
-body:has(#report-screen.open) #swipe-edge-zone,
 body:has(#profile-screen.open) #swipe-strip,
-body:has(#profile-screen.open) #swipe-edge-zone,
 body:has(#author-screen.open) #swipe-strip,
-body:has(#author-screen.open) #swipe-edge-zone,
 body:has(#search-screen.open) #swipe-strip,
-body:has(#search-screen.open) #swipe-edge-zone,
-body:has(#onboarding-screen.open) #swipe-strip,
-body:has(#onboarding-screen.open) #swipe-edge-zone{
+body:has(#onboarding-screen.open) #swipe-strip{
   display:none;
 }
 
