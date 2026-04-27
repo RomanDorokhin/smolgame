@@ -276,13 +276,20 @@ export async function submitGame(req, env) {
   } catch (e) {
     console.error('submitGame', e);
     const msg = String(e?.message || e || '');
+    // Старые D1 без genre_emoji / image_url — сохраняем без них, чтобы отправка работала без ручной миграции.
     if (/no such column/i.test(msg)) {
-      return error(
-        'База на сервере без нужных колонок — админу: выполни миграцию D1 (файл migrations/0001_add_game_columns.sql).',
-        503
-      );
+      try {
+        await env.DB.prepare(
+          `INSERT INTO games (id, title, description, genre, url, author_id, status)
+           VALUES (?, ?, ?, ?, ?, ?, 'pending')`
+        ).bind(id, ok.title, ok.description, ok.genre, ok.url, user.id).run();
+      } catch (e2) {
+        console.error('submitGame legacy insert', e2);
+        return error('Не удалось сохранить игру. Попробуй позже.', 500);
+      }
+    } else {
+      return error('Не удалось сохранить игру. Попробуй позже.', 500);
     }
-    return error('Не удалось сохранить игру. Попробуй позже.', 500);
   }
 
   return json({ ok: true, id, status: 'pending' });

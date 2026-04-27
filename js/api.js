@@ -26,8 +26,11 @@ async function apiFetch(path, { method = 'GET', body } = {}) {
   let data = null;
   try { data = await resp.json(); } catch (e) {}
   if (!resp.ok) {
-    let msg = data?.error || resp.statusText || 'request failed';
-    if (resp.status >= 500 || msg === 'internal') {
+    const raw = data?.error;
+    let msg = (typeof raw === 'string' && raw.trim()) || resp.statusText || 'request failed';
+    // Не затираем осмысленный текст от API (503 про миграцию, «Не удалось сохранить…» и т.д.).
+    const vague = !raw || String(raw).trim() === '' || String(raw).toLowerCase() === 'internal';
+    if (vague && (resp.status >= 500 || msg === 'internal')) {
       msg = 'Сервер временно недоступен. Попробуй позже.';
     }
     throw new Error(msg);
