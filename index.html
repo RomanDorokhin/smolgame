@@ -187,12 +187,12 @@
 
   <!-- Способ загрузки -->
   <div class="upload-methods" id="upload-methods-anchor">
-    <div class="method-card selected" id="method-code" data-action="select-method" data-method="code">
+    <div class="method-card" id="method-code" data-action="select-method" data-method="code">
       <div class="m-icon">📝</div>
       <div class="m-title">Вставить код</div>
       <div class="m-desc">Вставить HTML</div>
     </div>
-    <div class="method-card" id="method-url" data-action="select-method" data-method="url">
+    <div class="method-card selected" id="method-url" data-action="select-method" data-method="url">
       <div class="m-icon">🔗</div>
       <div class="m-title">Ссылка</div>
       <div class="m-desc">Уже на хостинге</div>
@@ -200,7 +200,7 @@
   </div>
 
   <!-- Форма: код -->
-  <div class="form-section visible" id="form-code">
+  <div class="form-section" id="form-code">
     <div class="field-group">
       <div class="field-label">GitHub аккаунт</div>
       <button class="github-btn" data-action="auth-github">
@@ -228,7 +228,7 @@
   </div>
 
   <!-- Форма: ссылка -->
-  <div class="form-section" id="form-url">
+  <div class="form-section visible" id="form-url">
     <div class="field-group">
       <div class="field-label">Ссылка на игру</div>
       <input class="field-input" type="url" placeholder="https://username.github.io/game" id="urlInput">

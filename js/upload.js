@@ -31,9 +31,9 @@ function isStorageUnavailableError(e) {
 async function resolveCoverImageUrl() {
   const coverUrlRaw = document.getElementById('coverUrlInput')?.value?.trim() || '';
   if (coverUrlRaw) {
-    const u = safeHttpUrl(coverUrlRaw);
-    if (!u || !u.startsWith('https://')) {
-      showToast('⚠️ Некорректная HTTPS-ссылка на обложку');
+    const u = normalizeToHttpsUrl(coverUrlRaw);
+    if (!u) {
+      showToast('⚠️ Некорректная ссылка на обложку (нужен https или http)');
       return { error: true };
     }
     return { imageUrl: u };
@@ -59,7 +59,8 @@ async function resolveCoverImageUrl() {
 
 async function submitGame(method) {
   if (method === 'code') {
-    showToast('⏳ По ссылке: вкладка «Ссылка». Вставка кода — позже.');
+    showToast('⚠️ Загрузка по ссылке — вкладка «Ссылка» справа. «Вставить код» пока не отправляется.');
+    if (typeof selectMethod === 'function') selectMethod('url');
     return;
   }
 
@@ -70,9 +71,9 @@ async function submitGame(method) {
   const genreEmoji = (GENRES.find(x => x.label === genreLabel)?.emoji) || '🎮';
 
   if (!rawUrl || !name) { showToast('⚠️ Заполни ссылку и название'); return; }
-  const safeUrl = safeHttpUrl(rawUrl);
-  if (!safeUrl || !safeUrl.startsWith('https://')) {
-    showToast('⚠️ Нужна корректная HTTPS-ссылка');
+  const safeUrl = normalizeToHttpsUrl(rawUrl);
+  if (!safeUrl) {
+    showToast('⚠️ Нужна рабочая ссылка (https://… или http:// — превратим в https)');
     return;
   }
 

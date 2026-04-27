@@ -32,5 +32,5 @@ window.currentIdx = 0;
 window.slides = [];
 
 window.selectedGenre = '';
-window.selectedUploadMethod = 'code';
+window.selectedUploadMethod = 'url';
 window.selectedGenres = { code: '', url: '' };

@@ -2,6 +2,7 @@ function openUpload() {
   document.getElementById('upload-screen').classList.add('open');
   renderGenrePills('genrePills', 'code');
   renderGenrePills('genrePills2', 'url');
+  if (typeof selectMethod === 'function') selectMethod(window.selectedUploadMethod || 'url');
   if (typeof maybeShowWelcomeOnUploadOpen === 'function') maybeShowWelcomeOnUploadOpen();
 }
 function closeUpload() {

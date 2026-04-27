@@ -24,6 +24,20 @@ function safeHttpUrl(raw) {
   }
 }
 
+/** Для отправки на сервер: только https (http → https, GitHub Pages часто даёт http). */
+function normalizeToHttpsUrl(raw) {
+  const base = safeHttpUrl(raw);
+  if (!base) return null;
+  try {
+    const u = new URL(base);
+    if (u.protocol === 'http:') u.protocol = 'https:';
+    if (u.protocol !== 'https:') return null;
+    return u.toString();
+  } catch (e) {
+    return null;
+  }
+}
+
 /** URL фото профиля (Telegram / CDN) или null, если показываем букву/эмодзи. */
 function avatarImgUrl(avatar) {
   if (avatar == null || avatar === '') return null;
@@ -66,6 +80,7 @@ window.fmtNum = fmtNum;
 window.showToast = showToast;
 window.esc = esc;
 window.safeHttpUrl = safeHttpUrl;
+window.normalizeToHttpsUrl = normalizeToHttpsUrl;
 window.avatarImgUrl = avatarImgUrl;
 window.loadSet = loadSet;
 window.saveSet = saveSet;
