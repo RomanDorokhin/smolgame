@@ -42,6 +42,8 @@ async function apiFetch(path, { method = 'GET', body } = {}) {
     if (resp.status === 401) {
       msg =
         'Вход в Telegram не подтверждён. Открой мини-апп из бота (не из браузера). Если уже из бота — на Worker должен быть секрет TELEGRAM_BOT_TOKEN от этого же бота (npx wrangler secret put TELEGRAM_BOT_TOKEN).';
+    } else if (resp.status === 409) {
+      // оставляем текст от API (например профиль в БД)
     } else {
       const vague =
         !raw ||

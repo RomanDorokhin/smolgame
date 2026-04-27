@@ -394,6 +394,12 @@ export async function submitGame(req, env) {
     } catch (e) {
       console.error('submitGame insert', e);
       const msg = String(e?.message || e || '');
+      if (/FOREIGN KEY constraint failed/i.test(msg)) {
+        return error(
+          'Профиль в базе не создался. Закрой мини-апп полностью, открой снова из бота, подожди пару секунд и отправь ещё раз.',
+          409
+        );
+      }
       if (/no such column/i.test(msg)) {
         try {
           await env.DB.prepare(
@@ -402,6 +408,13 @@ export async function submitGame(req, env) {
           ).bind(id, ok.title, ok.description, ok.genre, ok.url, user.id).run();
         } catch (e2) {
           console.error('submitGame legacy insert', e2);
+          const m2 = String(e2?.message || e2 || '');
+          if (/FOREIGN KEY constraint failed/i.test(m2)) {
+            return error(
+              'Профиль в базе не создался. Открой мини-апп из бота заново и попробуй снова.',
+              409
+            );
+          }
           return error('Не удалось сохранить игру (база). Попробуй позже.', 500);
         }
       } else {

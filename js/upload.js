@@ -98,7 +98,9 @@ async function submitGame(method) {
     showToast('✅ Отправлено на модерацию!');
     closeUpload();
   } catch (e) {
-    showToast('⚠️ ' + (e.message || 'не получилось'));
+    const m = e?.message || 'не получилось';
+    console.error('submitGame failed', e);
+    showToast('⚠️ ' + m);
   }
 }
 
