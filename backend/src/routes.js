@@ -1,4 +1,5 @@
 import { json, error, newId } from './http.js';
+import { isMissingColumnError } from './db-errors.js';
 import { authenticate, upsertUser } from './auth.js';
 import { safeHttpsUrl, validateSubmission, validateProfilePatch } from './validators.js';
 
@@ -67,7 +68,7 @@ async function firstSuccessfulAll(db, sqlStrings, bindArgs = []) {
       return bindArgs.length ? await stmt.bind(...bindArgs).all() : await stmt.all();
     } catch (e) {
       lastErr = e;
-      if (!/no such column/i.test(String(e?.message || ''))) throw e;
+      if (!isMissingColumnError(e)) throw e;
     }
   }
   throw lastErr;
@@ -81,7 +82,7 @@ async function firstSuccessfulFirst(db, sqlStrings, bindArgs = []) {
       return bindArgs.length ? await stmt.bind(...bindArgs).first() : await stmt.first();
     } catch (e) {
       lastErr = e;
-      if (!/no such column/i.test(String(e?.message || ''))) throw e;
+      if (!isMissingColumnError(e)) throw e;
     }
   }
   throw lastErr;
@@ -416,7 +417,7 @@ export async function submitGame(req, env) {
           409
         );
       }
-      if (/no such column/i.test(msg)) {
+      if (isMissingColumnError(e)) {
         try {
           await env.DB.prepare(
             `INSERT INTO games (id, title, description, genre, url, author_id, status)

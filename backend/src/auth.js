@@ -1,4 +1,5 @@
 import { verifyInitData } from './telegram.js';
+import { isMissingColumnError } from './db-errors.js';
 
 /**
  * Извлекает и валидирует текущего пользователя из заголовка `x-telegram-init-data`.
@@ -87,7 +88,7 @@ export async function upsertUser(db, user) {
       return;
     } catch (e) {
       lastErr = e;
-      if (!/no such column/i.test(String(e?.message || ''))) throw e;
+      if (!isMissingColumnError(e)) throw e;
     }
   }
   throw lastErr;
