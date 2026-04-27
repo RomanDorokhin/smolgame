@@ -984,7 +984,14 @@ textarea.field-input{
 .code-area:focus{border-color:rgba(255,45,85,0.5);}
 .code-area::placeholder{color:rgba(255,255,255,0.2);}
 
-#form-code .code-area{min-height:220px;height:min(42vh,320px);}
+#form-github .code-area,
+#form-premium .code-area{min-height:220px;height:min(42vh,320px);}
+.upload-methods--triple{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(108px,1fr));
+  gap:10px;
+}
+#btn-premium-tab-advance{margin-top:14px;width:100%;}
 #btn-code-tab-advance{margin-top:14px;width:100%;}
 .github-reauth-btn{margin-top:8px;}
 .gh-paste-strip{margin-bottom:12px;padding:10px 12px;border-radius:12px;background:rgba(255,255,255,0.06);font-size:14px;line-height:1.45;}

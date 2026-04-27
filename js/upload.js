@@ -14,15 +14,9 @@ async function refreshUploadCapabilities() {
 }
 
 function updateGithubUploadUi() {
-  const desc = document.getElementById('method-code-desc');
-  if (desc) {
-    if (USER.isPremium) {
-      desc.textContent = 'Премиум: хостинг на SmolGame';
-    } else if (USER.isGithubConnected && USER.hasGithubPublishToken) {
-      desc.textContent = 'Код → твой GitHub + Pages';
-    } else {
-      desc.textContent = 'GitHub или премиум';
-    }
+  const premCard = document.getElementById('method-premium');
+  if (premCard) {
+    premCard.hidden = !USER.isPremium;
   }
   const hint = document.getElementById('github-connect-hint');
   if (hint) {
@@ -50,40 +44,38 @@ function updateGithubUploadUi() {
   }
   const inline = document.getElementById('github-inline-upload');
   if (inline) {
-    const showInline = !USER.isPremium && done;
-    if (showInline) inline.removeAttribute('hidden');
+    if (done) inline.removeAttribute('hidden');
     else inline.setAttribute('hidden', '');
   }
 }
 
 async function selectMethod(m) {
-  if (m === 'code') {
+  if (m === 'github' || m === 'premium') {
     await refreshUploadCapabilities();
   }
+  if (m === 'premium' && !USER.isPremium) {
+    showToast('⚠️ Вкладка «Премиум» только для премиум-аккаунта');
+    m = 'url';
+  }
   window.selectedUploadMethod = m;
-  document.getElementById('method-code').classList.toggle('selected', m === 'code');
-  document.getElementById('method-url').classList.toggle('selected', m === 'url');
-  document.getElementById('form-code').classList.toggle('visible', m === 'code');
-  document.getElementById('form-url').classList.toggle('visible', m === 'url');
-  if (m === 'code') {
+  document.getElementById('method-url')?.classList.toggle('selected', m === 'url');
+  document.getElementById('method-github')?.classList.toggle('selected', m === 'github');
+  document.getElementById('method-premium')?.classList.toggle('selected', m === 'premium');
+  document.getElementById('form-url')?.classList.toggle('visible', m === 'url');
+  document.getElementById('form-github')?.classList.toggle('visible', m === 'github');
+  document.getElementById('form-premium')?.classList.toggle('visible', m === 'premium');
+
+  if (m === 'github') {
     const connect = document.getElementById('code-branch-connect');
-    const prem = document.getElementById('code-branch-premium');
     const gh = document.getElementById('code-branch-github');
-    if (USER.isPremium) {
-      if (connect) connect.hidden = true;
-      if (prem) prem.hidden = false;
-      if (gh) gh.hidden = true;
-      if (typeof resetCodeWizard === 'function') resetCodeWizard();
-    } else if (USER.isGithubConnected && USER.hasGithubPublishToken) {
-      if (connect) connect.hidden = true;
-      if (prem) prem.hidden = true;
-      if (gh) gh.hidden = false;
-      if (typeof resetGhCodeWizard === 'function') resetGhCodeWizard();
-    } else {
-      if (connect) connect.hidden = false;
-      if (prem) prem.hidden = true;
-      if (gh) gh.hidden = true;
-    }
+    const done = USER.isGithubConnected && USER.hasGithubPublishToken;
+    if (connect) connect.hidden = Boolean(done);
+    if (gh) gh.hidden = !done;
+    if (done && typeof resetGhCodeWizard === 'function') resetGhCodeWizard();
+  }
+  if (m === 'premium' && USER.isPremium && typeof resetCodeWizard === 'function') {
+    resetCodeWizard();
+    if (typeof renderGenrePills === 'function') renderGenrePills('genrePillsCodeOnly', 'codeOnly');
   }
 }
 
@@ -95,7 +87,7 @@ async function githubUnlink() {
   try {
     await API.githubUnlink();
     await refreshUploadCapabilities();
-    if (typeof selectMethod === 'function') await selectMethod('code');
+    if (typeof selectMethod === 'function') await selectMethod('github');
     showToast('✅ GitHub отвязан');
   } catch (e) {
     showToast('⚠️ ' + (e?.message || 'не удалось'));
@@ -237,7 +229,7 @@ async function githubUploadSubmit() {
     showToast(out?.pagesReady ? '✅ GitHub Pages отвечает' : '✅ Репозиторий создан, Pages могут подняться через минуту');
     window._ghPublishedPlayUrl = out.pagesUrl || '';
     resetGithubInlineForm();
-    if (typeof selectMethod === 'function') await selectMethod('code');
+    if (typeof selectMethod === 'function') await selectMethod('github');
     if (!USER.isPremium) beginGhCodeWizardAfterPublish(out);
   } catch (e) {
     const msg = e?.message || 'ошибка';
@@ -692,19 +684,13 @@ function previewCodeWizardCover(input) {
 }
 
 async function submitGame(method) {
-  if (method === 'code') {
+  if (method === 'premium') {
     await refreshUploadCapabilities();
-    if (USER.isPremium) {
-      if (typeof codeWizardNext === 'function') codeWizardNext();
+    if (!USER.isPremium) {
+      showToast('⚠️ Только для премиум');
       return;
     }
-    if (USER.isGithubConnected && USER.hasGithubPublishToken) {
-      if (typeof ghCodeWizardNext === 'function') ghCodeWizardNext();
-      return;
-    }
-    showToast(
-      '⚠️ Привяжи GitHub и загрузи игру кнопкой «Загрузить на GitHub», либо оформи премиум — тогда код можно хостить на SmolGame.'
-    );
+    if (typeof codeWizardNext === 'function') codeWizardNext();
     return;
   }
 

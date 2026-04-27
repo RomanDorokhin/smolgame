@@ -68,7 +68,7 @@ async function handleGithubOAuthReturn() {
     }
     if (g === 'connected') {
       if (typeof openUpload === 'function') openUpload();
-      if (typeof selectMethod === 'function') await selectMethod('code');
+      if (typeof selectMethod === 'function') await selectMethod('github');
     }
   } catch (e) {
     /* ignore */

@@ -174,6 +174,7 @@ function switchTab(tab) {
     upload?.classList.add('open');
     if (typeof renderGenrePills === 'function') {
       renderGenrePills('genrePillsCodeOnly', 'codeOnly');
+      renderGenrePills('genrePillsGhCode', 'ghCode');
       renderGenrePills('genrePills2', 'url');
     }
     if (typeof refreshUploadCapabilities === 'function') {
