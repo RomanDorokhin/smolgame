@@ -13,7 +13,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <!-- ?v= сбрасывает кэш WebView Telegram после правок JS/CSS (меняй при каждом релизе фронта). -->
-<link rel="stylesheet" href="styles.css?v=20260428f">
+<link rel="stylesheet" href="styles.css?v=20260428g">
 </head>
 <body>
 
@@ -22,6 +22,22 @@
     <div class="tg-only-logo">smol<span>game</span></div>
     <p class="tg-only-title">Открой в Telegram</p>
     <p class="tg-only-text">Открой из Telegram: меню бота → мини-приложение.</p>
+  </div>
+</div>
+
+<!-- ══ БОКОВЫЕ ДЕЙСТВИЯ: в DOM ДО #feed — иначе слой кнопок перекрывает iframe и ломает drag по игре ══ -->
+<div id="side-actions">
+  <div class="action-btn" data-action="toggle-like" title="Лайк и в избранное">
+    <div class="action-icon" id="likeIcon">🤍</div>
+    <div class="action-label" id="likeCount">0</div>
+  </div>
+  <div class="action-btn" data-action="share-game">
+    <div class="action-icon">🔗</div>
+    <div class="action-label" id="playsCount">0</div>
+  </div>
+  <div class="action-btn" data-action="report-game">
+    <div class="action-icon">⚑</div>
+    <div class="action-label">Жалоба</div>
   </div>
 </div>
 
@@ -42,22 +58,6 @@
   <div class="empty-title">Игр пока нет</div>
   <div class="empty-sub">Загрузи игру — она появится в ленте после модерации.</div>
   <button class="empty-btn" data-action="open-upload">Загрузить игру</button>
-</div>
-
-<!-- ══ БОКОВЫЕ ДЕЙСТВИЯ ══ -->
-<div id="side-actions">
-  <div class="action-btn" data-action="toggle-like" title="Лайк и в избранное">
-    <div class="action-icon" id="likeIcon">🤍</div>
-    <div class="action-label" id="likeCount">0</div>
-  </div>
-  <div class="action-btn" data-action="share-game">
-    <div class="action-icon">🔗</div>
-    <div class="action-label" id="playsCount">0</div>
-  </div>
-  <div class="action-btn" data-action="report-game">
-    <div class="action-icon">⚑</div>
-    <div class="action-label">Жалоба</div>
-  </div>
 </div>
 
 <!-- ══ ИНФО ОБ ИГРЕ (автор + мета игры в одну линию) ══ -->
@@ -403,25 +403,25 @@
 
 <!-- ══ SCRIPTS ══ -->
 <!-- Порядок важен: config/utils/telegram → state → api → модули логики → события → main. -->
-<script src="js/config.js?v=20260428f"></script>
-<script src="js/utils.js?v=20260428f"></script>
-<script src="js/telegram.js?v=20260428f"></script>
-<script src="js/tg-gate.js?v=20260428f"></script>
-<script src="js/state.js?v=20260428f"></script>
-<script src="js/api.js?v=20260428f"></script>
-<script src="js/onboarding.js?v=20260428f"></script>
-<script src="js/help-screens.js?v=20260428f"></script>
-<script src="js/feed.js?v=20260428f"></script>
-<script src="js/feed-nav-tip.js?v=20260428f"></script>
-<script src="js/actions.js?v=20260428f"></script>
-<script src="js/upload.js?v=20260428f"></script>
-<script src="js/genres.js?v=20260428f"></script>
-<script src="js/search.js?v=20260428f"></script>
-<script src="js/profile.js?v=20260428f"></script>
-<script src="js/admin.js?v=20260428f"></script>
-<script src="js/screens.js?v=20260428f"></script>
-<script src="js/events.js?v=20260428f"></script>
-<script src="js/overlay-pull-close.js?v=20260428f"></script>
-<script src="js/main.js?v=20260428f"></script>
+<script src="js/config.js?v=20260428g"></script>
+<script src="js/utils.js?v=20260428g"></script>
+<script src="js/telegram.js?v=20260428g"></script>
+<script src="js/tg-gate.js?v=20260428g"></script>
+<script src="js/state.js?v=20260428g"></script>
+<script src="js/api.js?v=20260428g"></script>
+<script src="js/onboarding.js?v=20260428g"></script>
+<script src="js/help-screens.js?v=20260428g"></script>
+<script src="js/feed.js?v=20260428g"></script>
+<script src="js/feed-nav-tip.js?v=20260428g"></script>
+<script src="js/actions.js?v=20260428g"></script>
+<script src="js/upload.js?v=20260428g"></script>
+<script src="js/genres.js?v=20260428g"></script>
+<script src="js/search.js?v=20260428g"></script>
+<script src="js/profile.js?v=20260428g"></script>
+<script src="js/admin.js?v=20260428g"></script>
+<script src="js/screens.js?v=20260428g"></script>
+<script src="js/events.js?v=20260428g"></script>
+<script src="js/overlay-pull-close.js?v=20260428g"></script>
+<script src="js/main.js?v=20260428g"></script>
 </body>
 </html>

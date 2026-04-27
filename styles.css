@@ -135,6 +135,9 @@ body.tg-only-wall #toast{
   position:fixed;
   inset:0;
   overflow:hidden;
+  /* Выше колонки лайков (она ниже по z-index), чтобы iframe получал touch */
+  z-index:1;
+  isolation:isolate;
 }
 
 .slide{
@@ -508,14 +511,15 @@ body:has(#onboarding-screen.open) #swipe-strip{
 
 #side-actions{
   position:fixed;
-  right:12px;
-  bottom:calc(var(--game-bottom) + 18px);
+  /* Вверху справа — не над лотком/полем по центру (раньше справа снизу перекрывали drag) */
+  top:calc(var(--safe-top) + 10px);
+  right:10px;
+  bottom:auto;
   display:flex;
-  flex-direction:column;
+  flex-direction:row;
   align-items:center;
-  gap:18px;
-  z-index:301;
-  /* Иначе колонка перехватывает drag по игре (тетрис и т.п.) в правой части экрана */
+  gap:10px;
+  z-index:350;
   pointer-events:none;
 }
 #side-actions .action-btn{
@@ -1503,7 +1507,7 @@ textarea.field-input{
   gap:16px;
   text-align:center;
   padding:40px;
-  z-index:10;
+  z-index:400;
 }
 #empty-state.show{display:flex;}
 .empty-icon{font-size:64px;}
