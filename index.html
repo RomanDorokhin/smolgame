@@ -14,7 +14,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <!-- ?v= сбрасывает кэш WebView Telegram после правок JS/CSS (меняй при каждом релизе фронта). -->
-<link rel="stylesheet" href="styles.css?v=20260440">
+<link rel="stylesheet" href="styles.css?v=20260441">
 </head>
 <body>
 
@@ -262,21 +262,11 @@
 
     <div id="code-branch-github" class="code-upload-branch" hidden>
     <p class="upload-wizard-hint gh-paste-strip">
-      После отправки на GitHub — ссылка на игру, название и модерация.
+      Ссылка на игру подставляется автоматически. Дальше — название, обложка, жанр и модерация.
     </p>
+    <input type="hidden" id="ghCodeWizardPagesUrl" value="">
     <div id="gh-code-wizard-step1" class="upload-wizard-step">
-      <p class="upload-wizard-hint" id="gh-code-wizard-step1-hint">Шаг 1 из 5 — код уже в твоём репозитории на GitHub.</p>
-      <div class="field-group">
-        <div class="field-label">Ссылка GitHub Pages</div>
-        <input class="field-input" type="url" readonly id="ghCodeWizardPagesUrl" value="">
-      </div>
-      <div class="code-wizard-actions">
-        <button type="button" class="submit-btn" data-action="gh-code-wizard-next">Дальше: название и описание →</button>
-      </div>
-    </div>
-
-    <div id="gh-code-wizard-step2" class="upload-wizard-step" hidden>
-      <p class="upload-wizard-hint">Шаг 2 из 5 — как назовём игру в ленте?</p>
+      <p class="upload-wizard-hint">Шаг 1 из 4 — как назовём игру в ленте?</p>
       <div class="field-group">
         <div class="field-label">Название</div>
         <input class="field-input" type="text" placeholder="Моя крутая игра" id="ghCodeWizardTitle" maxlength="40">
@@ -291,8 +281,8 @@
       </div>
     </div>
 
-    <div id="gh-code-wizard-step3" class="upload-wizard-step" hidden>
-      <p class="upload-wizard-hint">Шаг 3 из 5 — обложка (можно пропустить).</p>
+    <div id="gh-code-wizard-step2" class="upload-wizard-step" hidden>
+      <p class="upload-wizard-hint">Шаг 2 из 4 — обложка (можно пропустить).</p>
       <div class="field-group">
         <div class="field-label">Ссылка на картинку (https)</div>
         <input class="field-input" type="url" id="ghCodeWizardCoverUrl" placeholder="https://… jpg/png">
@@ -310,8 +300,8 @@
       </div>
     </div>
 
-    <div id="gh-code-wizard-step4" class="upload-wizard-step" hidden>
-      <p class="upload-wizard-hint">Шаг 4 из 5 — жанр</p>
+    <div id="gh-code-wizard-step3" class="upload-wizard-step" hidden>
+      <p class="upload-wizard-hint">Шаг 3 из 4 — жанр</p>
       <div class="field-group">
         <div class="genre-pills" id="genrePillsGhCode"></div>
       </div>
@@ -321,8 +311,8 @@
       </div>
     </div>
 
-    <div id="gh-code-wizard-step5" class="upload-wizard-step" hidden>
-      <p class="upload-wizard-hint">Шаг 5 — проверь и отправь на модерацию</p>
+    <div id="gh-code-wizard-step4" class="upload-wizard-step" hidden>
+      <p class="upload-wizard-hint">Шаг 4 — проверь и отправь на модерацию</p>
       <div class="upload-review-box" id="ghCodeWizardReview"></div>
       <div class="code-wizard-actions code-wizard-actions--wrap">
         <button type="button" class="profile-text-btn" data-action="gh-code-wizard-back">← Редактировать</button>
@@ -582,26 +572,26 @@
 
 <!-- ══ SCRIPTS ══ -->
 <!-- Порядок важен: config/utils/telegram → state → api → модули логики → события → main. -->
-<script src="js/config.js?v=20260440"></script>
-<script src="js/utils.js?v=20260440"></script>
-<script src="js/telegram.js?v=20260440"></script>
-<script src="js/tg-gate.js?v=20260440"></script>
-<script src="js/boot-splash.js?v=20260440"></script>
-<script src="js/state.js?v=20260440"></script>
-<script src="js/api.js?v=20260440"></script>
-<script src="js/onboarding.js?v=20260440"></script>
-<script src="js/help-screens.js?v=20260440"></script>
-<script src="js/feed.js?v=20260440"></script>
-<script src="js/feed-nav-tip.js?v=20260440"></script>
-<script src="js/actions.js?v=20260440"></script>
-<script src="js/upload.js?v=20260440"></script>
-<script src="js/genres.js?v=20260440"></script>
-<script src="js/search.js?v=20260440"></script>
-<script src="js/profile.js?v=20260440"></script>
-<script src="js/admin.js?v=20260440"></script>
-<script src="js/screens.js?v=20260440"></script>
-<script src="js/events.js?v=20260440"></script>
-<script src="js/overlay-pull-close.js?v=20260440"></script>
-<script src="js/main.js?v=20260440"></script>
+<script src="js/config.js?v=20260441"></script>
+<script src="js/utils.js?v=20260441"></script>
+<script src="js/telegram.js?v=20260441"></script>
+<script src="js/tg-gate.js?v=20260441"></script>
+<script src="js/boot-splash.js?v=20260441"></script>
+<script src="js/state.js?v=20260441"></script>
+<script src="js/api.js?v=20260441"></script>
+<script src="js/onboarding.js?v=20260441"></script>
+<script src="js/help-screens.js?v=20260441"></script>
+<script src="js/feed.js?v=20260441"></script>
+<script src="js/feed-nav-tip.js?v=20260441"></script>
+<script src="js/actions.js?v=20260441"></script>
+<script src="js/upload.js?v=20260441"></script>
+<script src="js/genres.js?v=20260441"></script>
+<script src="js/search.js?v=20260441"></script>
+<script src="js/profile.js?v=20260441"></script>
+<script src="js/admin.js?v=20260441"></script>
+<script src="js/screens.js?v=20260441"></script>
+<script src="js/events.js?v=20260441"></script>
+<script src="js/overlay-pull-close.js?v=20260441"></script>
+<script src="js/main.js?v=20260441"></script>
 </body>
 </html>

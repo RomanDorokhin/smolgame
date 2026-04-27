@@ -242,21 +242,15 @@ async function githubUploadSubmit() {
 }
 
 function beginGhCodeWizardAfterPublish(apiOut) {
-  const url = apiOut?.pagesUrl || window._ghPublishedPlayUrl || '';
+  const urlRaw = apiOut?.pagesUrl || window._ghPublishedPlayUrl || '';
   const inp = document.getElementById('ghCodeWizardPagesUrl');
-  if (inp) inp.value = url;
-  const hint = document.getElementById('gh-code-wizard-step1-hint');
-  if (hint) {
-    const ready = apiOut?.pagesReady;
-    hint.innerHTML = ready
-      ? 'Шаг 1 из 5 — <strong>страница открывается</strong>. Дальше — название и описание.'
-      : 'Шаг 1 из 5 — репозиторий создан. Pages иногда открываются с задержкой; ссылку можно проверить позже.';
-  }
+  if (inp) inp.value = urlRaw || '';
+  window._ghPublishedPlayUrl = normalizeToHttpsUrl(urlRaw) || urlRaw || '';
   setGhCodeWizardStep(1);
 }
 
 function setGhCodeWizardStep(n) {
-  for (let i = 1; i <= 5; i++) {
+  for (let i = 1; i <= 4; i++) {
     const el = document.getElementById('gh-code-wizard-step' + i);
     if (el) el.hidden = i !== n;
   }
@@ -316,34 +310,23 @@ async function resolveGhCodeWizardCover() {
 function ghCodeWizardNext() {
   const step = window._ghCodeWizardStep || 1;
   if (step === 1) {
-    const playUrl = document.getElementById('ghCodeWizardPagesUrl')?.value?.trim() || '';
-    const u = normalizeToHttpsUrl(playUrl);
-    if (!u || !/github\.io/i.test(u)) {
-      showToast('⚠️ Сначала отправь код на GitHub (форма выше)');
-      return;
-    }
-    window._ghPublishedPlayUrl = u;
-    setGhCodeWizardStep(2);
-    return;
-  }
-  if (step === 2) {
     const title = document.getElementById('ghCodeWizardTitle')?.value?.trim() || '';
     if (!title) {
       showToast('⚠️ Укажи название игры');
       return;
     }
-    setGhCodeWizardStep(3);
+    setGhCodeWizardStep(2);
     return;
   }
-  if (step === 3) {
-    setGhCodeWizardStep(4);
+  if (step === 2) {
+    setGhCodeWizardStep(3);
     if (typeof renderGenrePills === 'function') {
       renderGenrePills('genrePillsGhCode', 'ghCode');
     }
     return;
   }
-  if (step === 4) {
-    setGhCodeWizardStep(5);
+  if (step === 3) {
+    setGhCodeWizardStep(4);
     const playUrl = window._ghPublishedPlayUrl || document.getElementById('ghCodeWizardPagesUrl')?.value?.trim() || '';
     const title = document.getElementById('ghCodeWizardTitle')?.value?.trim() || '';
     const desc = document.getElementById('ghCodeWizardDesc')?.value?.trim() || '';
@@ -355,7 +338,7 @@ function ghCodeWizardNext() {
     const box = document.getElementById('ghCodeWizardReview');
     if (box) {
       box.innerHTML = `
-        <p><strong>Ссылка на игру:</strong> ${esc(playUrl)}</p>
+        <p><strong>Ссылка на игру:</strong> ${esc(playUrl || '')}</p>
         <p><strong>Название:</strong> ${esc(title)}</p>
         <p><strong>Описание:</strong> ${esc(desc || '—')}</p>
         <p><strong>Жанр:</strong> ${esc(emoji + ' ' + genre)}</p>
@@ -386,14 +369,14 @@ async function ghCodeWizardPublish() {
     window._ghPublishedPlayUrl || document.getElementById('ghCodeWizardPagesUrl')?.value?.trim() || ''
   );
   if (!playUrl || !/github\.io/i.test(playUrl)) {
-    showToast('⚠️ Нет ссылки GitHub Pages');
-    setGhCodeWizardStep(1);
+    showToast('⚠️ Нет ссылки игры — сначала отправь код на GitHub выше.');
+    if (typeof selectMethod === 'function') selectMethod('github');
     return;
   }
   const title = document.getElementById('ghCodeWizardTitle')?.value?.trim() || '';
   if (!title) {
     showToast('⚠️ Укажи название');
-    setGhCodeWizardStep(2);
+    setGhCodeWizardStep(1);
     return;
   }
   const desc = document.getElementById('ghCodeWizardDesc')?.value?.trim() || '';
