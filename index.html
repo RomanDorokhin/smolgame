@@ -14,7 +14,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <!-- ?v= сбрасывает кэш WebView Telegram после правок JS/CSS (меняй при каждом релизе фронта). -->
-<link rel="stylesheet" href="styles.css?v=20260442">
+<link rel="stylesheet" href="styles.css?v=20260443">
 </head>
 <body>
 
@@ -228,16 +228,8 @@
 
     <div id="github-inline-upload" class="github-inline-upload" hidden>
       <p class="upload-wizard-hint github-inline-upload__lead">
-        Сначала <strong>название, описание</strong> и <strong>код / файлы</strong> — только потом нажимай «Отправить на GitHub»: тогда создаётся репозиторий. Дальше — обложка, жанр и модерация.
+        Сначала <strong>код или файлы</strong>, затем <strong>название и описание</strong> — и только после этого «Отправить на GitHub»: тогда создаётся репозиторий. Дальше — обложка, жанр и модерация.
       </p>
-      <div class="field-group">
-        <div class="field-label">Название игры (как в ленте)</div>
-        <input class="field-input" type="text" placeholder="Моя крутая игра" id="ghCodeWizardTitle" maxlength="40">
-      </div>
-      <div class="field-group">
-        <div class="field-label">Описание</div>
-        <textarea class="field-input" placeholder="Пара слов о чём игра…" id="ghCodeWizardDesc" maxlength="120"></textarea>
-      </div>
       <div class="github-input-mode">
         <button type="button" class="profile-text-btn github-mode-btn selected" data-action="github-upload-set-mode" data-mode="paste">Вставить код</button>
         <button type="button" class="profile-text-btn github-mode-btn" data-action="github-upload-set-mode" data-mode="files">Файлы</button>
@@ -257,6 +249,14 @@
           </label>
           <div class="github-files-list" id="githubFilesList"></div>
         </div>
+      </div>
+      <div class="field-group">
+        <div class="field-label">Название игры (как в ленте)</div>
+        <input class="field-input" type="text" placeholder="Моя крутая игра" id="ghCodeWizardTitle" maxlength="40">
+      </div>
+      <div class="field-group">
+        <div class="field-label">Описание</div>
+        <textarea class="field-input" placeholder="Пара слов о чём игра…" id="ghCodeWizardDesc" maxlength="120"></textarea>
       </div>
       <button type="button" class="submit-btn github-inline-submit" data-action="github-upload-submit">Отправить на GitHub</button>
       <div class="github-upload-result" id="githubUploadResult" hidden></div>
@@ -564,26 +564,26 @@
 
 <!-- ══ SCRIPTS ══ -->
 <!-- Порядок важен: config/utils/telegram → state → api → модули логики → события → main. -->
-<script src="js/config.js?v=20260442"></script>
-<script src="js/utils.js?v=20260442"></script>
-<script src="js/telegram.js?v=20260442"></script>
-<script src="js/tg-gate.js?v=20260442"></script>
-<script src="js/boot-splash.js?v=20260442"></script>
-<script src="js/state.js?v=20260442"></script>
-<script src="js/api.js?v=20260442"></script>
-<script src="js/onboarding.js?v=20260442"></script>
-<script src="js/help-screens.js?v=20260442"></script>
-<script src="js/feed.js?v=20260442"></script>
-<script src="js/feed-nav-tip.js?v=20260442"></script>
-<script src="js/actions.js?v=20260442"></script>
-<script src="js/upload.js?v=20260442"></script>
-<script src="js/genres.js?v=20260442"></script>
-<script src="js/search.js?v=20260442"></script>
-<script src="js/profile.js?v=20260442"></script>
-<script src="js/admin.js?v=20260442"></script>
-<script src="js/screens.js?v=20260442"></script>
-<script src="js/events.js?v=20260442"></script>
-<script src="js/overlay-pull-close.js?v=20260442"></script>
-<script src="js/main.js?v=20260442"></script>
+<script src="js/config.js?v=20260443"></script>
+<script src="js/utils.js?v=20260443"></script>
+<script src="js/telegram.js?v=20260443"></script>
+<script src="js/tg-gate.js?v=20260443"></script>
+<script src="js/boot-splash.js?v=20260443"></script>
+<script src="js/state.js?v=20260443"></script>
+<script src="js/api.js?v=20260443"></script>
+<script src="js/onboarding.js?v=20260443"></script>
+<script src="js/help-screens.js?v=20260443"></script>
+<script src="js/feed.js?v=20260443"></script>
+<script src="js/feed-nav-tip.js?v=20260443"></script>
+<script src="js/actions.js?v=20260443"></script>
+<script src="js/upload.js?v=20260443"></script>
+<script src="js/genres.js?v=20260443"></script>
+<script src="js/search.js?v=20260443"></script>
+<script src="js/profile.js?v=20260443"></script>
+<script src="js/admin.js?v=20260443"></script>
+<script src="js/screens.js?v=20260443"></script>
+<script src="js/events.js?v=20260443"></script>
+<script src="js/overlay-pull-close.js?v=20260443"></script>
+<script src="js/main.js?v=20260443"></script>
 </body>
 </html>

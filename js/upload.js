@@ -26,7 +26,7 @@ function updateGithubUploadUi() {
       hint.textContent =
         'Токен не сохранён: проверь миграцию D1 (github_access_token_enc) и снова нажми «Войти через GitHub».';
     } else {
-      hint.textContent = 'Готово — заполни название, описание, код или файлы, затем «Отправить на GitHub».';
+      hint.textContent = 'Готово — код или файлы, название, описание, затем «Отправить на GitHub».';
     }
   }
   const btnLabel = document.getElementById('btn-github-primary-label');
