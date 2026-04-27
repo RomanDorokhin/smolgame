@@ -17,21 +17,39 @@ async function apiFetch(path, { method = 'GET', body } = {}) {
   const isFormData = typeof FormData !== 'undefined' && body instanceof FormData;
   if (body !== undefined && !isFormData) headers['content-type'] = 'application/json';
 
-  const resp = await fetch(API_BASE + path, {
-    method,
-    headers,
-    body: isFormData ? body : (body !== undefined ? JSON.stringify(body) : undefined),
-  });
+  let resp;
+  try {
+    resp = await fetch(API_BASE + path, {
+      method,
+      headers,
+      body: isFormData ? body : (body !== undefined ? JSON.stringify(body) : undefined),
+    });
+  } catch (e) {
+    const net = String(e?.message || e || '');
+    throw new Error(
+      net.toLowerCase().includes('failed to fetch') || net.toLowerCase().includes('network')
+        ? 'Нет сети или API недоступен. Проверь интернет и что Worker задеплоен.'
+        : 'Запрос не выполнился: ' + (net || 'ошибка сети')
+    );
+  }
 
   let data = null;
   try { data = await resp.json(); } catch (e) {}
   if (!resp.ok) {
     const raw = data?.error;
     let msg = (typeof raw === 'string' && raw.trim()) || resp.statusText || 'request failed';
-    // Не затираем осмысленный текст от API (503 про миграцию, «Не удалось сохранить…» и т.д.).
-    const vague = !raw || String(raw).trim() === '' || String(raw).toLowerCase() === 'internal';
-    if (vague && (resp.status >= 500 || msg === 'internal')) {
-      msg = 'Сервер временно недоступен. Попробуй позже.';
+
+    if (resp.status === 401) {
+      msg =
+        'Вход в Telegram не подтверждён. Открой мини-апп из бота (не из браузера). Если уже из бота — на Worker должен быть секрет TELEGRAM_BOT_TOKEN от этого же бота (npx wrangler secret put TELEGRAM_BOT_TOKEN).';
+    } else {
+      const vague =
+        !raw ||
+        String(raw).trim() === '' ||
+        String(raw).toLowerCase() === 'internal';
+      if (vague && (resp.status >= 500 || String(msg).toLowerCase() === 'internal')) {
+        msg = `Ошибка API (${resp.status}). Обычно это не ссылка на игру, а сбой на Worker или базе — обнови деплой (git pull + npx wrangler deploy) и логи в Cloudflare.`;
+      }
     }
     throw new Error(msg);
   }

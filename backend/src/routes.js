@@ -373,42 +373,47 @@ export async function register(req, env) {
 }
 
 export async function submitGame(req, env) {
-  const user = await authenticate(req, env);
-  if (!user) return error('unauthorized', 401);
-  await upsertUser(env.DB, user);
-
-  let body;
-  try { body = await req.json(); } catch (e) { return error('invalid json'); }
-
-  const { ok, error: verr } = validateSubmission(body);
-  if (verr) return error(verr);
-
-  const id = newId();
   try {
-    await env.DB.prepare(
-      `INSERT INTO games (id, title, description, genre, genre_emoji, url, image_url, author_id, status)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending')`
-    ).bind(id, ok.title, ok.description, ok.genre, ok.genreEmoji, ok.url, ok.imageUrl, user.id).run();
-  } catch (e) {
-    console.error('submitGame', e);
-    const msg = String(e?.message || e || '');
-    // Старые D1 без genre_emoji / image_url — сохраняем без них, чтобы отправка работала без ручной миграции.
-    if (/no such column/i.test(msg)) {
-      try {
-        await env.DB.prepare(
-          `INSERT INTO games (id, title, description, genre, url, author_id, status)
-           VALUES (?, ?, ?, ?, ?, ?, 'pending')`
-        ).bind(id, ok.title, ok.description, ok.genre, ok.url, user.id).run();
-      } catch (e2) {
-        console.error('submitGame legacy insert', e2);
-        return error('Не удалось сохранить игру. Попробуй позже.', 500);
-      }
-    } else {
-      return error('Не удалось сохранить игру. Попробуй позже.', 500);
-    }
-  }
+    const user = await authenticate(req, env);
+    if (!user) return error('unauthorized', 401);
 
-  return json({ ok: true, id, status: 'pending' });
+    await upsertUser(env.DB, user);
+
+    let body;
+    try { body = await req.json(); } catch (e) { return error('invalid json'); }
+
+    const { ok, error: verr } = validateSubmission(body);
+    if (verr) return error(verr);
+
+    const id = newId();
+    try {
+      await env.DB.prepare(
+        `INSERT INTO games (id, title, description, genre, genre_emoji, url, image_url, author_id, status)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending')`
+      ).bind(id, ok.title, ok.description, ok.genre, ok.genreEmoji, ok.url, ok.imageUrl, user.id).run();
+    } catch (e) {
+      console.error('submitGame insert', e);
+      const msg = String(e?.message || e || '');
+      if (/no such column/i.test(msg)) {
+        try {
+          await env.DB.prepare(
+            `INSERT INTO games (id, title, description, genre, url, author_id, status)
+             VALUES (?, ?, ?, ?, ?, ?, 'pending')`
+          ).bind(id, ok.title, ok.description, ok.genre, ok.url, user.id).run();
+        } catch (e2) {
+          console.error('submitGame legacy insert', e2);
+          return error('Не удалось сохранить игру (база). Попробуй позже.', 500);
+        }
+      } else {
+        return error('Не удалось сохранить игру (база). Попробуй позже.', 500);
+      }
+    }
+
+    return json({ ok: true, id, status: 'pending' });
+  } catch (e) {
+    console.error('submitGame unhandled', e);
+    return error('Не удалось сохранить игру. Повтори позже или обнови приложение.', 500);
+  }
 }
 
 export async function uploadImage(req, env) {

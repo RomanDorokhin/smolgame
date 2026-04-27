@@ -77,6 +77,11 @@ async function submitGame(method) {
     return;
   }
 
+  if (typeof hasTelegramInitData === 'function' && !hasTelegramInitData()) {
+    showToast('⚠️ Открой мини-апп из Telegram-бота — иначе сервер не узнает тебя и не примет игру.');
+    return;
+  }
+
   showToast('🔍 Отправляем...');
   try {
     const { imageUrl, error } = await resolveCoverImageUrl();
