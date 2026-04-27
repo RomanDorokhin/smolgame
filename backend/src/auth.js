@@ -24,26 +24,66 @@ export async function authenticate(req, env) {
 
 /**
  * Апсертим юзера в БД (обновляем имя/аватар, если уже есть).
+ * Старые D1 без tg_username / site_handle — перебираем варианты INSERT (как для ленты).
  */
+const UPSERT_USER_SQL_VARIANTS = [
+  {
+    sql: `INSERT INTO users (id, username, tg_username, first_name, last_name, photo_url)
+          VALUES (?, ?, ?, ?, ?, ?)
+          ON CONFLICT(id) DO UPDATE SET
+            username    = COALESCE(users.site_handle, users.username),
+            tg_username = excluded.tg_username,
+            first_name  = COALESCE(excluded.first_name, users.first_name),
+            last_name   = COALESCE(excluded.last_name, users.last_name),
+            photo_url   = COALESCE(excluded.photo_url, users.photo_url)`,
+    bind: (u) => [u.id, u.username, u.username, u.first_name, u.last_name, u.photo_url],
+  },
+  // Есть tg_username, но нет site_handle в таблице
+  {
+    sql: `INSERT INTO users (id, username, tg_username, first_name, last_name, photo_url)
+          VALUES (?, ?, ?, ?, ?, ?)
+          ON CONFLICT(id) DO UPDATE SET
+            username    = COALESCE(excluded.username, users.username),
+            tg_username = excluded.tg_username,
+            first_name  = COALESCE(excluded.first_name, users.first_name),
+            last_name   = COALESCE(excluded.last_name, users.last_name),
+            photo_url   = COALESCE(excluded.photo_url, users.photo_url)`,
+    bind: (u) => [u.id, u.username, u.username, u.first_name, u.last_name, u.photo_url],
+  },
+  // Есть site_handle, нет tg_username
+  {
+    sql: `INSERT INTO users (id, username, first_name, last_name, photo_url)
+          VALUES (?, ?, ?, ?, ?)
+          ON CONFLICT(id) DO UPDATE SET
+            username    = COALESCE(users.site_handle, excluded.username, users.username),
+            first_name  = COALESCE(excluded.first_name, users.first_name),
+            last_name   = COALESCE(excluded.last_name, users.last_name),
+            photo_url   = COALESCE(excluded.photo_url, users.photo_url)`,
+    bind: (u) => [u.id, u.username, u.first_name, u.last_name, u.photo_url],
+  },
+  // Минимальная схема users
+  {
+    sql: `INSERT INTO users (id, username, first_name, last_name, photo_url)
+          VALUES (?, ?, ?, ?, ?)
+          ON CONFLICT(id) DO UPDATE SET
+            username    = COALESCE(excluded.username, users.username),
+            first_name  = COALESCE(excluded.first_name, users.first_name),
+            last_name   = COALESCE(excluded.last_name, users.last_name),
+            photo_url   = COALESCE(excluded.photo_url, users.photo_url)`,
+    bind: (u) => [u.id, u.username, u.first_name, u.last_name, u.photo_url],
+  },
+];
+
 export async function upsertUser(db, user) {
-  await db
-    .prepare(
-      `INSERT INTO users (id, username, tg_username, first_name, last_name, photo_url)
-       VALUES (?, ?, ?, ?, ?, ?)
-       ON CONFLICT(id) DO UPDATE SET
-         username   = COALESCE(users.site_handle, users.username),
-         tg_username = excluded.tg_username,
-         first_name = COALESCE(excluded.first_name, users.first_name),
-         last_name  = COALESCE(excluded.last_name, users.last_name),
-         photo_url  = COALESCE(excluded.photo_url, users.photo_url)`
-    )
-    .bind(
-      user.id,
-      user.username,
-      user.username,
-      user.first_name,
-      user.last_name,
-      user.photo_url
-    )
-    .run();
+  let lastErr;
+  for (const variant of UPSERT_USER_SQL_VARIANTS) {
+    try {
+      await db.prepare(variant.sql).bind(...variant.bind(user)).run();
+      return;
+    } catch (e) {
+      lastErr = e;
+      if (!/no such column/i.test(String(e?.message || ''))) throw e;
+    }
+  }
+  throw lastErr;
 }
