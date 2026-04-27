@@ -29,6 +29,20 @@ export function validateSubmission(body) {
   return { ok: { title, description, genre, genreEmoji, url, imageUrl } };
 }
 
+/** Мета для POST /api/submit-html-game (URL игры подставляет сервер). */
+export function validateHostedGameFields(body) {
+  const title = String(body.title || '').trim().slice(0, 40);
+  const description = String(body.description || '').trim().slice(0, 120);
+  const genre = GENRES.has(body.genre) ? body.genre : 'Прочее';
+  const genreEmoji = String(body.genreEmoji || '🎮').slice(0, 8);
+  const imageUrl = body.imageUrl ? safeHttpsUrl(body.imageUrl) : null;
+
+  if (!title) return { error: 'Название игры обязательно' };
+  if (body.imageUrl && !imageUrl) return { error: 'Некорректная ссылка на обложку' };
+
+  return { ok: { title, description, genre, genreEmoji, imageUrl } };
+}
+
 const HANDLE_RE = /^[a-z0-9_]{3,24}$/;
 
 /** PATCH /api/me: displayName, bio, siteHandle, photoUrl (optional). */

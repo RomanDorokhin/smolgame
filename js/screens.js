@@ -173,7 +173,7 @@ function switchTab(tab) {
     const upload = document.getElementById('upload-screen');
     upload?.classList.add('open');
     if (typeof renderGenrePills === 'function') {
-      renderGenrePills('genrePills', 'code');
+      renderGenrePills('genrePillsCodeOnly', 'codeOnly');
       renderGenrePills('genrePills2', 'url');
     }
     if (typeof selectMethod === 'function') selectMethod(window.selectedUploadMethod || 'url');

@@ -35,6 +35,10 @@ const CLICK_ACTIONS = {
   'select-method':  (el) => selectMethod(el.dataset.method),
   'auth-github':    () => authGithub(),
   'submit-game':    (el) => submitGame(el.dataset.method),
+  'code-wizard-next': () => codeWizardNext(),
+  'code-wizard-back': () => codeWizardBack(),
+  'code-wizard-cancel': () => codeWizardCancel(),
+  'code-wizard-publish': () => codeWizardPublish(),
 
   'open-game':      (el) => openGameFromSearch(el.dataset.gameId),
   'open-game-profile': (el) => openGameFromProfile(el.dataset.gameId),

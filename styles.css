@@ -984,6 +984,34 @@ textarea.field-input{
 .code-area:focus{border-color:rgba(255,45,85,0.5);}
 .code-area::placeholder{color:rgba(255,255,255,0.2);}
 
+#form-code .code-area{min-height:220px;height:min(42vh,320px);}
+.upload-wizard-step{margin-bottom:8px;}
+.upload-wizard-hint{
+  font-size:14px;
+  color:rgba(255,255,255,0.78);
+  line-height:1.45;
+  margin:0 0 14px;
+}
+.code-wizard-actions{
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+  align-items:center;
+  margin-top:16px;
+}
+.code-wizard-actions--wrap{justify-content:flex-start;}
+.upload-review-box{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:14px;
+  padding:16px;
+  font-size:14px;
+  line-height:1.5;
+  color:rgba(255,255,255,0.88);
+}
+.upload-review-box p{margin:0 0 10px;}
+.upload-review-box p:last-child{margin-bottom:0;}
+
 .github-btn{
   width:100%;
   padding:16px;

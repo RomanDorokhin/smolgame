@@ -6,6 +6,7 @@ import {
   adminPending, adminApprove, adminReject,
 } from './routes.js';
 import { githubOAuthStart, githubOAuthCallback } from './github-oauth.js';
+import { submitHtmlGame, serveHostedGame } from './hosted-games.js';
 
 export default {
   async fetch(req, env) {
@@ -43,6 +44,11 @@ async function route(req, env, pathname) {
     return new Response('ok', { status: 200 });
   }
 
+  const hostedMatch = pathname.match(/^\/g\/([^/]+)\/?$/);
+  if (hostedMatch && m === 'GET') {
+    return serveHostedGame(req, env, hostedMatch[1]);
+  }
+
   if (pathname === '/api/feed'   && m === 'GET')  return getFeed(req, env);
   if (pathname === '/api/me'     && m === 'GET')  return getMe(req, env);
   if (pathname === '/api/me'     && m === 'PATCH') return updateMe(req, env);
@@ -50,6 +56,7 @@ async function route(req, env, pathname) {
   if (pathname === '/api/me/registered' && m === 'GET') return checkRegistered(req, env);
   if (pathname === '/api/register' && m === 'POST') return register(req, env);
   if (pathname === '/api/submit' && m === 'POST') return submitGame(req, env);
+  if (pathname === '/api/submit-html-game' && m === 'POST') return submitHtmlGame(req, env);
   if (pathname === '/api/upload-image' && m === 'POST') return uploadImage(req, env);
   if (pathname === '/api/auth/github/start' && m === 'GET') return githubOAuthStart(req, env);
   if (pathname === '/auth/github/callback' && m === 'GET') return githubOAuthCallback(req, env);

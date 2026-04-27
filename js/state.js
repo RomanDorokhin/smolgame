@@ -33,4 +33,4 @@ window.slides = [];
 
 window.selectedGenre = '';
 window.selectedUploadMethod = 'url';
-window.selectedGenres = { code: '', url: '' };
+window.selectedGenres = { code: '', url: '', codeOnly: '' };

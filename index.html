@@ -14,7 +14,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <!-- ?v= сбрасывает кэш WebView Telegram после правок JS/CSS (меняй при каждом релизе фронта). -->
-<link rel="stylesheet" href="styles.css?v=20260430">
+<link rel="stylesheet" href="styles.css?v=20260432">
 </head>
 <body>
 
@@ -178,7 +178,7 @@
     <details class="help-acc">
       <summary><span class="help-acc-num">4</span> Заполни форму ниже</summary>
       <div class="help-acc-body">
-        <p>Выбери <strong>Ссылка</strong>, вставь URL GitHub Pages, название и описание — отправь на модерацию. Или вкладка <strong>Вставить код</strong>, если хочешь загрузить HTML напрямую.</p>
+        <p><strong>Ссылка</strong> — вставь URL своей игры и метаданные. <strong>Вставить код</strong> — пошаговый мастер: HTML → название → обложка → жанр → отправка (игра хостится на SmolGame, нужен R2 в Worker).</p>
       </div>
     </details>
 
@@ -208,32 +208,80 @@
     </div>
   </div>
 
-  <!-- Форма: код -->
+  <!-- Форма: код — пошаговый мастер (отдельно от «Ссылка») -->
   <div class="form-section" id="form-code">
     <div class="field-group">
-      <div class="field-label">GitHub аккаунт</div>
-      <button class="github-btn" data-action="auth-github">
+      <div class="field-label">GitHub (необязательно)</div>
+      <button type="button" class="github-btn" data-action="auth-github">
         <span>🐙</span> Войти через GitHub
       </button>
-      <div class="field-hint-center">Для публикации от имени GitHub</div>
+      <div class="field-hint-center">Для публикации от GitHub — по желанию</div>
     </div>
-    <div class="field-group">
-      <div class="field-label">Название игры</div>
-      <input class="field-input" type="text" placeholder="Моя крутая игра" id="gameNameInput" maxlength="40">
+
+    <div id="code-wizard-step1" class="upload-wizard-step">
+      <p class="upload-wizard-hint">Шаг 1 из 5 — вставь <strong>полный HTML</strong> одной страницы (как из ИИ).</p>
+      <div class="field-group">
+        <div class="field-label">Код игры (HTML)</div>
+        <textarea class="code-area" placeholder="<!DOCTYPE html>..." id="codeInputWizard"></textarea>
+      </div>
+      <button type="button" class="submit-btn" data-action="code-wizard-next">Дальше: проверить и перейти к названию →</button>
     </div>
-    <div class="field-group">
-      <div class="field-label">Описание</div>
-      <textarea class="field-input" placeholder="Пара слов о чём игра..." id="gameDescInput" maxlength="120"></textarea>
+
+    <div id="code-wizard-step2" class="upload-wizard-step" hidden>
+      <p class="upload-wizard-hint">Шаг 2 из 5 — как назовём игру в ленте?</p>
+      <div class="field-group">
+        <div class="field-label">Название</div>
+        <input class="field-input" type="text" placeholder="Моя крутая игра" id="codeWizardTitle" maxlength="40">
+      </div>
+      <div class="field-group">
+        <div class="field-label">Описание</div>
+        <textarea class="field-input" placeholder="Пара слов о чём игра…" id="codeWizardDesc" maxlength="120"></textarea>
+      </div>
+      <div class="code-wizard-actions">
+        <button type="button" class="profile-text-btn" data-action="code-wizard-back">← Назад</button>
+        <button type="button" class="submit-btn" data-action="code-wizard-next">Дальше →</button>
+      </div>
     </div>
-    <div class="field-group">
-      <div class="field-label">Жанр</div>
-      <div class="genre-pills" id="genrePills"></div>
+
+    <div id="code-wizard-step3" class="upload-wizard-step" hidden>
+      <p class="upload-wizard-hint">Шаг 3 из 5 — обложка (можно пропустить).</p>
+      <div class="field-group">
+        <div class="field-label">Ссылка на картинку (https)</div>
+        <input class="field-input" type="url" id="codeWizardCoverUrl" placeholder="https://… jpg/png">
+      </div>
+      <div class="field-group">
+        <label class="image-upload">
+          <input type="file" accept="image/*" id="codeWizardCoverFile">
+          <span>Или выбрать файл</span>
+        </label>
+        <div class="image-preview" id="codeWizardCoverPreview">Обложка не выбрана</div>
+      </div>
+      <div class="code-wizard-actions">
+        <button type="button" class="profile-text-btn" data-action="code-wizard-back">← Назад</button>
+        <button type="button" class="submit-btn" data-action="code-wizard-next">Дальше →</button>
+      </div>
     </div>
-    <div class="field-group">
-      <div class="field-label">Код игры (HTML)</div>
-      <textarea class="code-area" placeholder="<!DOCTYPE html>..." id="codeInput"></textarea>
+
+    <div id="code-wizard-step4" class="upload-wizard-step" hidden>
+      <p class="upload-wizard-hint">Шаг 4 из 5 — жанр</p>
+      <div class="field-group">
+        <div class="genre-pills" id="genrePillsCodeOnly"></div>
+      </div>
+      <div class="code-wizard-actions">
+        <button type="button" class="profile-text-btn" data-action="code-wizard-back">← Назад</button>
+        <button type="button" class="submit-btn" data-action="code-wizard-next">Дальше →</button>
+      </div>
     </div>
-    <button class="submit-btn" data-action="submit-game" data-method="code">🚀 Опубликовать</button>
+
+    <div id="code-wizard-step5" class="upload-wizard-step" hidden>
+      <p class="upload-wizard-hint">Шаг 5 — проверь и отправь на модерацию</p>
+      <div class="upload-review-box" id="codeWizardReview"></div>
+      <div class="code-wizard-actions code-wizard-actions--wrap">
+        <button type="button" class="profile-text-btn" data-action="code-wizard-back">← Редактировать</button>
+        <button type="button" class="profile-text-btn" data-action="code-wizard-cancel">Отмена</button>
+        <button type="button" class="submit-btn" data-action="code-wizard-publish">🚀 Отправить на модерацию</button>
+      </div>
+    </div>
   </div>
 
   <!-- Форма: ссылка -->
@@ -411,26 +459,26 @@
 
 <!-- ══ SCRIPTS ══ -->
 <!-- Порядок важен: config/utils/telegram → state → api → модули логики → события → main. -->
-<script src="js/config.js?v=20260430"></script>
-<script src="js/utils.js?v=20260430"></script>
-<script src="js/telegram.js?v=20260430"></script>
-<script src="js/tg-gate.js?v=20260430"></script>
-<script src="js/boot-splash.js?v=20260430"></script>
-<script src="js/state.js?v=20260430"></script>
-<script src="js/api.js?v=20260430"></script>
-<script src="js/onboarding.js?v=20260430"></script>
-<script src="js/help-screens.js?v=20260430"></script>
-<script src="js/feed.js?v=20260430"></script>
-<script src="js/feed-nav-tip.js?v=20260430"></script>
-<script src="js/actions.js?v=20260430"></script>
-<script src="js/upload.js?v=20260430"></script>
-<script src="js/genres.js?v=20260430"></script>
-<script src="js/search.js?v=20260430"></script>
-<script src="js/profile.js?v=20260430"></script>
-<script src="js/admin.js?v=20260430"></script>
-<script src="js/screens.js?v=20260430"></script>
-<script src="js/events.js?v=20260430"></script>
-<script src="js/overlay-pull-close.js?v=20260430"></script>
-<script src="js/main.js?v=20260430"></script>
+<script src="js/config.js?v=20260432"></script>
+<script src="js/utils.js?v=20260432"></script>
+<script src="js/telegram.js?v=20260432"></script>
+<script src="js/tg-gate.js?v=20260432"></script>
+<script src="js/boot-splash.js?v=20260432"></script>
+<script src="js/state.js?v=20260432"></script>
+<script src="js/api.js?v=20260432"></script>
+<script src="js/onboarding.js?v=20260432"></script>
+<script src="js/help-screens.js?v=20260432"></script>
+<script src="js/feed.js?v=20260432"></script>
+<script src="js/feed-nav-tip.js?v=20260432"></script>
+<script src="js/actions.js?v=20260432"></script>
+<script src="js/upload.js?v=20260432"></script>
+<script src="js/genres.js?v=20260432"></script>
+<script src="js/search.js?v=20260432"></script>
+<script src="js/profile.js?v=20260432"></script>
+<script src="js/admin.js?v=20260432"></script>
+<script src="js/screens.js?v=20260432"></script>
+<script src="js/events.js?v=20260432"></script>
+<script src="js/overlay-pull-close.js?v=20260432"></script>
+<script src="js/main.js?v=20260432"></script>
 </body>
 </html>
