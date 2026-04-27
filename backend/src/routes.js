@@ -344,6 +344,23 @@ const GET_ME_SQL_VARIANTS = [
      FROM users WHERE id = ?`,
 ];
 
+/** Всегда читает привязку GitHub отдельно — основной GET_ME_SQL_VARIANTS может быть без этих колонок. */
+async function fetchGithubLinkRow(db, userId) {
+  const tries = [
+    `SELECT github_user_id AS githubUserId, github_login AS githubLogin, github_access_token_enc AS githubAccessTokenEnc
+       FROM users WHERE id = ?`,
+    `SELECT github_user_id AS githubUserId, github_login AS githubLogin FROM users WHERE id = ?`,
+  ];
+  for (const sql of tries) {
+    try {
+      return await db.prepare(sql).bind(userId).first();
+    } catch (e) {
+      if (!isMissingColumnError(e)) throw e;
+    }
+  }
+  return null;
+}
+
 export async function getMe(req, env) {
   const user = await authenticate(req, env);
   if (!user) return error('unauthorized', 401);
@@ -355,6 +372,14 @@ export async function getMe(req, env) {
     throw e;
   }
   if (dbUser && !('githubAccessTokenEnc' in dbUser)) dbUser.githubAccessTokenEnc = null;
+
+  const ghRow = await fetchGithubLinkRow(env.DB, user.id);
+  if (ghRow) {
+    dbUser.githubUserId = ghRow.githubUserId ?? null;
+    dbUser.githubLogin = ghRow.githubLogin ?? null;
+    dbUser.githubAccessTokenEnc =
+      ghRow.githubAccessTokenEnc !== undefined ? ghRow.githubAccessTokenEnc : null;
+  }
 
   // Статистика автора (одна строка — надёжнее .first(), чем .all()[0] в D1).
   const statsRow = await env.DB.prepare(

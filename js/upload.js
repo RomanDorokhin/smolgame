@@ -36,7 +36,7 @@ function updateGithubUploadUi() {
   const primary = document.getElementById('btn-github-primary');
   const done = USER.isGithubConnected && USER.hasGithubPublishToken;
   if (primary) {
-    primary.hidden = false;
+    primary.hidden = Boolean(done);
   }
   const unlinkBtn = document.getElementById('btn-github-unlink');
   if (unlinkBtn) {
@@ -776,4 +776,19 @@ document.addEventListener('change', (ev) => {
   if (ev.target?.id === 'codeWizardCoverFile') previewCodeWizardCover(ev.target);
   if (ev.target?.id === 'ghCodeWizardCoverFile') previewGhCodeWizardCover(ev.target);
   if (ev.target?.id === 'githubMultiFiles') onGithubMultiFilesChange(ev.target);
+});
+
+/** После OAuth в браузере возврат в мини-апп — подтянуть /api/me и обновить вкладку GitHub. */
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState !== 'visible') return;
+  try {
+    if (!document.getElementById('upload-screen')?.classList.contains('open')) return;
+  } catch (e) {
+    return;
+  }
+  if (typeof refreshUploadCapabilities !== 'function') return;
+  refreshUploadCapabilities().then(() => {
+    const m = window.selectedUploadMethod;
+    if (m === 'github' && typeof selectMethod === 'function') selectMethod('github');
+  });
 });
