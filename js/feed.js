@@ -136,8 +136,6 @@ async function injectGameIntoFeed(gameId) {
     appendSlides(idx, [game]);
     if (prevLen === 0) {
       document.getElementById('empty-state').classList.remove('show');
-      const pinnedEl = document.getElementById('feed-pinned-meta');
-      if (pinnedEl) pinnedEl.style.display = '';
       document.getElementById('side-actions').style.display = '';
       document.getElementById('game-info').style.display = '';
       document.getElementById('swipe-strip').style.display = '';
@@ -262,8 +260,6 @@ function renderFeed() {
 
   if (GAMES.length === 0) {
     document.getElementById('empty-state').classList.add('show');
-    const pinned = document.getElementById('feed-pinned-meta');
-    if (pinned) pinned.style.display = 'none';
     document.getElementById('side-actions').style.display = 'none';
     document.getElementById('game-info').style.display = 'none';
     document.getElementById('swipe-strip').style.display = 'none';
@@ -278,8 +274,6 @@ function renderFeed() {
   }
 
   document.getElementById('empty-state').classList.remove('show');
-  const pinned = document.getElementById('feed-pinned-meta');
-  if (pinned) pinned.style.display = '';
   document.getElementById('side-actions').style.display = '';
   document.getElementById('game-info').style.display = '';
   document.getElementById('swipe-strip').style.display = '';
@@ -421,19 +415,6 @@ function updateOverlay() {
   followBtn.textContent = following ? '✓ Following' : '+ Follow';
   followBtn.classList.toggle('following', following);
 
-  const pinAuthor = document.getElementById('feedPinnedAuthor');
-  const pinTitle = document.getElementById('feedPinnedTitle');
-  const pinAv = document.getElementById('feedPinnedAvatar');
-  if (pinAuthor) pinAuthor.textContent = g.authorName || '—';
-  if (pinTitle) pinTitle.textContent = g.title || '—';
-  if (pinAv) {
-    const pinUrl = avatarImgUrl(g.authorAvatar);
-    if (pinUrl) {
-      pinAv.innerHTML = `<img src="${esc(pinUrl)}" alt="" referrerpolicy="no-referrer">`;
-    } else {
-      pinAv.textContent = g.authorAvatar || g.authorName?.[0] || '?';
-    }
-  }
 }
 
 /** Горизонт в полоске: влево = следующая, вправо = предыдущая (как карточки) */

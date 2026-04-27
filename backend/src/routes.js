@@ -295,14 +295,14 @@ export async function getMe(req, env) {
        FROM users WHERE id = ?`
   ).bind(user.id).first();
 
-  // Статистика автора.
-  const { results: stats } = await env.DB.prepare(
+  // Статистика автора (одна строка — надёжнее .first(), чем .all()[0] в D1).
+  const statsRow = await env.DB.prepare(
     `SELECT
        (SELECT COUNT(*) FROM games   WHERE author_id = ?1 AND status='published') AS gamesCount,
        (SELECT COALESCE(SUM(likes),0) FROM games WHERE author_id = ?1) AS likesTotal,
        (SELECT COUNT(*) FROM follows WHERE author_id = ?1) AS followersCount`
-  ).bind(user.id).all();
-  const s = stats[0] || {};
+  ).bind(user.id).first();
+  const s = statsRow && typeof statsRow === 'object' ? statsRow : {};
 
   const tgName = [user.first_name, user.last_name].filter(Boolean).join(' ');
   const displayName = (dbUser?.displayName && String(dbUser.displayName).trim())

@@ -4,6 +4,22 @@ function gameThumbHtml(g) {
     : `<span>${esc(g.genreEmoji || '🎮')}</span>`;
 }
 
+/** Нормализация ответа GET /api/me (статы могут прийти строками из D1). */
+function parseProfileStats(me) {
+  const raw = me?.stats;
+  if (!raw || typeof raw !== 'object') {
+    return { games: null, likes: null, followers: null };
+  }
+  const games = Number(raw.games ?? raw.gamesCount);
+  const likes = Number(raw.likes ?? raw.likesTotal);
+  const followers = Number(raw.followers ?? raw.followersCount);
+  return {
+    games: Number.isFinite(games) ? games : null,
+    likes: Number.isFinite(likes) ? likes : null,
+    followers: Number.isFinite(followers) ? followers : null,
+  };
+}
+
 function gameStatusBadgeHtml(status) {
   if (status === 'pending') {
     return '<span class="game-card-status-badge pending">Модерация</span>';
@@ -24,9 +40,12 @@ async function renderProfile() {
   if (handleRead) handleRead.textContent = USER.siteHandle || USER.id || '—';
   bioRead.textContent = '';
 
-  document.getElementById('statGames').textContent = '—';
-  document.getElementById('statFollowers').textContent = '—';
-  document.getElementById('statLikes').textContent = '—';
+  const setStatGames = v => { document.getElementById('statGames').textContent = v; };
+  const setStatFollowers = v => { document.getElementById('statFollowers').textContent = v; };
+  const setStatLikes = v => { document.getElementById('statLikes').textContent = v; };
+  setStatGames('…');
+  setStatFollowers('…');
+  setStatLikes('…');
 
   document.getElementById('devBadge').style.display = USER.isGithubConnected ? '' : 'none';
 
@@ -34,11 +53,10 @@ async function renderProfile() {
 
   try {
     const me = await API.me();
-    if (me?.stats) {
-      document.getElementById('statGames').textContent = me.stats.games;
-      document.getElementById('statLikes').textContent = fmtNum(me.stats.likes);
-      document.getElementById('statFollowers').textContent = fmtNum(me.stats.followers);
-    }
+    const st = parseProfileStats(me);
+    if (st.games != null) setStatGames(String(st.games));
+    if (st.likes != null) setStatLikes(fmtNum(st.likes));
+    if (st.followers != null) setStatFollowers(fmtNum(st.followers));
     if (me?.user?.isAdmin) {
       document.body.classList.add('is-admin');
     } else {
@@ -70,6 +88,18 @@ async function renderProfile() {
   } catch (e) {
     console.warn('profile my games failed', e);
     myGames = GAMES.filter(g => g.authorId === USER.id);
+  }
+
+  const publishedCount = myGames.filter(g => g && g.status === 'published').length;
+  if (document.getElementById('statGames').textContent === '…') {
+    setStatGames(String(publishedCount));
+  }
+  if (document.getElementById('statFollowers').textContent === '…') {
+    setStatFollowers('0');
+  }
+  if (document.getElementById('statLikes').textContent === '…') {
+    const sumLikes = myGames.reduce((acc, g) => acc + (Number(g?.likes) || 0), 0);
+    setStatLikes(fmtNum(sumLikes));
   }
 
   const grid = document.getElementById('myGamesGrid');
