@@ -15,6 +15,9 @@ html,body,#root,#feed,.slide{margin:0;padding:0;border:0;width:100%;height:100%;
   --info-h: 76px;
   /* Полоска свайпа между iframe и блоком автора — только здесь листаем ленту */
   --swipe-strip-h: 52px;
+  /* Полоска под статус-баром: автор + название — игра начинается ниже */
+  --feed-pinned-h: 52px;
+  --game-top: calc(var(--safe-top) + var(--feed-pinned-h));
   --game-bottom: calc(var(--safe-bottom) + var(--nav-h) + var(--info-h) + var(--swipe-strip-h));
 }
 
@@ -75,6 +78,7 @@ body{
 body.tg-only-wall #feed,
 body.tg-only-wall #feed-transition,
 body.tg-only-wall #empty-state,
+body.tg-only-wall #feed-pinned-meta,
 body.tg-only-wall #side-actions,
 body.tg-only-wall #game-info,
 body.tg-only-wall #dots,
@@ -165,12 +169,12 @@ body.tg-only-wall #toast{
   touch-action:none;
   pointer-events:auto;
   position:absolute;
-  top:0;
+  top:var(--game-top);
   left:0;
   width:100%;
   max-width:100%;
-  height:calc(100vh - var(--game-bottom));
-  height:calc(100dvh - var(--game-bottom));
+  height:calc(100vh - var(--game-top) - var(--game-bottom));
+  height:calc(100dvh - var(--game-top) - var(--game-bottom));
   border:none;
   display:block;
   background:#000;
@@ -178,11 +182,11 @@ body.tg-only-wall #toast{
 
 .slide-placeholder{
   position:absolute;
-  top:0;
+  top:var(--game-top);
   left:0;
   width:100%;
-  height:calc(100vh - var(--game-bottom));
-  height:calc(100dvh - var(--game-bottom));
+  height:calc(100vh - var(--game-top) - var(--game-bottom));
+  height:calc(100dvh - var(--game-top) - var(--game-bottom));
   display:flex;
   flex-direction:column;
   align-items:center;
@@ -195,6 +199,74 @@ body.tg-only-wall #toast{
 
 #feed{background:#000;}
 .slide-placeholder.hidden{opacity:0;pointer-events:none;}
+
+/* Верх ленты: ник и название — фиксированная зона, игра под ней */
+.feed-pinned-meta{
+  position:fixed;
+  left:0;
+  right:0;
+  top:0;
+  height:var(--game-top);
+  padding:calc(var(--safe-top) + 4px) 72px 8px 14px;
+  box-sizing:border-box;
+  display:flex;
+  align-items:flex-end;
+  z-index:320;
+  pointer-events:none;
+  background:linear-gradient(180deg, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.55) 72%, rgba(0,0,0,0) 100%);
+  border-bottom:1px solid rgba(255,255,255,0.06);
+}
+.feed-pinned-inner{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  min-width:0;
+  width:100%;
+  pointer-events:auto;
+  cursor:pointer;
+  -webkit-tap-highlight-color:transparent;
+}
+.feed-pinned-avatar{
+  width:34px;
+  height:34px;
+  border-radius:50%;
+  flex-shrink:0;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:13px;
+  font-weight:700;
+  overflow:hidden;
+}
+.feed-pinned-avatar img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+}
+.feed-pinned-text{
+  min-width:0;
+  flex:1;
+  display:flex;
+  flex-direction:column;
+  gap:2px;
+}
+.feed-pinned-author{
+  font-size:13px;
+  font-weight:700;
+  color:rgba(255,255,255,0.95);
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.feed-pinned-title{
+  font-size:12px;
+  font-weight:600;
+  color:rgba(255,255,255,0.55);
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
 
 /* Админ: кнопки модерации поверх игры в ленте */
 .feed-moderation-card{
@@ -519,8 +591,8 @@ body:has(#onboarding-screen.open) #swipe-strip{
 
 #side-actions{
   position:fixed;
-  /* Десктоп: ряд сверху справа */
-  top:calc(var(--safe-top) + 10px);
+  /* Под полоской автора/названия, не под статус-баром */
+  top:calc(var(--game-top) + 6px);
   right:10px;
   bottom:auto;
   display:flex;
@@ -1590,11 +1662,12 @@ body.is-admin .admin-only{display:block;}
   :root{
     --nav-h:64px;
     --info-h:72px;
+    --feed-pinned-h: 48px;
   }
 
-  /* Как TikTok: колонка поверх видео (игры), только в зоне canvas — тачи мимо кругов в игру */
+  /* Как TikTok: колонка поверх игры, ниже верхней полоски с автором */
   #side-actions{
-    top:calc(env(safe-area-inset-top, 0px) + 8px);
+    top:calc(var(--game-top) + 6px);
     bottom:calc(var(--game-bottom) + 12px);
     right:max(6px, env(safe-area-inset-right, 0px));
     left:auto;
@@ -1693,7 +1766,10 @@ body.is-admin .admin-only{display:block;}
 }
 
 @media (max-width: 380px) {
-  :root{--info-h:68px;}
+  :root{
+    --info-h:68px;
+    --feed-pinned-h: 44px;
+  }
   #side-actions{right:max(4px, env(safe-area-inset-right, 0px));gap:12px;}
   .action-icon{width:44px;height:44px;font-size:19px;}
   .action-label{font-size:10px;max-width:54px;}

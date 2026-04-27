@@ -13,7 +13,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <!-- ?v= сбрасывает кэш WebView Telegram после правок JS/CSS (меняй при каждом релизе фронта). -->
-<link rel="stylesheet" href="styles.css?v=20260428j">
+<link rel="stylesheet" href="styles.css?v=20260428k">
 </head>
 <body>
 
@@ -22,6 +22,17 @@
     <div class="tg-only-logo">smol<span>game</span></div>
     <p class="tg-only-title">Открой в Telegram</p>
     <p class="tg-only-text">Открой из Telegram: меню бота → мини-приложение.</p>
+  </div>
+</div>
+
+<!-- ══ Верх ленты: ник + название игры — под safe area, игра начинается ниже (удобнее тянуть) ══ -->
+<div id="feed-pinned-meta" class="feed-pinned-meta">
+  <div class="feed-pinned-inner" data-action="open-author">
+    <div class="feed-pinned-avatar" id="feedPinnedAvatar">?</div>
+    <div class="feed-pinned-text">
+      <div class="feed-pinned-author" id="feedPinnedAuthor">—</div>
+      <div class="feed-pinned-title" id="feedPinnedTitle">—</div>
+    </div>
   </div>
 </div>
 
@@ -411,7 +422,7 @@
 <script src="js/api.js?v=20260428g"></script>
 <script src="js/onboarding.js?v=20260428g"></script>
 <script src="js/help-screens.js?v=20260428g"></script>
-<script src="js/feed.js?v=20260428j"></script>
+<script src="js/feed.js?v=20260428k"></script>
 <script src="js/feed-nav-tip.js?v=20260428g"></script>
 <script src="js/actions.js?v=20260428g"></script>
 <script src="js/upload.js?v=20260428g"></script>
