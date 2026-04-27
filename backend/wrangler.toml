@@ -37,9 +37,13 @@ GITHUB_CLIENT_ID = "Ov23linmpKR0Bab5Fogn"
 # Callback в GitHub OAuth App: https://smolgame.dorokhin731.workers.dev/auth/github/callback
 # Локально: backend/.dev.vars см. .env.example
 #
-# R2 для загрузки «Вставить код» (HTML на Worker) и картинок:
-#   [[r2_buckets]]
-#   binding = "IMAGES"
-#   bucket_name = "smolgame-images"
-# Плюс публичный URL картинок: PUBLIC_IMAGE_BASE_URL или R2_PUBLIC_URL (см. README).
+# R2 для «Вставить код» и обложек (после создания bucket в Dashboard раскомментируй и задеплой):
+#   1) Cloudflare → R2 → Create bucket → например smolgame-images
+#   2) Раскомментируй [[r2_buckets]] ниже, bucket_name = имя bucket
+#   3) [vars] PUBLIC_IMAGE_BASE_URL = публичный URL bucket (R2.dev или custom domain)
+#   4) npm run deploy
+#[[r2_buckets]]
+#binding = "IMAGES"
+#bucket_name = "smolgame-images"
+# PUBLIC_IMAGE_BASE_URL = "https://pub-xxxxx.r2.dev"
 # ───────────────────────────────────────────────

@@ -57,7 +57,7 @@ function validateHtmlPayload(body) {
 export async function submitHtmlGame(req, env) {
   if (!env.IMAGES) {
     return error(
-      'Хранилище R2 не подключено к Worker. Владельцу: Cloudflare → R2 → создать bucket → Workers → smolgame → Settings → R2 bucket bindings → binding IMAGES.',
+      'Файлы игр не настроены: в Cloudflare создай bucket R2, в Worker smolgame → Settings → Triggers → (или Bindings) подключи R2 с именем binding **IMAGES**, потом снова Deploy. Подробнее в README репозитория (раздел R2).',
       501
     );
   }
