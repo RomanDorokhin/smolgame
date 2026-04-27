@@ -23,19 +23,17 @@ ADMIN_TG_IDS = "336216597"
 FRONTEND_ORIGIN = "https://romandorokhin.github.io"
 # Путь мини-аппа на GitHub Pages (редирект после GitHub OAuth).
 GITHUB_APP_PATH = "/smolgame"
+# GitHub OAuth App → Client ID (публичный). ОБЯЗАТЕЛЬНО держи здесь: иначе `wrangler deploy`
+# сотрёт переменные, заданные только в Dashboard, и вход через GitHub сломается.
+GITHUB_CLIENT_ID = "Ov23linmpKR0Bab5Fogn"
 # Если Worker на своём домене, укажи полный origin без слэша (иначе берётся из запроса).
 # GITHUB_OAUTH_REDIRECT_BASE = "https://smolgame.dorokhin731.workers.dev"
 
 # ───────────────────────────────────────────────
-# Секреты (НЕ здесь, положить отдельной командой!):
+# Секреты (НЕ здесь, положить отдельной командой — переживают deploy):
 #   npx wrangler secret put TELEGRAM_BOT_TOKEN
 #   npx wrangler secret put GITHUB_CLIENT_SECRET
 # Токен нужен для валидации initData от Telegram WebApp.
-# GitHub OAuth: GitHub → Settings → Developer settings → OAuth Apps → New OAuth App.
-#   Authorization callback URL = https://smolgame.dorokhin731.workers.dev/auth/github/callback
-#   (или твой Worker URL; должен совпадать с GITHUB_OAUTH_REDIRECT_BASE если задаёшь его.)
-# В Cloudflare → Workers → smolgame → Settings → Variables:
-#   GITHUB_CLIENT_ID = Client ID из GitHub (не секрет, можно Plaintext)
-#   GITHUB_CLIENT_SECRET = через «Encrypt» или: npx wrangler secret put GITHUB_CLIENT_SECRET
+# Callback в GitHub OAuth App: https://smolgame.dorokhin731.workers.dev/auth/github/callback
 # Локально: backend/.dev.vars см. .env.example
 # ───────────────────────────────────────────────

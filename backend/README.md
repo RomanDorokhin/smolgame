@@ -134,7 +134,7 @@ backend/
 
 ### GitHub OAuth (привязка аккаунта)
 
-Если в мини-аппе тост **«GitHub OAuth не настроен на сервере»** — на Worker **нет** переменной `GITHUB_CLIENT_ID` (и/или секрета).
+Если в мини-аппе тост **«GitHub OAuth не настроен на сервере»** — на Worker **нет** `GITHUB_CLIENT_ID` или **`npm run deploy` стёр переменные из Dashboard**. У `wrangler deploy` источник правды — **`wrangler.toml` + secrets**; то, что добавили только в UI Cloudflare без записи в toml, при следующем деплое **пропадает**. Держи **`GITHUB_CLIENT_ID` в `[vars]`** в `wrangler.toml`, а **`GITHUB_CLIENT_SECRET`** — через `wrangler secret put`.
 
 1. [GitHub → Settings → Developer settings → OAuth Apps](https://github.com/settings/developers) → **New OAuth App**.
 2. **Authorization callback URL** — **ровно** такой URL (подставь свой Worker из `npm run deploy` или из `js/api.js` → `PROD_API_BASE`):
