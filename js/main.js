@@ -22,6 +22,9 @@ async function bootstrap() {
   await jumpToStartParamGame();
   handleGithubOAuthReturn();
 
+  if (!needOnboarding && typeof maybeShowWelcomeAfterRegister === 'function') {
+    maybeShowWelcomeAfterRegister();
+  }
   if (!needOnboarding && typeof maybeShowFeedNavTipAfterGames === 'function') {
     maybeShowFeedNavTipAfterGames();
   }

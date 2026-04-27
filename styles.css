@@ -41,7 +41,13 @@ iframe.slide-game{
 #upload-screen.open,
 #upload-screen.open *,
 #onboarding-screen.open,
-#onboarding-screen.open *{
+#onboarding-screen.open *,
+#welcome-screen.open,
+#welcome-screen.open *,
+#help-how-screen.open,
+#help-how-screen.open *,
+#help-faq-screen.open,
+#help-faq-screen.open *{
   touch-action:pan-y;
 }
 
@@ -81,6 +87,9 @@ body.tg-only-wall #profile-screen,
 body.tg-only-wall #search-screen,
 body.tg-only-wall #author-screen,
 body.tg-only-wall #onboarding-screen,
+body.tg-only-wall #welcome-screen,
+body.tg-only-wall #help-how-screen,
+body.tg-only-wall #help-faq-screen,
 body.tg-only-wall #toast{
   visibility:hidden !important;
   pointer-events:none !important;
@@ -274,6 +283,51 @@ body.tg-only-wall #toast{
 
 #swipe-strip.dragging{z-index:315;}
 
+/* Кнопка «Как добавить игру» — над полоской свайпа */
+.feed-how-hint-btn{
+  position:fixed;
+  left:50%;
+  transform:translateX(-50%);
+  bottom:calc(var(--safe-bottom) + var(--nav-h) + var(--info-h) + var(--swipe-strip-h) + 8px);
+  z-index:308;
+  padding:8px 16px;
+  border-radius:999px;
+  border:1px solid rgba(255,255,255,0.14);
+  background:rgba(12,12,12,0.72);
+  color:rgba(255,255,255,0.88);
+  font-size:12px;
+  font-weight:700;
+  letter-spacing:0.02em;
+  cursor:pointer;
+  white-space:nowrap;
+  max-width:calc(100vw - 100px);
+  overflow:hidden;
+  text-overflow:ellipsis;
+  backdrop-filter:blur(10px);
+  -webkit-backdrop-filter:blur(10px);
+  touch-action:manipulation;
+}
+.feed-how-hint-btn:active{
+  background:rgba(255,45,85,0.18);
+  border-color:rgba(255,45,85,0.35);
+}
+body:has(#upload-screen.open) .feed-how-hint-btn,
+body:has(#report-screen.open) .feed-how-hint-btn,
+body:has(#profile-screen.open) .feed-how-hint-btn,
+body:has(#author-screen.open) .feed-how-hint-btn,
+body:has(#search-screen.open) .feed-how-hint-btn,
+body:has(#onboarding-screen.open) .feed-how-hint-btn,
+body:has(#feed-nav-tip-overlay.feed-nav-tip-visible) .feed-how-hint-btn,
+body:has(#welcome-screen.open) .feed-how-hint-btn,
+body:has(#help-how-screen.open) .feed-how-hint-btn,
+body:has(#help-faq-screen.open) .feed-how-hint-btn,
+body.tg-only-wall .feed-how-hint-btn{
+  display:none !important;
+}
+body:has(#empty-state.show) .feed-how-hint-btn{
+  display:none !important;
+}
+
 /* На первом слайде вертикальный жест вниз в полоске — отдать закрытию Telegram */
 #swipe-strip.telegram-swipe-pass{
   pointer-events:none !important;
@@ -402,7 +456,10 @@ body:has(#report-screen.open) #swipe-strip,
 body:has(#profile-screen.open) #swipe-strip,
 body:has(#author-screen.open) #swipe-strip,
 body:has(#search-screen.open) #swipe-strip,
-body:has(#onboarding-screen.open) #swipe-strip{
+body:has(#onboarding-screen.open) #swipe-strip,
+body:has(#welcome-screen.open) #swipe-strip,
+body:has(#help-how-screen.open) #swipe-strip,
+body:has(#help-faq-screen.open) #swipe-strip{
   display:none;
 }
 
@@ -1325,6 +1382,149 @@ textarea.field-input{
   font-weight:700;
   font-size:14px;
 }
+
+.profile-help-row{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  flex-wrap:wrap;
+  gap:6px;
+  margin-top:16px;
+  padding:0 8px 8px;
+}
+.profile-help-link{
+  background:none;
+  border:none;
+  padding:6px 4px;
+  font-size:13px;
+  font-weight:600;
+  color:var(--accent);
+  cursor:pointer;
+  text-decoration:underline;
+  text-underline-offset:3px;
+}
+.profile-help-sep{color:var(--muted);font-size:12px;}
+
+/* Приветствие (3 слайда) */
+#welcome-screen{
+  position:fixed;
+  inset:0;
+  z-index:720;
+  display:none;
+  align-items:center;
+  justify-content:center;
+  padding:24px;
+  background:rgba(0,0,0,0.92);
+}
+#welcome-screen.open{display:flex;}
+.welcome-card{max-width:420px;}
+.welcome-footer{display:flex;flex-direction:column;gap:10px;}
+.welcome-btn-secondary{
+  background:transparent !important;
+  border:1px solid var(--border) !important;
+  color:rgba(255,255,255,0.85) !important;
+}
+
+/* Гайд + FAQ */
+#help-how-screen,
+#help-faq-screen{
+  position:fixed;
+  inset:0;
+  z-index:530;
+  background:var(--bg);
+  display:none;
+  flex-direction:column;
+  overflow:hidden;
+}
+#help-how-screen.open,
+#help-faq-screen.open{display:flex;}
+.help-screen-header{
+  flex-shrink:0;
+  padding:calc(var(--safe-top) + 16px) 20px 14px;
+  border-bottom:1px solid var(--border);
+}
+.help-scroll{
+  flex:1;
+  overflow-y:auto;
+  overflow-x:hidden;
+  -webkit-overflow-scrolling:touch;
+  overscroll-behavior-y:contain;
+  padding:16px 20px calc(var(--safe-bottom) + 24px);
+}
+.help-intro{
+  font-size:14px;
+  color:var(--muted);
+  line-height:1.45;
+  margin:0 0 18px;
+}
+.help-acc,
+.help-faq-item{
+  margin-bottom:10px;
+  border:1px solid var(--border);
+  border-radius:14px;
+  background:var(--surface);
+  overflow:hidden;
+}
+.help-acc summary,
+.help-faq-item summary{
+  list-style:none;
+  padding:14px 16px;
+  font-size:15px;
+  font-weight:700;
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  gap:10px;
+  user-select:none;
+}
+.help-acc summary::-webkit-details-marker,
+.help-faq-item summary::-webkit-details-marker{display:none;}
+.help-acc-num{
+  flex-shrink:0;
+  width:26px;
+  height:26px;
+  border-radius:8px;
+  background:rgba(255,45,85,0.2);
+  color:var(--accent);
+  font-size:13px;
+  font-weight:800;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+.help-acc-body{
+  padding:0 16px 16px;
+  font-size:14px;
+  line-height:1.5;
+  color:rgba(255,255,255,0.78);
+}
+.help-acc-body p{margin:0 0 10px;}
+.help-acc-body p:last-child{margin-bottom:0;}
+.help-prompt{
+  margin:10px 0;
+  padding:12px 14px;
+  background:rgba(0,0,0,0.45);
+  border:1px solid var(--border);
+  border-radius:10px;
+  font-size:12px;
+  line-height:1.45;
+  white-space:pre-wrap;
+  word-break:break-word;
+  color:rgba(255,255,255,0.88);
+}
+.help-ol{
+  margin:8px 0 12px;
+  padding-left:20px;
+}
+.help-ol li{margin-bottom:6px;}
+.help-ol code{font-size:12px;}
+.help-acc-body code{
+  font-size:12px;
+  background:rgba(0,0,0,0.35);
+  padding:2px 6px;
+  border-radius:4px;
+}
+.help-cta-upload{margin-top:20px;width:100%;}
 
 /* ══════════════════════════════
    TOAST

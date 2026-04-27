@@ -88,6 +88,8 @@
   <button type="button" class="feed-nav-arrow feed-nav-arrow-next" data-action="feed-nav-next" aria-label="Следующая игра">→</button>
 </div>
 
+<button type="button" class="feed-how-hint-btn" data-action="open-how-to-add" aria-label="Как добавить игру">Как добавить игру</button>
+
 <!-- Одноразовая подсказка по ленте -->
 <div id="feed-nav-tip-overlay" class="feed-nav-tip-overlay">
   <div class="feed-nav-tip-card">
@@ -259,6 +261,11 @@
       <div class="profile-badge">🎮 Игрок</div>
       <div class="profile-badge dev" id="devBadge" style="display:none">⚡ Разработчик</div>
     </div>
+    <div class="profile-help-row">
+      <button type="button" class="profile-help-link" data-action="open-help-how">Как это работает</button>
+      <span class="profile-help-sep">·</span>
+      <button type="button" class="profile-help-link" data-action="open-help-faq">FAQ</button>
+    </div>
   </div>
   <!-- Модерация — видна только админу (body.is-admin) -->
   <div class="admin-only">
@@ -327,6 +334,83 @@
   <div class="games-grid" id="authorGamesGrid"></div>
 </div>
 
+<!-- ══ ПРИВЕТСТВИЕ (3 слайда, один раз после регистрации) ══ -->
+<div id="welcome-screen">
+  <div class="onboarding-card welcome-card">
+    <div class="onboarding-body" id="welcomeBody"></div>
+    <div class="onboarding-footer welcome-footer" id="welcomeFooter"></div>
+  </div>
+</div>
+
+<!-- ══ КАК ДОБАВИТЬ ИГРУ (гайд) ══ -->
+<div id="help-how-screen">
+  <div class="screen-header help-screen-header">
+    <div class="screen-title">Как добавить игру</div>
+    <div class="close-btn" data-action="close-help-how">✕</div>
+  </div>
+  <div class="help-scroll">
+    <p class="help-intro">Четыре шага. Открывай по одному — не нужно читать всё сразу.</p>
+
+    <details class="help-acc">
+      <summary><span class="help-acc-num">1</span> Создай игру с ИИ</summary>
+      <div class="help-acc-body">
+        <p>Зайди на <strong>claude.ai</strong> или <strong>chatgpt.com</strong> — оба бесплатны. Напиши (можно скопировать):</p>
+        <pre class="help-prompt">Напиши мне простую браузерную игру на HTML + JavaScript.
+Один файл, без внешних библиотек.
+Жанр: [змейка / тетрис / кликер / своё]
+Игра должна работать на мобильном телефоне.</pre>
+        <p>ИИ выдаст код — скопируй целиком. Не понравилось — попроси переделать.</p>
+      </div>
+    </details>
+
+    <details class="help-acc">
+      <summary><span class="help-acc-num">2</span> Выложи на GitHub Pages</summary>
+      <div class="help-acc-body">
+        <p>Бесплатный хостинг от GitHub, без карты и серверов.</p>
+        <ol class="help-ol">
+          <li>github.com → регистрация (если нет)</li>
+          <li>+ → New repository, имя например <code>my-game</code>, <strong>Public</strong> → Create</li>
+          <li>Add file → Create new file → имя <code>index.html</code> → вставь код → Commit changes</li>
+          <li>Settings → Pages → Branch: <strong>main</strong> → Save</li>
+        </ol>
+        <p>Через 1–2 мин ссылка вида <code>https://твой-ник.github.io/my-game</code> — это URL игры.</p>
+      </div>
+    </details>
+
+    <details class="help-acc">
+      <summary><span class="help-acc-num">3</span> Скопируй ссылку</summary>
+      <div class="help-acc-body">
+        <p>В <strong>Settings → Pages</strong> зелёная плашка: <em>Your site is live at https://…</em> — скопируй её. Подожди 1–3 мин после публикации, если не открывается сразу.</p>
+      </div>
+    </details>
+
+    <details class="help-acc">
+      <summary><span class="help-acc-num">4</span> Добавь в SmolGame</summary>
+      <div class="help-acc-body">
+        <p>Вернись сюда → <strong>Загрузить</strong> (＋) → вкладка со ссылкой → вставь URL GitHub Pages, название и описание → отправь на модерацию. Игра появится в ленте.</p>
+      </div>
+    </details>
+
+    <button type="button" class="submit-btn help-cta-upload" data-action="help-how-upload">Открыть форму загрузки</button>
+  </div>
+</div>
+
+<!-- ══ FAQ ══ -->
+<div id="help-faq-screen">
+  <div class="screen-header help-screen-header">
+    <div class="screen-title">FAQ</div>
+    <div class="close-btn" data-action="close-help-faq">✕</div>
+  </div>
+  <div class="help-scroll">
+    <details class="help-faq-item"><summary>Это правда бесплатно?</summary><div class="help-acc-body"><p>Да. У Claude и ChatGPT есть бесплатные режимы. GitHub Pages бесплатен.</p></div></details>
+    <details class="help-faq-item"><summary>Нужно уметь программировать?</summary><div class="help-acc-body"><p>Нет. Ты описываешь желаемое ИИ — он пишет код.</p></div></details>
+    <details class="help-faq-item"><summary>Игра не работает — что делать?</summary><div class="help-acc-body"><p>Скопируй текст ошибки из браузера и отправь ИИ: «Вот ошибка, исправь код».</p></div></details>
+    <details class="help-faq-item"><summary>Какие игры подходят?</summary><div class="help-acc-body"><p>Браузерные на HTML, один файл <code>index.html</code>, без серверной части.</p></div></details>
+    <details class="help-faq-item"><summary>Можно обновить игру после публикации?</summary><div class="help-acc-body"><p>Да. Измени <code>index.html</code> в репозитории — через пару минут обновится по той же ссылке.</p></div></details>
+    <details class="help-faq-item"><summary>Почему GitHub?</summary><div class="help-acc-body"><p>Простой и надёжный бесплатный вариант: без карты и сложной настройки.</p></div></details>
+  </div>
+</div>
+
 <!-- ══ ЭКРАН: РЕГИСТРАЦИЯ ══ -->
 <div id="onboarding-screen">
   <div class="onboarding-card">
@@ -347,6 +431,7 @@
 <script src="js/state.js"></script>
 <script src="js/api.js"></script>
 <script src="js/onboarding.js"></script>
+<script src="js/help-screens.js"></script>
 <script src="js/feed.js"></script>
 <script src="js/feed-nav-tip.js"></script>
 <script src="js/actions.js"></script>

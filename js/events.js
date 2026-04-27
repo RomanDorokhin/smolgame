@@ -20,6 +20,17 @@ const CLICK_ACTIONS = {
   'feed-nav-prev':  () => feedNavPrev(),
   'feed-nav-next':  () => feedNavNext(),
   'dismiss-feed-nav-tip': () => dismissFeedNavTip(),
+  'open-how-to-add': () => openHowToAddFromFeed(),
+
+  'welcome-next': () => welcomeNext(),
+  'welcome-browse': () => welcomeFinishBrowse(),
+  'welcome-upload': () => welcomeFinishUpload(),
+
+  'close-help-how': () => closeHelpHowScreen(),
+  'close-help-faq': () => closeHelpFaqScreen(),
+  'open-help-how': () => openHelpHowScreen(),
+  'open-help-faq': () => openHelpFaqScreen(),
+  'help-how-upload': () => openUploadFromHelpHow(),
 
   'open-author':    () => openAuthorProfile(),
   'close-author':   () => closeAuthorScreen(),
