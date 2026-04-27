@@ -19,7 +19,10 @@ const CLICK_ACTIONS = {
 
   'feed-nav-prev':  () => feedNavPrev(),
   'feed-nav-next':  () => feedNavNext(),
-  'dismiss-feed-nav-tip': () => dismissFeedNavTip(),
+  'dismiss-feed-nav-tip': () => ackFeedNavTip(),
+  'ack-feed-nav-tip':      () => ackFeedNavTip(),
+  'open-feed-help':        () => openFeedHelp(),
+  'close-feed-nav-tip':    () => closeFeedNavTip(),
   'welcome-next': () => welcomeNext(),
   'welcome-browse': () => welcomeFinishBrowse(),
   'welcome-upload': () => welcomeFinishUpload(),

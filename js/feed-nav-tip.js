@@ -1,11 +1,53 @@
 /**
- * Одноразовая подсказка: где листать ленту (localStorage по STORAGE_KEYS.feedNavTip).
+ * Подсказки ленты: первый показ (localStorage feedNavTip) + кнопка «Справка».
  */
-function dismissFeedNavTip() {
+function closeFeedNavTip() {
+  document.getElementById('feed-nav-tip-overlay')?.classList.remove('feed-nav-tip-visible');
+}
+
+function ackFeedNavTip() {
   try {
     localStorage.setItem(STORAGE_KEYS.feedNavTip, '1');
   } catch (e) { /* ignore */ }
-  document.getElementById('feed-nav-tip-overlay')?.classList.remove('feed-nav-tip-visible');
+  closeFeedNavTip();
+}
+
+function openFeedHelp() {
+  document.getElementById('feed-nav-tip-overlay')?.classList.add('feed-nav-tip-visible');
+}
+
+/** После первого смены игры — убираем пульсацию полоски и FAB-подсказку */
+function markFeedSwipeLearned() {
+  try {
+    if (localStorage.getItem(STORAGE_KEYS.feedSwipeLearned) === '1') return;
+    localStorage.setItem(STORAGE_KEYS.feedSwipeLearned, '1');
+  } catch (e) { /* ignore */ }
+  document.getElementById('swipe-strip')?.classList.remove('swipe-strip--coach');
+  document.getElementById('feed-coach-fab')?.setAttribute('hidden', '');
+}
+
+function refreshFeedCoachState() {
+  const strip = document.getElementById('swipe-strip');
+  const fab = document.getElementById('feed-coach-fab');
+  if (!strip) return;
+  let learned = false;
+  try {
+    learned = localStorage.getItem(STORAGE_KEYS.feedSwipeLearned) === '1';
+  } catch (e) { /* ignore */ }
+  const multi = Array.isArray(GAMES) && GAMES.length >= 2;
+  const visible = strip.style.display !== 'none';
+  if (!multi || !visible) {
+    strip.classList.remove('swipe-strip--coach');
+    fab?.setAttribute('hidden', '');
+    return;
+  }
+  if (learned) {
+    strip.classList.remove('swipe-strip--coach');
+    fab?.setAttribute('hidden', '');
+  } else {
+    strip.classList.add('swipe-strip--coach');
+    fab?.removeAttribute('hidden');
+  }
 }
 
 function maybeShowFeedNavTipAfterGames() {
@@ -17,6 +59,7 @@ function maybeShowFeedNavTipAfterGames() {
     if (localStorage.getItem(STORAGE_KEYS.feedNavTip) === '1') return;
   } catch (e) { /* ignore */ }
   overlay.classList.add('feed-nav-tip-visible');
+  refreshFeedCoachState();
 }
 
 function feedNavPrev() {
@@ -31,7 +74,12 @@ function feedNavNext() {
   hideSwipeHint();
 }
 
-window.dismissFeedNavTip = dismissFeedNavTip;
+window.closeFeedNavTip = closeFeedNavTip;
+window.ackFeedNavTip = ackFeedNavTip;
+window.openFeedHelp = openFeedHelp;
+window.markFeedSwipeLearned = markFeedSwipeLearned;
+window.refreshFeedCoachState = refreshFeedCoachState;
+window.dismissFeedNavTip = ackFeedNavTip;
 window.maybeShowFeedNavTipAfterGames = maybeShowFeedNavTipAfterGames;
 window.feedNavPrev = feedNavPrev;
 window.feedNavNext = feedNavNext;

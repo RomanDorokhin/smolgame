@@ -14,7 +14,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <!-- ?v= сбрасывает кэш WebView Telegram после правок JS/CSS (меняй при каждом релизе фронта). -->
-<link rel="stylesheet" href="styles.css?v=20260444">
+<link rel="stylesheet" href="styles.css?v=20260445">
 </head>
 <body>
 
@@ -86,6 +86,11 @@
 <!-- ══ ПРОГРЕСС ══ -->
 <div id="dots"></div>
 
+<!-- Как листать: повторный вызов справки (до первого успешного свайпа — с пульсацией полоски) -->
+<button type="button" id="feed-coach-fab" class="feed-coach-fab sg-btn sg-btn--ghost sg-btn--fab" data-action="open-feed-help" aria-label="Как листать ленту" hidden>
+  <svg class="sg-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.5"/><path d="M12 16.5v-.75a3 3 0 013-3h.75a3 3 0 003-3 3 3 0 00-3-3 3 3 0 00-3 3M12 9h.01" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+</button>
+
 <!-- ══ Зона ленты: только здесь горизонтальный свайп (как карточки), не трогаем игру ══ -->
 <div id="swipe-strip" aria-hidden="true">
   <button type="button" class="feed-nav-arrow feed-nav-arrow-prev" data-action="feed-nav-prev" aria-label="Предыдущая игра"><svg class="sg-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
@@ -96,12 +101,35 @@
   <button type="button" class="feed-nav-arrow feed-nav-arrow-next" data-action="feed-nav-next" aria-label="Следующая игра"><svg class="sg-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M9 18l6-6-6-6" stroke="currentColor" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
 </div>
 
-<!-- Одноразовая подсказка по ленте -->
+<!-- Подсказка по ленте (первый вход или по кнопке «?») -->
 <div id="feed-nav-tip-overlay" class="feed-nav-tip-overlay">
   <div class="feed-nav-tip-card">
+    <button type="button" class="feed-nav-tip-close sg-btn sg-btn--ghost sg-btn--icon" data-action="close-feed-nav-tip" aria-label="Закрыть">
+      <svg class="sg-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="1.85" stroke-linecap="round"/></svg>
+    </button>
     <p class="feed-nav-tip-title">Как листать ленту</p>
-    <p class="feed-nav-tip-text">Внизу полоска: <strong>свайп влево</strong> — следующая игра, <strong>вправо</strong> — предыдущая; карточки едут в ту же сторону. Играть — в центре экрана.</p>
-    <button type="button" class="feed-nav-tip-btn" data-action="dismiss-feed-nav-tip">Понятно</button>
+    <p class="feed-nav-tip-lead">Свайп <strong>только</strong> по нижней полоске — не по самой игре.</p>
+    <div class="feed-nav-tip-demo" aria-hidden="true">
+      <div class="feed-nav-tip-demo-hand">👆</div>
+      <div class="feed-nav-tip-demo-track">
+        <span class="feed-nav-tip-demo-label">свайп</span>
+        <div class="feed-nav-tip-demo-line">
+          <span class="feed-nav-tip-demo-arrow">←</span>
+          <span class="feed-nav-tip-demo-handle"></span>
+          <span class="feed-nav-tip-demo-arrow">→</span>
+        </div>
+      </div>
+    </div>
+    <ul class="feed-nav-tip-list">
+      <li><strong>Влево</strong> по полоске — следующая игра</li>
+      <li><strong>Вправо</strong> — предыдущая</li>
+      <li><strong>Стрелки</strong> по краям полоски — то же самое</li>
+      <li><strong>Центр экрана</strong> — только игра</li>
+    </ul>
+    <div class="feed-nav-tip-actions">
+      <button type="button" class="sg-btn sg-btn--secondary feed-nav-tip-secondary" data-action="close-feed-nav-tip">Закрыть</button>
+      <button type="button" class="sg-btn sg-btn--primary" data-action="ack-feed-nav-tip">Понятно</button>
+    </div>
   </div>
 </div>
 
@@ -574,26 +602,26 @@
 
 <!-- ══ SCRIPTS ══ -->
 <!-- Порядок важен: config/utils/telegram → state → api → модули логики → события → main. -->
-<script src="js/config.js?v=20260444"></script>
-<script src="js/utils.js?v=20260444"></script>
-<script src="js/telegram.js?v=20260444"></script>
-<script src="js/tg-gate.js?v=20260444"></script>
-<script src="js/boot-splash.js?v=20260444"></script>
-<script src="js/state.js?v=20260444"></script>
-<script src="js/api.js?v=20260444"></script>
-<script src="js/onboarding.js?v=20260444"></script>
-<script src="js/help-screens.js?v=20260444"></script>
-<script src="js/feed.js?v=20260444"></script>
-<script src="js/feed-nav-tip.js?v=20260444"></script>
-<script src="js/actions.js?v=20260444"></script>
-<script src="js/upload.js?v=20260444"></script>
-<script src="js/genres.js?v=20260444"></script>
-<script src="js/search.js?v=20260444"></script>
-<script src="js/profile.js?v=20260444"></script>
-<script src="js/admin.js?v=20260444"></script>
-<script src="js/screens.js?v=20260444"></script>
-<script src="js/events.js?v=20260444"></script>
-<script src="js/overlay-pull-close.js?v=20260444"></script>
-<script src="js/main.js?v=20260444"></script>
+<script src="js/config.js?v=20260445"></script>
+<script src="js/utils.js?v=20260445"></script>
+<script src="js/telegram.js?v=20260445"></script>
+<script src="js/tg-gate.js?v=20260445"></script>
+<script src="js/boot-splash.js?v=20260445"></script>
+<script src="js/state.js?v=20260445"></script>
+<script src="js/api.js?v=20260445"></script>
+<script src="js/onboarding.js?v=20260445"></script>
+<script src="js/help-screens.js?v=20260445"></script>
+<script src="js/feed.js?v=20260445"></script>
+<script src="js/feed-nav-tip.js?v=20260445"></script>
+<script src="js/actions.js?v=20260445"></script>
+<script src="js/upload.js?v=20260445"></script>
+<script src="js/genres.js?v=20260445"></script>
+<script src="js/search.js?v=20260445"></script>
+<script src="js/profile.js?v=20260445"></script>
+<script src="js/admin.js?v=20260445"></script>
+<script src="js/screens.js?v=20260445"></script>
+<script src="js/events.js?v=20260445"></script>
+<script src="js/overlay-pull-close.js?v=20260445"></script>
+<script src="js/main.js?v=20260445"></script>
 </body>
 </html>

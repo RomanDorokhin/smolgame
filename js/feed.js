@@ -263,6 +263,8 @@ function renderFeed() {
     document.getElementById('side-actions').style.display = 'none';
     document.getElementById('game-info').style.display = 'none';
     document.getElementById('swipe-strip').style.display = 'none';
+    document.getElementById('feed-coach-fab')?.setAttribute('hidden', '');
+    document.getElementById('swipe-strip')?.classList.remove('swipe-strip--coach');
     const ft = document.getElementById('feed-transition');
     if (ft) {
       ft.classList.remove('feed-transition--show');
@@ -280,6 +282,7 @@ function renderFeed() {
 
   appendSlides(0, GAMES);
   goTo(0, true);
+  if (typeof refreshFeedCoachState === 'function') refreshFeedCoachState();
 }
 
 function lazyLoadAround(idx) {
@@ -351,6 +354,7 @@ function goTo(idx, instant = false) {
     if (!instant) {
       hapticFeedNav();
       showBetweenGamesLogoOverlay();
+      if (typeof markFeedSwipeLearned === 'function') markFeedSwipeLearned();
     }
   }
 

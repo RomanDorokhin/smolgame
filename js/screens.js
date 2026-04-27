@@ -154,6 +154,7 @@ function switchTab(tab) {
 
   if (tab === 'feed') {
     closeAllMainTabs();
+    if (typeof refreshFeedCoachState === 'function') refreshFeedCoachState();
     return;
   }
 

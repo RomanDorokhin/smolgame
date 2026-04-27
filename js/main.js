@@ -36,6 +36,7 @@ async function bootstrap() {
     if (!needOnboarding && typeof maybeShowFeedNavTipAfterGames === 'function') {
       maybeShowFeedNavTipAfterGames();
     }
+    if (typeof refreshFeedCoachState === 'function') refreshFeedCoachState();
   } catch (e) {
     console.error('bootstrap failed', e);
     if (typeof showToast === 'function') {
