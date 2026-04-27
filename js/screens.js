@@ -163,7 +163,9 @@ function switchTab(tab) {
   if (tab === 'search') {
     document.getElementById('search-screen')?.classList.add('open');
     if (typeof renderGenreFilter === 'function') renderGenreFilter();
-    if (typeof onSearch === 'function') onSearch('');
+    if (typeof initSearchInput === 'function') initSearchInput();
+    const q = document.getElementById('searchInput')?.value || '';
+    if (typeof onSearch === 'function') onSearch(q);
   } else if (tab === 'profile') {
     const screen = document.getElementById('profile-screen');
     screen?.classList.remove('profile-edit-active');

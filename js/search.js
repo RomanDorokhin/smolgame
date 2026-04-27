@@ -1,3 +1,37 @@
+function selectedGenreChipHtml() {
+  const sel = window.selectedGenre;
+  if (!sel || sel === 'Все') return '';
+  const key = typeof genreIconKeyFromLabel === 'function' ? genreIconKeyFromLabel(sel) : '';
+  const icon =
+    typeof genreIconSvg === 'function' ? genreIconSvg(key, 'sg-genre-ic--sm') : '';
+  return `<button type="button" class="search-active-filter" data-action="search-clear-genre" aria-label="Сбросить фильтр жанра">${icon}<span>${esc(sel)}</span><span class="search-active-filter-x" aria-hidden="true">×</span></button>`;
+}
+
+function hasSearchQuery() {
+  const v = document.getElementById('searchInput')?.value?.trim() || '';
+  return Boolean(v);
+}
+
+function isDefaultSearchView() {
+  const g = window.selectedGenre;
+  return !hasSearchQuery() && (!g || g === '' || g === 'Все');
+}
+
+function renderSearchEmptyState() {
+  const results = document.getElementById('searchResults');
+  if (!results) return;
+  if (isDefaultSearchView()) {
+    results.innerHTML = `
+      <div class="search-empty-state">
+        <div class="search-empty-icon-wrap">${typeof genreIconSvg === 'function' ? genreIconSvg('all', 'sg-genre-ic--hero') : ''}</div>
+        <p class="search-empty-title">Ищи по названию или автору</p>
+        <p class="search-empty-sub">Фильтр по жанру — полоска выше. Начни ввод или выбери категорию.</p>
+      </div>`;
+    return;
+  }
+  results.innerHTML = `<div class="search-no-results"><p>Ничего не нашли</p><p class="search-no-results-hint">Попробуй другой запрос или жанр.</p></div>`;
+}
+
 function onSearch(query) {
   const results = document.getElementById('searchResults');
   const filtered = GAMES.filter(g => {
@@ -12,16 +46,20 @@ function onSearch(query) {
     return matchQuery && matchGenre;
   });
 
+  const hint = document.getElementById('searchHintBar');
+  if (hint) hint.innerHTML = selectedGenreChipHtml();
+
   if (filtered.length === 0) {
-    results.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:40px 0;color:var(--muted);font-size:14px;">Нет результатов</div>`;
+    renderSearchEmptyState();
     return;
   }
 
   results.innerHTML = filtered.map(g => `
-    <div class="game-card" data-action="open-game" data-game-id="${esc(g.id)}">
+    <div class="game-card search-game-card" data-action="open-game" data-game-id="${esc(g.id)}">
       <div class="game-card-thumb">${gameThumbHtml(g)}</div>
       <div class="game-card-info">
-        <div class="game-card-name">${esc(g.title)}</div>
+        <div class="game-card-title-row"><span class="game-card-genre-ic">${typeof genreIconForGame === 'function' ? genreIconForGame(g) : ''}</span><span class="game-card-name">${esc(g.title)}</span></div>
+        ${g.genre ? `<div class="game-card-genre-str">${esc(g.genre)}</div>` : ''}
         <div class="game-card-stats"><span class="sg-mini-stat">${sgStatHeartSvg()}${fmtNum(g.likes)}</span><span class="sg-mini-sep">·</span><span class="sg-mini-stat">${sgStatEyeSvg()}${fmtNum(g.plays)}</span></div>
       </div>
     </div>
@@ -40,5 +78,20 @@ async function openGameFromSearch(gameId) {
   if (idx >= 0 && typeof goTo === 'function') goTo(idx, false);
 }
 
+function initSearchInput() {
+  const inp = document.getElementById('searchInput');
+  if (!inp || inp.dataset.searchInit) return;
+  inp.dataset.searchInit = '1';
+  inp.addEventListener('keydown', e => {
+    if (e.key === 'Escape') {
+      e.target.value = '';
+      onSearch('');
+    }
+  });
+}
+
+document.addEventListener('DOMContentLoaded', initSearchInput);
+
 window.onSearch = onSearch;
 window.openGameFromSearch = openGameFromSearch;
+window.initSearchInput = initSearchInput;

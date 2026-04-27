@@ -15,7 +15,7 @@ async function loadAdminPending() {
     }
     host.innerHTML = games.map(g => `
       <div class="admin-card" data-game-id="${esc(g.id)}">
-        <div class="admin-card-title">${esc(g.genre_emoji || '🎮')} ${esc(g.title)}</div>
+        <div class="admin-card-title admin-card-title--row">${typeof genreIconSvg === 'function' && typeof genreIconKeyFromStored === 'function' ? genreIconSvg(genreIconKeyFromStored(g.genre_emoji, g.genre), 'sg-genre-ic--sm') : ''}<span>${esc(g.title)}</span></div>
         <div class="admin-card-meta">
           ${esc(g.genre || 'Без жанра')} · от ${esc(g.authorFirst || g.authorHandle || g.author_id)}<br>
           <a href="${esc(g.url)}" target="_blank" rel="noopener noreferrer">${esc(g.url)}</a>

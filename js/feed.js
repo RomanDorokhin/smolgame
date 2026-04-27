@@ -167,7 +167,7 @@ function appendSlides(startIndex, gamesSlice) {
     placeholder.className = 'slide-placeholder';
     const thumbHtml = g.imageUrl
       ? `<img src="${esc(g.imageUrl)}" class="slide-cover" alt="">`
-      : `<div class="placeholder-icon">${esc(g.genreEmoji || '🎮')}</div>`;
+      : `<div class="placeholder-icon sg-placeholder-genre">${typeof genreIconForGame === 'function' ? genreIconForGame(g) : ''}</div>`;
     const statusBanner = g.status === 'pending'
       ? '<div class="slide-status-banner">На модерации</div>'
       : g.status === 'rejected'
@@ -388,13 +388,16 @@ function updateOverlay() {
 
   titleEl.textContent = g.title || '—';
 
-  const genreText = [g.genreEmoji, g.genre].filter(Boolean).join(' ').trim();
-  if (genreText) {
-    genreEl.textContent = genreText;
+  if (g.genre) {
+    const icon =
+      typeof genreIconForGame === 'function'
+        ? genreIconForGame(g)
+        : '';
+    genreEl.innerHTML = `${icon}<span class="game-genre-label">${esc(g.genre)}</span>`;
     genreEl.hidden = false;
     sepEl.hidden = false;
   } else {
-    genreEl.textContent = '';
+    genreEl.innerHTML = '';
     genreEl.hidden = true;
     sepEl.hidden = true;
   }

@@ -14,7 +14,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <!-- ?v= сбрасывает кэш WebView Telegram после правок JS/CSS (меняй при каждом релизе фронта). -->
-<link rel="stylesheet" href="styles.css?v=20260448">
+<link rel="stylesheet" href="styles.css?v=20260450">
 </head>
 <body>
 
@@ -554,21 +554,21 @@
 <!-- ══ ЭКРАН: ПОИСК ══ -->
 <div id="search-screen">
   <div class="search-header">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+    <div class="search-header-top">
       <div class="screen-title">Поиск</div>
       <div class="close-btn" data-action="close-search">✕</div>
     </div>
     <div class="search-bar">
       <span class="search-icon" aria-hidden="true"><svg class="sg-icon sg-icon--sm" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="11" cy="11" r="6.75" stroke="currentColor" stroke-width="1.65"/><path d="M16.5 16.5L21 21" stroke="currentColor" stroke-width="1.65" stroke-linecap="round"/></svg></span>
-      <input type="text" placeholder="Найти игру или автора..." id="searchInput" data-input="search">
+      <input type="search" enterkeyhint="search" autocomplete="off" placeholder="Название или автор…" id="searchInput" data-input="search">
     </div>
+    <div id="searchHintBar" class="search-hint-bar"></div>
   </div>
-  <div class="genre-scroll" id="genreFilter"></div>
-  <div class="search-results" id="searchResults">
-    <div style="grid-column:1/-1;text-align:center;padding:40px 0;color:var(--muted);font-size:14px;">
-      Введи запрос
-    </div>
+  <div class="genre-scroll-wrap">
+    <div class="genre-scroll-label">Жанр</div>
+    <div class="genre-scroll" id="genreFilter"></div>
   </div>
+  <div class="search-results" id="searchResults"></div>
 </div>
 
 <!-- ══ ЭКРАН: АВТОР ══ -->
@@ -617,26 +617,27 @@
 
 <!-- ══ SCRIPTS ══ -->
 <!-- Порядок важен: config/utils/telegram → state → api → модули логики → события → main. -->
-<script src="js/config.js?v=20260448"></script>
-<script src="js/utils.js?v=20260448"></script>
-<script src="js/telegram.js?v=20260448"></script>
-<script src="js/tg-gate.js?v=20260448"></script>
-<script src="js/boot-splash.js?v=20260448"></script>
-<script src="js/state.js?v=20260448"></script>
-<script src="js/api.js?v=20260448"></script>
-<script src="js/onboarding.js?v=20260448"></script>
-<script src="js/help-screens.js?v=20260448"></script>
-<script src="js/feed.js?v=20260448"></script>
-<script src="js/feed-nav-tip.js?v=20260448"></script>
-<script src="js/actions.js?v=20260448"></script>
-<script src="js/upload.js?v=20260448"></script>
-<script src="js/genres.js?v=20260448"></script>
-<script src="js/search.js?v=20260448"></script>
-<script src="js/profile.js?v=20260448"></script>
-<script src="js/admin.js?v=20260448"></script>
-<script src="js/screens.js?v=20260448"></script>
-<script src="js/events.js?v=20260448"></script>
-<script src="js/overlay-pull-close.js?v=20260448"></script>
-<script src="js/main.js?v=20260448"></script>
+<script src="js/config.js?v=20260450"></script>
+<script src="js/genre-icons.js?v=20260450"></script>
+<script src="js/utils.js?v=20260450"></script>
+<script src="js/telegram.js?v=20260450"></script>
+<script src="js/tg-gate.js?v=20260450"></script>
+<script src="js/boot-splash.js?v=20260450"></script>
+<script src="js/state.js?v=20260450"></script>
+<script src="js/api.js?v=20260450"></script>
+<script src="js/onboarding.js?v=20260450"></script>
+<script src="js/help-screens.js?v=20260450"></script>
+<script src="js/feed.js?v=20260450"></script>
+<script src="js/feed-nav-tip.js?v=20260450"></script>
+<script src="js/actions.js?v=20260450"></script>
+<script src="js/upload.js?v=20260450"></script>
+<script src="js/genres.js?v=20260450"></script>
+<script src="js/search.js?v=20260450"></script>
+<script src="js/profile.js?v=20260450"></script>
+<script src="js/admin.js?v=20260450"></script>
+<script src="js/screens.js?v=20260450"></script>
+<script src="js/events.js?v=20260450"></script>
+<script src="js/overlay-pull-close.js?v=20260450"></script>
+<script src="js/main.js?v=20260450"></script>
 </body>
 </html>

@@ -23,6 +23,12 @@ const CLICK_ACTIONS = {
   'ack-feed-nav-tip':      () => ackFeedNavTip(),
   'open-feed-help':        () => openFeedHelp(),
   'close-feed-nav-tip':    () => closeFeedNavTip(),
+  'search-clear-genre':    () => {
+    window.selectedGenre = '';
+    if (typeof renderGenreFilter === 'function') renderGenreFilter();
+    const q = document.getElementById('searchInput')?.value || '';
+    if (typeof onSearch === 'function') onSearch(q);
+  },
   'welcome-next': () => welcomeNext(),
   'welcome-browse': () => welcomeFinishBrowse(),
   'welcome-upload': () => welcomeFinishUpload(),

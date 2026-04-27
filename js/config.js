@@ -6,13 +6,14 @@ window.BOT_USERNAME = 'smolgame_bot';
 // Если оставить пустым — используется бот по умолчанию (его Menu Button).
 window.BOT_APP_NAME = '';
 
+/** Жанры: key — короткий id иконки (отправляется в genre_emoji вместо эмодзи) */
 window.GENRES = [
-  { label: 'Аркада',      emoji: '🕹️' },
-  { label: 'Головоломка', emoji: '🧩' },
-  { label: 'Экшен',       emoji: '⚔️' },
-  { label: 'Казуалка',    emoji: '🎯' },
-  { label: 'Стратегия',   emoji: '♟️' },
-  { label: 'Гонки',       emoji: '🏎️' },
-  { label: 'Платформер',  emoji: '🏃' },
-  { label: 'Прочее',      emoji: '🎲' },
+  { label: 'Аркада',      key: 'arcade' },
+  { label: 'Головоломка', key: 'puzzle' },
+  { label: 'Экшен',       key: 'action' },
+  { label: 'Казуалка',    key: 'casual' },
+  { label: 'Стратегия',   key: 'strategy' },
+  { label: 'Гонки',       key: 'racing' },
+  { label: 'Платформер',  key: 'platform' },
+  { label: 'Прочее',      key: 'other' },
 ];

@@ -1,7 +1,7 @@
 function gameThumbHtml(g) {
   return g.imageUrl
     ? `<img src="${esc(g.imageUrl)}" class="game-card-cover" alt="">`
-    : `<span>${esc(g.genreEmoji || '🎮')}</span>`;
+    : `<span class="game-card-thumb-placeholder">${typeof genreIconForGame === 'function' ? genreIconForGame(g) : ''}</span>`;
 }
 
 /** Нормализация ответа GET /api/me (статы могут прийти строками из D1). */
@@ -113,7 +113,7 @@ async function renderProfile() {
         <div class="game-card-thumb">
           ${gameStatusBadgeHtml(g.status)}
           ${gameThumbHtml(g)}
-          <button type="button" class="delete-game-btn" data-action="delete-game" data-game-id="${esc(g.id)}">🗑</button>
+          <button type="button" class="delete-game-btn" data-action="delete-game" data-game-id="${esc(g.id)}" aria-label="Удалить"><svg class="sg-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M9 3h6M5 7h14M10 11v8M14 11v8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M8 7l1 14h6l1-14" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg></button>
         </div>
         <div class="game-card-info">
           <div class="game-card-name">${esc(g.title)}</div>

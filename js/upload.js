@@ -332,7 +332,10 @@ function ghCodeWizardNext() {
     const title = document.getElementById('ghCodeWizardTitle')?.value?.trim() || '';
     const desc = document.getElementById('ghCodeWizardDesc')?.value?.trim() || '';
     const genre = window.selectedGenres.ghCode || 'Прочее';
-    const emoji = (GENRES.find(x => x.label === genre)?.emoji) || '🎮';
+    const gIcon =
+      typeof genreIconSvg === 'function' && typeof genreIconKeyFromLabel === 'function'
+        ? genreIconSvg(genreIconKeyFromLabel(genre), 'sg-genre-ic--inline')
+        : '';
     const coverUrl = document.getElementById('ghCodeWizardCoverUrl')?.value?.trim() || '';
     const hasFile = Boolean(document.getElementById('ghCodeWizardCoverFile')?.files?.[0]);
     const coverLine = coverUrl ? esc(coverUrl) : hasFile ? 'файл (загрузится при отправке)' : 'нет';
@@ -342,7 +345,7 @@ function ghCodeWizardNext() {
         <p><strong>Ссылка на игру:</strong> ${esc(playUrl || '')}</p>
         <p><strong>Название:</strong> ${esc(title)}</p>
         <p><strong>Описание:</strong> ${esc(desc || '—')}</p>
-        <p><strong>Жанр:</strong> ${esc(emoji + ' ' + genre)}</p>
+        <p class="upload-genre-line"><strong>Жанр:</strong>${gIcon}<span>${esc(genre)}</span></p>
         <p><strong>Обложка:</strong> ${coverLine}</p>
       `;
     }
@@ -382,7 +385,7 @@ async function ghCodeWizardPublish() {
   }
   const desc = document.getElementById('ghCodeWizardDesc')?.value?.trim() || '';
   const genre = window.selectedGenres.ghCode || 'Прочее';
-  const genreEmoji = (GENRES.find(x => x.label === genre)?.emoji) || '🎮';
+  const genreEmoji = typeof genreKeyForApiLabel === 'function' ? genreKeyForApiLabel(genre) : 'other';
 
   showToast('🔍 Отправляем…');
   try {
@@ -565,7 +568,10 @@ function codeWizardNext() {
     const title = document.getElementById('codeWizardTitle')?.value?.trim() || '';
     const desc = document.getElementById('codeWizardDesc')?.value?.trim() || '';
     const genre = window.selectedGenres.codeOnly || 'Прочее';
-    const emoji = (GENRES.find(x => x.label === genre)?.emoji) || '🎮';
+    const gIcon =
+      typeof genreIconSvg === 'function' && typeof genreIconKeyFromLabel === 'function'
+        ? genreIconSvg(genreIconKeyFromLabel(genre), 'sg-genre-ic--inline')
+        : '';
     const coverUrl = document.getElementById('codeWizardCoverUrl')?.value?.trim() || '';
     const hasFile = Boolean(document.getElementById('codeWizardCoverFile')?.files?.[0]);
     const coverLine = coverUrl
@@ -578,7 +584,7 @@ function codeWizardNext() {
       box.innerHTML = `
         <p><strong>Название:</strong> ${esc(title)}</p>
         <p><strong>Описание:</strong> ${esc(desc || '—')}</p>
-        <p><strong>Жанр:</strong> ${esc(emoji + ' ' + genre)}</p>
+        <p class="upload-genre-line"><strong>Жанр:</strong>${gIcon}<span>${esc(genre)}</span></p>
         <p><strong>Обложка:</strong> ${coverLine}</p>
         <p><strong>Код:</strong> ${esc(String(html.length))} символов</p>
       `;
@@ -624,7 +630,7 @@ async function codeWizardPublish() {
   }
   const desc = document.getElementById('codeWizardDesc')?.value?.trim() || '';
   const genre = window.selectedGenres.codeOnly || 'Прочее';
-  const genreEmoji = (GENRES.find(x => x.label === genre)?.emoji) || '🎮';
+  const genreEmoji = typeof genreKeyForApiLabel === 'function' ? genreKeyForApiLabel(genre) : 'other';
 
   showToast('🔍 Отправляем…');
   try {
@@ -682,7 +688,7 @@ async function submitGame(method) {
   const name = document.getElementById('gameNameInput2').value.trim();
   const desc = document.getElementById('gameDescInput2').value.trim();
   const genreLabel = selectedGenres.url || 'Прочее';
-  const genreEmoji = (GENRES.find(x => x.label === genreLabel)?.emoji) || '🎮';
+  const genreEmoji = typeof genreKeyForApiLabel === 'function' ? genreKeyForApiLabel(genreLabel) : 'other';
 
   if (!rawUrl || !name) { showToast('⚠️ Заполни ссылку и название'); return; }
   const safeUrl = normalizeToHttpsUrl(rawUrl);
