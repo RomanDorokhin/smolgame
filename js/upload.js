@@ -10,7 +10,7 @@ async function authGithub() {
   try {
     const { url } = await API.githubOAuthStart();
     if (!url) {
-      showToast('⚠️ GitHub OAuth не настроен');
+      showToast('⚠️ GitHub: задай GITHUB_CLIENT_ID и GITHUB_CLIENT_SECRET в Cloudflare → Worker → Variables');
       return;
     }
     try {

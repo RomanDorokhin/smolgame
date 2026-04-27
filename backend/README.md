@@ -134,8 +134,17 @@ backend/
 
 ### GitHub OAuth (привязка аккаунта)
 
+Если в мини-аппе тост **«GitHub OAuth не настроен на сервере»** — на Worker **нет** переменной `GITHUB_CLIENT_ID` (и/или секрета).
+
 1. [GitHub → Settings → Developer settings → OAuth Apps](https://github.com/settings/developers) → **New OAuth App**.
-2. **Authorization callback URL** = `https://<твой-worker>.workers.dev/auth/github/callback` (тот же хост, что у API; см. `GITHUB_OAUTH_REDIRECT_BASE` в `wrangler.toml`, если Worker на своём домене).
-3. В Cloudflare: `npx wrangler secret put GITHUB_CLIENT_SECRET` и задай **GITHUB_CLIENT_ID** (через `wrangler.toml` [vars] или `wrangler vars put`).
+2. **Authorization callback URL** — **ровно** такой URL (подставь свой Worker из `npm run deploy` или из `js/api.js` → `PROD_API_BASE`):
+   - `https://<твой-worker>.workers.dev/auth/github/callback`  
+   Если в `wrangler.toml` задан `GITHUB_OAUTH_REDIRECT_BASE`, callback в GitHub должен совпадать с `{GITHUB_OAUTH_REDIRECT_BASE}/auth/github/callback`.
+3. **Cloudflare** → Workers → **smolgame** → **Settings** → **Variables**:
+   - **GITHUB_CLIENT_ID** — вставь **Client ID** из GitHub (тип **Plaintext** ок: это не секрет).
+   - **GITHUB_CLIENT_SECRET** — **Encrypt** и вставь секрет из GitHub, либо в терминале:  
+     `cd backend && npx wrangler secret put GITHUB_CLIENT_SECRET`
 4. В D1 добавь колонки и таблицу (если база старая): см. комментарии в `schema.sql` — `github_user_id`, `github_login`, таблица `oauth_states`, индекс уникальности по `github_user_id`.
 5. `npm run deploy`. В мини-аппе: «Загрузить» → «Войти через GitHub».
+
+Локально: скопируй `backend/.env.example` → `backend/.dev.vars`, заполни id/secret, `npx wrangler dev`.

@@ -16,12 +16,29 @@ function redirect(url) {
 /**
  * GET /api/auth/github/start — JSON { url } для открытия в браузере (избегаем fetch-follow на GitHub).
  */
+function githubClientId(env) {
+  const a = String(env.GITHUB_CLIENT_ID ?? '').trim();
+  if (a) return a;
+  return String(env.GITHUB_OAUTH_CLIENT_ID ?? '').trim();
+}
+
+function githubClientSecret(env) {
+  const a = String(env.GITHUB_CLIENT_SECRET ?? '').trim();
+  if (a) return a;
+  return String(env.GITHUB_OAUTH_CLIENT_SECRET ?? '').trim();
+}
+
 export async function githubOAuthStart(req, env) {
   const user = await authenticate(req, env);
   if (!user) return error('unauthorized', 401);
 
-  const clientId = env.GITHUB_CLIENT_ID;
-  if (!clientId) return error('GitHub OAuth не настроен на сервере', 503);
+  const clientId = githubClientId(env);
+  if (!clientId) {
+    return error(
+      'GitHub OAuth: на Worker не задан GITHUB_CLIENT_ID. Cloudflare → Workers → smolgame → Settings → Variables: добавь GITHUB_CLIENT_ID (публичный) и секрет GITHUB_CLIENT_SECRET. Callback в GitHub OAuth App: <WORKER_URL>/auth/github/callback',
+      503
+    );
+  }
 
   await upsertUser(env.DB, user);
 
@@ -73,10 +90,12 @@ export async function githubOAuthCallback(req, env) {
     return back(`?github=error&message=${encodeURIComponent('Сессия истекла — попробуй снова')}`);
   }
 
-  const clientId = env.GITHUB_CLIENT_ID;
-  const clientSecret = env.GITHUB_CLIENT_SECRET;
+  const clientId = githubClientId(env);
+  const clientSecret = githubClientSecret(env);
   if (!clientId || !clientSecret) {
-    return back(`?github=error&message=${encodeURIComponent('OAuth не настроен')}`);
+    return back(
+      `?github=error&message=${encodeURIComponent('OAuth: нет GITHUB_CLIENT_ID или GITHUB_CLIENT_SECRET на Worker')}`
+    );
   }
 
   const origin = workerOrigin(req, env);

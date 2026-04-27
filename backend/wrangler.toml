@@ -31,7 +31,11 @@ GITHUB_APP_PATH = "/smolgame"
 #   npx wrangler secret put TELEGRAM_BOT_TOKEN
 #   npx wrangler secret put GITHUB_CLIENT_SECRET
 # Токен нужен для валидации initData от Telegram WebApp.
-# GitHub OAuth: создай OAuth App (callback = <WORKER>/auth/github/callback),
-#   npx wrangler vars put GITHUB_CLIENT_ID
-#   npx wrangler secret put GITHUB_CLIENT_SECRET
+# GitHub OAuth: GitHub → Settings → Developer settings → OAuth Apps → New OAuth App.
+#   Authorization callback URL = https://smolgame.dorokhin731.workers.dev/auth/github/callback
+#   (или твой Worker URL; должен совпадать с GITHUB_OAUTH_REDIRECT_BASE если задаёшь его.)
+# В Cloudflare → Workers → smolgame → Settings → Variables:
+#   GITHUB_CLIENT_ID = Client ID из GitHub (не секрет, можно Plaintext)
+#   GITHUB_CLIENT_SECRET = через «Encrypt» или: npx wrangler secret put GITHUB_CLIENT_SECRET
+# Локально: backend/.dev.vars см. .env.example
 # ───────────────────────────────────────────────
