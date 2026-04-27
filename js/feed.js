@@ -336,7 +336,9 @@ function updateOverlay() {
 }
 
 const SWIPE_NEXT_PX = 55;
-const SWIPE_PREV_PX = 25;
+/** Свайп вниз — предыдущая игра: порог ниже, чем у Telegram на закрытие mini-app */
+const SWIPE_PREV_PX = 12;
+const SWIPE_PREV_VELOCITY = 0.2;
 const MOVE_THRESHOLD_PX = 10;
 
 let touchStartY = 0;
@@ -443,7 +445,7 @@ function feedPointerUp(e, dragHost) {
       hideSwipeHint();
     }
   } else if (dy < 0 && window.currentIdx > 0) {
-    if (-dy > SWIPE_PREV_PX || velocity > 0.35) {
+    if (-dy > SWIPE_PREV_PX || velocity > SWIPE_PREV_VELOCITY) {
       goTo(window.currentIdx - 1);
       hideSwipeHint();
     }
