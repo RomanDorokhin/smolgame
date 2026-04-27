@@ -9,6 +9,133 @@ import { safeHttpsUrl, validateSubmission, validateProfilePatch } from './valida
 const FEED_PAGE_DEFAULT = 15;
 const FEED_PAGE_MAX = 40;
 
+/** Старые D1 без части колонок в users/games — перебираем запросы, пока не сработает. */
+const PUBLISHED_FEED_SQL_VARIANTS = [
+  // Полная схема
+  `SELECT g.id, g.title, g.description, g.genre, g.genre_emoji AS genreEmoji,
+          g.url, g.image_url AS imageUrl, g.likes, g.plays, g.author_id AS authorId,
+          u.site_handle AS authorHandle, u.first_name AS authorFirst, u.last_name AS authorLast,
+          u.display_name AS authorDisplayName,
+          COALESCE(NULLIF(TRIM(u.avatar_override_url), ''), u.photo_url) AS authorPhoto
+     FROM games g
+     LEFT JOIN users u ON u.id = g.author_id
+    WHERE g.status = 'published'
+    ORDER BY g.created_at DESC
+    LIMIT ?1 OFFSET ?2`,
+  // Старые games без genre_emoji / image_url; полные users
+  `SELECT g.id, g.title, g.description, g.genre, CAST(NULL AS TEXT) AS genreEmoji,
+          g.url, CAST(NULL AS TEXT) AS imageUrl, g.likes, g.plays, g.author_id AS authorId,
+          u.site_handle AS authorHandle, u.first_name AS authorFirst, u.last_name AS authorLast,
+          u.display_name AS authorDisplayName,
+          COALESCE(NULLIF(TRIM(u.avatar_override_url), ''), u.photo_url) AS authorPhoto
+     FROM games g
+     LEFT JOIN users u ON u.id = g.author_id
+    WHERE g.status = 'published'
+    ORDER BY g.created_at DESC
+    LIMIT ?1 OFFSET ?2`,
+  // Полные games; users только «старые» поля (без site_handle / display_name / avatar_override)
+  `SELECT g.id, g.title, g.description, g.genre, g.genre_emoji AS genreEmoji,
+          g.url, g.image_url AS imageUrl, g.likes, g.plays, g.author_id AS authorId,
+          COALESCE(NULLIF(TRIM(u.username), ''), u.id) AS authorHandle,
+          u.first_name AS authorFirst, u.last_name AS authorLast,
+          CAST(NULL AS TEXT) AS authorDisplayName,
+          u.photo_url AS authorPhoto
+     FROM games g
+     LEFT JOIN users u ON u.id = g.author_id
+    WHERE g.status = 'published'
+    ORDER BY g.created_at DESC
+    LIMIT ?1 OFFSET ?2`,
+  // Минимум и games, и users
+  `SELECT g.id, g.title, g.description, g.genre, CAST(NULL AS TEXT) AS genreEmoji,
+          g.url, CAST(NULL AS TEXT) AS imageUrl, g.likes, g.plays, g.author_id AS authorId,
+          COALESCE(NULLIF(TRIM(u.username), ''), u.id) AS authorHandle,
+          u.first_name AS authorFirst, u.last_name AS authorLast,
+          CAST(NULL AS TEXT) AS authorDisplayName,
+          u.photo_url AS authorPhoto
+     FROM games g
+     LEFT JOIN users u ON u.id = g.author_id
+    WHERE g.status = 'published'
+    ORDER BY g.created_at DESC
+    LIMIT ?1 OFFSET ?2`,
+];
+
+async function firstSuccessfulAll(db, sqlStrings, bindArgs = []) {
+  let lastErr;
+  for (const sql of sqlStrings) {
+    try {
+      const stmt = db.prepare(sql);
+      return bindArgs.length ? await stmt.bind(...bindArgs).all() : await stmt.all();
+    } catch (e) {
+      lastErr = e;
+      if (!/no such column/i.test(String(e?.message || ''))) throw e;
+    }
+  }
+  throw lastErr;
+}
+
+async function firstSuccessfulFirst(db, sqlStrings, bindArgs = []) {
+  let lastErr;
+  for (const sql of sqlStrings) {
+    try {
+      const stmt = db.prepare(sql);
+      return bindArgs.length ? await stmt.bind(...bindArgs).first() : await stmt.first();
+    } catch (e) {
+      lastErr = e;
+      if (!/no such column/i.test(String(e?.message || ''))) throw e;
+    }
+  }
+  throw lastErr;
+}
+
+async function publishedFeedGamesQuery(db, limit, offset) {
+  return firstSuccessfulAll(db, PUBLISHED_FEED_SQL_VARIANTS, [limit, offset]);
+}
+
+const GAME_BY_ID_SQL_VARIANTS = [
+  `SELECT g.id, g.title, g.description, g.genre, g.genre_emoji AS genreEmoji,
+          g.url, g.image_url AS imageUrl, g.likes, g.plays, g.author_id AS authorId,
+          g.status,
+          u.site_handle AS authorHandle, u.first_name AS authorFirst, u.last_name AS authorLast,
+          u.display_name AS authorDisplayName,
+          COALESCE(NULLIF(TRIM(u.avatar_override_url), ''), u.photo_url) AS authorPhoto
+     FROM games g
+     LEFT JOIN users u ON u.id = g.author_id
+    WHERE g.id = ?`,
+  `SELECT g.id, g.title, g.description, g.genre, CAST(NULL AS TEXT) AS genreEmoji,
+          g.url, CAST(NULL AS TEXT) AS imageUrl, g.likes, g.plays, g.author_id AS authorId,
+          g.status,
+          u.site_handle AS authorHandle, u.first_name AS authorFirst, u.last_name AS authorLast,
+          u.display_name AS authorDisplayName,
+          COALESCE(NULLIF(TRIM(u.avatar_override_url), ''), u.photo_url) AS authorPhoto
+     FROM games g
+     LEFT JOIN users u ON u.id = g.author_id
+    WHERE g.id = ?`,
+  `SELECT g.id, g.title, g.description, g.genre, g.genre_emoji AS genreEmoji,
+          g.url, g.image_url AS imageUrl, g.likes, g.plays, g.author_id AS authorId,
+          g.status,
+          COALESCE(NULLIF(TRIM(u.username), ''), u.id) AS authorHandle,
+          u.first_name AS authorFirst, u.last_name AS authorLast,
+          CAST(NULL AS TEXT) AS authorDisplayName,
+          u.photo_url AS authorPhoto
+     FROM games g
+     LEFT JOIN users u ON u.id = g.author_id
+    WHERE g.id = ?`,
+  `SELECT g.id, g.title, g.description, g.genre, CAST(NULL AS TEXT) AS genreEmoji,
+          g.url, CAST(NULL AS TEXT) AS imageUrl, g.likes, g.plays, g.author_id AS authorId,
+          g.status,
+          COALESCE(NULLIF(TRIM(u.username), ''), u.id) AS authorHandle,
+          u.first_name AS authorFirst, u.last_name AS authorLast,
+          CAST(NULL AS TEXT) AS authorDisplayName,
+          u.photo_url AS authorPhoto
+     FROM games g
+     LEFT JOIN users u ON u.id = g.author_id
+    WHERE g.id = ?`,
+];
+
+async function gameByIdRow(db, gameId) {
+  return firstSuccessfulFirst(db, GAME_BY_ID_SQL_VARIANTS, [gameId]);
+}
+
 export async function getFeed(req, env) {
   const user = await authenticate(req, env);
   const userId = user?.id ?? null;
@@ -21,18 +148,7 @@ export async function getFeed(req, env) {
   limit = Math.min(FEED_PAGE_MAX, Math.max(1, Math.floor(limit)));
 
   // Только опубликованные, новые первыми. Пагинация: ?offset=&limit=
-  const { results } = await env.DB.prepare(
-    `SELECT g.id, g.title, g.description, g.genre, g.genre_emoji AS genreEmoji,
-            g.url, g.image_url AS imageUrl, g.likes, g.plays, g.author_id AS authorId,
-            u.site_handle AS authorHandle, u.first_name AS authorFirst, u.last_name AS authorLast,
-            u.display_name AS authorDisplayName,
-            COALESCE(NULLIF(TRIM(u.avatar_override_url), ''), u.photo_url) AS authorPhoto
-       FROM games g
-       LEFT JOIN users u ON u.id = g.author_id
-      WHERE g.status = 'published'
-      ORDER BY g.created_at DESC
-      LIMIT ?1 OFFSET ?2`
-  ).bind(limit, offset).all();
+  const { results } = await publishedFeedGamesQuery(env.DB, limit, offset);
 
   let likedSet = new Set();
   let followedSet = new Set();
@@ -324,17 +440,7 @@ export async function getGameById(req, env, gameId) {
   const viewer = await authenticate(req, env);
   const viewerId = viewer?.id ?? null;
 
-  const g = await env.DB.prepare(
-    `SELECT g.id, g.title, g.description, g.genre, g.genre_emoji AS genreEmoji,
-            g.url, g.image_url AS imageUrl, g.likes, g.plays, g.author_id AS authorId,
-            g.status,
-            u.site_handle AS authorHandle, u.first_name AS authorFirst, u.last_name AS authorLast,
-            u.display_name AS authorDisplayName,
-            COALESCE(NULLIF(TRIM(u.avatar_override_url), ''), u.photo_url) AS authorPhoto
-       FROM games g
-       LEFT JOIN users u ON u.id = g.author_id
-      WHERE g.id = ?`
-  ).bind(gameId).first();
+  const g = await gameByIdRow(env.DB, gameId);
 
   if (!g) return error('not found', 404);
   if (g.status !== 'published' && g.authorId !== viewerId) return error('not found', 404);
@@ -526,13 +632,19 @@ export async function adminPending(req, env) {
   const { resp } = await requireAdmin(req, env);
   if (resp) return resp;
 
-  const { results } = await env.DB.prepare(
+  const pendingSqlVariants = [
     `SELECT g.*, u.site_handle AS authorHandle, u.first_name AS authorFirst
        FROM games g
        LEFT JOIN users u ON u.id = g.author_id
       WHERE g.status = 'pending'
-      ORDER BY g.created_at ASC`
-  ).all();
+      ORDER BY g.created_at ASC`,
+    `SELECT g.*, COALESCE(NULLIF(TRIM(u.username), ''), u.id) AS authorHandle, u.first_name AS authorFirst
+       FROM games g
+       LEFT JOIN users u ON u.id = g.author_id
+      WHERE g.status = 'pending'
+      ORDER BY g.created_at ASC`,
+  ];
+  const { results } = await firstSuccessfulAll(env.DB, pendingSqlVariants);
 
   return json({ games: results });
 }
