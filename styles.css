@@ -778,7 +778,8 @@ body:has(#onboarding-screen.open) #swipe-strip{
 #bottom-nav{
   position:fixed;
   bottom:0;left:0;right:0;
-  z-index:400;
+  /* Поверх вкладок поиск/профиль/загрузка — как нижняя полоска в TikTok */
+  z-index:620;
   height:calc(var(--safe-bottom) + var(--nav-h));
   background:rgba(8,8,8,0.92);
   border-top:1px solid var(--border);
@@ -845,7 +846,13 @@ body:has(#onboarding-screen.open) #swipe-strip{
   touch-action:pan-y;
   padding:calc(var(--safe-top) + 60px) 20px calc(var(--safe-bottom) + 20px);
 }
-#upload-screen.open{display:flex;}
+#upload-screen.open{
+  display:flex;
+  /* Панель над нижним таббаром, не на весь экран */
+  bottom:calc(var(--safe-bottom) + var(--nav-h));
+  z-index:560;
+  padding-bottom:calc(var(--safe-bottom) + var(--nav-h) + 20px);
+}
 
 .upload-welcome-block{
   margin-bottom:22px;
@@ -1097,6 +1104,11 @@ textarea.field-input{
   touch-action:pan-y;
 }
 #profile-screen.open,#author-screen.open{display:flex;}
+#profile-screen.open{
+  bottom:calc(var(--safe-bottom) + var(--nav-h));
+  z-index:560;
+  padding-bottom:calc(var(--safe-bottom) + var(--nav-h) + 16px);
+}
 
 .profile-header{
   padding:calc(var(--safe-top) + 20px) 20px 20px;
@@ -1375,7 +1387,12 @@ textarea.field-input{
   overscroll-behavior-y:contain;
   touch-action:pan-y;
 }
-#search-screen.open{display:flex;}
+#search-screen.open{
+  display:flex;
+  bottom:calc(var(--safe-bottom) + var(--nav-h));
+  z-index:560;
+  padding-bottom:calc(var(--safe-bottom) + var(--nav-h) + 12px);
+}
 
 .search-header{
   padding:calc(var(--safe-top) + 16px) 16px 12px;

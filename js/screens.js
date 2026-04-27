@@ -1,34 +1,43 @@
+function setBottomNavActive(tab) {
+  document.querySelectorAll('#bottom-nav .nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('nav-' + tab)?.classList.add('active');
+}
+
+/** Закрыть основные вкладки (поиск / профиль / загрузить) без смены активной кнопки навбара */
+function closeAllMainTabs() {
+  const upload = document.getElementById('upload-screen');
+  if (upload?.classList.contains('open')) {
+    upload.classList.remove('open');
+    if (typeof hideUploadWelcomeBlock === 'function') hideUploadWelcomeBlock();
+  }
+  const profile = document.getElementById('profile-screen');
+  profile?.classList.remove('open', 'profile-edit-active');
+  document.getElementById('search-screen')?.classList.remove('open');
+}
+
 function openUpload() {
-  document.getElementById('upload-screen').classList.add('open');
-  renderGenrePills('genrePills', 'code');
-  renderGenrePills('genrePills2', 'url');
-  if (typeof selectMethod === 'function') selectMethod(window.selectedUploadMethod || 'url');
-  if (typeof maybeShowWelcomeOnUploadOpen === 'function') maybeShowWelcomeOnUploadOpen();
+  switchTab('upload');
 }
 function closeUpload() {
-  document.getElementById('upload-screen').classList.remove('open');
+  document.getElementById('upload-screen')?.classList.remove('open');
   if (typeof hideUploadWelcomeBlock === 'function') hideUploadWelcomeBlock();
+  switchTab('feed');
 }
 
 function openProfile() {
-  const screen = document.getElementById('profile-screen');
-  screen?.classList.remove('profile-edit-active');
-  renderProfile();
-  loadAdminPending();
-  screen?.classList.add('open');
+  switchTab('profile');
 }
 function closeProfile() {
-  const screen = document.getElementById('profile-screen');
-  screen?.classList.remove('open', 'profile-edit-active');
+  document.getElementById('profile-screen')?.classList.remove('open', 'profile-edit-active');
+  switchTab('feed');
 }
 
 function openSearch() {
-  document.getElementById('search-screen').classList.add('open');
-  renderGenreFilter();
-  onSearch('');
+  switchTab('search');
 }
 function closeSearch() {
-  document.getElementById('search-screen').classList.remove('open');
+  document.getElementById('search-screen')?.classList.remove('open');
+  switchTab('feed');
 }
 
 function openAuthorScreen(authorId) {
@@ -139,11 +148,36 @@ async function loadAuthorProfile(authorId) {
 }
 
 function switchTab(tab) {
-  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-  document.getElementById('nav-' + tab)?.classList.add('active');
-  if (tab === 'search') openSearch();
-  else if (tab === 'profile') openProfile();
-  else if (tab === 'feed') { closeSearch(); closeProfile(); }
+  if (!tab) return;
+  setBottomNavActive(tab);
+
+  if (tab === 'feed') {
+    closeAllMainTabs();
+    return;
+  }
+
+  closeAllMainTabs();
+
+  if (tab === 'search') {
+    document.getElementById('search-screen')?.classList.add('open');
+    if (typeof renderGenreFilter === 'function') renderGenreFilter();
+    if (typeof onSearch === 'function') onSearch('');
+  } else if (tab === 'profile') {
+    const screen = document.getElementById('profile-screen');
+    screen?.classList.remove('profile-edit-active');
+    if (typeof renderProfile === 'function') renderProfile();
+    if (typeof loadAdminPending === 'function') loadAdminPending();
+    screen?.classList.add('open');
+  } else if (tab === 'upload') {
+    const upload = document.getElementById('upload-screen');
+    upload?.classList.add('open');
+    if (typeof renderGenrePills === 'function') {
+      renderGenrePills('genrePills', 'code');
+      renderGenrePills('genrePills2', 'url');
+    }
+    if (typeof selectMethod === 'function') selectMethod(window.selectedUploadMethod || 'url');
+    if (typeof maybeShowWelcomeOnUploadOpen === 'function') maybeShowWelcomeOnUploadOpen();
+  }
 }
 
 window.openUpload = openUpload;
@@ -157,3 +191,5 @@ window.closeAuthorScreen = closeAuthorScreen;
 window.loadAuthorProfile = loadAuthorProfile;
 window.toggleAuthorFollow = toggleAuthorFollow;
 window.switchTab = switchTab;
+window.closeAllMainTabs = closeAllMainTabs;
+window.setBottomNavActive = setBottomNavActive;
