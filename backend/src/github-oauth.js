@@ -85,11 +85,18 @@ export async function githubOAuthCallback(req, env) {
     return back(`?github=error&message=${encodeURIComponent('Нет code или state')}`);
   }
 
-  const row = await env.DB.prepare(
-    `SELECT user_id AS userId FROM oauth_states WHERE id = ? AND expires_at > ?`
+  const rawState = await env.DB.prepare(
+    `SELECT user_id FROM oauth_states WHERE id = ? AND expires_at > ?`
   ).bind(state, Math.floor(Date.now() / 1000)).first();
 
-  if (!row?.userId) {
+  const telegramUserId =
+    rawState?.user_id ??
+    rawState?.userId ??
+    rawState?.USER_ID ??
+    null;
+  const tgUid = telegramUserId != null ? String(telegramUserId).trim() : '';
+
+  if (!tgUid) {
     return back(`?github=error&message=${encodeURIComponent('Сессия истекла — попробуй снова')}`);
   }
 
@@ -144,7 +151,7 @@ export async function githubOAuthCallback(req, env) {
 
   const other = await env.DB.prepare(
     `SELECT id FROM users WHERE github_user_id = ? AND id <> ?`
-  ).bind(ghId, row.userId).first();
+  ).bind(ghId, tgUid).first();
 
   if (other) {
     return back(`?github=error&message=${encodeURIComponent('Этот GitHub уже привязан к другому аккаунту')}`);
@@ -152,24 +159,53 @@ export async function githubOAuthCallback(req, env) {
 
   const enc = await encryptGithubToken(accessToken, githubClientSecret(env));
 
+  let wrote = 0;
   try {
     if (enc) {
-      await env.DB.prepare(
+      const r = await env.DB.prepare(
         `UPDATE users SET github_user_id = ?, github_login = ?, github_access_token_enc = ? WHERE id = ?`
-      ).bind(ghId, ghLogin, enc, row.userId).run();
+      ).bind(ghId, ghLogin, enc, tgUid).run();
+      wrote = Number(r?.meta?.changes ?? 0);
     } else {
-      await env.DB.prepare(
+      const r = await env.DB.prepare(
         `UPDATE users SET github_user_id = ?, github_login = ? WHERE id = ?`
-      ).bind(ghId, ghLogin, row.userId).run();
+      ).bind(ghId, ghLogin, tgUid).run();
+      wrote = Number(r?.meta?.changes ?? 0);
     }
   } catch (e) {
     if (isMissingColumnError(e)) {
-      await env.DB.prepare(
+      const r = await env.DB.prepare(
         `UPDATE users SET github_user_id = ?, github_login = ? WHERE id = ?`
-      ).bind(ghId, ghLogin, row.userId).run();
+      ).bind(ghId, ghLogin, tgUid).run();
+      wrote = Number(r?.meta?.changes ?? 0);
     } else {
       throw e;
     }
+  }
+
+  if (!wrote) {
+    try {
+      await env.DB.prepare(`INSERT OR IGNORE INTO users (id) VALUES (?)`).bind(tgUid).run();
+      const r2 = await env.DB.prepare(
+        enc
+          ? `UPDATE users SET github_user_id = ?, github_login = ?, github_access_token_enc = ? WHERE id = ?`
+          : `UPDATE users SET github_user_id = ?, github_login = ? WHERE id = ?`
+      )
+        .bind(...(enc ? [ghId, ghLogin, enc, tgUid] : [ghId, ghLogin, tgUid]))
+        .run();
+      wrote = Number(r2?.meta?.changes ?? 0);
+    } catch (e2) {
+      console.error('githubOAuthCallback retry upsert', e2);
+    }
+  }
+
+  if (!wrote) {
+    console.error('githubOAuthCallback: UPDATE users changed 0 rows', { tgUid, ghId });
+    return back(
+      `?github=error&message=${encodeURIComponent(
+        'Не нашли строку пользователя в базе. Открой мини-апп из бота ещё раз и повтори вход через GitHub.'
+      )}`
+    );
   }
 
   await env.DB.prepare(`DELETE FROM oauth_states WHERE id = ?`).bind(state).run();
