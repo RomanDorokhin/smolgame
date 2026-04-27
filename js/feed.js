@@ -406,7 +406,9 @@ function updateOverlay() {
   }
 
   const liked = likedSet.has(g.id);
-  document.getElementById('likeIcon').textContent = liked ? '❤️' : '🤍';
+  const likeIcon = document.getElementById('likeIcon');
+  likeIcon.innerHTML = likeIconMarkup(liked);
+  likeIcon.classList.toggle('active-like', liked);
   document.getElementById('likeCount').textContent = fmtNum(g.likes + (liked ? 1 : 0));
   document.getElementById('playsCount').textContent = fmtNum(g.plays);
 

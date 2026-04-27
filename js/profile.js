@@ -117,7 +117,7 @@ async function renderProfile() {
         </div>
         <div class="game-card-info">
           <div class="game-card-name">${esc(g.title)}</div>
-          <div class="game-card-stats">❤️ ${fmtNum(g.likes)} · 👁 ${fmtNum(g.plays)}</div>
+          <div class="game-card-stats"><span class="sg-mini-stat">${sgStatHeartSvg()}${fmtNum(g.likes)}</span><span class="sg-mini-sep">·</span><span class="sg-mini-stat">${sgStatEyeSvg()}${fmtNum(g.plays)}</span></div>
         </div>
       </div>
     `).join('');

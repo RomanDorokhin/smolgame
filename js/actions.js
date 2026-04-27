@@ -8,12 +8,12 @@ function toggleLike() {
   if (wasLiked) {
     likedSet.delete(g.id);
     bookmarkedSet.delete(g.id);
-    icon.textContent = '🤍';
+    icon.innerHTML = likeIconMarkup(false);
     icon.classList.remove('active-like');
   } else {
     likedSet.add(g.id);
     bookmarkedSet.add(g.id);
-    icon.textContent = '❤️';
+    icon.innerHTML = likeIconMarkup(true);
     icon.classList.add('active-like', 'pop');
     setTimeout(() => icon.classList.remove('pop'), 400);
   }

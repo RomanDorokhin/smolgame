@@ -14,7 +14,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <!-- ?v= сбрасывает кэш WebView Telegram после правок JS/CSS (меняй при каждом релизе фронта). -->
-<link rel="stylesheet" href="styles.css?v=20260443">
+<link rel="stylesheet" href="styles.css?v=20260444">
 </head>
 <body>
 
@@ -35,15 +35,15 @@
 <!-- ══ БОКОВЫЕ ДЕЙСТВИЯ: в DOM ДО #feed — иначе слой кнопок перекрывает iframe и ломает drag по игре ══ -->
 <div id="side-actions">
   <div class="action-btn" data-action="toggle-like" title="Лайк и в избранное">
-    <div class="action-icon" id="likeIcon">🤍</div>
+    <div class="action-icon" id="likeIcon"><svg class="sg-icon sg-icon--heart" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
     <div class="action-label" id="likeCount">0</div>
   </div>
   <div class="action-btn" data-action="share-game">
-    <div class="action-icon">🔗</div>
+    <div class="action-icon"><svg class="sg-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M10.5 13.5L21 3M21 3h-6.75M21 3v6.75" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"/><path d="M18.75 14.25v6.75a1.5 1.5 0 01-1.5 1.5H6.75a1.5 1.5 0 01-1.5-1.5V9.75a1.5 1.5 0 011.5-1.5h6.75" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
     <div class="action-label" id="playsCount">0</div>
   </div>
   <div class="action-btn" data-action="report-game">
-    <div class="action-icon">⚑</div>
+    <div class="action-icon"><svg class="sg-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M6.75 3.75v16.5a1.5 1.5 0 001.5 1.5h7.5a1.5 1.5 0 001.5-1.5v-12l-6-6h-4.5a1.5 1.5 0 00-1.5 1.5z" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"/><path d="M13.5 3v6h6M12 18v-6M9 18v-3" stroke="currentColor" stroke-width="1.65" stroke-linecap="round"/></svg></div>
     <div class="action-label">Жалоба</div>
   </div>
 </div>
@@ -61,7 +61,7 @@
 
 <!-- ══ ПУСТАЯ ЛЕНТА ══ -->
 <div id="empty-state">
-  <div class="empty-icon">🎮</div>
+  <div class="empty-icon" aria-hidden="true"><svg class="sg-icon" style="width:72px;height:72px;opacity:0.6" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M7.5 8.25h9a3 3 0 013 3v7.5a1.5 1.5 0 01-1.5 1.5h-12A1.5 1.5 0 015 18.75v-7.5a3 3 0 013-3zM9 8.25V6a3 3 0 013-3h0a3 3 0 013 3v2.25" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="9.75" cy="13.5" r="0.9" fill="currentColor"/><circle cx="14.25" cy="13.5" r="0.9" fill="currentColor"/><path d="M9.75 17.25h4.5a2.25 2.25 0 002.045-1.31l.022-.047" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg></div>
   <div class="empty-title">Игр пока нет</div>
   <div class="empty-sub">Загрузи игру — она появится в ленте после модерации.</div>
   <button class="empty-btn" data-action="switch-tab" data-tab="upload">Загрузить игру</button>
@@ -88,12 +88,12 @@
 
 <!-- ══ Зона ленты: только здесь горизонтальный свайп (как карточки), не трогаем игру ══ -->
 <div id="swipe-strip" aria-hidden="true">
-  <button type="button" class="feed-nav-arrow feed-nav-arrow-prev" data-action="feed-nav-prev" aria-label="Предыдущая игра">←</button>
+  <button type="button" class="feed-nav-arrow feed-nav-arrow-prev" data-action="feed-nav-prev" aria-label="Предыдущая игра"><svg class="sg-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
   <div class="swipe-strip-mid">
     <span class="swipe-strip-handle swipe-strip-handle-h" aria-hidden="true"></span>
-    <span class="swipe-strip-hint" id="swipe-hint-label">Как в карточках: влево — дальше · вправо — назад</span>
+    <span class="swipe-strip-hint" id="swipe-hint-label">Влево — следующая · вправо — назад</span>
   </div>
-  <button type="button" class="feed-nav-arrow feed-nav-arrow-next" data-action="feed-nav-next" aria-label="Следующая игра">→</button>
+  <button type="button" class="feed-nav-arrow feed-nav-arrow-next" data-action="feed-nav-next" aria-label="Следующая игра"><svg class="sg-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M9 18l6-6-6-6" stroke="currentColor" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
 </div>
 
 <!-- Одноразовая подсказка по ленте -->
@@ -108,19 +108,19 @@
 <!-- ══ НИЖНИЙ НАВ ══ -->
 <div id="bottom-nav">
   <div class="nav-item active" id="nav-feed" data-action="switch-tab" data-tab="feed">
-    <div class="nav-icon">🎮</div>
+    <div class="nav-icon sg-icon sg-icon--nav"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M7.5 8.25h9a3 3 0 013 3v7.5a1.5 1.5 0 01-1.5 1.5h-12A1.5 1.5 0 015 18.75v-7.5a3 3 0 013-3zM9 8.25V6a3 3 0 013-3h0a3 3 0 013 3v2.25" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"/><circle cx="9.75" cy="13.5" r="1.125" fill="currentColor"/><circle cx="14.25" cy="13.5" r="1.125" fill="currentColor"/><path d="M9.75 17.25h4.5a2.25 2.25 0 002.045-1.31l.022-.047" stroke="currentColor" stroke-width="1.65" stroke-linecap="round"/></svg></div>
     <div class="nav-label">Лента</div>
   </div>
   <div class="nav-item" id="nav-search" data-action="switch-tab" data-tab="search">
-    <div class="nav-icon">🔍</div>
+    <div class="nav-icon sg-icon sg-icon--nav"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><circle cx="11" cy="11" r="6.75" stroke="currentColor" stroke-width="1.65"/><path d="M16.5 16.5L21 21" stroke="currentColor" stroke-width="1.65" stroke-linecap="round"/></svg></div>
     <div class="nav-label">Поиск</div>
   </div>
   <div class="nav-item" id="nav-upload" data-action="switch-tab" data-tab="upload">
-    <div class="nav-icon">➕</div>
+    <div class="nav-icon sg-icon sg-icon--nav"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M12 5.25v13.5M5.25 12h13.5" stroke="currentColor" stroke-width="1.85" stroke-linecap="round"/></svg></div>
     <div class="nav-label">Загрузить</div>
   </div>
   <div class="nav-item" id="nav-profile" data-action="switch-tab" data-tab="profile">
-    <div class="nav-icon">👤</div>
+    <div class="nav-icon sg-icon sg-icon--nav"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><circle cx="12" cy="9" r="3.75" stroke="currentColor" stroke-width="1.65"/><path d="M6 19.5v-.75a4.5 4.5 0 014.5-4.5h3a4.5 4.5 0 014.5 4.5v.75" stroke="currentColor" stroke-width="1.65" stroke-linecap="round"/></svg></div>
     <div class="nav-label">Профиль</div>
   </div>
 </div>
@@ -130,6 +130,16 @@
   <div class="screen-header">
     <div class="screen-title">Загрузить игру</div>
     <div class="close-btn" data-action="close-upload">✕</div>
+  </div>
+
+  <div class="upload-steps" aria-hidden="true">
+    <span class="upload-steps-label">Шаги</span>
+    <div class="upload-steps-track">
+      <span class="upload-steps-dot done"></span>
+      <span class="upload-steps-dot done"></span>
+      <span class="upload-steps-dot done"></span>
+      <span class="upload-steps-dot current"></span>
+    </div>
   </div>
 
   <div id="upload-welcome-block" class="upload-welcome-block" hidden>
@@ -197,17 +207,17 @@
   <!-- Способ загрузки: три отдельные вкладки -->
   <div class="upload-methods upload-methods--triple" id="upload-methods-anchor">
     <div class="method-card selected" id="method-url" data-action="select-method" data-method="url">
-      <div class="m-icon">🔗</div>
+      <div class="m-icon m-icon--svg" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M10 13a5 5 0 010-7l1.5-1.5a5 5 0 017.07 7.07l-.88.88M14 11a5 5 0 010 7l-1.5 1.5a5 5 0 01-7.07-7.07l.88-.88" stroke="currentColor" stroke-width="1.65" stroke-linecap="round"/></svg></div>
       <div class="m-title">Ссылка</div>
       <div class="m-desc">Игра уже по URL</div>
     </div>
     <div class="method-card" id="method-github" data-action="select-method" data-method="github">
-      <div class="m-icon">🐙</div>
+      <div class="m-icon m-icon--svg" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0-2-1.5-3-1.5-3-1.5-.3 1.15-.3 2.35 0 3.5a5.4 5.4 0 0 0-1 3.5c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M9 18c-4.51 2-5-2-7-2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
       <div class="m-title">GitHub</div>
       <div class="m-desc">Код в твой репозиторий</div>
     </div>
     <div class="method-card" id="method-premium" data-action="select-method" data-method="premium" hidden>
-      <div class="m-icon">⭐</div>
+      <div class="m-icon m-icon--svg" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 3l2.39 5.42L20 9.27l-4.5 4.08L16.78 21 12 17.77 7.22 21 8.5 13.35 4 9.27l5.61-.85L12 3z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg></div>
       <div class="m-title">Премиум</div>
       <div class="m-desc">HTML на SmolGame</div>
     </div>
@@ -218,7 +228,7 @@
     <div class="field-group" id="github-connect-row">
       <div class="field-label">Аккаунт GitHub</div>
       <button type="button" class="github-btn" id="btn-github-primary" data-action="auth-github">
-        <span>🐙</span> <span id="btn-github-primary-label">Войти через GitHub</span>
+        <span class="github-btn-icon" aria-hidden="true"><svg class="sg-icon sg-icon--sm" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0-2-1.5-3-1.5-3-1.5-.3 1.15-.3 2.35 0 3.5a5.4 5.4 0 0 0-1 3.5c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M9 18c-4.51 2-5-2-7-2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span> <span id="btn-github-primary-label">Войти через GitHub</span>
       </button>
       <button type="button" class="profile-text-btn github-reauth-btn" id="btn-github-unlink" data-action="github-unlink" hidden>
         Отвязать GitHub
@@ -309,7 +319,7 @@
       <div class="code-wizard-actions code-wizard-actions--wrap">
         <button type="button" class="profile-text-btn" data-action="gh-code-wizard-back">← Редактировать</button>
         <button type="button" class="profile-text-btn" data-action="gh-code-wizard-cancel">Отмена</button>
-        <button type="button" class="submit-btn" data-action="gh-code-wizard-publish">🚀 Отправить на модерацию</button>
+        <button type="button" class="submit-btn" data-action="gh-code-wizard-publish">Отправить на модерацию</button>
       </div>
     </div>
     </div>
@@ -380,7 +390,7 @@
       <div class="code-wizard-actions code-wizard-actions--wrap">
         <button type="button" class="profile-text-btn" data-action="code-wizard-back">← Редактировать</button>
         <button type="button" class="profile-text-btn" data-action="code-wizard-cancel">Отмена</button>
-        <button type="button" class="submit-btn" data-action="code-wizard-publish">🚀 Отправить на модерацию</button>
+        <button type="button" class="submit-btn" data-action="code-wizard-publish">Отправить на модерацию</button>
       </div>
     </div>
     </div>
@@ -418,7 +428,7 @@
       </label>
       <div class="image-preview" id="imagePreview">Обложка не выбрана</div>
     </div>
-    <button class="submit-btn" data-action="submit-game" data-method="url">🚀 Отправить на модерацию</button>
+    <button class="submit-btn" data-action="submit-game" data-method="url">Отправить на модерацию</button>
   </div>
 </div>
 
@@ -506,7 +516,7 @@
       <div class="close-btn" data-action="close-search">✕</div>
     </div>
     <div class="search-bar">
-      <span class="search-icon">🔍</span>
+      <span class="search-icon" aria-hidden="true"><svg class="sg-icon sg-icon--sm" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="11" cy="11" r="6.75" stroke="currentColor" stroke-width="1.65"/><path d="M16.5 16.5L21 21" stroke="currentColor" stroke-width="1.65" stroke-linecap="round"/></svg></span>
       <input type="text" placeholder="Найти игру или автора..." id="searchInput" data-input="search">
     </div>
   </div>
@@ -564,26 +574,26 @@
 
 <!-- ══ SCRIPTS ══ -->
 <!-- Порядок важен: config/utils/telegram → state → api → модули логики → события → main. -->
-<script src="js/config.js?v=20260443"></script>
-<script src="js/utils.js?v=20260443"></script>
-<script src="js/telegram.js?v=20260443"></script>
-<script src="js/tg-gate.js?v=20260443"></script>
-<script src="js/boot-splash.js?v=20260443"></script>
-<script src="js/state.js?v=20260443"></script>
-<script src="js/api.js?v=20260443"></script>
-<script src="js/onboarding.js?v=20260443"></script>
-<script src="js/help-screens.js?v=20260443"></script>
-<script src="js/feed.js?v=20260443"></script>
-<script src="js/feed-nav-tip.js?v=20260443"></script>
-<script src="js/actions.js?v=20260443"></script>
-<script src="js/upload.js?v=20260443"></script>
-<script src="js/genres.js?v=20260443"></script>
-<script src="js/search.js?v=20260443"></script>
-<script src="js/profile.js?v=20260443"></script>
-<script src="js/admin.js?v=20260443"></script>
-<script src="js/screens.js?v=20260443"></script>
-<script src="js/events.js?v=20260443"></script>
-<script src="js/overlay-pull-close.js?v=20260443"></script>
-<script src="js/main.js?v=20260443"></script>
+<script src="js/config.js?v=20260444"></script>
+<script src="js/utils.js?v=20260444"></script>
+<script src="js/telegram.js?v=20260444"></script>
+<script src="js/tg-gate.js?v=20260444"></script>
+<script src="js/boot-splash.js?v=20260444"></script>
+<script src="js/state.js?v=20260444"></script>
+<script src="js/api.js?v=20260444"></script>
+<script src="js/onboarding.js?v=20260444"></script>
+<script src="js/help-screens.js?v=20260444"></script>
+<script src="js/feed.js?v=20260444"></script>
+<script src="js/feed-nav-tip.js?v=20260444"></script>
+<script src="js/actions.js?v=20260444"></script>
+<script src="js/upload.js?v=20260444"></script>
+<script src="js/genres.js?v=20260444"></script>
+<script src="js/search.js?v=20260444"></script>
+<script src="js/profile.js?v=20260444"></script>
+<script src="js/admin.js?v=20260444"></script>
+<script src="js/screens.js?v=20260444"></script>
+<script src="js/events.js?v=20260444"></script>
+<script src="js/overlay-pull-close.js?v=20260444"></script>
+<script src="js/main.js?v=20260444"></script>
 </body>
 </html>
