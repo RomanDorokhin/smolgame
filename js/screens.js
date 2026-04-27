@@ -3,7 +3,7 @@ function setBottomNavActive(tab) {
   document.getElementById('nav-' + tab)?.classList.add('active');
 }
 
-/** Закрыть основные вкладки (поиск / профиль / загрузить) без смены активной кнопки навбара */
+/** Закрыть основные вкладки и оверлей автора (нижний таб не должен «застревать» под #author-screen). */
 function closeAllMainTabs() {
   const upload = document.getElementById('upload-screen');
   if (upload?.classList.contains('open')) {
@@ -13,6 +13,7 @@ function closeAllMainTabs() {
   const profile = document.getElementById('profile-screen');
   profile?.classList.remove('open', 'profile-edit-active');
   document.getElementById('search-screen')?.classList.remove('open');
+  document.getElementById('author-screen')?.classList.remove('open');
 }
 
 function openUpload() {

@@ -1,29 +1,45 @@
 async function bootstrap() {
   if (typeof hasTelegramInitData === 'function' && !hasTelegramInitData()) {
+    if (typeof hideBootSplash === 'function') hideBootSplash();
     if (typeof showTelegramOnlyWall === 'function') showTelegramOnlyWall();
     return;
   }
   if (typeof hideTelegramOnlyWall === 'function') hideTelegramOnlyWall();
+  if (typeof showBootSplash === 'function') showBootSplash();
 
   let needOnboarding = false;
-  if (typeof checkOnboarding === 'function') {
-    try {
-      needOnboarding = await checkOnboarding();
-    } catch (e) {
-      console.warn('onboarding check failed', e);
+  try {
+    const onboardingP =
+      typeof checkOnboarding === 'function'
+        ? checkOnboarding().catch(e => {
+            console.warn('onboarding check failed', e);
+            return false;
+          })
+        : Promise.resolve(false);
+
+    const gamesP = typeof loadGames === 'function' ? loadGames() : Promise.resolve();
+
+    const [need] = await Promise.all([onboardingP, gamesP]);
+    needOnboarding = Boolean(need);
+
+    if (needOnboarding && typeof showOnboardingScreen === 'function') {
+      if (typeof hideBootSplash === 'function') hideBootSplash();
+      showOnboardingScreen();
     }
-  }
 
-  if (needOnboarding && typeof showOnboardingScreen === 'function') {
-    showOnboardingScreen();
-  }
+    await jumpToStartParamGame();
+    handleGithubOAuthReturn();
 
-  await loadGames();
-  await jumpToStartParamGame();
-  handleGithubOAuthReturn();
-
-  if (!needOnboarding && typeof maybeShowFeedNavTipAfterGames === 'function') {
-    maybeShowFeedNavTipAfterGames();
+    if (!needOnboarding && typeof maybeShowFeedNavTipAfterGames === 'function') {
+      maybeShowFeedNavTipAfterGames();
+    }
+  } catch (e) {
+    console.error('bootstrap failed', e);
+    if (typeof showToast === 'function') {
+      showToast('⚠️ ' + (e?.message || 'Не удалось загрузить'));
+    }
+  } finally {
+    if (!needOnboarding && typeof hideBootSplash === 'function') hideBootSplash();
   }
 }
 

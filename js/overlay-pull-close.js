@@ -6,13 +6,13 @@ const PULL_HANDLE_ZONE = 120;
 
 function closestOverlayScreen(el) {
   return el?.closest?.(
-    '#profile-screen, #author-screen, #search-screen, #upload-screen, #report-screen'
+    '#profile-screen, #author-screen, #search-screen, #upload-screen'
   );
 }
 
 function isOverlayOpen() {
   return Boolean(document.querySelector(
-    '#profile-screen.open, #author-screen.open, #search-screen.open, #upload-screen.open, #report-screen.open'
+    '#profile-screen.open, #author-screen.open, #search-screen.open, #upload-screen.open'
   ));
 }
 
@@ -22,7 +22,6 @@ function closeOverlayScreen(screen) {
   else if (screen.id === 'author-screen' && typeof closeAuthorScreen === 'function') closeAuthorScreen();
   else if (screen.id === 'search-screen' && typeof closeSearch === 'function') closeSearch();
   else if (screen.id === 'upload-screen' && typeof closeUpload === 'function') closeUpload();
-  else if (screen.id === 'report-screen' && typeof closeReportScreen === 'function') closeReportScreen();
 }
 
 document.addEventListener('DOMContentLoaded', () => {

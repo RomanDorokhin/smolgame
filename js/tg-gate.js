@@ -10,6 +10,8 @@ function hasTelegramInitData() {
 }
 
 function showTelegramOnlyWall() {
+  document.getElementById('app-boot-splash')?.classList.remove('visible');
+  document.getElementById('app-boot-splash')?.setAttribute('hidden', '');
   document.body.classList.add('tg-only-wall');
   const wall = document.getElementById('tg-only-wall');
   if (wall) wall.hidden = false;

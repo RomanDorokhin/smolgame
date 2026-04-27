@@ -75,6 +75,62 @@ body{
   background:var(--bg);
 }
 .tg-only-wall[hidden]{display:none !important;}
+body.tg-only-wall #app-boot-splash{
+  visibility:hidden !important;
+  pointer-events:none !important;
+}
+
+/* Первый кадр: логотип + загрузка (скрывается после feed + проверки онбординга) */
+#app-boot-splash{
+  position:fixed;
+  inset:0;
+  z-index:1500;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:20px;
+  background:var(--bg);
+  opacity:0;
+  transition:opacity 0.28s ease;
+  pointer-events:none;
+}
+#app-boot-splash:not([hidden]){display:flex;}
+#app-boot-splash[hidden]{display:none !important;}
+#app-boot-splash.visible{
+  opacity:1;
+  pointer-events:auto;
+}
+.app-boot-logo{
+  font-family:'Syne',sans-serif;
+  font-size:clamp(28px,8vw,38px);
+  font-weight:800;
+  letter-spacing:-0.5px;
+  background:linear-gradient(135deg,#fff 0%,rgba(255,255,255,0.6) 100%);
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+  background-clip:text;
+}
+.app-boot-logo span{
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+  background-clip:text;
+}
+.app-boot-sub{
+  font-size:14px;
+  font-weight:600;
+  color:var(--muted);
+  letter-spacing:0.04em;
+}
+.app-boot-ring{
+  width:36px;
+  height:36px;
+  border-radius:50%;
+  border:2px solid rgba(255,255,255,0.12);
+  border-top-color:rgba(255,45,85,0.75);
+  animation:spin 0.75s linear infinite;
+}
+
 body.tg-only-wall #feed,
 body.tg-only-wall #feed-transition,
 body.tg-only-wall #empty-state,
@@ -507,7 +563,6 @@ body.tg-only-wall #toast{
 .feed-nav-tip-btn:active{opacity:0.9;}
 
 body:has(#upload-screen.open) #swipe-strip,
-body:has(#report-screen.open) #swipe-strip,
 body:has(#profile-screen.open) #swipe-strip,
 body:has(#author-screen.open) #swipe-strip,
 body:has(#search-screen.open) #swipe-strip,

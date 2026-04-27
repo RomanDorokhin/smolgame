@@ -10,12 +10,19 @@
 <title>SmolGame</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://smolgame.dorokhin731.workers.dev" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <!-- ?v= сбрасывает кэш WebView Telegram после правок JS/CSS (меняй при каждом релизе фронта). -->
-<link rel="stylesheet" href="styles.css?v=20260428l">
+<link rel="stylesheet" href="styles.css?v=20260429">
 </head>
 <body>
+
+<div id="app-boot-splash" class="app-boot-splash" hidden aria-live="polite" aria-busy="true">
+  <div class="app-boot-logo">smol<span>game</span></div>
+  <div class="app-boot-sub">Загрузка…</div>
+  <div class="app-boot-ring" aria-hidden="true"></div>
+</div>
 
 <div id="tg-only-wall" class="tg-only-wall" hidden>
   <div class="tg-only-card">
@@ -192,6 +199,7 @@
     <details class="help-faq-item"><summary>Игра не работает — что делать?</summary><div class="help-acc-body"><p>Скопируй текст ошибки из браузера и отправь ИИ: «Вот ошибка, исправь код».</p></div></details>
     <details class="help-faq-item"><summary>Какие игры подходят?</summary><div class="help-acc-body"><p>Браузерные на HTML, один файл <code>index.html</code>, без серверной части.</p></div></details>
     <details class="help-faq-item"><summary>Можно обновить игру после публикации?</summary><div class="help-acc-body"><p>Да. Измени <code>index.html</code> в репозитории — через пару минут обновится по той же ссылке.</p></div></details>
+    <details class="help-faq-item"><summary>На телефоне перетаскивание в игре «залипает»</summary><div class="help-acc-body"><p>Частая причина: <code>touchstart</code> на маленьком canvas, а <code>touchmove</code>/<code>touchend</code> только на <code>document</code>. В iOS и в iframe жест рвётся. Делай через <strong>Pointer Events</strong> и <code>setPointerCapture</code> на элементе, с которого начали драг, или вешай move/end на <code>window</code> с <code>capture: true</code> и обрабатывай <code>touchcancel</code>.</p></div></details>
     <details class="help-faq-item"><summary>Почему GitHub?</summary><div class="help-acc-body"><p>Простой и надёжный бесплатный вариант: без карты и сложной настройки.</p></div></details>
 
     <button type="button" class="submit-btn upload-scroll-to-form" data-action="upload-scroll-to-form">К форме загрузки</button>
@@ -414,25 +422,26 @@
 
 <!-- ══ SCRIPTS ══ -->
 <!-- Порядок важен: config/utils/telegram → state → api → модули логики → события → main. -->
-<script src="js/config.js?v=20260428g"></script>
-<script src="js/utils.js?v=20260428g"></script>
-<script src="js/telegram.js?v=20260428g"></script>
-<script src="js/tg-gate.js?v=20260428g"></script>
-<script src="js/state.js?v=20260428g"></script>
-<script src="js/api.js?v=20260428g"></script>
-<script src="js/onboarding.js?v=20260428g"></script>
-<script src="js/help-screens.js?v=20260428g"></script>
-<script src="js/feed.js?v=20260428k"></script>
-<script src="js/feed-nav-tip.js?v=20260428g"></script>
-<script src="js/actions.js?v=20260428g"></script>
-<script src="js/upload.js?v=20260428g"></script>
-<script src="js/genres.js?v=20260428g"></script>
-<script src="js/search.js?v=20260428g"></script>
-<script src="js/profile.js?v=20260428g"></script>
-<script src="js/admin.js?v=20260428g"></script>
-<script src="js/screens.js?v=20260428l"></script>
-<script src="js/events.js?v=20260428g"></script>
-<script src="js/overlay-pull-close.js?v=20260428g"></script>
-<script src="js/main.js?v=20260428g"></script>
+<script src="js/config.js?v=20260429"></script>
+<script src="js/utils.js?v=20260429"></script>
+<script src="js/telegram.js?v=20260429"></script>
+<script src="js/tg-gate.js?v=20260429"></script>
+<script src="js/boot-splash.js?v=20260429"></script>
+<script src="js/state.js?v=20260429"></script>
+<script src="js/api.js?v=20260429"></script>
+<script src="js/onboarding.js?v=20260429"></script>
+<script src="js/help-screens.js?v=20260429"></script>
+<script src="js/feed.js?v=20260429"></script>
+<script src="js/feed-nav-tip.js?v=20260429"></script>
+<script src="js/actions.js?v=20260429"></script>
+<script src="js/upload.js?v=20260429"></script>
+<script src="js/genres.js?v=20260429"></script>
+<script src="js/search.js?v=20260429"></script>
+<script src="js/profile.js?v=20260429"></script>
+<script src="js/admin.js?v=20260429"></script>
+<script src="js/screens.js?v=20260429"></script>
+<script src="js/events.js?v=20260429"></script>
+<script src="js/overlay-pull-close.js?v=20260429"></script>
+<script src="js/main.js?v=20260429"></script>
 </body>
 </html>
