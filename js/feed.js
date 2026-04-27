@@ -208,6 +208,14 @@ function renderFeed() {
     document.getElementById('side-actions').style.display = 'none';
     document.getElementById('game-info').style.display = 'none';
     document.getElementById('swipe-strip').style.display = 'none';
+    const ft = document.getElementById('feed-transition');
+    if (ft) {
+      ft.classList.remove('feed-transition--show');
+      ft.setAttribute('hidden', '');
+    }
+    document.body.classList.remove('feed-nav-animating');
+    clearTimeout(feedTransHideT1);
+    clearTimeout(feedTransHideT2);
     return;
   }
 
@@ -237,11 +245,30 @@ function hapticFeedNav() {
   } catch (e) { /* ignore */ }
 }
 
-function flashFeedSlideChange() {
-  document.body.classList.remove('feed-slide-flash');
-  void document.body.offsetWidth;
-  document.body.classList.add('feed-slide-flash');
-  setTimeout(() => document.body.classList.remove('feed-slide-flash'), 400);
+/** Длительность «карточки» в секундах — совпадает с CSS-ощущением Tinder-like */
+const FEED_CARD_TRANSITION_SEC = 0.56;
+const FEED_LOGO_OVERLAY_MS = Math.round(FEED_CARD_TRANSITION_SEC * 1000) + 140;
+const FEED_LOGO_FADEOUT_MS = 260;
+let feedTransHideT1 = 0;
+let feedTransHideT2 = 0;
+
+function showBetweenGamesLogoOverlay() {
+  const el = document.getElementById('feed-transition');
+  if (!el) return;
+  el.removeAttribute('hidden');
+  document.body.classList.add('feed-nav-animating');
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => el.classList.add('feed-transition--show'));
+  });
+  clearTimeout(feedTransHideT1);
+  clearTimeout(feedTransHideT2);
+  feedTransHideT1 = setTimeout(() => {
+    el.classList.remove('feed-transition--show');
+    feedTransHideT2 = setTimeout(() => {
+      el.setAttribute('hidden', '');
+      document.body.classList.remove('feed-nav-animating');
+    }, FEED_LOGO_FADEOUT_MS);
+  }, FEED_LOGO_OVERLAY_MS);
 }
 
 function updateFeedNavArrows() {
@@ -262,7 +289,7 @@ function goTo(idx, instant = false) {
     resetSwipeHint();
     if (!instant) {
       hapticFeedNav();
-      flashFeedSlideChange();
+      showBetweenGamesLogoOverlay();
     }
   }
 
@@ -270,7 +297,7 @@ function goTo(idx, instant = false) {
     s.style.left = '';
     s.style.transition = instant
       ? 'none'
-      : 'transform 0.42s cubic-bezier(0.32, 0.72, 0, 1)';
+      : `transform ${FEED_CARD_TRANSITION_SEC}s cubic-bezier(0.25, 0.82, 0.3, 1)`;
     s.style.transform = `translate3d(${(i - window.currentIdx) * 100}%,0,0)`;
   });
 

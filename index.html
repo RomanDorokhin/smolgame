@@ -27,6 +27,14 @@
 <!-- ══ FEED ══ -->
 <div id="feed"></div>
 
+<!-- Короткий оверлей с логотипом между играми (верхний логотип в это время скрыт) -->
+<div id="feed-transition" class="feed-transition" hidden aria-hidden="true">
+  <div class="feed-transition-inner">
+    <div class="logo feed-transition-logo">smol<span>game</span></div>
+    <div class="feed-transition-ring" aria-hidden="true"></div>
+  </div>
+</div>
+
 <!-- ══ ПУСТАЯ ЛЕНТА ══ -->
 <div id="empty-state">
   <div class="empty-icon">🎮</div>
@@ -35,7 +43,7 @@
   <button class="empty-btn" data-action="open-upload">Загрузить игру</button>
 </div>
 
-<!-- ══ ТОПБАР ══ -->
+<!-- ══ ТОПБАР (прячется на мгновение при смене игры — логотип в feed-transition) ══ -->
 <div id="topbar">
   <div class="logo">smol<span>game</span></div>
 </div>
