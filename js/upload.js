@@ -683,7 +683,18 @@ function previewCodeWizardCover(input) {
 
 async function submitGame(method) {
   if (method === 'code') {
-    if (typeof codeWizardNext === 'function') codeWizardNext();
+    await refreshUploadCapabilities();
+    if (USER.isPremium) {
+      if (typeof codeWizardNext === 'function') codeWizardNext();
+      return;
+    }
+    if (USER.isGithubConnected && USER.hasGithubPublishToken) {
+      if (typeof ghCodeWizardNext === 'function') ghCodeWizardNext();
+      return;
+    }
+    showToast(
+      '⚠️ Привяжи GitHub и загрузи игру кнопкой «Загрузить на GitHub», либо оформи премиум — тогда код можно хостить на SmolGame.'
+    );
     return;
   }
 
@@ -768,4 +779,5 @@ window.previewGhCodeWizardCover = previewGhCodeWizardCover;
 document.addEventListener('change', (ev) => {
   if (ev.target?.id === 'gameImageInput') previewCover(ev.target);
   if (ev.target?.id === 'codeWizardCoverFile') previewCodeWizardCover(ev.target);
+  if (ev.target?.id === 'ghCodeWizardCoverFile') previewGhCodeWizardCover(ev.target);
 });

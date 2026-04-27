@@ -985,6 +985,7 @@ textarea.field-input{
 .code-area::placeholder{color:rgba(255,255,255,0.2);}
 
 #form-code .code-area{min-height:220px;height:min(42vh,320px);}
+#btn-code-tab-advance{margin-top:14px;width:100%;}
 .upload-wizard-step{margin-bottom:8px;}
 .upload-wizard-hint{
   font-size:14px;
