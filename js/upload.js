@@ -1,4 +1,24 @@
-function selectMethod(m) {
+async function refreshUploadCapabilities() {
+  try {
+    const me = await API.me();
+    if (me?.user) {
+      USER.isGithubConnected = Boolean(me.user.isGithubConnected);
+      USER.githubUsername = me.user.githubUsername || null;
+      USER.isPremium = Boolean(me.user.isPremium);
+    }
+  } catch (e) {
+    console.warn('refreshUploadCapabilities', e);
+  }
+}
+
+async function selectMethod(m) {
+  if (m === 'code') {
+    await refreshUploadCapabilities();
+    if (!USER.isPremium) {
+      showToast('⚠️ «Вставить код» на сервер SmolGame — только для премиум. Залей игру на GitHub Pages и вкладка «Ссылка», или оформи премиум.');
+      m = 'url';
+    }
+  }
   window.selectedUploadMethod = m;
   document.getElementById('method-code').classList.toggle('selected', m === 'code');
   document.getElementById('method-url').classList.toggle('selected', m === 'url');
@@ -199,6 +219,13 @@ function codeWizardCancel() {
 }
 
 async function codeWizardPublish() {
+  await refreshUploadCapabilities();
+  if (!USER.isPremium) {
+    showToast('⚠️ Хостинг кода на SmolGame только для премиум. Используй вкладку «Ссылка».');
+    resetCodeWizard();
+    selectMethod('url');
+    return;
+  }
   if (typeof hasTelegramInitData === 'function' && !hasTelegramInitData()) {
     showToast('⚠️ Открой мини-апп из Telegram-бота');
     return;
@@ -323,6 +350,7 @@ function previewCover(input) {
 }
 
 window.selectMethod = selectMethod;
+window.refreshUploadCapabilities = refreshUploadCapabilities;
 window.authGithub = authGithub;
 window.submitGame = submitGame;
 window.previewCover = previewCover;

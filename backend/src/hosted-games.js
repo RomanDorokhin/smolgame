@@ -64,6 +64,12 @@ export async function submitHtmlGame(req, env) {
 
   const user = await authenticate(req, env);
   if (!user) return error('unauthorized', 401);
+  if (!user.isPremium) {
+    return error(
+      'Загрузка HTML на SmolGame (хостинг в R2) доступна только премиум-аккаунтам. Остальным: вкладка «Ссылка» (свой GitHub Pages) или оформи премиум. Список PREMIUM_TG_IDS в настройках Worker.',
+      403
+    );
+  }
 
   try {
     await upsertUser(env.DB, user);

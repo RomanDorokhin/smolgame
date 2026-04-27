@@ -176,7 +176,13 @@ function switchTab(tab) {
       renderGenrePills('genrePillsCodeOnly', 'codeOnly');
       renderGenrePills('genrePills2', 'url');
     }
-    if (typeof selectMethod === 'function') selectMethod(window.selectedUploadMethod || 'url');
+    if (typeof refreshUploadCapabilities === 'function') {
+      refreshUploadCapabilities().finally(() => {
+        if (typeof selectMethod === 'function') selectMethod(window.selectedUploadMethod || 'url');
+      });
+    } else if (typeof selectMethod === 'function') {
+      selectMethod(window.selectedUploadMethod || 'url');
+    }
     if (typeof maybeShowWelcomeOnUploadOpen === 'function') maybeShowWelcomeOnUploadOpen();
   }
 }

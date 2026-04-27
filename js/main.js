@@ -29,6 +29,9 @@ async function bootstrap() {
 
     await jumpToStartParamGame();
     handleGithubOAuthReturn();
+    if (typeof refreshUploadCapabilities === 'function') {
+      refreshUploadCapabilities().catch(() => {});
+    }
 
     if (!needOnboarding && typeof maybeShowFeedNavTipAfterGames === 'function') {
       maybeShowFeedNavTipAfterGames();

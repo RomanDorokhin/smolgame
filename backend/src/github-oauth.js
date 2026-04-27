@@ -56,7 +56,8 @@ export async function githubOAuthStart(req, env) {
   u.searchParams.set('client_id', clientId);
   u.searchParams.set('redirect_uri', redirectUri);
   u.searchParams.set('state', state);
-  u.searchParams.set('scope', 'read:user');
+  /* read:user + repo — для будущего «залить в репозиторий пользователя»; сейчас callback сохраняет только профиль */
+  u.searchParams.set('scope', 'read:user repo');
 
   return json({ url: u.toString() });
 }

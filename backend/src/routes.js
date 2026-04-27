@@ -326,6 +326,7 @@ export async function getMe(req, env) {
       isGithubConnected: Boolean(dbUser?.githubUserId),
       githubUsername: dbUser?.githubLogin || null,
       isAdmin: user.isAdmin === true,
+      isPremium: user.isPremium === true,
     },
     stats: {
       games: s.gamesCount ?? 0,

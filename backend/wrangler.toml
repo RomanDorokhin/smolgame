@@ -18,6 +18,8 @@ database_id = "bc1e52ac-4a7f-4b2c-bcb8-353269568a24"
 [vars]
 # Telegram ID админов через запятую (только они видят очередь модерации).
 ADMIN_TG_IDS = "336216597"
+# Telegram ID премиум-пользователей (через запятую): только они — «Вставить код» на R2.
+PREMIUM_TG_IDS = "336216597"
 
 # Origin фронтенда для CORS. GitHub Pages = <username>.github.io.
 FRONTEND_ORIGIN = "https://romandorokhin.github.io"
