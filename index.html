@@ -14,7 +14,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <!-- ?v= сбрасывает кэш WebView Telegram после правок JS/CSS (меняй при каждом релизе фронта). -->
-<link rel="stylesheet" href="styles.css?v=20260441">
+<link rel="stylesheet" href="styles.css?v=20260442">
 </head>
 <body>
 
@@ -228,8 +228,16 @@
 
     <div id="github-inline-upload" class="github-inline-upload" hidden>
       <p class="upload-wizard-hint github-inline-upload__lead">
-        Код уйдёт в <strong>новый репозиторий</strong> на твоём GitHub, включим Pages. Ниже — название игры и модерация.
+        Сначала <strong>название, описание</strong> и <strong>код / файлы</strong> — только потом нажимай «Отправить на GitHub»: тогда создаётся репозиторий. Дальше — обложка, жанр и модерация.
       </p>
+      <div class="field-group">
+        <div class="field-label">Название игры (как в ленте)</div>
+        <input class="field-input" type="text" placeholder="Моя крутая игра" id="ghCodeWizardTitle" maxlength="40">
+      </div>
+      <div class="field-group">
+        <div class="field-label">Описание</div>
+        <textarea class="field-input" placeholder="Пара слов о чём игра…" id="ghCodeWizardDesc" maxlength="120"></textarea>
+      </div>
       <div class="github-input-mode">
         <button type="button" class="profile-text-btn github-mode-btn selected" data-action="github-upload-set-mode" data-mode="paste">Вставить код</button>
         <button type="button" class="profile-text-btn github-mode-btn" data-action="github-upload-set-mode" data-mode="files">Файлы</button>
@@ -262,27 +270,11 @@
 
     <div id="code-branch-github" class="code-upload-branch" hidden>
     <p class="upload-wizard-hint gh-paste-strip">
-      Ссылка на игру подставляется автоматически. Дальше — название, обложка, жанр и модерация.
+      Репозиторий уже создан — ссылка на игру подставится сама. Дальше: обложка, жанр, модерация.
     </p>
     <input type="hidden" id="ghCodeWizardPagesUrl" value="">
     <div id="gh-code-wizard-step1" class="upload-wizard-step">
-      <p class="upload-wizard-hint">Шаг 1 из 4 — как назовём игру в ленте?</p>
-      <div class="field-group">
-        <div class="field-label">Название</div>
-        <input class="field-input" type="text" placeholder="Моя крутая игра" id="ghCodeWizardTitle" maxlength="40">
-      </div>
-      <div class="field-group">
-        <div class="field-label">Описание</div>
-        <textarea class="field-input" placeholder="Пара слов о чём игра…" id="ghCodeWizardDesc" maxlength="120"></textarea>
-      </div>
-      <div class="code-wizard-actions">
-        <button type="button" class="profile-text-btn" data-action="gh-code-wizard-back">← Назад</button>
-        <button type="button" class="submit-btn" data-action="gh-code-wizard-next">Дальше →</button>
-      </div>
-    </div>
-
-    <div id="gh-code-wizard-step2" class="upload-wizard-step" hidden>
-      <p class="upload-wizard-hint">Шаг 2 из 4 — обложка (можно пропустить).</p>
+      <p class="upload-wizard-hint">Шаг 1 из 3 — обложка (можно пропустить).</p>
       <div class="field-group">
         <div class="field-label">Ссылка на картинку (https)</div>
         <input class="field-input" type="url" id="ghCodeWizardCoverUrl" placeholder="https://… jpg/png">
@@ -300,8 +292,8 @@
       </div>
     </div>
 
-    <div id="gh-code-wizard-step3" class="upload-wizard-step" hidden>
-      <p class="upload-wizard-hint">Шаг 3 из 4 — жанр</p>
+    <div id="gh-code-wizard-step2" class="upload-wizard-step" hidden>
+      <p class="upload-wizard-hint">Шаг 2 из 3 — жанр</p>
       <div class="field-group">
         <div class="genre-pills" id="genrePillsGhCode"></div>
       </div>
@@ -311,8 +303,8 @@
       </div>
     </div>
 
-    <div id="gh-code-wizard-step4" class="upload-wizard-step" hidden>
-      <p class="upload-wizard-hint">Шаг 4 — проверь и отправь на модерацию</p>
+    <div id="gh-code-wizard-step3" class="upload-wizard-step" hidden>
+      <p class="upload-wizard-hint">Шаг 3 — проверь и отправь на модерацию</p>
       <div class="upload-review-box" id="ghCodeWizardReview"></div>
       <div class="code-wizard-actions code-wizard-actions--wrap">
         <button type="button" class="profile-text-btn" data-action="gh-code-wizard-back">← Редактировать</button>
@@ -572,26 +564,26 @@
 
 <!-- ══ SCRIPTS ══ -->
 <!-- Порядок важен: config/utils/telegram → state → api → модули логики → события → main. -->
-<script src="js/config.js?v=20260441"></script>
-<script src="js/utils.js?v=20260441"></script>
-<script src="js/telegram.js?v=20260441"></script>
-<script src="js/tg-gate.js?v=20260441"></script>
-<script src="js/boot-splash.js?v=20260441"></script>
-<script src="js/state.js?v=20260441"></script>
-<script src="js/api.js?v=20260441"></script>
-<script src="js/onboarding.js?v=20260441"></script>
-<script src="js/help-screens.js?v=20260441"></script>
-<script src="js/feed.js?v=20260441"></script>
-<script src="js/feed-nav-tip.js?v=20260441"></script>
-<script src="js/actions.js?v=20260441"></script>
-<script src="js/upload.js?v=20260441"></script>
-<script src="js/genres.js?v=20260441"></script>
-<script src="js/search.js?v=20260441"></script>
-<script src="js/profile.js?v=20260441"></script>
-<script src="js/admin.js?v=20260441"></script>
-<script src="js/screens.js?v=20260441"></script>
-<script src="js/events.js?v=20260441"></script>
-<script src="js/overlay-pull-close.js?v=20260441"></script>
-<script src="js/main.js?v=20260441"></script>
+<script src="js/config.js?v=20260442"></script>
+<script src="js/utils.js?v=20260442"></script>
+<script src="js/telegram.js?v=20260442"></script>
+<script src="js/tg-gate.js?v=20260442"></script>
+<script src="js/boot-splash.js?v=20260442"></script>
+<script src="js/state.js?v=20260442"></script>
+<script src="js/api.js?v=20260442"></script>
+<script src="js/onboarding.js?v=20260442"></script>
+<script src="js/help-screens.js?v=20260442"></script>
+<script src="js/feed.js?v=20260442"></script>
+<script src="js/feed-nav-tip.js?v=20260442"></script>
+<script src="js/actions.js?v=20260442"></script>
+<script src="js/upload.js?v=20260442"></script>
+<script src="js/genres.js?v=20260442"></script>
+<script src="js/search.js?v=20260442"></script>
+<script src="js/profile.js?v=20260442"></script>
+<script src="js/admin.js?v=20260442"></script>
+<script src="js/screens.js?v=20260442"></script>
+<script src="js/events.js?v=20260442"></script>
+<script src="js/overlay-pull-close.js?v=20260442"></script>
+<script src="js/main.js?v=20260442"></script>
 </body>
 </html>

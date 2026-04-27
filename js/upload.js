@@ -26,7 +26,7 @@ function updateGithubUploadUi() {
       hint.textContent =
         'Токен не сохранён: проверь миграцию D1 (github_access_token_enc) и снова нажми «Войти через GitHub».';
     } else {
-      hint.textContent = 'Готово — вставь HTML или выбери файлы и отправь на GitHub.';
+      hint.textContent = 'Готово — заполни название, описание, код или файлы, затем «Отправить на GitHub».';
     }
   }
   const btnLabel = document.getElementById('btn-github-primary-label');
@@ -71,7 +71,6 @@ async function selectMethod(m) {
     const done = USER.isGithubConnected && USER.hasGithubPublishToken;
     if (connect) connect.hidden = Boolean(done);
     if (gh) gh.hidden = !done;
-    if (done && typeof resetGhCodeWizard === 'function') resetGhCodeWizard();
   }
   if (m === 'premium' && USER.isPremium && typeof resetCodeWizard === 'function') {
     resetCodeWizard();
@@ -183,6 +182,13 @@ async function githubUploadSubmit() {
     showToast('⚠️ Открой мини-апп из Telegram-бота');
     return;
   }
+  const gameTitle = document.getElementById('ghCodeWizardTitle')?.value?.trim() || '';
+  if (!gameTitle) {
+    showToast('⚠️ Сначала укажи название игры');
+    return;
+  }
+  const gameDescription = document.getElementById('ghCodeWizardDesc')?.value?.trim() || '';
+
   const files = [];
   if (_githubUploadMode === 'paste') {
     const html = document.getElementById('githubPasteHtml')?.value?.trim() || '';
@@ -225,7 +231,11 @@ async function githubUploadSubmit() {
   showToast('🔍 Создаём репозиторий на GitHub…');
   const resBox = document.getElementById('githubUploadResult');
   try {
-    const out = await API.githubPublishGame({ files });
+    const out = await API.githubPublishGame({
+      files,
+      gameTitle,
+      gameDescription,
+    });
     showToast(out?.pagesReady ? '✅ GitHub Pages отвечает' : '✅ Репозиторий создан, Pages могут подняться через минуту');
     window._ghPublishedPlayUrl = out.pagesUrl || '';
     resetGithubInlineForm();
@@ -250,7 +260,7 @@ function beginGhCodeWizardAfterPublish(apiOut) {
 }
 
 function setGhCodeWizardStep(n) {
-  for (let i = 1; i <= 4; i++) {
+  for (let i = 1; i <= 3; i++) {
     const el = document.getElementById('gh-code-wizard-step' + i);
     if (el) el.hidden = i !== n;
   }
@@ -310,23 +320,14 @@ async function resolveGhCodeWizardCover() {
 function ghCodeWizardNext() {
   const step = window._ghCodeWizardStep || 1;
   if (step === 1) {
-    const title = document.getElementById('ghCodeWizardTitle')?.value?.trim() || '';
-    if (!title) {
-      showToast('⚠️ Укажи название игры');
-      return;
-    }
     setGhCodeWizardStep(2);
-    return;
-  }
-  if (step === 2) {
-    setGhCodeWizardStep(3);
     if (typeof renderGenrePills === 'function') {
       renderGenrePills('genrePillsGhCode', 'ghCode');
     }
     return;
   }
-  if (step === 3) {
-    setGhCodeWizardStep(4);
+  if (step === 2) {
+    setGhCodeWizardStep(3);
     const playUrl = window._ghPublishedPlayUrl || document.getElementById('ghCodeWizardPagesUrl')?.value?.trim() || '';
     const title = document.getElementById('ghCodeWizardTitle')?.value?.trim() || '';
     const desc = document.getElementById('ghCodeWizardDesc')?.value?.trim() || '';
@@ -375,8 +376,8 @@ async function ghCodeWizardPublish() {
   }
   const title = document.getElementById('ghCodeWizardTitle')?.value?.trim() || '';
   if (!title) {
-    showToast('⚠️ Укажи название');
-    setGhCodeWizardStep(1);
+    showToast('⚠️ Укажи название в форме выше');
+    document.getElementById('ghCodeWizardTitle')?.focus?.();
     return;
   }
   const desc = document.getElementById('ghCodeWizardDesc')?.value?.trim() || '';

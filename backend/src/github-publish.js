@@ -39,7 +39,11 @@ async function ghJson(url, opts, token) {
 
 /**
  * POST /api/github/publish-game
- * body: { files: [{ path: "index.html", content: "<!DOCTYPE..." }, ...] }
+ * body: {
+ *   files: [{ path: "index.html", content: "<!DOCTYPE..." }, ...],
+ *   gameTitle?: string,
+ *   gameDescription?: string,
+ * }
  * Creates public repo under user, pushes files, enables Pages, returns pages URL.
  */
 export async function publishGameToGithub(req, env) {
@@ -83,6 +87,11 @@ export async function publishGameToGithub(req, env) {
     return error('invalid json');
   }
 
+  const rawTitle = body.gameTitle != null ? String(body.gameTitle).trim() : '';
+  const rawDesc = body.gameDescription != null ? String(body.gameDescription).trim() : '';
+  if (!rawTitle) return error('Укажи название игры перед созданием репозитория.');
+  if (rawTitle.length > 120) return error('Название игры слишком длинное (макс 120 символов).');
+
   const files = Array.isArray(body.files) ? body.files : [];
   if (files.length === 0) return error('Добавь хотя бы один файл (например index.html)');
   if (files.length > 20) return error('Не больше 20 файлов за раз');
@@ -111,6 +120,13 @@ export async function publishGameToGithub(req, env) {
 
   const owner = String(row.login);
 
+  let repoDescription = rawDesc
+    ? `${rawTitle} — ${rawDesc}`
+    : `SmolGame: ${rawTitle}`;
+  if (repoDescription.length > 350) {
+    repoDescription = repoDescription.slice(0, 347) + '…';
+  }
+
   let repoName = '';
   let cr = { ok: false, status: 0, data: null };
   for (let attempt = 0; attempt < 6; attempt++) {
@@ -126,7 +142,7 @@ export async function publishGameToGithub(req, env) {
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
           name: repo,
-          description: 'Game published via SmolGame',
+          description: repoDescription,
           private: false,
           auto_init: false,
         }),
