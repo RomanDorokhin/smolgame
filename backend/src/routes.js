@@ -103,6 +103,36 @@ async function pendingQueueGamesQuery(db, cap = 100) {
   return firstSuccessfulAll(db, PENDING_QUEUE_SQL_VARIANTS, [cap, 0]);
 }
 
+/** Очередь модерации без JOIN users — надёжно, если схема users отличается. */
+const PENDING_QUEUE_GAMES_ONLY_VARIANTS = [
+  `SELECT g.id, g.title, g.description, g.genre, g.genre_emoji AS genreEmoji,
+          g.url, g.image_url AS imageUrl, g.likes, g.plays, g.author_id AS authorId,
+          CAST(NULL AS TEXT) AS authorHandle,
+          CAST(NULL AS TEXT) AS authorFirst,
+          CAST(NULL AS TEXT) AS authorLast,
+          CAST(NULL AS TEXT) AS authorDisplayName,
+          CAST(NULL AS TEXT) AS authorPhoto
+     FROM games g
+    WHERE g.status = 'pending'
+    ORDER BY g.created_at ASC
+    LIMIT ?1 OFFSET ?2`,
+  `SELECT g.id, g.title, g.description, g.genre, CAST(NULL AS TEXT) AS genreEmoji,
+          g.url, CAST(NULL AS TEXT) AS imageUrl, g.likes, g.plays, g.author_id AS authorId,
+          CAST(NULL AS TEXT) AS authorHandle,
+          CAST(NULL AS TEXT) AS authorFirst,
+          CAST(NULL AS TEXT) AS authorLast,
+          CAST(NULL AS TEXT) AS authorDisplayName,
+          CAST(NULL AS TEXT) AS authorPhoto
+     FROM games g
+    WHERE g.status = 'pending'
+    ORDER BY g.created_at ASC
+    LIMIT ?1 OFFSET ?2`,
+];
+
+async function pendingQueueGamesOnlyQuery(db, cap = 100) {
+  return firstSuccessfulAll(db, PENDING_QUEUE_GAMES_ONLY_VARIANTS, [cap, 0]);
+}
+
 function mapFeedGameRow(g, likedSet, followedSet, bookmarkedSet, extra = {}) {
   return {
     id: g.id,
@@ -215,8 +245,20 @@ export async function getFeed(req, env) {
   let pendingCount = 0;
   if (user?.isAdmin === true) {
     try {
-      const { results: pendRows } = await pendingQueueGamesQuery(env.DB, 100);
-      pendingQueue = pendRows.map(g =>
+      let pendRows = [];
+      try {
+        ({ results: pendRows } = await pendingQueueGamesQuery(env.DB, 100));
+      } catch (e1) {
+        console.error('getFeed pendingQueue join', e1);
+      }
+      if (!pendRows?.length) {
+        try {
+          ({ results: pendRows } = await pendingQueueGamesOnlyQuery(env.DB, 100));
+        } catch (e2) {
+          console.error('getFeed pendingQueue games-only', e2);
+        }
+      }
+      pendingQueue = (pendRows || []).map(g =>
         mapFeedGameRow(g, likedSet, followedSet, bookmarkedSet, {
           status: 'pending',
           isModerationQueue: true,

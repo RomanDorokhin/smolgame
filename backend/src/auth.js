@@ -19,7 +19,8 @@ export async function authenticate(req, env) {
       .map(s => s.trim())
       .filter(Boolean)
   );
-  user.isAdmin = adminIds.has(user.id);
+  const uid = String(user.id);
+  user.isAdmin = [...adminIds].some(a => String(a) === uid);
   return user;
 }
 

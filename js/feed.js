@@ -35,8 +35,10 @@ async function loadGames() {
     const data = await API.feed({ offset: 0, limit: FEED_PAGE_SIZE });
     const published = Array.isArray(data?.games) ? data.games : [];
     window.feedPublishedLoaded = published.length;
-    if (data?.isAdmin && Array.isArray(data.pendingQueue) && data.pendingQueue.length > 0) {
+    if (data?.isAdmin === true) {
       document.body.classList.add('is-admin');
+    }
+    if (data?.isAdmin === true && Array.isArray(data.pendingQueue) && data.pendingQueue.length > 0) {
       window.GAMES = mergePendingIntoFeed(data.pendingQueue, published);
     } else {
       window.GAMES = published;
