@@ -152,6 +152,14 @@ body.tg-only-wall #toast{
   backface-visibility:hidden;
   -webkit-backface-visibility:hidden;
 }
+/* iOS WebView: соседние iframe с transform иногда «крадут» touch; неактивный слайд полностью прозрачен для hit-test */
+.slide.feed-slide--inactive,
+.slide.feed-slide--inactive *{
+  pointer-events:none !important;
+}
+.slide.feed-slide--active{
+  pointer-events:auto;
+}
 
 .slide-game{
   touch-action:none;

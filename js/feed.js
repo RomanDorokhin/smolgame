@@ -158,6 +158,8 @@ function appendSlides(startIndex, gamesSlice) {
     const slide = document.createElement('div');
     slide.className = 'slide';
     slide.id = 'slide-' + i;
+    slide.classList.toggle('feed-slide--active', i === window.currentIdx);
+    slide.classList.toggle('feed-slide--inactive', i !== window.currentIdx);
     slide.style.left = '';
     slide.style.transform = `translate3d(${(i - window.currentIdx) * 100}%,0,0)`;
 
@@ -330,6 +332,15 @@ function updateFeedNavArrows() {
   if (nextBtn) nextBtn.disabled = n < 2 || i >= n - 1;
 }
 
+function updateSlidePointerEvents() {
+  if (!Array.isArray(window.slides)) return;
+  window.slides.forEach((slideEl, i) => {
+    const on = i === window.currentIdx;
+    slideEl.classList.toggle('feed-slide--active', on);
+    slideEl.classList.toggle('feed-slide--inactive', !on);
+  });
+}
+
 function goTo(idx, instant = false) {
   if (GAMES.length === 0) return;
 
@@ -359,6 +370,7 @@ function goTo(idx, instant = false) {
   lazyLoadAround(window.currentIdx);
   maybeLoadMoreFeed();
   updateFeedNavArrows();
+  updateSlidePointerEvents();
 }
 
 function updateOverlay() {
