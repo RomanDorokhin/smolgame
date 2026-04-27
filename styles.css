@@ -1031,6 +1031,90 @@ textarea.field-input{
   transition:opacity 0.2s;
 }
 .github-btn:active{opacity:0.8;}
+.github-upload-btn{margin-top:12px;}
+#btn-github-primary{margin-bottom:8px;}
+
+.code-upload-branch{margin-top:4px;}
+
+.github-upload-modal{
+  position:fixed;
+  inset:0;
+  z-index:900;
+  display:flex;
+  align-items:flex-end;
+  justify-content:center;
+  padding:0;
+  box-sizing:border-box;
+}
+.github-upload-modal[hidden]{display:none!important;}
+.github-upload-modal__backdrop{
+  position:absolute;
+  inset:0;
+  background:rgba(0,0,0,0.55);
+}
+.github-upload-modal__sheet{
+  position:relative;
+  width:100%;
+  max-width:520px;
+  max-height:min(88vh,640px);
+  background:var(--bg-elevated, #121218);
+  border:1px solid var(--border);
+  border-radius:20px 20px 0 0;
+  box-shadow:0 -8px 40px rgba(0,0,0,0.45);
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+}
+.github-upload-modal__head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:14px 16px;
+  border-bottom:1px solid var(--border);
+  font-weight:700;
+  font-size:16px;
+}
+.github-upload-modal__close{
+  background:transparent;
+  border:none;
+  color:var(--muted);
+  font-size:26px;
+  line-height:1;
+  cursor:pointer;
+  padding:4px 8px;
+}
+.github-upload-modal__body{
+  padding:16px;
+  overflow-y:auto;
+  flex:1;
+}
+.github-input-mode{
+  display:flex;
+  gap:10px;
+  margin:12px 0 14px;
+}
+.github-mode-btn.selected{
+  border-color:rgba(255,45,85,0.45);
+  color:#fff;
+}
+.github-files-list{
+  font-size:13px;
+  color:var(--muted);
+  margin-top:10px;
+  line-height:1.5;
+  max-height:120px;
+  overflow-y:auto;
+}
+.github-upload-result{
+  margin-top:14px;
+  padding:12px;
+  border-radius:12px;
+  background:var(--surface);
+  border:1px solid var(--border);
+  font-size:14px;
+  line-height:1.45;
+}
+.github-upload-result a{color:#7ab8ff;word-break:break-all;}
 
 .image-upload{
   width:100%;

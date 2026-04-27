@@ -1,5 +1,7 @@
 import { authenticate, upsertUser } from './auth.js';
 import { json, error, newId } from './http.js';
+import { encryptGithubToken } from './github-token-crypto.js';
+import { isMissingColumnError } from './db-errors.js';
 
 const OAUTH_TTL_SEC = 600;
 
@@ -16,13 +18,13 @@ function redirect(url) {
 /**
  * GET /api/auth/github/start — JSON { url } для открытия в браузере (избегаем fetch-follow на GitHub).
  */
-function githubClientId(env) {
+export function githubClientId(env) {
   const a = String(env.GITHUB_CLIENT_ID ?? '').trim();
   if (a) return a;
   return String(env.GITHUB_OAUTH_CLIENT_ID ?? '').trim();
 }
 
-function githubClientSecret(env) {
+export function githubClientSecret(env) {
   const a = String(env.GITHUB_CLIENT_SECRET ?? '').trim();
   if (a) return a;
   return String(env.GITHUB_OAUTH_CLIENT_SECRET ?? '').trim();
@@ -148,9 +150,27 @@ export async function githubOAuthCallback(req, env) {
     return back(`?github=error&message=${encodeURIComponent('Этот GitHub уже привязан к другому аккаунту')}`);
   }
 
-  await env.DB.prepare(
-    `UPDATE users SET github_user_id = ?, github_login = ? WHERE id = ?`
-  ).bind(ghId, ghLogin, row.userId).run();
+  const enc = await encryptGithubToken(accessToken, githubClientSecret(env));
+
+  try {
+    if (enc) {
+      await env.DB.prepare(
+        `UPDATE users SET github_user_id = ?, github_login = ?, github_access_token_enc = ? WHERE id = ?`
+      ).bind(ghId, ghLogin, enc, row.userId).run();
+    } else {
+      await env.DB.prepare(
+        `UPDATE users SET github_user_id = ?, github_login = ? WHERE id = ?`
+      ).bind(ghId, ghLogin, row.userId).run();
+    }
+  } catch (e) {
+    if (isMissingColumnError(e)) {
+      await env.DB.prepare(
+        `UPDATE users SET github_user_id = ?, github_login = ? WHERE id = ?`
+      ).bind(ghId, ghLogin, row.userId).run();
+    } else {
+      throw e;
+    }
+  }
 
   await env.DB.prepare(`DELETE FROM oauth_states WHERE id = ?`).bind(state).run();
 

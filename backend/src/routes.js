@@ -285,15 +285,31 @@ export async function getMe(req, env) {
   const user = await authenticate(req, env);
   if (!user) return error('unauthorized', 401);
   await upsertUser(env.DB, user);
-  const dbUser = await env.DB.prepare(
-    `SELECT site_handle AS siteHandle,
-            display_name AS displayName,
-            bio AS bio,
-            github_login AS githubLogin,
-            github_user_id AS githubUserId,
-            COALESCE(NULLIF(TRIM(avatar_override_url), ''), photo_url) AS avatarUrl
-       FROM users WHERE id = ?`
-  ).bind(user.id).first();
+  let dbUser;
+  try {
+    dbUser = await env.DB.prepare(
+      `SELECT site_handle AS siteHandle,
+              display_name AS displayName,
+              bio AS bio,
+              github_login AS githubLogin,
+              github_user_id AS githubUserId,
+              github_access_token_enc AS githubAccessTokenEnc,
+              COALESCE(NULLIF(TRIM(avatar_override_url), ''), photo_url) AS avatarUrl
+         FROM users WHERE id = ?`
+    ).bind(user.id).first();
+  } catch (e) {
+    if (!isMissingColumnError(e)) throw e;
+    dbUser = await env.DB.prepare(
+      `SELECT site_handle AS siteHandle,
+              display_name AS displayName,
+              bio AS bio,
+              github_login AS githubLogin,
+              github_user_id AS githubUserId,
+              COALESCE(NULLIF(TRIM(avatar_override_url), ''), photo_url) AS avatarUrl
+         FROM users WHERE id = ?`
+    ).bind(user.id).first();
+    if (dbUser) dbUser.githubAccessTokenEnc = null;
+  }
 
   // Статистика автора (одна строка — надёжнее .first(), чем .all()[0] в D1).
   const statsRow = await env.DB.prepare(
@@ -325,6 +341,7 @@ export async function getMe(req, env) {
       avatar,
       isGithubConnected: Boolean(dbUser?.githubUserId),
       githubUsername: dbUser?.githubLogin || null,
+      hasGithubPublishToken: Boolean(dbUser?.githubAccessTokenEnc),
       isAdmin: user.isAdmin === true,
       isPremium: user.isPremium === true,
     },

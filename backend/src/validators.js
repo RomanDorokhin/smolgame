@@ -14,16 +14,33 @@ export function safeHttpsUrl(raw) {
   }
 }
 
+/** Игра на GitHub Pages (*.github.io) — отдельная проверка для submit. */
+export function safeGithubPagesPlayUrl(raw) {
+  try {
+    const u = new URL(String(raw || '').trim());
+    if (u.protocol !== 'https:') return null;
+    const h = u.hostname.toLowerCase();
+    if (!h.endsWith('.github.io')) return null;
+    if (!u.pathname || u.pathname === '/') return u.toString();
+    return u.toString();
+  } catch (e) {
+    return null;
+  }
+}
+
 export function validateSubmission(body) {
   const title = String(body.title || '').trim().slice(0, 40);
   const description = String(body.description || '').trim().slice(0, 120);
   const genre = GENRES.has(body.genre) ? body.genre : 'Прочее';
   const genreEmoji = String(body.genreEmoji || '🎮').slice(0, 8);
-  const url = safeHttpsUrl(body.url);
+  const ghPages = safeGithubPagesPlayUrl(body.url);
+  const url = ghPages || safeHttpsUrl(body.url);
   const imageUrl = body.imageUrl ? safeHttpsUrl(body.imageUrl) : null;
 
   if (!title) return { error: 'Название игры обязательно' };
-  if (!url)   return { error: 'Нужна корректная https:// ссылка' };
+  if (!url) {
+    return { error: 'Нужна корректная https:// ссылка (для GitHub Pages — https://username.github.io/…)' };
+  }
   if (body.imageUrl && !imageUrl) return { error: 'Некорректная ссылка на обложку' };
 
   return { ok: { title, description, genre, genreEmoji, url, imageUrl } };

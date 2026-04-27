@@ -7,6 +7,7 @@ import {
 } from './routes.js';
 import { githubOAuthStart, githubOAuthCallback } from './github-oauth.js';
 import { submitHtmlGame, serveHostedGame } from './hosted-games.js';
+import { publishGameToGithub } from './github-publish.js';
 
 export default {
   async fetch(req, env) {
@@ -57,6 +58,7 @@ async function route(req, env, pathname) {
   if (pathname === '/api/register' && m === 'POST') return register(req, env);
   if (pathname === '/api/submit' && m === 'POST') return submitGame(req, env);
   if (pathname === '/api/submit-html-game' && m === 'POST') return submitHtmlGame(req, env);
+  if (pathname === '/api/github/publish-game' && m === 'POST') return publishGameToGithub(req, env);
   if (pathname === '/api/upload-image' && m === 'POST') return uploadImage(req, env);
   if (pathname === '/api/auth/github/start' && m === 'GET') return githubOAuthStart(req, env);
   if (pathname === '/auth/github/callback' && m === 'GET') return githubOAuthCallback(req, env);

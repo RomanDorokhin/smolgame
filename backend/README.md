@@ -79,9 +79,16 @@ https://smolgame.dorokhin731.workers.dev
 
 Загрузка файла идёт в **R2** (`IMAGES` binding) и публичный URL (`PUBLIC_IMAGE_BASE_URL` или `R2_PUBLIC_URL`). Если R2 не подключён, режим **«Вставить код»** вернёт 501 — настрой bucket и binding в `wrangler.toml` (см. комментарий в конце файла). В форме **«Ссылка»** без R2 можно указать **HTTPS-ссылку на обложку** или отправить игру **без обложки**; сама игра тогда только по внешнему URL.
 
-**Вставить код (хостинг на SmolGame):** только для пользователей из **`PREMIUM_TG_IDS`** (Telegram numeric id через запятую в `wrangler.toml`). HTML в R2, URL игры `https://<worker>/g/<id>/`. Остальные — вкладка **«Ссылка»** (свой GitHub Pages и т.п.).
+**Вставить код (хостинг на SmolGame):** только для пользователей из **`PREMIUM_TG_IDS`** (Telegram numeric id через запятую в `wrangler.toml`). HTML в R2, URL игры `https://<worker>/g/<id>/`.
 
-**GitHub OAuth:** сейчас привязывает логин и даёт scope **`repo`** на будущее (публикация в репозиторий пользователя) — **access token пока не сохраняем**, отдельный поток «создать репо и залить код» ещё нужно реализовать.
+**Загрузка на GitHub (все с привязанным GitHub):** после OAuth Worker сохраняет **зашифрованный** access token в D1 (`github_access_token_enc`, ключ — `GITHUB_CLIENT_SECRET`). Эндпоинт `POST /api/github/publish-game` создаёт публичный репозиторий, заливает файлы, включает GitHub Pages и возвращает URL `https://<login>.github.io/<repo>/`. Нужна миграция:
+
+```bash
+cd backend
+npm run db:migrate:remote:github-token
+```
+
+После миграции пользователь должен **ещё раз** пройти «Войти через GitHub», чтобы токен записался в базу.
 
 ## Что дальше
 
@@ -107,6 +114,12 @@ https://smolgame.dorokhin731.workers.dev
   ```bash
   cd backend
   npm run db:migrate:remote:oauth
+  ```
+
+- Если API публикации пишет про **`github_access_token_enc`** — накати миграцию токена и повтори вход через GitHub:
+
+  ```bash
+  npm run db:migrate:remote:github-token
   ```
 
 ## Как добавить первую игру

@@ -11,6 +11,7 @@ window.USER = {
   avatar: (tgUser?.photo_url && String(tgUser.photo_url).trim()) || tgUser?.first_name?.[0] || '?',
   isGithubConnected: false,
   githubUsername: null,
+  hasGithubPublishToken: false,
   isPremium: false,
 };
 
@@ -34,4 +35,4 @@ window.slides = [];
 
 window.selectedGenre = '';
 window.selectedUploadMethod = 'url';
-window.selectedGenres = { code: '', url: '', codeOnly: '' };
+window.selectedGenres = { code: '', url: '', codeOnly: '', ghCode: '' };

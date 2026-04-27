@@ -87,6 +87,7 @@ window.API = {
   checkRegistered: ()      => apiFetch('/api/me/registered'),
   submit:       (payload)  => apiFetch('/api/submit', { method: 'POST', body: payload }),
   submitHtmlGame: (payload) => apiFetch('/api/submit-html-game', { method: 'POST', body: payload }),
+  githubPublishGame: (payload) => apiFetch('/api/github/publish-game', { method: 'POST', body: payload }),
   uploadImage:  (formData) => apiFetch('/api/upload-image', { method: 'POST', body: formData }),
   delete:       (gameId)   => apiFetch(`/api/games/${encodeURIComponent(gameId)}`, { method: 'DELETE' }),
 
