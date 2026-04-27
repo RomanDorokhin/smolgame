@@ -44,7 +44,7 @@ async function adminApproveGame(card) {
     const host = document.getElementById('adminPendingList');
     if (host && host.children.length === 0) loadAdminPending();
     // Обновим ленту, чтобы игра появилась у всех.
-    loadGames();
+    if (typeof loadGames === 'function') loadGames();
   } catch (e) {
     showToast('⚠️ ' + (e.message || 'ошибка'));
   }
@@ -59,6 +59,7 @@ async function adminRejectGame(card) {
     showToast('✗ Отклонено');
     const host = document.getElementById('adminPendingList');
     if (host && host.children.length === 0) loadAdminPending();
+    if (typeof loadGames === 'function') loadGames();
   } catch (e) {
     showToast('⚠️ ' + (e.message || 'ошибка'));
   }

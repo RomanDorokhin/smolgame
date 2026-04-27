@@ -2,17 +2,45 @@ const FEED_PAGE_SIZE = 15;
 
 window.feedHasMore = true;
 window.feedLoadingMore = false;
+/** Сколько опубликованных игр уже подгружено (без очереди модерации в начале). */
+window.feedPublishedLoaded = 0;
 
 function feedEl() {
   return document.getElementById('feed');
 }
 
+function mergePendingIntoFeed(pendingQueue, published) {
+  const pq = Array.isArray(pendingQueue) ? pendingQueue : [];
+  const pub = Array.isArray(published) ? published : [];
+  const seen = new Set();
+  const out = [];
+  for (const g of pq) {
+    if (!g?.id || seen.has(g.id)) continue;
+    seen.add(g.id);
+    out.push({ ...g, status: 'pending', isModerationQueue: true });
+  }
+  for (const g of pub) {
+    if (!g?.id || seen.has(g.id)) continue;
+    seen.add(g.id);
+    out.push(g);
+  }
+  return out;
+}
+
 async function loadGames() {
   window.feedHasMore = true;
   window.feedLoadingMore = false;
+  window.feedPublishedLoaded = 0;
   try {
     const data = await API.feed({ offset: 0, limit: FEED_PAGE_SIZE });
-    window.GAMES = Array.isArray(data?.games) ? data.games : [];
+    const published = Array.isArray(data?.games) ? data.games : [];
+    window.feedPublishedLoaded = published.length;
+    if (data?.isAdmin && Array.isArray(data.pendingQueue) && data.pendingQueue.length > 0) {
+      document.body.classList.add('is-admin');
+      window.GAMES = mergePendingIntoFeed(data.pendingQueue, published);
+    } else {
+      window.GAMES = published;
+    }
     window.feedHasMore = data?.hasMore !== false;
 
     window.likedSet = new Set(GAMES.filter(g => g.isLiked).map(g => g.id));
@@ -52,7 +80,7 @@ async function loadMoreFeed() {
   if (!feedHasMore || feedLoadingMore || GAMES.length === 0) return;
   feedLoadingMore = true;
   try {
-    const data = await API.feed({ offset: GAMES.length, limit: FEED_PAGE_SIZE });
+    const data = await API.feed({ offset: feedPublishedLoaded, limit: FEED_PAGE_SIZE });
     const batch = Array.isArray(data?.games) ? data.games : [];
     window.feedHasMore = typeof data?.hasMore === 'boolean'
       ? data.hasMore
@@ -65,6 +93,7 @@ async function loadMoreFeed() {
       return;
     }
 
+    window.feedPublishedLoaded += fresh.length;
     mergeInteractionSetsFromGames(fresh);
     const start = GAMES.length;
     GAMES.push(...fresh);
@@ -196,6 +225,18 @@ function appendSlides(startIndex, gamesSlice) {
 
     slide.appendChild(placeholder);
     slide.appendChild(iframe);
+    if (g.isModerationQueue && document.body.classList.contains('is-admin')) {
+      const mod = document.createElement('div');
+      mod.className = 'feed-moderation-card';
+      mod.dataset.gameId = g.id;
+      mod.innerHTML = `
+        <div class="feed-moderation-actions">
+          <button type="button" class="admin-btn approve" data-action="admin-approve">✓ Одобрить</button>
+          <button type="button" class="admin-btn reject" data-action="admin-reject">✗ Отклонить</button>
+          <button type="button" class="admin-btn delete" data-action="admin-delete">🗑</button>
+        </div>`;
+      slide.appendChild(mod);
+    }
     feed.appendChild(slide);
     window.slides.push(slide);
 

@@ -92,6 +92,42 @@ async function publishedFeedGamesQuery(db, limit, offset) {
   return firstSuccessfulAll(db, PUBLISHED_FEED_SQL_VARIANTS, [limit, offset]);
 }
 
+/** Та же схема колонок, что и лента, но только pending — для админа в начале ленты. */
+const PENDING_QUEUE_SQL_VARIANTS = PUBLISHED_FEED_SQL_VARIANTS.map(sql =>
+  sql
+    .replace("WHERE g.status = 'published'", "WHERE g.status = 'pending'")
+    .replace('ORDER BY g.created_at DESC', 'ORDER BY g.created_at ASC')
+);
+
+async function pendingQueueGamesQuery(db, cap = 100) {
+  return firstSuccessfulAll(db, PENDING_QUEUE_SQL_VARIANTS, [cap, 0]);
+}
+
+function mapFeedGameRow(g, likedSet, followedSet, bookmarkedSet, extra = {}) {
+  return {
+    id: g.id,
+    title: g.title,
+    description: g.description,
+    genre: g.genre,
+    genreEmoji: g.genreEmoji,
+    url: g.url,
+    imageUrl: g.imageUrl,
+    likes: g.likes,
+    plays: g.plays,
+    authorId: g.authorId,
+    authorName: (g.authorDisplayName && String(g.authorDisplayName).trim())
+      || [g.authorFirst, g.authorLast].filter(Boolean).join(' ')
+      || g.authorHandle
+      || 'Аноним',
+    authorHandle: g.authorHandle || '',
+    authorAvatar: g.authorPhoto || (g.authorFirst?.[0] || '?'),
+    isLiked: likedSet.has(g.id),
+    isFollowing: followedSet.has(g.authorId),
+    isBookmarked: bookmarkedSet.has(g.id),
+    ...extra,
+  };
+}
+
 const GAME_BY_ID_SQL_VARIANTS = [
   `SELECT g.id, g.title, g.description, g.genre, g.genre_emoji AS genreEmoji,
           g.url, g.image_url AS imageUrl, g.likes, g.plays, g.author_id AS authorId,
@@ -171,33 +207,35 @@ export async function getFeed(req, env) {
     bookmarkedSet = new Set(bookmarks.results.map(r => r.game_id));
   }
 
-  const games = results.map(g => ({
-    id: g.id,
-    title: g.title,
-    description: g.description,
-    genre: g.genre,
-    genreEmoji: g.genreEmoji,
-    url: g.url,
-    imageUrl: g.imageUrl,
-    likes: g.likes,
-    plays: g.plays,
-    authorId: g.authorId,
-    authorName: (g.authorDisplayName && String(g.authorDisplayName).trim())
-      || [g.authorFirst, g.authorLast].filter(Boolean).join(' ')
-      || g.authorHandle
-      || 'Аноним',
-    authorHandle: g.authorHandle || '',
-    authorAvatar: g.authorPhoto || (g.authorFirst?.[0] || '?'),
-    isLiked: likedSet.has(g.id),
-    isFollowing: followedSet.has(g.authorId),
-    isBookmarked: bookmarkedSet.has(g.id),
-  }));
+  const games = results.map(g =>
+    mapFeedGameRow(g, likedSet, followedSet, bookmarkedSet, { status: 'published' })
+  );
+
+  let pendingQueue = [];
+  let pendingCount = 0;
+  if (user?.isAdmin === true) {
+    try {
+      const { results: pendRows } = await pendingQueueGamesQuery(env.DB, 100);
+      pendingQueue = pendRows.map(g =>
+        mapFeedGameRow(g, likedSet, followedSet, bookmarkedSet, {
+          status: 'pending',
+          isModerationQueue: true,
+        })
+      );
+      pendingCount = pendingQueue.length;
+    } catch (e) {
+      console.error('getFeed pendingQueue', e);
+    }
+  }
 
   return json({
     games,
     offset,
     limit,
     hasMore: results.length === limit,
+    isAdmin: user?.isAdmin === true,
+    pendingQueue,
+    pendingCount,
   });
 }
 
