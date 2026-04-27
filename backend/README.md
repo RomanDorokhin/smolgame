@@ -85,6 +85,13 @@ https://smolgame.dorokhin731.workers.dev
   npm run db:migrate:remote
   ```
 
+- Если при входе через GitHub ошибка **`no such table: oauth_states`**:
+
+  ```bash
+  cd backend
+  npm run db:migrate:remote:oauth
+  ```
+
 ## Как добавить первую игру
 
 1. Открой мини-апп в Telegram.
