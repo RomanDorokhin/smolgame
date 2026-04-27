@@ -178,7 +178,7 @@ function appendSlides(startIndex, gamesSlice) {
       ${thumbHtml}
       <div class="placeholder-title">${esc(g.title)}</div>
       <div class="placeholder-sub">Загрузка…</div>
-      <div class="loader-ring"></div>
+      ${typeof sgLogoMarkLoaderHtml === 'function' ? sgLogoMarkLoaderHtml() : '<div class="loader-ring"></div>'}
     `;
 
     const iframe = document.createElement('iframe');
@@ -283,6 +283,7 @@ function renderFeed() {
   appendSlides(0, GAMES);
   goTo(0, true);
   if (typeof refreshFeedCoachState === 'function') refreshFeedCoachState();
+  if (typeof scheduleSwipeStripIdleNudge === 'function') scheduleSwipeStripIdleNudge();
 }
 
 function lazyLoadAround(idx) {
@@ -375,6 +376,9 @@ function goTo(idx, instant = false) {
   maybeLoadMoreFeed();
   updateFeedNavArrows();
   updateSlidePointerEvents();
+  if (prevIdx !== window.currentIdx && !instant && typeof onSwipeStripUserActivity === 'function') {
+    onSwipeStripUserActivity();
+  }
 }
 
 function updateOverlay() {
@@ -421,7 +425,7 @@ function updateOverlay() {
 
   const following = followedSet.has(g.authorId);
   const followBtn = document.getElementById('followBtn');
-  followBtn.textContent = following ? '✓ Following' : '+ Follow';
+  followBtn.textContent = following ? 'Вы подписаны' : '+ Подписаться';
   followBtn.classList.toggle('following', following);
 
 }
@@ -461,6 +465,10 @@ function feedPointerDown(e, dragHost) {
   if (isOverlayOpen() || GAMES.length === 0) return;
   const strip = document.getElementById('swipe-strip');
   if (strip?.style.display === 'none') return;
+
+  if (dragHost === strip && typeof onSwipeStripUserActivity === 'function') {
+    onSwipeStripUserActivity();
+  }
 
   touching = true;
   activePointerId = e.pointerId;
@@ -571,6 +579,7 @@ document.addEventListener('DOMContentLoaded', () => {
   strip.addEventListener('wheel', e => {
     if (isOverlayOpen() || GAMES.length < 2) return;
     e.preventDefault();
+    if (typeof onSwipeStripUserActivity === 'function') onSwipeStripUserActivity();
     const absX = Math.abs(e.deltaX);
     const absY = Math.abs(e.deltaY);
     if (absX >= absY) {
@@ -583,6 +592,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     hideSwipeHint();
   }, { passive: false });
+
+  if (typeof scheduleSwipeStripIdleNudge === 'function') scheduleSwipeStripIdleNudge();
 });
 
 document.addEventListener('keydown', e => {
@@ -615,6 +626,37 @@ function hideSwipeHint() {
     setTimeout(() => { label.style.display = 'none'; }, 400);
   }
 }
+
+const SWIPE_IDLE_NUDGE_MS = 12000;
+let swipeStripIdleT = 0;
+
+function clearSwipeStripIdleTimer() {
+  if (swipeStripIdleT) {
+    clearTimeout(swipeStripIdleT);
+    swipeStripIdleT = 0;
+  }
+}
+
+function scheduleSwipeStripIdleNudge() {
+  clearSwipeStripIdleTimer();
+  const strip = document.getElementById('swipe-strip');
+  strip?.classList.remove('swipe-strip--idle-nudge');
+  if (!strip || GAMES.length < 2 || isOverlayOpen() || strip.style.display === 'none') return;
+  swipeStripIdleT = setTimeout(() => {
+    swipeStripIdleT = 0;
+    const s = document.getElementById('swipe-strip');
+    if (!s || s.style.display === 'none' || GAMES.length < 2 || isOverlayOpen()) return;
+    s.classList.add('swipe-strip--idle-nudge');
+  }, SWIPE_IDLE_NUDGE_MS);
+}
+
+function onSwipeStripUserActivity() {
+  document.getElementById('swipe-strip')?.classList.remove('swipe-strip--idle-nudge');
+  scheduleSwipeStripIdleNudge();
+}
+
+window.scheduleSwipeStripIdleNudge = scheduleSwipeStripIdleNudge;
+window.onSwipeStripUserActivity = onSwipeStripUserActivity;
 
 window.loadGames = loadGames;
 window.loadMoreFeed = loadMoreFeed;

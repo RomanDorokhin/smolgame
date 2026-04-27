@@ -14,26 +14,25 @@
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <!-- ?v= сбрасывает кэш WebView Telegram после правок JS/CSS (меняй при каждом релизе фронта). -->
-<link rel="stylesheet" href="styles.css?v=20260450">
+<link rel="stylesheet" href="styles.css?v=20260451">
 </head>
 <body>
 
 <div id="app-boot-splash" class="app-boot-splash" hidden aria-live="polite" aria-busy="true">
   <div class="sg-brand sg-brand--splash">
-    <div class="sg-brand-mark" aria-hidden="true">
-      <svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs><linearGradient id="sgLogoGradSplash" x1="10" y1="14" x2="38" y2="38" gradientUnits="userSpaceOnUse"><stop offset="0%" stop-color="#9eb0c8"/><stop offset="100%" stop-color="#6f7d92"/></linearGradient></defs><rect x="13" y="13" width="22" height="22" rx="8" fill="none" stroke="url(#sgLogoGradSplash)" stroke-width="2.25"/><circle cx="24" cy="24" r="4.5" fill="url(#sgLogoGradSplash)" opacity=".95"/></svg>
+    <div class="sg-brand-mark sg-brand-mark--spin" aria-hidden="true">
+      <svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs><linearGradient id="sgLogoGradSplash" x1="10" y1="14" x2="38" y2="38" gradientUnits="userSpaceOnUse"><stop offset="0%" stop-color="#b4c7e0"/><stop offset="100%" stop-color="#7d90a8"/></linearGradient></defs><rect x="13" y="13" width="22" height="22" rx="8" fill="none" stroke="url(#sgLogoGradSplash)" stroke-width="2.25"/><circle cx="24" cy="24" r="4.5" fill="url(#sgLogoGradSplash)" opacity=".95"/></svg>
     </div>
     <div class="sg-brand-wordmark"><span class="sg-brand-word-muted">smol</span><span class="sg-brand-word-accent">game</span></div>
   </div>
   <div class="app-boot-sub">Загрузка…</div>
-  <div class="app-boot-ring" aria-hidden="true"></div>
 </div>
 
 <div id="tg-only-wall" class="tg-only-wall" hidden>
   <div class="tg-only-card">
     <div class="sg-brand sg-brand--card" style="margin-bottom:8px">
       <div class="sg-brand-mark sg-brand-mark--sm" aria-hidden="true">
-        <svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs><linearGradient id="sgLogoGradCard" x1="10" y1="14" x2="38" y2="38" gradientUnits="userSpaceOnUse"><stop offset="0%" stop-color="#9eb0c8"/><stop offset="100%" stop-color="#6f7d92"/></linearGradient></defs><rect x="13" y="13" width="22" height="22" rx="8" fill="none" stroke="url(#sgLogoGradCard)" stroke-width="2.25"/><circle cx="24" cy="24" r="4.5" fill="url(#sgLogoGradCard)" opacity=".95"/></svg>
+        <svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs><linearGradient id="sgLogoGradCard" x1="10" y1="14" x2="38" y2="38" gradientUnits="userSpaceOnUse"><stop offset="0%" stop-color="#b4c7e0"/><stop offset="100%" stop-color="#7d90a8"/></linearGradient></defs><rect x="13" y="13" width="22" height="22" rx="8" fill="none" stroke="url(#sgLogoGradCard)" stroke-width="2.25"/><circle cx="24" cy="24" r="4.5" fill="url(#sgLogoGradCard)" opacity=".95"/></svg>
       </div>
       <div class="sg-brand-wordmark sg-brand-wordmark--compact"><span class="sg-brand-word-muted">smol</span><span class="sg-brand-word-accent">game</span></div>
     </div>
@@ -65,12 +64,11 @@
 <div id="feed-transition" class="feed-transition" hidden aria-hidden="true">
   <div class="feed-transition-inner">
     <div class="sg-brand sg-brand--transition feed-transition-logo">
-      <div class="sg-brand-mark sg-brand-mark--xs" aria-hidden="true">
-        <svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs><linearGradient id="sgLogoGradTrans" x1="10" y1="14" x2="38" y2="38" gradientUnits="userSpaceOnUse"><stop offset="0%" stop-color="#9eb0c8"/><stop offset="100%" stop-color="#6f7d92"/></linearGradient></defs><rect x="13" y="13" width="22" height="22" rx="8" fill="none" stroke="url(#sgLogoGradTrans)" stroke-width="2.25"/><circle cx="24" cy="24" r="4.5" fill="url(#sgLogoGradTrans)" opacity=".95"/></svg>
+      <div class="sg-brand-mark sg-brand-mark--xs sg-brand-mark--spin" aria-hidden="true">
+        <svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs><linearGradient id="sgLogoGradTrans" x1="10" y1="14" x2="38" y2="38" gradientUnits="userSpaceOnUse"><stop offset="0%" stop-color="#b4c7e0"/><stop offset="100%" stop-color="#7d90a8"/></linearGradient></defs><rect x="13" y="13" width="22" height="22" rx="8" fill="none" stroke="url(#sgLogoGradTrans)" stroke-width="2.25"/><circle cx="24" cy="24" r="4.5" fill="url(#sgLogoGradTrans)" opacity=".95"/></svg>
       </div>
       <div class="sg-brand-wordmark sg-brand-wordmark--transition"><span class="sg-brand-word-muted">smol</span><span class="sg-brand-word-accent">game</span></div>
     </div>
-    <div class="feed-transition-ring" aria-hidden="true"></div>
   </div>
 </div>
 
@@ -94,7 +92,7 @@
         <span class="game-genre-inline" id="gameGenreInline" hidden></span>
       </div>
     </div>
-    <div class="follow-btn" id="followBtn" data-action="toggle-follow">+ Follow</div>
+    <div class="follow-btn" id="followBtn" data-action="toggle-follow">+ Подписаться</div>
   </div>
 </div>
 
@@ -617,27 +615,27 @@
 
 <!-- ══ SCRIPTS ══ -->
 <!-- Порядок важен: config/utils/telegram → state → api → модули логики → события → main. -->
-<script src="js/config.js?v=20260450"></script>
-<script src="js/genre-icons.js?v=20260450"></script>
-<script src="js/utils.js?v=20260450"></script>
-<script src="js/telegram.js?v=20260450"></script>
-<script src="js/tg-gate.js?v=20260450"></script>
-<script src="js/boot-splash.js?v=20260450"></script>
-<script src="js/state.js?v=20260450"></script>
-<script src="js/api.js?v=20260450"></script>
-<script src="js/onboarding.js?v=20260450"></script>
-<script src="js/help-screens.js?v=20260450"></script>
-<script src="js/feed.js?v=20260450"></script>
-<script src="js/feed-nav-tip.js?v=20260450"></script>
-<script src="js/actions.js?v=20260450"></script>
-<script src="js/upload.js?v=20260450"></script>
-<script src="js/genres.js?v=20260450"></script>
-<script src="js/search.js?v=20260450"></script>
-<script src="js/profile.js?v=20260450"></script>
-<script src="js/admin.js?v=20260450"></script>
-<script src="js/screens.js?v=20260450"></script>
-<script src="js/events.js?v=20260450"></script>
-<script src="js/overlay-pull-close.js?v=20260450"></script>
-<script src="js/main.js?v=20260450"></script>
+<script src="js/config.js?v=20260451"></script>
+<script src="js/genre-icons.js?v=20260451"></script>
+<script src="js/utils.js?v=20260451"></script>
+<script src="js/telegram.js?v=20260451"></script>
+<script src="js/tg-gate.js?v=20260451"></script>
+<script src="js/boot-splash.js?v=20260451"></script>
+<script src="js/state.js?v=20260451"></script>
+<script src="js/api.js?v=20260451"></script>
+<script src="js/onboarding.js?v=20260451"></script>
+<script src="js/help-screens.js?v=20260451"></script>
+<script src="js/feed.js?v=20260451"></script>
+<script src="js/feed-nav-tip.js?v=20260451"></script>
+<script src="js/actions.js?v=20260451"></script>
+<script src="js/upload.js?v=20260451"></script>
+<script src="js/genres.js?v=20260451"></script>
+<script src="js/search.js?v=20260451"></script>
+<script src="js/profile.js?v=20260451"></script>
+<script src="js/admin.js?v=20260451"></script>
+<script src="js/screens.js?v=20260451"></script>
+<script src="js/events.js?v=20260451"></script>
+<script src="js/overlay-pull-close.js?v=20260451"></script>
+<script src="js/main.js?v=20260451"></script>
 </body>
 </html>

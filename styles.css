@@ -1,20 +1,20 @@
 html,body,#root,#feed,.slide{margin:0;padding:0;border:0;width:100%;height:100%;overflow:hidden;}
 
 :root{
-  /* Акцент — приглушённый стальной (не «электрический» голубой): ссылки, лайк, бейджи */
-  --accent:#8b9aac;
-  --accent2:#6a7a8c;
-  --accent-rgb:139,154,172;
-  --accent2-rgb:106,122,140;
-  --accent-soft:rgba(139,154,172,0.1);
+  /* Акцент — холодный серо-голубой, чуть ярче чтобы не сливаться с тёмным фоном */
+  --accent:#a3b8d4;
+  --accent2:#7a8faf;
+  --accent-rgb:163,184,212;
+  --accent2-rgb:122,143,175;
+  --accent-soft:rgba(163,184,212,0.14);
   /* Главные кнопки: нейтральный графит — не отвлекает от игр и контента */
   --cta-bg:linear-gradient(180deg,#2f323a 0%,#22252c 55%,#1a1c22 100%);
   --cta-bg-solid:#282b34;
   --cta-border:rgba(255,255,255,0.11);
   --cta-highlight:rgba(255,255,255,0.05);
-  /* Вордмарк / марка: чуть теплее серебра */
-  --brand-1:#9eb0c8;
-  --brand-2:#6f7d92;
+  /* Вордмарк / марка */
+  --brand-1:#b4c7e0;
+  --brand-2:#7d90a8;
   --bg:#0a0b0e;
   --surface:#13141a;
   --surface-elevated:#1c1e26;
@@ -393,6 +393,28 @@ body.tg-only-wall #app-boot-splash{
 .sg-brand-mark--sm{width:44px;height:44px;border-radius:13px;}
 .sg-brand-mark--xs{width:34px;height:34px;border-radius:10px;}
 
+.sg-brand-mark--spin,
+.sg-brand-mark--loader{
+  animation:sgLogoSpin 1.1s linear infinite;
+}
+.sg-brand-mark--loader{
+  width:40px;
+  height:40px;
+  border-radius:12px;
+  color:rgba(200,214,232,0.85);
+  box-shadow:none;
+  background:rgba(22,24,30,0.85);
+}
+@keyframes sgLogoSpin{
+  to{transform:rotate(360deg);}
+}
+#app-boot-splash .sg-brand-mark--spin{
+  animation-duration:1.05s;
+}
+#feed-transition .sg-brand-mark--spin{
+  animation-duration:0.85s;
+}
+
 .sg-brand-wordmark{
   font-family:'Syne',sans-serif;
   font-weight:800;
@@ -421,14 +443,6 @@ body.tg-only-wall #app-boot-splash{
   font-weight:600;
   color:var(--muted);
   letter-spacing:0.04em;
-}
-.app-boot-ring{
-  width:36px;
-  height:36px;
-  border-radius:50%;
-  border:2px solid rgba(255,255,255,0.12);
-  border-top-color:rgba(255,255,255,0.55);
-  animation:spin 0.75s linear infinite;
 }
 
 body.tg-only-wall #feed,
@@ -596,15 +610,6 @@ body.tg-only-wall #toast{
   100%{opacity:1;transform:scale(1) translate3d(0,0,0);}
 }
 .feed-transition-logo{filter:drop-shadow(0 6px 24px rgba(0,0,0,0.4));}
-.feed-transition-ring{
-  width:34px;
-  height:34px;
-  border-radius:50%;
-  border:2px solid rgba(255,255,255,0.12);
-  border-top-color:rgba(255,255,255,0.5);
-  animation:spin 0.75s linear infinite;
-}
-
 .slide-status-banner{
   position:absolute;
   top:12px;
@@ -689,6 +694,27 @@ body.tg-only-wall #toast{
   transition:opacity 0.35s ease;
   text-align:center;
   line-height:1.2;
+}
+
+/* Без жеста долго: лёгкий «дёрг» полоски — «потяни здесь» */
+#swipe-strip.swipe-strip--idle-nudge .swipe-strip-mid{
+  animation:swipeStripIdleNudge 2.8s ease-in-out infinite;
+  animation-delay:0.5s;
+}
+@keyframes swipeStripIdleNudge{
+  0%,88%,100%{transform:translateX(0);}
+  90%{transform:translateX(-5px);}
+  93%{transform:translateX(4px);}
+  96%{transform:translateX(-2px);}
+}
+#swipe-strip.swipe-strip--idle-nudge .swipe-strip-handle-h{
+  animation:swipeHandleWiggle 2.8s ease-in-out infinite;
+  animation-delay:0.5s;
+}
+@keyframes swipeHandleWiggle{
+  0%,85%,100%{opacity:0.55;transform:scaleX(1);}
+  90%{opacity:0.95;transform:scaleX(1.08) translateX(-2px);}
+  94%{opacity:0.85;transform:scaleX(1.04) translateX(3px);}
 }
 
 .feed-nav-arrow{

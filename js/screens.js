@@ -78,10 +78,12 @@ function toggleAuthorFollow(btn) {
     followedSet.delete(authorId);
     btn.textContent = '+ Подписаться';
     btn.classList.remove('following');
+    showToast('Отписались');
   } else {
     followedSet.add(authorId);
-    btn.textContent = '✓ Подписка';
+    btn.textContent = 'Вы подписаны';
     btn.classList.add('following');
+    showToast('Подписка оформлена');
   }
   saveSet(STORAGE_KEYS.followed, followedSet);
   updateOverlay();
@@ -122,7 +124,7 @@ async function loadAuthorProfile(authorId) {
     document.getElementById('authorStatLikes').textContent = fmtNum(stats.likes);
 
     const btn = document.getElementById('authorFollowBtn');
-    btn.textContent = profile.isSelf ? 'Это вы' : (profile.isFollowing ? '✓ Подписка' : '+ Подписаться');
+    btn.textContent = profile.isSelf ? 'Это вы' : (profile.isFollowing ? 'Вы подписаны' : '+ Подписаться');
     btn.classList.toggle('following', Boolean(profile.isFollowing || profile.isSelf));
     btn.dataset.authorId = authorId;
     btn.dataset.isSelf = profile.isSelf ? '1' : '';
@@ -155,6 +157,7 @@ function switchTab(tab) {
   if (tab === 'feed') {
     closeAllMainTabs();
     if (typeof refreshFeedCoachState === 'function') refreshFeedCoachState();
+    if (typeof scheduleSwipeStripIdleNudge === 'function') scheduleSwipeStripIdleNudge();
     return;
   }
 

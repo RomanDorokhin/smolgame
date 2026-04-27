@@ -49,14 +49,14 @@ function toggleFollow() {
   const wasFollowing = followedSet.has(g.authorId);
   if (wasFollowing) {
     followedSet.delete(g.authorId);
-    btn.textContent = '+ Follow';
+    btn.textContent = '+ Подписаться';
     btn.classList.remove('following');
-    showToast('Отписался');
+    showToast('Отписались');
   } else {
     followedSet.add(g.authorId);
-    btn.textContent = '✓ Following';
+    btn.textContent = 'Вы подписаны';
     btn.classList.add('following');
-    showToast('✅ Подписался на ' + g.authorName);
+    showToast('Подписка оформлена');
   }
   saveSet(STORAGE_KEYS.followed, followedSet);
 
