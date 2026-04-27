@@ -70,7 +70,12 @@ const UPSERT_USER_SQL_VARIANTS = [
             first_name  = COALESCE(excluded.first_name, users.first_name),
             last_name   = COALESCE(excluded.last_name, users.last_name),
             photo_url   = COALESCE(excluded.photo_url, users.photo_url)`,
-    bind: (u) => [u.id, u.username, u.first_name, u.last_name, u.photo_url],
+    bind: (u) => [u.id, u.username ?? '', u.first_name, u.last_name, u.photo_url],
+  },
+  // Только id — достаточно для FOREIGN KEY в games, если остальные колонки другие/отсутствуют
+  {
+    sql: `INSERT OR IGNORE INTO users (id) VALUES (?)`,
+    bind: (u) => [u.id],
   },
 ];
 

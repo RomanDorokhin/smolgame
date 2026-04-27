@@ -441,7 +441,13 @@ export async function submitGame(req, env) {
     return json({ ok: true, id, status: 'pending' });
   } catch (e) {
     console.error('submitGame unhandled', e);
-    return error('Не удалось сохранить игру. Повтори позже или обнови приложение.', 500);
+    const detail = String(e?.message || e || '').trim().slice(0, 220);
+    return error(
+      detail
+        ? `Ошибка при сохранении: ${detail}`
+        : 'Не удалось сохранить игру. Повтори позже или обнови приложение.',
+      500
+    );
   }
 }
 
