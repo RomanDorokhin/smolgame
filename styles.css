@@ -125,7 +125,7 @@ body.tg-only-wall #toast{
 /* ══════════════════════════════
    FEED
 ══════════════════════════════ */
-/* Лента: слайды позиционируются через top:% (без transform — стабильный drag в iframe на iOS) */
+/* Лента: слайды по left:% (как карточки влево/вправо, без transform — стабильный drag в iframe на iOS) */
 #feed{
   position:fixed;
   inset:0;
@@ -135,11 +135,10 @@ body.tg-only-wall #toast{
 .slide{
   position:absolute;
   left:0;
-  right:0;
+  top:0;
   width:100%;
   height:100%;
-  top:0;
-  will-change:top;
+  will-change:left;
 }
 
 .slide-game{

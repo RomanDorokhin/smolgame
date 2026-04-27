@@ -117,7 +117,7 @@ function appendSlides(startIndex, gamesSlice) {
     const slide = document.createElement('div');
     slide.className = 'slide';
     slide.id = 'slide-' + i;
-    slide.style.top = `${(i - window.currentIdx) * 100}%`;
+    slide.style.left = `${(i - window.currentIdx) * 100}%`;
 
     const placeholder = document.createElement('div');
     placeholder.className = 'slide-placeholder';
@@ -266,8 +266,8 @@ function goTo(idx, instant = false) {
   }
 
   window.slides.forEach((s, i) => {
-    s.style.transition = instant ? 'none' : 'top 0.4s cubic-bezier(0.4,0,0.2,1)';
-    s.style.top = `${(i - window.currentIdx) * 100}%`;
+    s.style.transition = instant ? 'none' : 'left 0.4s cubic-bezier(0.4,0,0.2,1)';
+    s.style.left = `${(i - window.currentIdx) * 100}%`;
   });
 
   document.querySelectorAll('.dot').forEach((d, i) =>
