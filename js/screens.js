@@ -2,9 +2,11 @@ function openUpload() {
   document.getElementById('upload-screen').classList.add('open');
   renderGenrePills('genrePills', 'code');
   renderGenrePills('genrePills2', 'url');
+  if (typeof maybeShowWelcomeOnUploadOpen === 'function') maybeShowWelcomeOnUploadOpen();
 }
 function closeUpload() {
   document.getElementById('upload-screen').classList.remove('open');
+  if (typeof hideUploadWelcomeBlock === 'function') hideUploadWelcomeBlock();
 }
 
 function openProfile() {

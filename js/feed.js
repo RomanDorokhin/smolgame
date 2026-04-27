@@ -377,7 +377,7 @@ let activePointerId = null;
 
 function isOverlayOpen() {
   return Boolean(document.querySelector(
-    '#upload-screen.open, #report-screen.open, #profile-screen.open, #search-screen.open, #author-screen.open, #onboarding-screen.open, #welcome-screen.open, #help-how-screen.open, #help-faq-screen.open, #feed-nav-tip-overlay.feed-nav-tip-visible'
+    '#upload-screen.open, #report-screen.open, #profile-screen.open, #search-screen.open, #author-screen.open, #onboarding-screen.open, #feed-nav-tip-overlay.feed-nav-tip-visible'
   ));
 }
 

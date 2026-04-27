@@ -6,13 +6,13 @@ const PULL_HANDLE_ZONE = 120;
 
 function closestOverlayScreen(el) {
   return el?.closest?.(
-    '#profile-screen, #author-screen, #search-screen, #upload-screen, #report-screen, #help-how-screen, #help-faq-screen'
+    '#profile-screen, #author-screen, #search-screen, #upload-screen, #report-screen'
   );
 }
 
 function isOverlayOpen() {
   return Boolean(document.querySelector(
-    '#profile-screen.open, #author-screen.open, #search-screen.open, #upload-screen.open, #report-screen.open, #help-how-screen.open, #help-faq-screen.open'
+    '#profile-screen.open, #author-screen.open, #search-screen.open, #upload-screen.open, #report-screen.open'
   ));
 }
 
@@ -23,8 +23,6 @@ function closeOverlayScreen(screen) {
   else if (screen.id === 'search-screen' && typeof closeSearch === 'function') closeSearch();
   else if (screen.id === 'upload-screen' && typeof closeUpload === 'function') closeUpload();
   else if (screen.id === 'report-screen' && typeof closeReportScreen === 'function') closeReportScreen();
-  else if (screen.id === 'help-how-screen' && typeof closeHelpHowScreen === 'function') closeHelpHowScreen();
-  else if (screen.id === 'help-faq-screen' && typeof closeHelpFaqScreen === 'function') closeHelpFaqScreen();
 }
 
 document.addEventListener('DOMContentLoaded', () => {

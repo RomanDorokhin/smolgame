@@ -149,7 +149,6 @@ async function finishOnboarding() {
     USER.siteHandle = res?.user?.siteHandle || siteHandle;
     closeOnboardingScreen();
     await loadGames();
-    if (typeof maybeShowWelcomeAfterRegister === 'function') maybeShowWelcomeAfterRegister();
     if (typeof maybeShowFeedNavTipAfterGames === 'function') maybeShowFeedNavTipAfterGames();
   } catch (e) {
     showToast('⚠️ ' + (e.message || 'не получилось'));

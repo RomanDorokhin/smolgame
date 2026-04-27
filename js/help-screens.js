@@ -1,5 +1,5 @@
 /**
- * Приветственный онбординг (3 слайда, один раз) + экраны «Как добавить игру» и FAQ.
+ * Приветственные 3 слайда и гайд — только внутри экрана «Загрузить», не на ленте.
  */
 const WELCOME_SLIDES = [
   {
@@ -14,7 +14,7 @@ const WELCOME_SLIDES = [
   },
   {
     title: 'Готов попробовать?',
-    html: `<p class="onboarding-text">Это занимает 10–15 минут. Никаких установок, никакого кода руками.</p>`,
+    html: `<p class="onboarding-text">Это занимает 10–15 минут. Никаких установок, никакого кода руками. Ниже — шаги и форма.</p>`,
     final: true,
   },
 ];
@@ -35,6 +35,11 @@ function setWelcomeStorageDone() {
   } catch (e) { /* ignore */ }
 }
 
+function hideUploadWelcomeBlock() {
+  const b = document.getElementById('upload-welcome-block');
+  if (b) b.setAttribute('hidden', '');
+}
+
 function renderWelcomeSlide() {
   const body = document.getElementById('welcomeBody');
   const footer = document.getElementById('welcomeFooter');
@@ -51,21 +56,21 @@ function renderWelcomeSlide() {
   if (slide.final) {
     footer.innerHTML = `
       <button type="button" class="submit-btn welcome-btn-secondary" data-action="welcome-browse">Сначала посмотрю</button>
-      <button type="button" class="submit-btn" data-action="welcome-upload">Добавить свою игру</button>
+      <button type="button" class="submit-btn" data-action="welcome-upload">К шагам и форме</button>
     `;
   } else {
     footer.innerHTML = `<button type="button" class="submit-btn" data-action="welcome-next">${esc(slide.btn)}</button>`;
   }
 }
 
-function openWelcomeScreen() {
+/** Первый заход на «Загрузить» — показать 3 слайда поверх гайда */
+function maybeShowWelcomeOnUploadOpen() {
+  if (welcomeStorageDone()) return;
+  const b = document.getElementById('upload-welcome-block');
+  if (!b) return;
   welcomeStep = 0;
-  document.getElementById('welcome-screen')?.classList.add('open');
+  b.removeAttribute('hidden');
   renderWelcomeSlide();
-}
-
-function closeWelcomeScreen() {
-  document.getElementById('welcome-screen')?.classList.remove('open');
 }
 
 function welcomeNext() {
@@ -75,59 +80,34 @@ function welcomeNext() {
   }
 }
 
-function welcomeFinishBrowse() {
+function scrollUploadToForm() {
+  document.getElementById('upload-methods-anchor')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function welcomeAfterSlides() {
   setWelcomeStorageDone();
-  closeWelcomeScreen();
+  hideUploadWelcomeBlock();
+  if (typeof selectMethod === 'function') selectMethod('url');
+  scrollUploadToForm();
+}
+
+function welcomeFinishBrowse() {
+  welcomeAfterSlides();
+  if (typeof closeUpload === 'function') closeUpload();
   if (typeof maybeShowFeedNavTipAfterGames === 'function') maybeShowFeedNavTipAfterGames();
 }
 
 function welcomeFinishUpload() {
-  setWelcomeStorageDone();
-  closeWelcomeScreen();
-  if (typeof openUpload === 'function') openUpload();
-  if (typeof maybeShowFeedNavTipAfterGames === 'function') maybeShowFeedNavTipAfterGames();
+  welcomeAfterSlides();
 }
 
-/** После успешной регистрации — показать приветствие один раз */
-function maybeShowWelcomeAfterRegister() {
-  if (welcomeStorageDone()) return;
-  openWelcomeScreen();
-}
-
-function openHelpHowScreen() {
-  document.getElementById('help-how-screen')?.classList.add('open');
-}
-
-function closeHelpHowScreen() {
-  document.getElementById('help-how-screen')?.classList.remove('open');
-}
-
-function openHelpFaqScreen() {
-  document.getElementById('help-faq-screen')?.classList.add('open');
-}
-
-function closeHelpFaqScreen() {
-  document.getElementById('help-faq-screen')?.classList.remove('open');
-}
-
-/** С главной: гайд, затем форма загрузки */
-function openHowToAddFromFeed() {
-  openHelpHowScreen();
-}
-
-function openUploadFromHelpHow() {
-  closeHelpHowScreen();
-  if (typeof openUpload === 'function') openUpload();
-  if (typeof selectMethod === 'function') selectMethod('url');
+function uploadScrollToForm() {
+  scrollUploadToForm();
 }
 
 window.welcomeNext = welcomeNext;
 window.welcomeFinishBrowse = welcomeFinishBrowse;
 window.welcomeFinishUpload = welcomeFinishUpload;
-window.maybeShowWelcomeAfterRegister = maybeShowWelcomeAfterRegister;
-window.openHelpHowScreen = openHelpHowScreen;
-window.closeHelpHowScreen = closeHelpHowScreen;
-window.openHelpFaqScreen = openHelpFaqScreen;
-window.closeHelpFaqScreen = closeHelpFaqScreen;
-window.openHowToAddFromFeed = openHowToAddFromFeed;
-window.openUploadFromHelpHow = openUploadFromHelpHow;
+window.maybeShowWelcomeOnUploadOpen = maybeShowWelcomeOnUploadOpen;
+window.hideUploadWelcomeBlock = hideUploadWelcomeBlock;
+window.uploadScrollToForm = uploadScrollToForm;
