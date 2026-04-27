@@ -11,7 +11,8 @@
     "db:migrate:remote": "wrangler d1 execute smolgame --remote --file=./schema.sql",
     "db:migrate:remote:game-columns": "wrangler d1 execute smolgame --remote --file=./migrations/0001_add_game_columns.sql",
     "db:migrate:remote:oauth": "wrangler d1 execute smolgame --remote --file=./migrations/0002_oauth_states.sql",
-    "db:migrate:remote:github-token": "wrangler d1 execute smolgame --remote --file=./migrations/0003_github_access_token.sql"
+    "db:migrate:remote:github-token": "wrangler d1 execute smolgame --remote --file=./migrations/0003_github_access_token.sql",
+    "db:migrate:remote:github-user-columns": "wrangler d1 execute smolgame --remote --file=./migrations/0004_github_user_columns.sql"
   },
   "devDependencies": {
     "wrangler": "^3.90.0"

@@ -28,7 +28,7 @@ async function bootstrap() {
     }
 
     await jumpToStartParamGame();
-    handleGithubOAuthReturn();
+    await handleGithubOAuthReturn();
     if (typeof refreshUploadCapabilities === 'function') {
       refreshUploadCapabilities().catch(() => {});
     }
@@ -46,7 +46,7 @@ async function bootstrap() {
   }
 }
 
-function handleGithubOAuthReturn() {
+async function handleGithubOAuthReturn() {
   try {
     const u = new URL(window.location.href);
     const g = u.searchParams.get('github');
@@ -62,6 +62,14 @@ function handleGithubOAuthReturn() {
     const qs = u.searchParams.toString();
     const clean = u.pathname + (qs ? '?' + qs : '') + u.hash;
     window.history.replaceState({}, '', clean);
+
+    if (typeof refreshUploadCapabilities === 'function') {
+      await refreshUploadCapabilities();
+    }
+    const upload = document.getElementById('upload-screen');
+    if (g === 'connected' && upload?.classList.contains('open') && typeof selectMethod === 'function') {
+      await selectMethod('code');
+    }
   } catch (e) {
     /* ignore */
   }

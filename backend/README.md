@@ -90,6 +90,15 @@ npm run db:migrate:remote:github-token
 
 После миграции пользователь должен **ещё раз** пройти «Войти через GitHub», чтобы токен записался в базу.
 
+Если в D1 в таблице `users` **нет** колонок `github_user_id` и `github_login` (старая база), OAuth не сможет сохранить привязку — выполни:
+
+```bash
+cd backend
+npm run db:migrate:remote:github-user-columns
+```
+
+(Если SQLite вернёт «duplicate column» на одной из строк — колонка уже есть, остальное всё равно примени вручную в консоли D1 по одной строке из `migrations/0004_github_user_columns.sql`.)
+
 ## Что дальше
 
 Просто пилим код.

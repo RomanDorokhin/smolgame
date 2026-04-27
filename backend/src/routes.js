@@ -281,35 +281,80 @@ export async function getFeed(req, env) {
   });
 }
 
+const GET_ME_SQL_VARIANTS = [
+  `SELECT site_handle AS siteHandle,
+          display_name AS displayName,
+          bio AS bio,
+          github_login AS githubLogin,
+          github_user_id AS githubUserId,
+          github_access_token_enc AS githubAccessTokenEnc,
+          COALESCE(NULLIF(TRIM(avatar_override_url), ''), photo_url) AS avatarUrl
+     FROM users WHERE id = ?`,
+  `SELECT site_handle AS siteHandle,
+          display_name AS displayName,
+          bio AS bio,
+          github_login AS githubLogin,
+          github_user_id AS githubUserId,
+          github_access_token_enc AS githubAccessTokenEnc,
+          photo_url AS avatarUrl
+     FROM users WHERE id = ?`,
+  `SELECT site_handle AS siteHandle,
+          display_name AS displayName,
+          bio AS bio,
+          github_login AS githubLogin,
+          github_user_id AS githubUserId,
+          COALESCE(NULLIF(TRIM(avatar_override_url), ''), photo_url) AS avatarUrl
+     FROM users WHERE id = ?`,
+  `SELECT site_handle AS siteHandle,
+          display_name AS displayName,
+          bio AS bio,
+          github_login AS githubLogin,
+          github_user_id AS githubUserId,
+          photo_url AS avatarUrl
+     FROM users WHERE id = ?`,
+  `SELECT site_handle AS siteHandle,
+          CAST(NULL AS TEXT) AS displayName,
+          CAST(NULL AS TEXT) AS bio,
+          github_login AS githubLogin,
+          github_user_id AS githubUserId,
+          github_access_token_enc AS githubAccessTokenEnc,
+          photo_url AS avatarUrl
+     FROM users WHERE id = ?`,
+  `SELECT site_handle AS siteHandle,
+          CAST(NULL AS TEXT) AS displayName,
+          CAST(NULL AS TEXT) AS bio,
+          github_login AS githubLogin,
+          github_user_id AS githubUserId,
+          photo_url AS avatarUrl
+     FROM users WHERE id = ?`,
+  `SELECT site_handle AS siteHandle,
+          display_name AS displayName,
+          bio AS bio,
+          COALESCE(NULLIF(TRIM(avatar_override_url), ''), photo_url) AS avatarUrl
+     FROM users WHERE id = ?`,
+  `SELECT site_handle AS siteHandle,
+          display_name AS displayName,
+          bio AS bio,
+          photo_url AS avatarUrl
+     FROM users WHERE id = ?`,
+  `SELECT site_handle AS siteHandle,
+          CAST(NULL AS TEXT) AS displayName,
+          CAST(NULL AS TEXT) AS bio,
+          photo_url AS avatarUrl
+     FROM users WHERE id = ?`,
+];
+
 export async function getMe(req, env) {
   const user = await authenticate(req, env);
   if (!user) return error('unauthorized', 401);
   await upsertUser(env.DB, user);
   let dbUser;
   try {
-    dbUser = await env.DB.prepare(
-      `SELECT site_handle AS siteHandle,
-              display_name AS displayName,
-              bio AS bio,
-              github_login AS githubLogin,
-              github_user_id AS githubUserId,
-              github_access_token_enc AS githubAccessTokenEnc,
-              COALESCE(NULLIF(TRIM(avatar_override_url), ''), photo_url) AS avatarUrl
-         FROM users WHERE id = ?`
-    ).bind(user.id).first();
+    dbUser = await firstSuccessfulFirst(env.DB, GET_ME_SQL_VARIANTS, [user.id]);
   } catch (e) {
-    if (!isMissingColumnError(e)) throw e;
-    dbUser = await env.DB.prepare(
-      `SELECT site_handle AS siteHandle,
-              display_name AS displayName,
-              bio AS bio,
-              github_login AS githubLogin,
-              github_user_id AS githubUserId,
-              COALESCE(NULLIF(TRIM(avatar_override_url), ''), photo_url) AS avatarUrl
-         FROM users WHERE id = ?`
-    ).bind(user.id).first();
-    if (dbUser) dbUser.githubAccessTokenEnc = null;
+    throw e;
   }
+  if (dbUser && !('githubAccessTokenEnc' in dbUser)) dbUser.githubAccessTokenEnc = null;
 
   // Статистика автора (одна строка — надёжнее .first(), чем .all()[0] в D1).
   const statsRow = await env.DB.prepare(

@@ -39,10 +39,18 @@ function updateGithubUploadUi() {
   if (btnLabel) {
     btnLabel.textContent = USER.isGithubConnected ? 'GitHub привязан ✓' : 'Войти через GitHub';
   }
+  const primary = document.getElementById('btn-github-primary');
+  const done = USER.isGithubConnected && USER.hasGithubPublishToken;
+  if (primary) {
+    primary.hidden = Boolean(done);
+  }
+  const reauth = document.getElementById('btn-github-reauth');
+  if (reauth) {
+    reauth.hidden = !done;
+  }
   const uploadBtn = document.getElementById('btn-github-upload');
   if (uploadBtn) {
-    const show = USER.isGithubConnected && USER.hasGithubPublishToken;
-    uploadBtn.hidden = !show;
+    uploadBtn.hidden = !done;
   }
 }
 
