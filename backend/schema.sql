@@ -14,6 +14,7 @@ CREATE TABLE IF NOT EXISTS users (
   avatar_override_url TEXT,              -- своё фото; иначе photo_url из Telegram
   github_user_id TEXT,                   -- id пользователя GitHub (уникален)
   github_login TEXT,                     -- логин @github
+  github_access_token_enc TEXT,          -- OAuth token (шифрование на Worker), см. миграцию 0003
   date_of_birth TEXT,
   consented_at INTEGER,
   tos_accepted_at INTEGER,
