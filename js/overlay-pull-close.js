@@ -6,13 +6,13 @@ const PULL_HANDLE_ZONE = 120;
 
 function closestOverlayScreen(el) {
   return el?.closest?.(
-    '#profile-screen, #author-screen, #search-screen, #upload-screen'
+    '#profile-screen, #author-screen, #search-screen, #games-library-screen, #upload-screen'
   );
 }
 
 function isOverlayOpen() {
   return Boolean(document.querySelector(
-    '#profile-screen.open, #author-screen.open, #search-screen.open, #upload-screen.open'
+    '#profile-screen.open, #author-screen.open, #search-screen.open, #games-library-screen.open, #upload-screen.open'
   ));
 }
 
@@ -21,6 +21,7 @@ function closeOverlayScreen(screen) {
   if (screen.id === 'profile-screen' && typeof closeProfile === 'function') closeProfile();
   else if (screen.id === 'author-screen' && typeof closeAuthorScreen === 'function') closeAuthorScreen();
   else if (screen.id === 'search-screen' && typeof closeSearch === 'function') closeSearch();
+  else if (screen.id === 'games-library-screen' && typeof closeGamesLibrary === 'function') closeGamesLibrary();
   else if (screen.id === 'upload-screen' && typeof closeUpload === 'function') closeUpload();
 }
 

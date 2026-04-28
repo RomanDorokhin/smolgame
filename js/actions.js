@@ -28,21 +28,25 @@ function toggleLike() {
   const req = wasLiked
     ? Promise.all([API.unlike(g.id), API.unbookmark(g.id)])
     : Promise.all([API.like(g.id), API.bookmark(g.id)]);
-  req.catch(err => {
-    if (wasLiked) {
-      likedSet.add(g.id);
-      bookmarkedSet.add(g.id);
-    } else {
-      likedSet.delete(g.id);
-      bookmarkedSet.delete(g.id);
-    }
-    saveSet(STORAGE_KEYS.liked, likedSet);
-    saveSet(STORAGE_KEYS.bookmarked, bookmarkedSet);
-    updateOverlay();
-    showToast(typeof userFacingError === 'function' ? userFacingError(err) : 'Не вышло. Попробуй ещё раз');
-    if (typeof hapticWarning === 'function') hapticWarning();
-    console.warn('like/bookmark failed', err);
-  });
+  req
+    .then(() => {
+      if (typeof refreshLikedGamesScreen === 'function') refreshLikedGamesScreen();
+    })
+    .catch(err => {
+      if (wasLiked) {
+        likedSet.add(g.id);
+        bookmarkedSet.add(g.id);
+      } else {
+        likedSet.delete(g.id);
+        bookmarkedSet.delete(g.id);
+      }
+      saveSet(STORAGE_KEYS.liked, likedSet);
+      saveSet(STORAGE_KEYS.bookmarked, bookmarkedSet);
+      updateOverlay();
+      showToast(typeof userFacingError === 'function' ? userFacingError(err) : 'Не вышло. Попробуй ещё раз');
+      if (typeof hapticWarning === 'function') hapticWarning();
+      console.warn('like/bookmark failed', err);
+    });
 }
 
 function toggleFollow() {

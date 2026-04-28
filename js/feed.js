@@ -492,7 +492,7 @@ let activePointerId = null;
 
 function isOverlayOpen() {
   return Boolean(document.querySelector(
-    '#upload-screen.open, #profile-screen.open, #search-screen.open, #author-screen.open, #onboarding-screen.open, #feed-nav-tip-overlay.feed-nav-tip-visible'
+    '#upload-screen.open, #profile-screen.open, #search-screen.open, #games-library-screen.open, #author-screen.open, #onboarding-screen.open, #feed-nav-tip-overlay.feed-nav-tip-visible'
   ));
 }
 

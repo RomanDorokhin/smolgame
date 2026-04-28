@@ -12,6 +12,7 @@ const CLICK_ACTIONS = {
   'close-profile':  () => closeProfile(),
   'open-search':    () => openSearch(),
   'close-search':   () => closeSearch(),
+  'close-games-library': () => closeGamesLibrary(),
 
   'toggle-like':    () => toggleLike(),
   'share-game':     () => shareGame(),
@@ -59,6 +60,7 @@ const CLICK_ACTIONS = {
 
   'open-game':      (el) => openGameFromSearch(el.dataset.gameId),
   'open-game-profile': (el) => openGameFromProfile(el.dataset.gameId),
+  'open-game-liked': (el) => openGameFromLikedList(el.dataset.gameId),
   'delete-game':    (el, ev) => { ev.stopPropagation(); deleteGame(el.dataset.gameId); },
   'save-profile':   () => saveProfile(),
   'reset-profile-photo': () => resetProfilePhoto(),

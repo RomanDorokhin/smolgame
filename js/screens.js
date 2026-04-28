@@ -14,6 +14,7 @@ function closeAllMainTabs() {
   const profile = document.getElementById('profile-screen');
   profile?.classList.remove('open', 'profile-edit-active');
   document.getElementById('search-screen')?.classList.remove('open');
+  document.getElementById('games-library-screen')?.classList.remove('open');
   document.getElementById('author-screen')?.classList.remove('open');
 }
 
@@ -39,6 +40,11 @@ function openSearch() {
 }
 function closeSearch() {
   document.getElementById('search-screen')?.classList.remove('open');
+  switchTab('feed');
+}
+
+function closeGamesLibrary() {
+  document.getElementById('games-library-screen')?.classList.remove('open');
   switchTab('feed');
 }
 
@@ -191,6 +197,9 @@ function switchTab(tab) {
     if (typeof renderProfile === 'function') renderProfile();
     if (typeof loadAdminPending === 'function') loadAdminPending();
     screen?.classList.add('open');
+  } else if (tab === 'games') {
+    document.getElementById('games-library-screen')?.classList.add('open');
+    if (typeof loadLikedGamesList === 'function') loadLikedGamesList();
   } else if (tab === 'upload') {
     const upload = document.getElementById('upload-screen');
     upload?.classList.add('open');
@@ -216,6 +225,7 @@ window.openProfile = openProfile;
 window.closeProfile = closeProfile;
 window.openSearch = openSearch;
 window.closeSearch = closeSearch;
+window.closeGamesLibrary = closeGamesLibrary;
 window.openAuthorScreen = openAuthorScreen;
 window.closeAuthorScreen = closeAuthorScreen;
 window.loadAuthorProfile = loadAuthorProfile;

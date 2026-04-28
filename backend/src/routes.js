@@ -536,6 +536,81 @@ export async function getMyGames(req, env) {
   return json({ games: results });
 }
 
+const LIKED_GAMES_SQL_VARIANTS = [
+  `SELECT g.id, g.title, g.description, g.genre, g.genre_emoji AS genreEmoji,
+          g.url, g.image_url AS imageUrl, g.likes, g.plays, g.author_id AS authorId,
+          u.site_handle AS authorHandle, u.first_name AS authorFirst, u.last_name AS authorLast,
+          u.display_name AS authorDisplayName,
+          COALESCE(NULLIF(TRIM(u.avatar_override_url), ''), u.photo_url) AS authorPhoto
+     FROM likes l
+     JOIN games g ON g.id = l.game_id AND g.status = 'published'
+     LEFT JOIN users u ON u.id = g.author_id
+    WHERE l.user_id = ?1
+    ORDER BY l.created_at DESC`,
+  `SELECT g.id, g.title, g.description, g.genre, CAST(NULL AS TEXT) AS genreEmoji,
+          g.url, CAST(NULL AS TEXT) AS imageUrl, g.likes, g.plays, g.author_id AS authorId,
+          u.site_handle AS authorHandle, u.first_name AS authorFirst, u.last_name AS authorLast,
+          u.display_name AS authorDisplayName,
+          COALESCE(NULLIF(TRIM(u.avatar_override_url), ''), u.photo_url) AS authorPhoto
+     FROM likes l
+     JOIN games g ON g.id = l.game_id AND g.status = 'published'
+     LEFT JOIN users u ON u.id = g.author_id
+    WHERE l.user_id = ?1
+    ORDER BY l.created_at DESC`,
+  `SELECT g.id, g.title, g.description, g.genre, g.genre_emoji AS genreEmoji,
+          g.url, g.image_url AS imageUrl, g.likes, g.plays, g.author_id AS authorId,
+          COALESCE(NULLIF(TRIM(u.username), ''), u.id) AS authorHandle,
+          u.first_name AS authorFirst, u.last_name AS authorLast,
+          CAST(NULL AS TEXT) AS authorDisplayName,
+          u.photo_url AS authorPhoto
+     FROM likes l
+     JOIN games g ON g.id = l.game_id AND g.status = 'published'
+     LEFT JOIN users u ON u.id = g.author_id
+    WHERE l.user_id = ?1
+    ORDER BY l.created_at DESC`,
+  `SELECT g.id, g.title, g.description, g.genre, CAST(NULL AS TEXT) AS genreEmoji,
+          g.url, CAST(NULL AS TEXT) AS imageUrl, g.likes, g.plays, g.author_id AS authorId,
+          COALESCE(NULLIF(TRIM(u.username), ''), u.id) AS authorHandle,
+          u.first_name AS authorFirst, u.last_name AS authorLast,
+          CAST(NULL AS TEXT) AS authorDisplayName,
+          u.photo_url AS authorPhoto
+     FROM likes l
+     JOIN games g ON g.id = l.game_id AND g.status = 'published'
+     LEFT JOIN users u ON u.id = g.author_id
+    WHERE l.user_id = ?1
+    ORDER BY l.created_at DESC`,
+];
+
+export async function getLikedGames(req, env) {
+  const user = await authenticate(req, env);
+  if (!user) return error('unauthorized', 401);
+
+  let likedSet = new Set();
+  let followedSet = new Set();
+  let bookmarkedSet = new Set();
+  const likes = await env.DB
+    .prepare(`SELECT game_id FROM likes WHERE user_id = ?`)
+    .bind(user.id)
+    .all();
+  likedSet = new Set(likes.results.map(r => r.game_id));
+
+  const follows = await env.DB
+    .prepare(`SELECT author_id FROM follows WHERE user_id = ?`)
+    .bind(user.id)
+    .all();
+  followedSet = new Set(follows.results.map(r => r.author_id));
+
+  const bookmarks = await env.DB
+    .prepare(`SELECT game_id FROM bookmarks WHERE user_id = ?`)
+    .bind(user.id)
+    .all();
+  bookmarkedSet = new Set(bookmarks.results.map(r => r.game_id));
+
+  const { results } = await firstSuccessfulAll(env.DB, LIKED_GAMES_SQL_VARIANTS, [user.id]);
+  const games = (results || []).map(g => mapFeedGameRow(g, likedSet, followedSet, bookmarkedSet));
+  return json({ games });
+}
+
 export async function checkRegistered(req, env) {
   const user = await authenticate(req, env);
   if (!user) return error('unauthorized', 401);
