@@ -21,12 +21,12 @@ function updateGithubUploadUi() {
   const hint = document.getElementById('github-connect-hint');
   if (hint) {
     if (!USER.isGithubConnected) {
-      hint.textContent = 'Привяжи GitHub — ниже появится поле для кода или файлов.';
+      hint.textContent = 'Привяжи GitHub сверху — затем вкладка «GitHub» и поле для кода или файлов.';
     } else if (!USER.hasGithubPublishToken) {
       hint.textContent =
         'Токен не сохранён: проверь миграцию D1 (github_access_token_enc) и снова нажми «Войти через GitHub».';
     } else {
-      hint.textContent = 'Готово — код или файлы, название, описание, затем «Отправить на GitHub».';
+      hint.textContent = 'Готово — открой «GitHub» ниже: код или файлы, название, описание, затем отправка.';
     }
   }
   const btnLabel = document.getElementById('btn-github-primary-label');
