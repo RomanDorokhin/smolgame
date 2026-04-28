@@ -14,9 +14,9 @@ async function refreshUploadCapabilities() {
 }
 
 function updateGithubUploadUi() {
-  const premCard = document.getElementById('method-premium');
-  if (premCard) {
-    premCard.hidden = !USER.isPremium;
+  const premDeck = document.getElementById('upload-premium-deck');
+  if (premDeck) {
+    premDeck.hidden = !USER.isPremium;
   }
   const hint = document.getElementById('github-connect-hint');
   if (hint) {
@@ -28,7 +28,10 @@ function updateGithubUploadUi() {
         'Токен не сохранён: проверь миграцию D1 (github_access_token_enc) и снова нажми «Войти через GitHub».';
     } else {
       hint.textContent =
-        'Готово — код или файлы, название, описание, затем «Создать репозиторий на GitHub». Код уходит в GitHub, не на сервер SmolGame.';
+        'Готово — код или файлы, название, описание, затем «Создать репозиторий на GitHub». Код уходит в GitHub, не на сервер SmolGame.' +
+        (USER.isPremium
+          ? ' Вкладка «Премиум» ниже — другой раздел, без репозитория GitHub.'
+          : '');
     }
   }
   const btnLabel = document.getElementById('btn-github-primary-label');
