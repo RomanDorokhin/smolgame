@@ -9,6 +9,10 @@ function feedEl() {
   return document.getElementById('feed');
 }
 
+function feedSwipeTeaseHost() {
+  return feedEl();
+}
+
 function mergePendingIntoFeed(pendingQueue, published) {
   const pq = Array.isArray(pendingQueue) ? pendingQueue : [];
   const pub = Array.isArray(published) ? published : [];
@@ -493,7 +497,7 @@ function feedPointerDown(e, dragHost) {
   }
   if (dragHost === strip) {
     resetSwipeStripDragVisual(strip);
-    document.body.classList.remove('feed-swipe-tease-burst');
+    feedSwipeTeaseHost()?.classList.remove('feed-swipe-tease-burst');
   }
 
   touching = true;
@@ -610,7 +614,7 @@ document.addEventListener('DOMContentLoaded', () => {
   if (document.getElementById('nav-feed')?.classList.contains('active')) {
     document.body.classList.add('is-tab-feed');
   }
-  document.body.addEventListener('animationend', onFeedSwipeTeaseBurstAnimationEnd);
+  feedSwipeTeaseHost()?.addEventListener('animationend', onFeedSwipeTeaseBurstAnimationEnd);
 
   const strip = swipeNavStrip();
   if (!strip) return;
@@ -727,21 +731,22 @@ function clearFeedSwipeTeaseTimers() {
 
 /** Учился свайпать или ушли с coach — убрать всплеск и таймеры */
 function clearFeedSwipeTeaseCoaching() {
-  document.body.classList.remove('feed-swipe-tease-burst');
+  feedSwipeTeaseHost()?.classList.remove('feed-swipe-tease-burst');
   clearFeedSwipeTeaseTimers();
 }
 
 /** Ушли с вкладки ленты (поиск, профиль, загрузка, карточка автора) — сразу убрать дёрганье */
 function stopFeedSwipeTeaseForLeavingFeed() {
-  document.body.classList.remove('feed-swipe-tease-burst');
+  feedSwipeTeaseHost()?.classList.remove('feed-swipe-tease-burst');
   clearFeedSwipeTeaseTimers();
 }
 
 let feedSwipeTeaseFinishT = 0;
 
 function finishFeedSwipeTeaseBurst() {
-  if (!document.body.classList.contains('feed-swipe-tease-burst')) return;
-  document.body.classList.remove('feed-swipe-tease-burst');
+  const host = feedSwipeTeaseHost();
+  if (!host?.classList.contains('feed-swipe-tease-burst')) return;
+  host.classList.remove('feed-swipe-tease-burst');
   if (feedSwipeTeaseFinishT) {
     clearTimeout(feedSwipeTeaseFinishT);
     feedSwipeTeaseFinishT = 0;
@@ -755,9 +760,11 @@ function finishFeedSwipeTeaseBurst() {
 }
 
 function startFeedSwipeTeaseBurst() {
-  document.body.classList.remove('feed-swipe-tease-burst');
-  void document.body.offsetWidth;
-  document.body.classList.add('feed-swipe-tease-burst');
+  const host = feedSwipeTeaseHost();
+  if (!host) return;
+  host.classList.remove('feed-swipe-tease-burst');
+  void host.offsetWidth;
+  host.classList.add('feed-swipe-tease-burst');
   if (feedSwipeTeaseFinishT) clearTimeout(feedSwipeTeaseFinishT);
   /* animationend не срабатывает при prefers-reduced-motion — подстраховка */
   feedSwipeTeaseFinishT = setTimeout(() => {
@@ -778,7 +785,7 @@ function scheduleFeedSwipeTeaseBoredom() {
 }
 
 function onFeedSwipeTeaseBurstAnimationEnd(ev) {
-  if (ev.target !== document.body || ev.animationName !== 'feedSwipeTeaseBurst') return;
+  if (ev.target !== feedSwipeTeaseHost() || ev.animationName !== 'feedSwipeTeaseBurst') return;
   if (feedSwipeTeaseFinishT) {
     clearTimeout(feedSwipeTeaseFinishT);
     feedSwipeTeaseFinishT = 0;
