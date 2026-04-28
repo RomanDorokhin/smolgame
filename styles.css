@@ -1619,6 +1619,40 @@ body.feed-layout-vertical #game-info{
   margin-top:18px;
 }
 
+/* Действия под карточкой: не перекрывают превью, крупная зона тапа */
+.profile-game-actions{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  justify-content:center;
+  align-items:center;
+  width:100%;
+  max-width:220px;
+  margin:0 auto;
+  padding:0 2px 4px;
+}
+.profile-game-actions .profile-text-btn{
+  flex:1;
+  min-width:0;
+  text-align:center;
+  justify-content:center;
+}
+.profile-game-actions .profile-game-play-btn{
+  flex:1.15;
+  min-width:0;
+}
+.profile-game-actions .profile-game-delete-btn{
+  flex:0 0 auto;
+  min-width:44px;
+  padding-left:12px;
+  padding-right:12px;
+  color:rgba(255,170,170,0.95);
+  border-color:rgba(229,115,115,0.35);
+}
+.profile-game-actions .profile-game-delete-btn:active{
+  background:rgba(229,115,115,0.12);
+}
+
 .upload-guide-block{
   margin-top:28px;
   padding-top:22px;
@@ -2190,8 +2224,17 @@ textarea.field-input{
   flex-wrap:wrap;
   margin:12px 0 16px;
 }
-#profile-screen:not(.profile-edit-active) #profileEditDoneBtn{display:none;}
+#profile-screen:not(.profile-edit-active) #profileEditSaveBtn,
+#profile-screen:not(.profile-edit-active) #profileEditDiscardBtn{display:none;}
 #profile-screen.profile-edit-active #profileEditOpenBtn{display:none;}
+.profile-stats-hint{
+  font-size:11px;
+  line-height:1.4;
+  color:rgba(255,255,255,0.38);
+  margin:-8px 0 14px;
+  max-width:340px;
+}
+.profile-stats-hint:empty{display:none;}
 .profile-edit-toggle-btn{
   flex:1;
   min-width:140px;

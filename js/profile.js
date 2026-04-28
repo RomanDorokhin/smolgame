@@ -192,13 +192,16 @@ async function renderProfile() {
           <div class="game-card-thumb">
             ${gameStatusBadgeHtml(g.status)}
             ${gameThumbHtml(g)}
-            ${canEdit ? `<button type="button" class="edit-game-btn" data-action="toggle-profile-game-editor" data-game-id="${idRaw}" aria-label="Редактировать карточку"><svg class="sg-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M12 20h9M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button>` : ''}
-            <button type="button" class="delete-game-btn" data-action="delete-game" data-game-id="${gid}" aria-label="Удалить"><svg class="sg-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M9 3h6M5 7h14M10 11v8M14 11v8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M8 7l1 14h6l1-14" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg></button>
           </div>
           <div class="game-card-info">
             <div class="game-card-name">${esc(g.title)}</div>
             <div class="game-card-stats"><span class="sg-mini-stat">${sgStatHeartSvg()}${fmtNum(g.likes)}</span><span class="sg-mini-sep">·</span><span class="sg-mini-stat">${sgStatEyeSvg()}${fmtNum(g.plays)}</span></div>
           </div>
+        </div>
+        <div class="profile-game-actions">
+          ${canEdit ? `<button type="button" class="profile-text-btn" data-action="toggle-profile-game-editor" data-game-id="${idRaw}">Карточка</button>` : ''}
+          <button type="button" class="profile-text-btn profile-game-play-btn" data-action="open-game-profile" data-game-id="${gid}">В ленту</button>
+          <button type="button" class="profile-text-btn profile-game-delete-btn" data-action="delete-game" data-game-id="${gid}" data-game-title="${titleEsc}" aria-label="Удалить игру">Удалить</button>
         </div>
         ${editorHtml}
       </div>`;
@@ -221,13 +224,16 @@ function setProfileAvatar(avatar) {
   else el.textContent = avatar || '?';
 }
 
+/** Снимок полей при входе в «Редактировать профиль» — для «Отмена». */
+window.profileEditSnapshot = null;
+
 async function saveProfile() {
   const displayName = document.getElementById('profileDisplayName').value.trim();
   const bio = document.getElementById('profileBioInput').value.trim();
 
   if (!displayName) {
     showToast('⚠️ Укажи имя');
-    return;
+    return false;
   }
 
   try {
@@ -250,23 +256,57 @@ async function saveProfile() {
     showToast('Сохранено');
     if (typeof hapticSuccess === 'function') hapticSuccess();
     if (typeof updateOverlay === 'function') updateOverlay();
-    cancelProfileEdit();
+    window.profileEditSnapshot = null;
+    document.getElementById('profile-screen')?.classList.remove('profile-edit-active');
+    return true;
   } catch (e) {
     showToast(typeof userFacingError === 'function' ? userFacingError(e) : 'Не сохранилось');
     if (typeof hapticWarning === 'function') hapticWarning();
+    return false;
   }
 }
 
 function startProfileEdit() {
+  const dn = document.getElementById('profileDisplayName');
+  const bio = document.getElementById('profileBioInput');
+  window.profileEditSnapshot = {
+    displayName: dn?.value ?? '',
+    bio: bio?.value ?? '',
+  };
   document.getElementById('profile-screen')?.classList.add('profile-edit-active');
+  const wrap = document.getElementById('profile-edit-wrap');
+  try {
+    wrap?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  } catch (e) {
+    wrap?.scrollIntoView();
+  }
+  setTimeout(() => dn?.focus(), 180);
+}
+
+/** Закрыть режим редактирования без сохранения (восстановить поля из снимка). */
+function discardProfileEdit() {
+  document.getElementById('profile-screen')?.classList.remove('profile-edit-active');
+  const snap = window.profileEditSnapshot;
+  window.profileEditSnapshot = null;
+  const dn = document.getElementById('profileDisplayName');
+  const bio = document.getElementById('profileBioInput');
+  if (snap && dn && bio) {
+    dn.value = snap.displayName;
+    bio.value = snap.bio;
+  } else if (dn && bio) {
+    dn.value = USER.displayName || USER.name || '';
+    bio.value = USER.bio || '';
+  }
+}
+
+/** Сохранить и выйти из режима редактирования (кнопка «Сохранить» в шапке). */
+async function finishProfileEdit() {
+  const ok = await saveProfile();
+  if (ok && typeof closeAllProfileGameEditors === 'function') closeAllProfileGameEditors();
 }
 
 function cancelProfileEdit() {
-  document.getElementById('profile-screen')?.classList.remove('profile-edit-active');
-  const dn = document.getElementById('profileDisplayName');
-  const bio = document.getElementById('profileBioInput');
-  if (dn) dn.value = USER.displayName || USER.name || '';
-  if (bio) bio.value = USER.bio || '';
+  discardProfileEdit();
 }
 
 async function resetProfilePhoto() {
@@ -316,9 +356,17 @@ async function openGameFromProfile(gameId) {
   if (typeof goTo === 'function') goTo(idx, false);
 }
 
-async function deleteGame(gameId) {
+async function deleteGame(gameId, titleHint) {
   if (!gameId) return;
-  if (!confirm('Удалить игру? Это действие нельзя отменить.')) return;
+  const idEsc = String(gameId).replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+  const row = document.querySelector('.profile-game-row[data-profile-game-id="' + idEsc + '"]');
+  const fromRow = row?.dataset?.title?.trim();
+  const label = (titleHint && String(titleHint).trim()) || fromRow || 'эту игру';
+  const question =
+    label === 'эту игру'
+      ? 'Удалить игру? Это действие нельзя отменить.'
+      : `Удалить «${label}»? Это действие нельзя отменить.`;
+  if (!confirm(question)) return;
   try {
     await API.delete(gameId);
     showToast('🗑 Игра удалена');
@@ -336,6 +384,8 @@ window.resetProfilePhoto = resetProfilePhoto;
 window.openGameFromProfile = openGameFromProfile;
 window.startProfileEdit = startProfileEdit;
 window.cancelProfileEdit = cancelProfileEdit;
+window.discardProfileEdit = discardProfileEdit;
+window.finishProfileEdit = finishProfileEdit;
 
 document.addEventListener('change', ev => {
   if (ev.target?.id === 'profileAvatarInput') onProfileAvatarFileChange(ev);

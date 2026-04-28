@@ -451,12 +451,14 @@
         </div>
       </div>
     </div>
+    <p class="profile-stats-hint" id="profileStatsHint">Игры — опубликованные карточки. Лайки — сумма по всем твоим играм в ленте.</p>
     <div class="profile-name" id="profileName">Гость</div>
     <div class="profile-handle" id="profileHandle">@—</div>
     <p class="profile-bio" id="profileBio"></p>
     <div class="profile-edit-actions">
       <button type="button" class="profile-edit-toggle-btn primary" id="profileEditOpenBtn" data-action="profile-start-edit">Редактировать профиль</button>
-      <button type="button" class="profile-edit-toggle-btn" id="profileEditDoneBtn" data-action="profile-cancel-edit">Готово</button>
+      <button type="button" class="profile-edit-toggle-btn primary" id="profileEditSaveBtn" data-action="profile-finish-edit">Сохранить</button>
+      <button type="button" class="profile-edit-toggle-btn" id="profileEditDiscardBtn" data-action="profile-discard-edit">Отмена</button>
     </div>
     <div id="profile-edit-wrap" class="profile-edit-wrap">
       <div class="profile-edit-fields">

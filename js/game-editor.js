@@ -127,6 +127,13 @@ function toggleProfileGameEditor(gameId) {
   } catch (e) {
     panel.scrollIntoView();
   }
+  setTimeout(() => {
+    try {
+      titleEl?.focus();
+    } catch (e2) {
+      /* ignore */
+    }
+  }, 220);
 }
 
 function cancelProfileGameEditor(gameId) {
