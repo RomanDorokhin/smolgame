@@ -1679,11 +1679,14 @@ body.feed-layout-vertical #game-info{
   background:var(--surface);
   border:2px solid var(--border);
   border-radius:16px;
-  padding:18px 14px;
+  padding:20px 14px 22px;
+  min-height:108px;
   cursor:pointer;
   text-align:center;
   transition:border-color 0.2s,background 0.2s;
   touch-action:manipulation;
+  -webkit-user-select:none;
+  user-select:none;
 }
 .method-card.selected{
   border-color:rgba(var(--accent-rgb),0.45);
@@ -2159,6 +2162,11 @@ textarea.field-input{
   color:var(--muted);
 }
 .profile-badge.dev{color:var(--accent);border-color:rgba(var(--accent-rgb),0.35);background:rgba(var(--accent-rgb),0.1);}
+.profile-badge--premium{
+  color:rgba(240,200,106,0.95);
+  border-color:rgba(240,200,106,0.45);
+  background:rgba(240,200,106,0.12);
+}
 
 .author-follow-btn{
   width:100%;

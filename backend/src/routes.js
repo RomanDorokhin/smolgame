@@ -670,6 +670,42 @@ export async function getPlayedGames(req, env) {
   }
 }
 
+/** GET /api/me/games-library — лайкнутые + «играл» одним round-trip (меньше холодных стартов Worker). */
+export async function getMyGamesLibraryBatch(req, env) {
+  const user = await authenticate(req, env);
+  if (!user) return error('unauthorized', 401);
+
+  const likesP = env.DB.prepare(`SELECT game_id FROM likes WHERE user_id = ?`).bind(user.id).all();
+  const followsP = env.DB.prepare(`SELECT author_id FROM follows WHERE user_id = ?`).bind(user.id).all();
+  const bookmarksP = env.DB.prepare(`SELECT game_id FROM bookmarks WHERE user_id = ?`).bind(user.id).all();
+  const likedP = firstSuccessfulAll(env.DB, LIKED_GAMES_SQL_VARIANTS, [user.id]);
+  const playedP = firstSuccessfulAll(env.DB, PLAYED_GAMES_SQL_VARIANTS, [user.id]).catch(e => {
+    if (/no such table/i.test(String(e?.message || e))) return { results: [] };
+    throw e;
+  });
+
+  const [likes, follows, bookmarks, likedRes, playedRes] = await Promise.all([
+    likesP,
+    followsP,
+    bookmarksP,
+    likedP,
+    playedP,
+  ]);
+
+  const likedSet = new Set((likes.results || []).map(r => r.game_id));
+  const followedSet = new Set((follows.results || []).map(r => r.author_id));
+  const bookmarkedSet = new Set((bookmarks.results || []).map(r => r.game_id));
+
+  const likedGames = (likedRes.results || []).map(g =>
+    mapFeedGameRow(g, likedSet, followedSet, bookmarkedSet)
+  );
+  const playedGames = (playedRes.results || []).map(g =>
+    mapFeedGameRow(g, likedSet, followedSet, bookmarkedSet)
+  );
+
+  return json({ likedGames, playedGames });
+}
+
 export async function checkRegistered(req, env) {
   const user = await authenticate(req, env);
   if (!user) return error('unauthorized', 401);

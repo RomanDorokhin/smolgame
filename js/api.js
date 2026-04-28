@@ -82,6 +82,7 @@ window.API = {
   me:           ()         => apiFetch('/api/me'),
   updateMe:     (payload)  => apiFetch('/api/me', { method: 'PATCH', body: payload }),
   myGames:      ()         => apiFetch('/api/me/games'),
+  gamesLibrary: ()         => apiFetch('/api/me/games-library'),
   likedGames:   ()         => apiFetch('/api/me/liked-games'),
   playedGames:  ()         => apiFetch('/api/me/played-games'),
   game:         (gameId)   => apiFetch(`/api/games/${encodeURIComponent(gameId)}`),

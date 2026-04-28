@@ -48,6 +48,8 @@ async function renderProfile() {
   setStatLikes('…');
 
   document.getElementById('devBadge').style.display = USER.isGithubConnected ? '' : 'none';
+  const premBadge = document.getElementById('premiumBadge');
+  if (premBadge) premBadge.style.display = USER.isPremium ? '' : 'none';
 
   let myGames = [];
 
@@ -79,6 +81,7 @@ async function renderProfile() {
       setProfileAvatar(USER.avatar);
       document.getElementById('profileDisplayName').value = USER.displayName || USER.name || '';
       document.getElementById('profileBioInput').value = USER.bio || '';
+      if (premBadge) premBadge.style.display = USER.isPremium ? '' : 'none';
     }
     const games = myGamesRes?.games;
     myGames = Array.isArray(games) ? games : [];
@@ -109,6 +112,7 @@ async function renderProfile() {
         setProfileAvatar(USER.avatar);
         document.getElementById('profileDisplayName').value = USER.displayName || USER.name || '';
         document.getElementById('profileBioInput').value = USER.bio || '';
+        if (premBadge) premBadge.style.display = USER.isPremium ? '' : 'none';
       }
     } catch (e2) {
       console.warn('profile /me retry failed', e2);

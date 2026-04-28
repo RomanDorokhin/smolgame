@@ -92,6 +92,8 @@ npm run db:migrate:remote:github-token
 
 После миграции пользователь должен **ещё раз** пройти «Войти через GitHub», чтобы токен записался в базу.
 
+**Экран «Игры» (лайки + недавно играл):** `GET /api/me/games-library` — один ответ `{ likedGames, playedGames }`, меньше задержки, чем два отдельных запроса. Фронт использует его с fallback на `/api/me/liked-games` и `/api/me/played-games`.
+
 **Отвязать GitHub:** в мини-аппе кнопка вызывает `POST /api/auth/github/unlink` (очищает `github_user_id`, `github_login`, `github_access_token_enc`).
 
 **Старая D1 без `display_name`:** если профиль автора падает с `no such column: display_name`, выполни `npm run db:migrate:remote:display-name` в `backend/` (файл `migrations/0007_users_display_name.sql`). Worker сам перебирает варианты SQL, но колонка нужна для редактирования имени в профиле.

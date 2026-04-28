@@ -44,12 +44,29 @@ async function loadGamesLibrary() {
       '<div style="grid-column:1/-1;text-align:center;padding:24px 0;color:var(--muted);font-size:14px;">Загрузка…</div>';
   }
   try {
-    const [likedData, playedData] = await Promise.all([
-      API.likedGames(),
-      API.playedGames().catch(() => ({ games: [] })),
-    ]);
-    const liked = Array.isArray(likedData?.games) ? likedData.games : [];
-    const played = Array.isArray(playedData?.games) ? playedData.games : [];
+    let liked = [];
+    let played = [];
+    if (typeof API.gamesLibrary === 'function') {
+      try {
+        const batch = await API.gamesLibrary();
+        liked = Array.isArray(batch?.likedGames) ? batch.likedGames : [];
+        played = Array.isArray(batch?.playedGames) ? batch.playedGames : [];
+      } catch (e) {
+        const [likedData, playedData] = await Promise.all([
+          API.likedGames(),
+          API.playedGames().catch(() => ({ games: [] })),
+        ]);
+        liked = Array.isArray(likedData?.games) ? likedData.games : [];
+        played = Array.isArray(playedData?.games) ? playedData.games : [];
+      }
+    } else {
+      const [likedData, playedData] = await Promise.all([
+        API.likedGames(),
+        API.playedGames().catch(() => ({ games: [] })),
+      ]);
+      liked = Array.isArray(likedData?.games) ? likedData.games : [];
+      played = Array.isArray(playedData?.games) ? playedData.games : [];
+    }
     renderGamesGridSection(
       'likedGamesGrid',
       liked,
