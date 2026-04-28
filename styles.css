@@ -334,43 +334,33 @@ html,body,#root,#feed,.slide{margin:0;padding:0;border:0;width:100%;height:100%;
   border-top-color:rgba(255,255,255,0.12);
   box-shadow:0 -1px 0 rgba(255,255,255,0.06);
 }
-/* Подсказка «сдвинь влево»: вся «коробка» UI + полоска двигаются вместе, как при свайпе */
-body:has(#swipe-strip.swipe-strip--coach) #feed,
-body:has(#swipe-strip.swipe-strip--coach) #side-actions,
-body:has(#swipe-strip.swipe-strip--coach) #game-info,
-body:has(#swipe-strip.swipe-strip--coach) #dots,
-body:has(#swipe-strip.swipe-strip--coach) #swipe-strip,
-body:has(#swipe-strip.swipe-strip--coach) #feed-coach-fab,
-body:has(#swipe-strip.swipe-strip--coach) #bottom-nav{
-  animation:feedSwipeTeaseNudge 2.4s cubic-bezier(0.4,0,0.2,1) infinite;
+/*
+  Подсказка «свайп влево»: анимация на body — все fixed-слои (игра, стрелки, FAB)
+  едут одним куском, без «дёрганья только по центру».
+*/
+body:has(#swipe-strip.swipe-strip--coach):not(:has(#swipe-strip.dragging)){
+  animation:feedSwipeTeaseNudge 2.35s cubic-bezier(0.33,0,0.2,1) infinite;
   will-change:transform;
 }
-#swipe-strip.dragging{animation:none !important;will-change:auto;}
-body:has(#feed-nav-tip-overlay.feed-nav-tip-visible) #feed,
-body:has(#feed-nav-tip-overlay.feed-nav-tip-visible) #side-actions,
-body:has(#feed-nav-tip-overlay.feed-nav-tip-visible) #game-info,
-body:has(#feed-nav-tip-overlay.feed-nav-tip-visible) #dots,
-body:has(#feed-nav-tip-overlay.feed-nav-tip-visible) #swipe-strip,
-body:has(#feed-nav-tip-overlay.feed-nav-tip-visible) #feed-coach-fab,
-body:has(#feed-nav-tip-overlay.feed-nav-tip-visible) #bottom-nav{
+#swipe-strip.dragging{will-change:auto;}
+body:has(#feed-nav-tip-overlay.feed-nav-tip-visible),
+body:has(#swipe-strip.dragging){
   animation:none !important;
   transform:none !important;
   will-change:auto;
 }
 @keyframes feedSwipeTeaseNudge{
   0%,100%{transform:translate3d(0,0,0);}
-  6%{transform:translate3d(-2.4vw,0,0);}
-  12%{transform:translate3d(0,0,0);}
-  18%,99.9%{transform:translate3d(0,0,0);}
+  /* Чуть сильнее «подтяжка» влево, как начало свайпа к следующей игре */
+  5%{transform:translate3d(calc(-1 * min(6vw, 30px)),0,0);}
+  6%{transform:translate3d(calc(-1 * min(5.2vw, 26px)),0,0);}
+  14%{transform:translate3d(0,0,0);}
+  52%{transform:translate3d(0,0,0);}
+  57%{transform:translate3d(calc(-1 * min(4.2vw, 20px)),0,0);}
+  64%{transform:translate3d(0,0,0);}
 }
 @media (prefers-reduced-motion: reduce){
-  body:has(#swipe-strip.swipe-strip--coach) #feed,
-  body:has(#swipe-strip.swipe-strip--coach) #side-actions,
-  body:has(#swipe-strip.swipe-strip--coach) #game-info,
-  body:has(#swipe-strip.swipe-strip--coach) #dots,
-  body:has(#swipe-strip.swipe-strip--coach) #swipe-strip,
-  body:has(#swipe-strip.swipe-strip--coach) #feed-coach-fab,
-  body:has(#swipe-strip.swipe-strip--coach) #bottom-nav{
+  body:has(#swipe-strip.swipe-strip--coach){
     animation:none !important;
     transform:none !important;
     will-change:auto;
