@@ -335,10 +335,9 @@ html,body,#root,#feed,.slide{margin:0;padding:0;border:0;width:100%;height:100%;
   box-shadow:0 -1px 0 rgba(255,255,255,0.06);
 }
 /*
-  Подсказка «свайп влево»: короткий всплеск на body (не бесконечно — только класс
-  .feed-swipe-tease-burst из JS: первый заход + редко при скуке на ленте).
+  Подсказка «свайп влево»: только на вкладке ленты (.is-tab-feed), не на поиске/профиле/загрузке.
 */
-body.feed-swipe-tease-burst:not(:has(#swipe-strip.dragging)){
+body.feed-swipe-tease-burst.is-tab-feed:not(:has(#swipe-strip.dragging)){
   animation:feedSwipeTeaseBurst 2.45s cubic-bezier(0.33,0,0.2,1) forwards;
   will-change:transform;
 }
@@ -362,7 +361,7 @@ body:has(#swipe-strip.dragging).feed-swipe-tease-burst{
   64%{transform:translate3d(0,0,0);}
 }
 @media (prefers-reduced-motion: reduce){
-  body.feed-swipe-tease-burst{
+  body.feed-swipe-tease-burst.is-tab-feed{
     animation:none !important;
     transform:none !important;
     will-change:auto;

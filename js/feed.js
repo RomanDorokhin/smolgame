@@ -607,6 +607,9 @@ function feedPointerCancel(e, dragHost) {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+  if (document.getElementById('nav-feed')?.classList.contains('active')) {
+    document.body.classList.add('is-tab-feed');
+  }
   document.body.addEventListener('animationend', onFeedSwipeTeaseBurstAnimationEnd);
 
   const strip = swipeNavStrip();
@@ -701,6 +704,7 @@ function hasFeedSwipeTeaseShownOnce() {
 }
 
 function canRunFeedSwipeTeaseBurst() {
+  if (!document.body.classList.contains('is-tab-feed')) return false;
   if (typeof isOverlayOpen === 'function' && isOverlayOpen()) return false;
   if (document.getElementById('onboarding-screen')?.classList.contains('open')) return false;
   const strip = document.getElementById('swipe-strip');
@@ -723,6 +727,12 @@ function clearFeedSwipeTeaseTimers() {
 
 /** Учился свайпать или ушли с coach — убрать всплеск и таймеры */
 function clearFeedSwipeTeaseCoaching() {
+  document.body.classList.remove('feed-swipe-tease-burst');
+  clearFeedSwipeTeaseTimers();
+}
+
+/** Ушли с вкладки ленты (поиск, профиль, загрузка, карточка автора) — сразу убрать дёрганье */
+function stopFeedSwipeTeaseForLeavingFeed() {
   document.body.classList.remove('feed-swipe-tease-burst');
   clearFeedSwipeTeaseTimers();
 }
@@ -806,6 +816,7 @@ function maybeFeedSwipeTeaseAfterOverlayClosed() {
 }
 
 window.clearFeedSwipeTeaseCoaching = clearFeedSwipeTeaseCoaching;
+window.stopFeedSwipeTeaseForLeavingFeed = stopFeedSwipeTeaseForLeavingFeed;
 window.clearFeedSwipeTeaseTimers = clearFeedSwipeTeaseTimers;
 window.scheduleFeedSwipeTeaseBoredom = scheduleFeedSwipeTeaseBoredom;
 window.queueMaybeOfferFeedSwipeTease = queueMaybeOfferFeedSwipeTease;

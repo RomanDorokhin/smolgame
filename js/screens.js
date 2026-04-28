@@ -44,11 +44,17 @@ function closeSearch() {
 
 function openAuthorScreen(authorId) {
   if (!authorId) return;
+  document.body.classList.remove('is-tab-feed');
+  if (typeof stopFeedSwipeTeaseForLeavingFeed === 'function') stopFeedSwipeTeaseForLeavingFeed();
   document.getElementById('author-screen').classList.add('open');
   loadAuthorProfile(authorId);
 }
 function closeAuthorScreen() {
   document.getElementById('author-screen').classList.remove('open');
+  if (document.getElementById('nav-feed')?.classList.contains('active')) {
+    document.body.classList.add('is-tab-feed');
+    if (typeof scheduleFeedSwipeTeaseBoredom === 'function') scheduleFeedSwipeTeaseBoredom();
+  }
 }
 function setAvatar(el, avatar) {
   const avatarUrl = avatarImgUrl(avatar);
@@ -157,6 +163,7 @@ function switchTab(tab) {
 
   if (tab === 'feed') {
     closeAllMainTabs();
+    document.body.classList.add('is-tab-feed');
     if (typeof refreshFeedCoachState === 'function') refreshFeedCoachState();
     if (typeof scheduleSwipeStripIdleNudge === 'function') scheduleSwipeStripIdleNudge();
     if (typeof scheduleFeedSwipeTeaseBoredom === 'function') scheduleFeedSwipeTeaseBoredom();
@@ -164,6 +171,8 @@ function switchTab(tab) {
   }
 
   closeAllMainTabs();
+  document.body.classList.remove('is-tab-feed');
+  if (typeof stopFeedSwipeTeaseForLeavingFeed === 'function') stopFeedSwipeTeaseForLeavingFeed();
 
   if (tab === 'search') {
     document.getElementById('search-screen')?.classList.add('open');
