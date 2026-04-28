@@ -1600,22 +1600,6 @@ body.feed-layout-vertical #game-info{
   font-size:24px;
   font-weight:800;
 }
-.close-btn{
-  width:40px;height:40px;
-  background:rgba(255,255,255,0.06);
-  border:1px solid var(--btn-border);
-  border-radius:50%;
-  display:flex;align-items:center;justify-content:center;
-  font-size:17px;
-  color:rgba(255,255,255,0.72);
-  cursor:pointer;
-  transition:opacity 0.18s ease, transform 0.14s ease, background 0.18s ease;
-}
-.close-btn:active{
-  transform:scale(0.94);
-  background:rgba(255,255,255,0.1);
-}
-
 .upload-methods{
   display:grid;
   grid-template-columns:1fr 1fr;

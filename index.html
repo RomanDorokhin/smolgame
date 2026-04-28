@@ -14,7 +14,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <!-- ?v= сбрасывает кэш WebView Telegram после правок JS/CSS (меняй при каждом релизе фронта). -->
-<link rel="stylesheet" href="styles.css?v=20260472">
+<link rel="stylesheet" href="styles.css?v=20260473">
 </head>
 <body>
 
@@ -181,7 +181,6 @@
 <div id="upload-screen">
   <div class="screen-header">
     <div class="screen-title">Загрузить игру</div>
-    <div class="close-btn" data-action="close-upload">✕</div>
   </div>
 
   <div class="upload-steps" aria-hidden="true">
@@ -487,9 +486,8 @@
 <!-- ══ ЭКРАН: ПРОФИЛЬ ══ -->
 <div id="profile-screen">
   <div class="profile-header">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+    <div style="display:flex;justify-content:flex-start;align-items:center;margin-bottom:16px;">
       <div class="screen-title">Профиль</div>
-      <div class="close-btn" data-action="close-profile">✕</div>
     </div>
     <div class="profile-top">
       <div class="profile-avatar" id="profileAvatar">?</div>
@@ -565,7 +563,6 @@
   <div class="search-header">
     <div class="search-header-top">
       <div class="screen-title">Игры</div>
-      <div class="close-btn" data-action="close-games-library">✕</div>
     </div>
     <p class="games-library-lead">Лайкнул и недавно открывал — в двух списках ниже.</p>
   </div>
@@ -588,7 +585,6 @@
   <div class="search-header">
     <div class="search-header-top">
       <div class="screen-title">Поиск</div>
-      <div class="close-btn" data-action="close-search">✕</div>
     </div>
     <div class="search-bar">
       <span class="search-icon" aria-hidden="true"><svg class="sg-icon sg-icon--sm" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="11" cy="11" r="6.75" stroke="currentColor" stroke-width="1.65"/><path d="M16.5 16.5L21 21" stroke="currentColor" stroke-width="1.65" stroke-linecap="round"/></svg></span>
@@ -606,9 +602,8 @@
 <!-- ══ ЭКРАН: АВТОР ══ -->
 <div id="author-screen">
   <div class="profile-header">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+    <div style="display:flex;justify-content:flex-start;align-items:center;margin-bottom:16px;">
       <div class="screen-title">Разработчик</div>
-      <div class="close-btn" data-action="close-author">✕</div>
     </div>
     <div class="profile-top">
       <div class="profile-avatar" id="authorProfileAvatar">?</div>
