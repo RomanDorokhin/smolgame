@@ -70,14 +70,24 @@ function maybeShowFeedNavTipAfterGames() {
 }
 
 function feedNavPrev() {
-  if (GAMES.length < 2 || window.currentIdx <= 0) return;
-  goTo(window.currentIdx - 1);
+  if (window.FEED_VERTICAL) {
+    if (GAMES.length < 2 || window.currentIdx >= GAMES.length - 1) return;
+    goTo(window.currentIdx + 1);
+  } else {
+    if (GAMES.length < 2 || window.currentIdx <= 0) return;
+    goTo(window.currentIdx - 1);
+  }
   hideSwipeHint();
 }
 
 function feedNavNext() {
-  if (GAMES.length < 2 || window.currentIdx >= GAMES.length - 1) return;
-  goTo(window.currentIdx + 1);
+  if (window.FEED_VERTICAL) {
+    if (GAMES.length < 2 || window.currentIdx <= 0) return;
+    goTo(window.currentIdx - 1);
+  } else {
+    if (GAMES.length < 2 || window.currentIdx >= GAMES.length - 1) return;
+    goTo(window.currentIdx + 1);
+  }
   hideSwipeHint();
 }
 

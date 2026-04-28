@@ -1,5 +1,9 @@
 const FEED_PAGE_SIZE = 15;
 
+/** Вертикальная лента (TikTok): свайп по экрану; «Играть» открывает фокус на iframe. */
+const FEED_VERTICAL = true;
+const FEED_DISCOVERY_DESC_MAX = 96;
+
 window.feedHasMore = true;
 window.feedLoadingMore = false;
 /** Сколько опубликованных игр уже подгружено (без очереди модерации в начале). */
@@ -7,6 +11,22 @@ window.feedPublishedLoaded = 0;
 
 function feedEl() {
   return document.getElementById('feed');
+}
+
+function truncateDesc(text, maxLen) {
+  const s = (text && String(text).trim()) || '';
+  if (s.length <= maxLen) return s;
+  return s.slice(0, Math.max(0, maxLen - 1)).trimEnd() + '…';
+}
+
+function enterGameFocusMode() {
+  document.body.classList.add('feed-game-focus');
+}
+
+function exitGameFocusMode() {
+  document.body.classList.remove('feed-game-focus');
+  document.getElementById('feed-exit-focus')?.setAttribute('hidden', '');
+  if (typeof refreshFeedCoachState === 'function') refreshFeedCoachState();
 }
 
 /** Класс всплеска на body — двигаются #feed и стрелка «следующая» синхронно */
@@ -171,7 +191,12 @@ function appendSlides(startIndex, gamesSlice) {
     slide.classList.toggle('feed-slide--active', i === window.currentIdx);
     slide.classList.toggle('feed-slide--inactive', i !== window.currentIdx);
     slide.style.left = '';
-    slide.style.transform = `translate3d(${(i - window.currentIdx) * 100}%,0,0)`;
+    slide.style.transform = FEED_VERTICAL
+      ? `translate3d(0,${(i - window.currentIdx) * 100}%,0)`
+      : `translate3d(${(i - window.currentIdx) * 100}%,0,0)`;
+
+    const slideInner = document.createElement('div');
+    slideInner.className = 'slide-inner';
 
     const placeholder = document.createElement('div');
     placeholder.className = 'slide-placeholder';
@@ -222,7 +247,8 @@ function appendSlides(startIndex, gamesSlice) {
         <div class="placeholder-title">${esc(g.title)}</div>
         <div class="placeholder-sub">Некорректная ссылка</div>
       `;
-      slide.appendChild(placeholder);
+      slideInner.appendChild(placeholder);
+      slide.appendChild(slideInner);
       feed.appendChild(slide);
       window.slides.push(slide);
       const dot = document.createElement('div');
@@ -237,8 +263,32 @@ function appendSlides(startIndex, gamesSlice) {
     }
     iframe.dataset.src = safeUrl;
 
-    slide.appendChild(placeholder);
-    slide.appendChild(iframe);
+    const stack = document.createElement('div');
+    stack.className = 'slide-stack';
+    stack.appendChild(placeholder);
+    stack.appendChild(iframe);
+    slideInner.appendChild(stack);
+
+    if (FEED_VERTICAL) {
+      const descText = truncateDesc(g.description, FEED_DISCOVERY_DESC_MAX);
+      const genreLine = g.genre
+        ? `<span class="slide-discovery-genre">${typeof genreIconForGame === 'function' ? genreIconForGame(g) : ''}<span>${esc(g.genre)}</span></span>`
+        : '';
+      const discovery = document.createElement('div');
+      discovery.className = 'slide-discovery';
+      discovery.innerHTML = `
+        <div class="slide-discovery-bg" aria-hidden="true"></div>
+        <div class="slide-discovery-content">
+          <div class="slide-discovery-title">${esc(g.title || 'Игра')}</div>
+          ${descText ? `<p class="slide-discovery-desc">${esc(descText)}</p>` : ''}
+          ${genreLine ? `<div class="slide-discovery-meta">${genreLine}</div>` : ''}
+          <button type="button" class="slide-play-btn sg-btn sg-btn--primary" data-action="feed-enter-focus">Играть</button>
+        </div>
+      `;
+      slideInner.appendChild(discovery);
+    }
+
+    slide.appendChild(slideInner);
     if (g.isModerationQueue && document.body.classList.contains('is-admin')) {
       const mod = document.createElement('div');
       mod.className = 'feed-moderation-card';
@@ -262,6 +312,7 @@ function appendSlides(startIndex, gamesSlice) {
 }
 
 function renderFeed() {
+  exitGameFocusMode();
   const feed = feedEl();
   const dots = document.getElementById('dots');
   feed.innerHTML = '';
@@ -308,6 +359,7 @@ function renderFeed() {
   document.getElementById('game-info').style.display = '';
   document.getElementById('swipe-strip').style.display = '';
 
+  document.body.classList.toggle('feed-layout-vertical', FEED_VERTICAL);
   appendSlides(0, GAMES);
   goTo(0, true);
   if (typeof refreshFeedCoachState === 'function') refreshFeedCoachState();
@@ -366,10 +418,19 @@ function updateFeedNavArrows() {
 
 const SWIPE_HINT_DEFAULT = 'Влево — следующая · вправо — назад';
 const SWIPE_HINT_ONE_GAME = 'Сейчас одна игра в ленте. Свайп по полоске заработает, когда появятся ещё игры.';
+const SWIPE_HINT_VERTICAL = 'Свайп вверх/вниз — другая игра · «Играть» — без рамок';
+const SWIPE_HINT_ONE_GAME_VERTICAL = 'Пока одна игра в ленте.';
 
 function updateSwipeStripHintForGameCount() {
   const label = document.getElementById('swipe-hint-label');
   if (!label) return;
+  if (FEED_VERTICAL) {
+    label.textContent = GAMES.length === 1 ? SWIPE_HINT_ONE_GAME_VERTICAL : SWIPE_HINT_VERTICAL;
+    label.style.display = '';
+    label.style.opacity = '';
+    swipeHintHidden = false;
+    return;
+  }
   if (GAMES.length === 1) {
     label.textContent = SWIPE_HINT_ONE_GAME;
     label.style.display = '';
@@ -395,6 +456,7 @@ function goTo(idx, instant = false) {
   const prevIdx = window.currentIdx;
   window.currentIdx = Math.max(0, Math.min(GAMES.length - 1, idx));
   if (prevIdx !== window.currentIdx) {
+    exitGameFocusMode();
     resetSwipeHint();
     if (!instant) {
       hapticFeedNav();
@@ -408,7 +470,9 @@ function goTo(idx, instant = false) {
     s.style.transition = instant
       ? 'none'
       : `transform ${FEED_CARD_TRANSITION_SEC}s cubic-bezier(0.25, 0.82, 0.3, 1)`;
-    s.style.transform = `translate3d(${(i - window.currentIdx) * 100}%,0,0)`;
+    s.style.transform = FEED_VERTICAL
+      ? `translate3d(0,${(i - window.currentIdx) * 100}%,0)`
+      : `translate3d(${(i - window.currentIdx) * 100}%,0,0)`;
   });
 
   document.querySelectorAll('.dot').forEach((d, i) =>
@@ -479,6 +543,8 @@ function updateOverlay() {
 /** Горизонт в полоске: влево = следующая, вправо = предыдущая (как карточки) */
 const SWIPE_HORIZ_PX = 48;
 const SWIPE_HORIZ_VELOCITY = 0.28;
+const SWIPE_VERT_PX = 52;
+const SWIPE_VERT_VELOCITY = 0.32;
 const MOVE_THRESHOLD_PX = 10;
 /** Жест «вниз» в полоске на первом слайде — отдать закрытию Telegram */
 const TELEGRAM_PASS_DOWN_PX = 14;
@@ -509,7 +575,21 @@ function resetSwipeStripDragVisual(stripEl) {
   const s = stripEl || document.getElementById('swipe-strip');
   if (!s) return;
   s.style.removeProperty('--swipe-dx');
+  s.style.removeProperty('--swipe-dy');
   s.style.removeProperty('--swipe-pull-abs');
+}
+
+function updateSwipeStripDragVisualVertical(stripEl, dy) {
+  const strip = stripEl || document.getElementById('swipe-strip');
+  const track = document.getElementById('swipe-strip-track');
+  if (!strip || !track) return;
+  const h = track.getBoundingClientRect().height;
+  const halfHandle = 18;
+  const max = Math.max(12, h / 2 - halfHandle - 2);
+  const clamped = Math.max(-max, Math.min(max, dy));
+  strip.style.setProperty('--swipe-dy', clamped + 'px');
+  const pull = Math.min(1, Math.abs(dy) / Math.max(40, max * 1.1));
+  strip.style.setProperty('--swipe-pull-abs', String(pull));
 }
 
 function updateSwipeStripDragVisual(stripEl, dx) {
@@ -530,13 +610,15 @@ let swipeDragHost = null;
 function feedPointerDown(e, dragHost) {
   if (e.pointerType === 'mouse' && e.button !== 0) return;
   if (isOverlayOpen() || GAMES.length === 0) return;
+  if (document.body.classList.contains('feed-game-focus')) return;
+  if (FEED_VERTICAL && e.target?.closest?.('iframe, button, a, input, textarea, label')) return;
   const strip = document.getElementById('swipe-strip');
-  if (strip?.style.display === 'none') return;
+  if (!FEED_VERTICAL && strip?.style.display === 'none') return;
 
   if (dragHost === strip && typeof onSwipeStripUserActivity === 'function') {
     onSwipeStripUserActivity();
   }
-  if (dragHost === strip) {
+  if (dragHost === strip || (FEED_VERTICAL && dragHost === feedEl())) {
     resetSwipeStripDragVisual(strip);
     feedSwipeTeaseBurstBody().classList.remove('feed-swipe-tease-burst');
   }
@@ -564,7 +646,12 @@ function feedPointerMove(e, dragHost) {
   const dy = e.clientY - touchStartY;
   const verticalDominant = Math.abs(dy) > Math.abs(dx) * 1.15;
 
-  if (window.currentIdx === 0 && verticalDominant && dy > TELEGRAM_PASS_DOWN_PX) {
+  if (
+    window.currentIdx === 0 &&
+    verticalDominant &&
+    dy > TELEGRAM_PASS_DOWN_PX &&
+    (!FEED_VERTICAL || dragHost === feedEl())
+  ) {
     const passPid = e.pointerId;
     try { dragHost.releasePointerCapture(e.pointerId); } catch (err) {}
     touching = false;
@@ -596,7 +683,13 @@ function feedPointerMove(e, dragHost) {
     if (typeof markFeedSwipeLearned === 'function') markFeedSwipeLearned();
   }
 
-  if (dragHost === strip) {
+  if (FEED_VERTICAL && (dragHost === feedEl() || dragHost === strip)) {
+    if (Math.abs(dy) > 8 && Math.abs(dy) >= Math.abs(dx) * 0.75) {
+      if (typeof markFeedSwipeLearned === 'function') markFeedSwipeLearned();
+    }
+    const vert = Math.abs(dy) >= Math.abs(dx) * 0.55 || Math.abs(dy) > 6;
+    updateSwipeStripDragVisualVertical(strip, vert ? dy : dy * 0.2);
+  } else if (dragHost === strip) {
     const horiz = Math.abs(dx) >= Math.abs(dy) * 0.55 || Math.abs(dx) > 6;
     updateSwipeStripDragVisual(strip, horiz ? dx : dx * 0.2);
   }
@@ -608,7 +701,9 @@ function feedPointerUp(e, dragHost) {
   activePointerId = null;
   swipeDragHost = null;
   dragHost.classList.remove('dragging');
-  if (dragHost === swipeNavStrip()) resetSwipeStripDragVisual(dragHost);
+  if (dragHost === swipeNavStrip() || (FEED_VERTICAL && dragHost === feedEl())) {
+    resetSwipeStripDragVisual(swipeNavStrip());
+  }
 
   if (dragHost.classList.contains('telegram-swipe-pass')) {
     clearTelegramSwipePass();
@@ -625,16 +720,32 @@ function feedPointerUp(e, dragHost) {
   const duration = Math.max(1, now - touchStartTime);
   const vHoriz = Math.abs(dx) / duration;
 
-  const horizontalIntent = Math.abs(dx) >= Math.abs(dy) * 0.85;
-
-  if (horizontalIntent) {
-    if (dx > SWIPE_HORIZ_PX || (dx > 22 && vHoriz > SWIPE_HORIZ_VELOCITY)) {
-      goTo(window.currentIdx + 1);
-      hideSwipeHint();
-    } else if (dx < -SWIPE_HORIZ_PX || (dx < -22 && vHoriz > SWIPE_HORIZ_VELOCITY)) {
-      if (window.currentIdx > 0) {
-        goTo(window.currentIdx - 1);
+  if (FEED_VERTICAL && (dragHost === feedEl() || dragHost === strip)) {
+    const dyNav = touchStartY - y;
+    const vVert = Math.abs(dyNav) / duration;
+    const vertIntent = Math.abs(dyNav) >= Math.abs(dx) * 0.82;
+    if (vertIntent) {
+      if (dyNav > SWIPE_VERT_PX || (dyNav > 26 && vVert > SWIPE_VERT_VELOCITY)) {
+        goTo(window.currentIdx + 1);
         hideSwipeHint();
+      } else if (dyNav < -SWIPE_VERT_PX || (dyNav < -26 && vVert > SWIPE_VERT_VELOCITY)) {
+        if (window.currentIdx > 0) {
+          goTo(window.currentIdx - 1);
+          hideSwipeHint();
+        }
+      }
+    }
+  } else {
+    const horizontalIntent = Math.abs(dx) >= Math.abs(dy) * 0.85;
+    if (horizontalIntent) {
+      if (dx > SWIPE_HORIZ_PX || (dx > 22 && vHoriz > SWIPE_HORIZ_VELOCITY)) {
+        goTo(window.currentIdx + 1);
+        hideSwipeHint();
+      } else if (dx < -SWIPE_HORIZ_PX || (dx < -22 && vHoriz > SWIPE_HORIZ_VELOCITY)) {
+        if (window.currentIdx > 0) {
+          goTo(window.currentIdx - 1);
+          hideSwipeHint();
+        }
       }
     }
   }
@@ -647,17 +758,47 @@ function feedPointerCancel(e, dragHost) {
   activePointerId = null;
   swipeDragHost = null;
   dragHost.classList.remove('dragging');
-  if (dragHost === swipeNavStrip()) resetSwipeStripDragVisual(dragHost);
+  if (dragHost === swipeNavStrip() || (FEED_VERTICAL && dragHost === feedEl())) {
+    resetSwipeStripDragVisual(swipeNavStrip());
+  }
   clearTelegramSwipePass();
 }
 
 document.addEventListener('DOMContentLoaded', () => {
   if (document.getElementById('nav-feed')?.classList.contains('active')) {
     document.body.classList.add('is-tab-feed');
+    document.body.classList.add('app-main-chrome');
   }
   feedEl()?.addEventListener('animationend', onFeedSwipeTeaseBurstAnimationEnd);
 
   const strip = swipeNavStrip();
+  const feed = feedEl();
+  if (FEED_VERTICAL && feed) {
+    feed.addEventListener('pointerdown', e => feedPointerDown(e, feed));
+    feed.addEventListener('pointermove', e => feedPointerMove(e, feed));
+    feed.addEventListener('pointerup', e => feedPointerUp(e, feed));
+    feed.addEventListener('pointercancel', e => feedPointerCancel(e, feed));
+    feed.addEventListener(
+      'wheel',
+      e => {
+        if (isOverlayOpen() || GAMES.length < 2 || document.body.classList.contains('feed-game-focus')) return;
+        e.preventDefault();
+        if (typeof onSwipeStripUserActivity === 'function') onSwipeStripUserActivity();
+        const absX = Math.abs(e.deltaX);
+        const absY = Math.abs(e.deltaY);
+        if (absX >= absY) {
+          if (absX < 18) return;
+          if (e.deltaX < 0) goTo(window.currentIdx + 1);
+          else if (window.currentIdx > 0) goTo(window.currentIdx - 1);
+        } else {
+          if (absY < 24) return;
+          goTo(e.deltaY > 0 ? window.currentIdx + 1 : window.currentIdx - 1);
+        }
+        hideSwipeHint();
+      },
+      { passive: false }
+    );
+  }
   if (!strip) return;
 
   strip.addEventListener('pointerdown', e => feedPointerDown(e, strip));
@@ -666,7 +807,7 @@ document.addEventListener('DOMContentLoaded', () => {
   strip.addEventListener('pointercancel', e => feedPointerCancel(e, strip));
 
   strip.addEventListener('wheel', e => {
-    if (isOverlayOpen() || GAMES.length < 2) return;
+    if (FEED_VERTICAL || isOverlayOpen() || GAMES.length < 2) return;
     e.preventDefault();
     if (typeof onSwipeStripUserActivity === 'function') onSwipeStripUserActivity();
     const absX = Math.abs(e.deltaX);
@@ -686,10 +827,16 @@ document.addEventListener('DOMContentLoaded', () => {
 document.addEventListener('keydown', e => {
   if (!['ArrowDown', 'ArrowUp', 'ArrowLeft', 'ArrowRight'].includes(e.key)) return;
   if (isOverlayOpen() || GAMES.length === 0) return;
+  if (document.body.classList.contains('feed-game-focus')) return;
   e.preventDefault();
-  if (e.key === 'ArrowDown' || e.key === 'ArrowRight') goTo(window.currentIdx + 1);
-  else if ((e.key === 'ArrowUp' || e.key === 'ArrowLeft') && window.currentIdx > 0) {
-    goTo(window.currentIdx - 1);
+  if (FEED_VERTICAL) {
+    if (e.key === 'ArrowDown') goTo(window.currentIdx + 1);
+    else if (e.key === 'ArrowUp' && window.currentIdx > 0) goTo(window.currentIdx - 1);
+  } else {
+    if (e.key === 'ArrowDown' || e.key === 'ArrowRight') goTo(window.currentIdx + 1);
+    else if ((e.key === 'ArrowUp' || e.key === 'ArrowLeft') && window.currentIdx > 0) {
+      goTo(window.currentIdx - 1);
+    }
   }
 });
 
@@ -753,6 +900,7 @@ function canGoNextInFeed() {
 }
 
 function canRunFeedSwipeTeaseBurst() {
+  if (FEED_VERTICAL) return false;
   if (isFeedSwipeLearned()) return false;
   if (!document.body.classList.contains('is-tab-feed')) return false;
   if (typeof isOverlayOpen === 'function' && isOverlayOpen()) return false;
@@ -885,3 +1033,6 @@ window.goTo = goTo;
 window.updateOverlay = updateOverlay;
 window.hideHint = hideSwipeHint;
 window.injectGameIntoFeed = injectGameIntoFeed;
+window.enterGameFocusMode = enterGameFocusMode;
+window.exitGameFocusMode = exitGameFocusMode;
+window.FEED_VERTICAL = FEED_VERTICAL;

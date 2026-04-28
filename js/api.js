@@ -83,6 +83,7 @@ window.API = {
   updateMe:     (payload)  => apiFetch('/api/me', { method: 'PATCH', body: payload }),
   myGames:      ()         => apiFetch('/api/me/games'),
   likedGames:   ()         => apiFetch('/api/me/liked-games'),
+  playedGames:  ()         => apiFetch('/api/me/played-games'),
   game:         (gameId)   => apiFetch(`/api/games/${encodeURIComponent(gameId)}`),
   register:     (payload)  => apiFetch('/api/register', { method: 'POST', body: payload }),
   checkRegistered: ()      => apiFetch('/api/me/registered'),

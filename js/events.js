@@ -60,7 +60,15 @@ const CLICK_ACTIONS = {
 
   'open-game':      (el) => openGameFromSearch(el.dataset.gameId),
   'open-game-profile': (el) => openGameFromProfile(el.dataset.gameId),
-  'open-game-liked': (el) => openGameFromLikedList(el.dataset.gameId),
+  'open-game-library': (el) => openGameFromLibrary(el.dataset.gameId),
+  'feed-enter-focus': () => {
+    if (typeof enterGameFocusMode === 'function') enterGameFocusMode();
+    document.getElementById('feed-exit-focus')?.removeAttribute('hidden');
+  },
+  'feed-exit-focus': () => {
+    if (typeof exitGameFocusMode === 'function') exitGameFocusMode();
+    document.getElementById('feed-exit-focus')?.setAttribute('hidden', '');
+  },
   'delete-game':    (el, ev) => { ev.stopPropagation(); deleteGame(el.dataset.gameId); },
   'save-profile':   () => saveProfile(),
   'reset-profile-photo': () => resetProfilePhoto(),

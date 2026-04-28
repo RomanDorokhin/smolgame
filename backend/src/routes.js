@@ -611,6 +611,84 @@ export async function getLikedGames(req, env) {
   return json({ games });
 }
 
+const PLAYED_GAMES_SQL_VARIANTS = [
+  `SELECT g.id, g.title, g.description, g.genre, g.genre_emoji AS genreEmoji,
+          g.url, g.image_url AS imageUrl, g.likes, g.plays, g.author_id AS authorId,
+          u.site_handle AS authorHandle, u.first_name AS authorFirst, u.last_name AS authorLast,
+          u.display_name AS authorDisplayName,
+          COALESCE(NULLIF(TRIM(u.avatar_override_url), ''), u.photo_url) AS authorPhoto
+     FROM user_game_plays p
+     JOIN games g ON g.id = p.game_id AND g.status = 'published'
+     LEFT JOIN users u ON u.id = g.author_id
+    WHERE p.user_id = ?1
+    ORDER BY p.last_played_at DESC`,
+  `SELECT g.id, g.title, g.description, g.genre, CAST(NULL AS TEXT) AS genreEmoji,
+          g.url, CAST(NULL AS TEXT) AS imageUrl, g.likes, g.plays, g.author_id AS authorId,
+          u.site_handle AS authorHandle, u.first_name AS authorFirst, u.last_name AS authorLast,
+          u.display_name AS authorDisplayName,
+          COALESCE(NULLIF(TRIM(u.avatar_override_url), ''), u.photo_url) AS authorPhoto
+     FROM user_game_plays p
+     JOIN games g ON g.id = p.game_id AND g.status = 'published'
+     LEFT JOIN users u ON u.id = g.author_id
+    WHERE p.user_id = ?1
+    ORDER BY p.last_played_at DESC`,
+  `SELECT g.id, g.title, g.description, g.genre, g.genre_emoji AS genreEmoji,
+          g.url, g.image_url AS imageUrl, g.likes, g.plays, g.author_id AS authorId,
+          COALESCE(NULLIF(TRIM(u.username), ''), u.id) AS authorHandle,
+          u.first_name AS authorFirst, u.last_name AS authorLast,
+          CAST(NULL AS TEXT) AS authorDisplayName,
+          u.photo_url AS authorPhoto
+     FROM user_game_plays p
+     JOIN games g ON g.id = p.game_id AND g.status = 'published'
+     LEFT JOIN users u ON u.id = g.author_id
+    WHERE p.user_id = ?1
+    ORDER BY p.last_played_at DESC`,
+  `SELECT g.id, g.title, g.description, g.genre, CAST(NULL AS TEXT) AS genreEmoji,
+          g.url, CAST(NULL AS TEXT) AS imageUrl, g.likes, g.plays, g.author_id AS authorId,
+          COALESCE(NULLIF(TRIM(u.username), ''), u.id) AS authorHandle,
+          u.first_name AS authorFirst, u.last_name AS authorLast,
+          CAST(NULL AS TEXT) AS authorDisplayName,
+          u.photo_url AS authorPhoto
+     FROM user_game_plays p
+     JOIN games g ON g.id = p.game_id AND g.status = 'published'
+     LEFT JOIN users u ON u.id = g.author_id
+    WHERE p.user_id = ?1
+    ORDER BY p.last_played_at DESC`,
+];
+
+export async function getPlayedGames(req, env) {
+  const user = await authenticate(req, env);
+  if (!user) return error('unauthorized', 401);
+
+  let likedSet = new Set();
+  let followedSet = new Set();
+  let bookmarkedSet = new Set();
+  const likes = await env.DB
+    .prepare(`SELECT game_id FROM likes WHERE user_id = ?`)
+    .bind(user.id)
+    .all();
+  likedSet = new Set(likes.results.map(r => r.game_id));
+  const follows = await env.DB
+    .prepare(`SELECT author_id FROM follows WHERE user_id = ?`)
+    .bind(user.id)
+    .all();
+  followedSet = new Set(follows.results.map(r => r.author_id));
+  const bookmarks = await env.DB
+    .prepare(`SELECT game_id FROM bookmarks WHERE user_id = ?`)
+    .bind(user.id)
+    .all();
+  bookmarkedSet = new Set(bookmarks.results.map(r => r.game_id));
+
+  try {
+    const { results } = await firstSuccessfulAll(env.DB, PLAYED_GAMES_SQL_VARIANTS, [user.id]);
+    const games = (results || []).map(g => mapFeedGameRow(g, likedSet, followedSet, bookmarkedSet));
+    return json({ games });
+  } catch (e) {
+    if (/no such table/i.test(String(e?.message || e))) return json({ games: [] });
+    throw e;
+  }
+}
+
 export async function checkRegistered(req, env) {
   const user = await authenticate(req, env);
   if (!user) return error('unauthorized', 401);
@@ -960,10 +1038,24 @@ export async function getUserGames(req, env, userId) {
 }
 
 export async function play(req, env, gameId) {
-  // Не требуем auth для просмотров — это публичный счётчик.
+  const user = await authenticate(req, env);
   await env.DB.prepare(
     `UPDATE games SET plays = plays + 1 WHERE id = ? AND status = 'published'`
   ).bind(gameId).run();
+  if (user?.id) {
+    try {
+      await env.DB
+        .prepare(
+          `INSERT INTO user_game_plays (user_id, game_id, last_played_at)
+           VALUES (?, ?, unixepoch())
+           ON CONFLICT(user_id, game_id) DO UPDATE SET last_played_at = excluded.last_played_at`
+        )
+        .bind(user.id, gameId)
+        .run();
+    } catch (e) {
+      if (!isMissingColumnError(e) && !/no such table/i.test(String(e?.message || e))) throw e;
+    }
+  }
   return json({ ok: true });
 }
 

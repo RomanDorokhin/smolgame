@@ -171,10 +171,16 @@ function switchTab(tab) {
   if (!tab) return;
   if (typeof hapticLight === 'function') hapticLight();
   setBottomNavActive(tab);
+  document.body.classList.toggle(
+    'app-main-chrome',
+    tab === 'feed' || tab === 'games' || tab === 'search' || tab === 'profile' || tab === 'upload'
+  );
 
   if (tab === 'feed') {
     closeAllMainTabs();
     document.body.classList.add('is-tab-feed');
+    const chrome = document.getElementById('app-tab-chrome-label');
+    if (chrome) chrome.textContent = 'Лента';
     if (typeof refreshFeedCoachState === 'function') refreshFeedCoachState();
     if (typeof scheduleSwipeStripIdleNudge === 'function') scheduleSwipeStripIdleNudge();
     if (typeof scheduleFeedSwipeTeaseBoredom === 'function') scheduleFeedSwipeTeaseBoredom();
@@ -186,12 +192,16 @@ function switchTab(tab) {
   if (typeof stopFeedSwipeTeaseForLeavingFeed === 'function') stopFeedSwipeTeaseForLeavingFeed();
 
   if (tab === 'search') {
+    const chrome = document.getElementById('app-tab-chrome-label');
+    if (chrome) chrome.textContent = 'Поиск';
     document.getElementById('search-screen')?.classList.add('open');
     if (typeof renderGenreFilter === 'function') renderGenreFilter();
     if (typeof initSearchInput === 'function') initSearchInput();
     const q = document.getElementById('searchInput')?.value || '';
     if (typeof onSearch === 'function') onSearch(q);
   } else if (tab === 'profile') {
+    const chrome = document.getElementById('app-tab-chrome-label');
+    if (chrome) chrome.textContent = 'Профиль';
     const screen = document.getElementById('profile-screen');
     screen?.classList.remove('profile-edit-active');
     if (typeof renderProfile === 'function') renderProfile();
@@ -199,8 +209,12 @@ function switchTab(tab) {
     screen?.classList.add('open');
   } else if (tab === 'games') {
     document.getElementById('games-library-screen')?.classList.add('open');
-    if (typeof loadLikedGamesList === 'function') loadLikedGamesList();
+    const chrome = document.getElementById('app-tab-chrome-label');
+    if (chrome) chrome.textContent = 'Игры';
+    if (typeof loadGamesLibrary === 'function') loadGamesLibrary();
   } else if (tab === 'upload') {
+    const chrome = document.getElementById('app-tab-chrome-label');
+    if (chrome) chrome.textContent = 'Загрузить';
     const upload = document.getElementById('upload-screen');
     upload?.classList.add('open');
     if (typeof renderGenrePills === 'function') {

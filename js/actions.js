@@ -30,7 +30,7 @@ function toggleLike() {
     : Promise.all([API.like(g.id), API.bookmark(g.id)]);
   req
     .then(() => {
-      if (typeof refreshLikedGamesScreen === 'function') refreshLikedGamesScreen();
+      if (typeof refreshGamesLibraryScreen === 'function') refreshGamesLibraryScreen();
     })
     .catch(err => {
       if (wasLiked) {

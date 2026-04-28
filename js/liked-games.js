@@ -1,40 +1,27 @@
 /**
- * Экран «Игры»: опубликованные игры, которые пользователь лайкнул (сервер + таблица likes).
+ * Экран «Игры»: лайкнутые и недавно открытые (сервер).
  */
-async function loadLikedGamesList() {
-  const grid = document.getElementById('likedGamesGrid');
-  if (!grid) return;
-  grid.innerHTML =
-    '<div style="grid-column:1/-1;text-align:center;padding:40px 0;color:var(--muted);font-size:14px;">Загрузка…</div>';
-  try {
-    const data = await API.likedGames();
-    const games = Array.isArray(data?.games) ? data.games : [];
-    renderLikedGamesGrid(games);
-  } catch (e) {
-    grid.innerHTML = `<div class="sg-empty-state sg-empty-state--grid" style="grid-column:1/-1">
-      <div class="sg-empty-state-title">Не загрузилось</div>
-      <div class="sg-empty-state-sub">${esc(typeof userFacingError === 'function' ? userFacingError(e) : (e?.message || 'Ошибка'))}</div>
-    </div>`;
-  }
-}
-
-function renderLikedGamesGrid(games) {
-  const grid = document.getElementById('likedGamesGrid');
+function renderGamesGridSection(gridId, games, emptyTitle, emptySub, emptyCtaTab) {
+  const grid = document.getElementById(gridId);
   if (!grid) return;
   if (games.length === 0) {
+    const heart =
+      gridId === 'likedGamesGrid' && typeof sgStatHeartSvg === 'function'
+        ? `<span class="liked-games-empty-heart">${sgStatHeartSvg()}</span>`
+        : '';
     grid.innerHTML = `
       <div class="sg-empty-state sg-empty-state--grid" style="grid-column:1/-1">
-        <div class="sg-empty-state-icon" aria-hidden="true">${typeof sgStatHeartSvg === 'function' ? `<span class="liked-games-empty-heart">${sgStatHeartSvg()}</span>` : ''}</div>
-        <div class="sg-empty-state-title">Пока пусто</div>
-        <div class="sg-empty-state-sub">Лайкни игры в ленте — они появятся здесь.</div>
-        <button type="button" class="empty-btn" data-action="switch-tab" data-tab="feed">В ленту</button>
+        ${heart ? `<div class="sg-empty-state-icon" aria-hidden="true">${heart}</div>` : ''}
+        <div class="sg-empty-state-title">${esc(emptyTitle)}</div>
+        <div class="sg-empty-state-sub">${esc(emptySub)}</div>
+        ${emptyCtaTab ? `<button type="button" class="empty-btn" data-action="switch-tab" data-tab="${esc(emptyCtaTab)}">В ленту</button>` : ''}
       </div>`;
     return;
   }
   grid.innerHTML = games
     .map(
       g => `
-    <div class="game-card" data-action="open-game-liked" data-game-id="${esc(g.id)}">
+    <div class="game-card" data-action="open-game-library" data-game-id="${esc(g.id)}">
       <div class="game-card-thumb">${typeof gameThumbHtml === 'function' ? gameThumbHtml(g) : ''}</div>
       <div class="game-card-info">
         <div class="game-card-name">${esc(g.title)}</div>
@@ -45,12 +32,55 @@ function renderLikedGamesGrid(games) {
     .join('');
 }
 
-function refreshLikedGamesScreen() {
-  const screen = document.getElementById('games-library-screen');
-  if (screen?.classList.contains('open')) loadLikedGamesList();
+async function loadGamesLibrary() {
+  const likedGrid = document.getElementById('likedGamesGrid');
+  const playedGrid = document.getElementById('playedGamesGrid');
+  if (likedGrid) {
+    likedGrid.innerHTML =
+      '<div style="grid-column:1/-1;text-align:center;padding:24px 0;color:var(--muted);font-size:14px;">Загрузка…</div>';
+  }
+  if (playedGrid) {
+    playedGrid.innerHTML =
+      '<div style="grid-column:1/-1;text-align:center;padding:24px 0;color:var(--muted);font-size:14px;">Загрузка…</div>';
+  }
+  try {
+    const [likedData, playedData] = await Promise.all([
+      API.likedGames(),
+      API.playedGames().catch(() => ({ games: [] })),
+    ]);
+    const liked = Array.isArray(likedData?.games) ? likedData.games : [];
+    const played = Array.isArray(playedData?.games) ? playedData.games : [];
+    renderGamesGridSection(
+      'likedGamesGrid',
+      liked,
+      'Пока пусто',
+      'Лайкни игры в ленте — они появятся здесь.',
+      'feed'
+    );
+    renderGamesGridSection(
+      'playedGamesGrid',
+      played,
+      'Пока пусто',
+      'Открой игры в ленте (кнопка «Играть») — список заполнится.',
+      'feed'
+    );
+  } catch (e) {
+    const msg = typeof userFacingError === 'function' ? userFacingError(e) : (e?.message || 'Ошибка');
+    const errHtml = `<div class="sg-empty-state sg-empty-state--grid" style="grid-column:1/-1">
+      <div class="sg-empty-state-title">Не загрузилось</div>
+      <div class="sg-empty-state-sub">${esc(msg)}</div>
+    </div>`;
+    if (likedGrid) likedGrid.innerHTML = errHtml;
+    if (playedGrid) playedGrid.innerHTML = errHtml;
+  }
 }
 
-async function openGameFromLikedList(gameId) {
+function refreshGamesLibraryScreen() {
+  const screen = document.getElementById('games-library-screen');
+  if (screen?.classList.contains('open')) loadGamesLibrary();
+}
+
+async function openGameFromLibrary(gameId) {
   if (!gameId) return;
   if (typeof closeGamesLibrary === 'function') closeGamesLibrary();
   if (typeof switchTab === 'function') switchTab('feed');
@@ -62,7 +92,10 @@ async function openGameFromLikedList(gameId) {
   if (idx >= 0 && typeof goTo === 'function') goTo(idx, false);
 }
 
-window.loadLikedGamesList = loadLikedGamesList;
-window.renderLikedGamesGrid = renderLikedGamesGrid;
-window.refreshLikedGamesScreen = refreshLikedGamesScreen;
-window.openGameFromLikedList = openGameFromLikedList;
+window.loadGamesLibrary = loadGamesLibrary;
+window.renderGamesGridSection = renderGamesGridSection;
+window.refreshGamesLibraryScreen = refreshGamesLibraryScreen;
+window.openGameFromLibrary = openGameFromLibrary;
+/* backwards compat */
+window.loadLikedGamesList = loadGamesLibrary;
+window.refreshLikedGamesScreen = refreshGamesLibraryScreen;
