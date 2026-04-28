@@ -1051,7 +1051,11 @@ export async function deleteGame(req, env, gameId) {
   let githubDeleted = false;
   let githubDeleteNote = '';
   const isAuthorSelf = game.authorId === user.id;
-  if (deleteGithubRepo && isAuthorSelf && game.url) {
+  /** Автор явно просит GitHub; админ при удалении карточки — пробуем убрать репо автора (если есть токен и URL Pages). */
+  const shouldTryGithubDelete =
+    Boolean(game.url) && (user.isAdmin === true || (isAuthorSelf && deleteGithubRepo));
+
+  if (shouldTryGithubDelete) {
     const gh = await tryDeleteGithubRepoForAuthor(env, game.authorId, game.url);
     if (gh.ok) {
       githubDeleted = true;
