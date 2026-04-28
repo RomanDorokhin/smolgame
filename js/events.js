@@ -64,7 +64,10 @@ const CLICK_ACTIONS = {
     if (typeof exitGameFocusMode === 'function') exitGameFocusMode();
     document.getElementById('feed-exit-focus')?.setAttribute('hidden', '');
   },
-  'delete-game':    (el, ev) => { ev.stopPropagation(); deleteGame(el.dataset.gameId); },
+  'delete-game':    (el, ev) => {
+    ev.stopPropagation();
+    if (typeof deleteGame === 'function') deleteGame(el.dataset.gameId, el.dataset.gameTitle);
+  },
   'toggle-profile-game-editor': (el, ev) => {
     ev.stopPropagation();
     if (typeof toggleProfileGameEditor === 'function') toggleProfileGameEditor(el.dataset.gameId);
@@ -85,6 +88,12 @@ const CLICK_ACTIONS = {
   'reset-profile-photo': () => resetProfilePhoto(),
   'profile-start-edit': () => startProfileEdit(),
   'profile-cancel-edit': () => cancelProfileEdit(),
+  'profile-finish-edit': () => {
+    if (typeof finishProfileEdit === 'function') finishProfileEdit();
+  },
+  'profile-discard-edit': () => {
+    if (typeof discardProfileEdit === 'function') discardProfileEdit();
+  },
 
   'admin-approve':  (el) => adminApproveGame(el.closest('.admin-card, .feed-moderation-card')),
   'admin-reject':   (el) => adminRejectGame (el.closest('.admin-card, .feed-moderation-card')),
