@@ -218,7 +218,7 @@ function appendSlides(startIndex, gamesSlice) {
     const iframe = document.createElement('iframe');
     iframe.className = 'slide-game';
     iframe.id = 'iframe-' + i;
-    iframe.setAttribute('sandbox', 'allow-scripts allow-forms allow-popups');
+    iframe.setAttribute('sandbox', 'allow-scripts allow-forms allow-popups allow-same-origin');
     iframe.setAttribute('allow', 'autoplay');
     iframe.setAttribute('referrerpolicy', 'no-referrer');
     iframe.setAttribute('loading', 'lazy');
