@@ -512,7 +512,7 @@ function feedPointerDown(e, dragHost) {
   if (document.body.classList.contains('feed-game-focus')) return;
   if (FEED_VERTICAL && e.target?.closest?.('button, a, input, textarea, label')) return;
 
-  if (typeof onSwipeStripUserActivity === 'function') onSwipeStripUserActivity();
+  scheduleFeedSwipeTeaseBoredom();
   feedSwipeTeaseBurstBody().classList.remove('feed-swipe-tease-burst');
 
   touching = true;
@@ -644,7 +644,7 @@ document.addEventListener('DOMContentLoaded', () => {
       e => {
         if (isOverlayOpen() || GAMES.length < 2 || document.body.classList.contains('feed-game-focus')) return;
         e.preventDefault();
-        if (typeof onSwipeStripUserActivity === 'function') onSwipeStripUserActivity();
+        scheduleFeedSwipeTeaseBoredom();
         const absX = Math.abs(e.deltaX);
         const absY = Math.abs(e.deltaY);
         if (absX >= absY) {
@@ -676,18 +676,6 @@ document.addEventListener('keydown', e => {
     }
   }
 });
-
-function hideSwipeHint() {}
-
-/** Раньше: idle-пульсация полоски. Полоска убрана — оставляем хук для таймеров подсказки. */
-function clearSwipeStripIdleTimer() {}
-function scheduleSwipeStripIdleNudge() {}
-function onSwipeStripUserActivity() {
-  scheduleFeedSwipeTeaseBoredom();
-}
-
-window.scheduleSwipeStripIdleNudge = scheduleSwipeStripIdleNudge;
-window.onSwipeStripUserActivity = onSwipeStripUserActivity;
 
 /* ── «Дёрни экран» подсказка свайпа: короткие всплески, не бесконечный loop ── */
 const FEED_SWIPE_TEASE_BOREDOM_MS = 18 * 1000; /* без действий на ленте — снова намекнуть */
@@ -844,7 +832,8 @@ window.loadMoreFeed = loadMoreFeed;
 window.renderFeed = renderFeed;
 window.goTo = goTo;
 window.updateOverlay = updateOverlay;
-window.hideHint = hideSwipeHint;
+/** Раньше скрывали подсказку свайпа; UI убран — вызовы из main.js оставляем как no-op. */
+window.hideHint = function hideHint() {};
 window.injectGameIntoFeed = injectGameIntoFeed;
 window.enterGameFocusMode = enterGameFocusMode;
 window.exitGameFocusMode = exitGameFocusMode;

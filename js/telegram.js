@@ -6,7 +6,7 @@ try {
     Telegram.WebApp.disableVerticalSwipes();
   }
 } catch (e) {
-  console.log('Not in Telegram, running in browser');
+  /* вне Telegram WebApp — ожидаемо для локальной разработки */
 }
 
 document.body.addEventListener('touchmove', function (e) {

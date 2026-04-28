@@ -184,7 +184,6 @@ function switchTab(tab) {
     const chrome = document.getElementById('app-tab-chrome-label');
     if (chrome) chrome.textContent = 'Лента';
     if (typeof refreshFeedCoachState === 'function') refreshFeedCoachState();
-    if (typeof scheduleSwipeStripIdleNudge === 'function') scheduleSwipeStripIdleNudge();
     if (typeof scheduleFeedSwipeTeaseBoredom === 'function') scheduleFeedSwipeTeaseBoredom();
     return;
   }
