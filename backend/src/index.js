@@ -30,6 +30,23 @@ export default {
   },
 };
 
+function isAllowedMiniAppOrigin(originHeader) {
+  const raw = String(originHeader || '').trim();
+  if (!raw || !/^https:\/\//i.test(raw)) return false;
+  try {
+    const { hostname } = new URL(raw);
+    const h = hostname.toLowerCase();
+    if (h === 't.me' || h.endsWith('.t.me')) return true;
+    if (h === 'telegram.org' || h.endsWith('.telegram.org')) return true;
+    if (h === 'telegram.dog' || h.endsWith('.telegram.dog')) return true;
+    // Мини-апп на GitHub Pages (любой *.github.io — Origin совпадает с хостом страницы)
+    if (h.endsWith('.github.io') || h.endsWith('.github.dev')) return true;
+    return false;
+  } catch {
+    return false;
+  }
+}
+
 function resolveCorsOrigin(req, env) {
   const requestOrigin = req.headers.get('origin') || '';
   if (/^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(requestOrigin)) {
@@ -37,10 +54,8 @@ function resolveCorsOrigin(req, env) {
   }
   const configured = String(env.FRONTEND_ORIGIN || '').trim().replace(/\/$/, '');
   const reqNorm = String(requestOrigin).trim().replace(/\/$/, '');
-  // GitHub Pages и т.п. — как в [vars] FRONTEND_ORIGIN
   if (configured && reqNorm === configured) return requestOrigin || configured;
-  // Telegram (Desktop/Web/часть клиентов) — Origin *.telegram.org, не GitHub Pages.
-  if (/^https:\/\/([a-z0-9-]+\.)*telegram\.org$/i.test(reqNorm)) return requestOrigin;
+  if (isAllowedMiniAppOrigin(requestOrigin)) return requestOrigin;
   return configured || '*';
 }
 

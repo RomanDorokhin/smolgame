@@ -37,7 +37,7 @@ async function apiFetch(path, { method = 'GET', body } = {}) {
       low.includes('canceled');
     throw new Error(
       webkitBroke
-        ? 'Запрос не дошёл до приложения (часто блокировка CORS в Telegram Desktop — обнови Worker с последним бэком). Иначе: VPN, сеть.'
+        ? 'Сеть/WebView: запрос к API оборвался. Чаще всего: не задеплоен Worker с фиксом CORS — в папке backend: git pull && npx wrangler deploy. Либо открой мини-апп с телефона.'
         : 'Запрос не выполнился: ' + (net || 'ошибка сети')
     );
   }
