@@ -55,13 +55,9 @@ function onSearch(query) {
   }
 
   results.innerHTML = filtered.map(g => `
-    <div class="game-card search-game-card" data-action="open-game" data-game-id="${esc(g.id)}">
-      <div class="game-card-thumb">${gameThumbHtml(g)}</div>
-      <div class="game-card-info">
-        <div class="game-card-title-row"><span class="game-card-genre-ic">${typeof genreIconForGame === 'function' ? genreIconForGame(g) : ''}</span><span class="game-card-name">${esc(g.title)}</span></div>
-        ${g.genre ? `<div class="game-card-genre-str">${esc(g.genre)}</div>` : ''}
-        <div class="game-card-stats"><span class="sg-mini-stat">${sgStatHeartSvg()}${fmtNum(g.likes)}</span><span class="sg-mini-sep">·</span><span class="sg-mini-stat">${sgStatEyeSvg()}${fmtNum(g.plays)}</span></div>
-      </div>
+    <div class="game-card sg-store-card search-game-card" data-action="open-game" data-game-id="${esc(g.id)}">
+      <div class="game-card-thumb sg-store-card-thumb">${gameThumbHtml(g)}</div>
+      ${typeof sgStorefrontCardInfoHtml === 'function' ? sgStorefrontCardInfoHtml(g, { author: true, desc: true }) : `<div class="game-card-info"><div class="game-card-name">${esc(g.title)}</div><div class="game-card-stats"><span class="sg-mini-stat">${sgStatHeartSvg()}${fmtNum(g.likes)}</span><span class="sg-mini-sep">·</span><span class="sg-mini-stat">${sgStatEyeSvg()}${fmtNum(g.plays)}</span></div></div>`}
     </div>
   `).join('');
 }

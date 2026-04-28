@@ -2474,6 +2474,111 @@ textarea.field-input{
 .game-card-name{font-size:13px;font-weight:700;margin-bottom:3px;}
 .game-card-stats{font-size:11px;color:var(--muted);}
 
+/* Карточка «как товар» (профиль, поиск, библиотека, автор) */
+.sg-store-card{
+  display:flex;
+  flex-direction:column;
+  background:linear-gradient(180deg,#22252e 0%,#1a1c24 48%,#16181f 100%);
+  border:1px solid rgba(255,255,255,0.09);
+  border-radius:16px;
+  box-shadow:0 4px 20px rgba(0,0,0,0.35), 0 1px 0 rgba(255,255,255,0.06) inset;
+  overflow:hidden;
+  min-height:0;
+}
+.sg-store-card:active{
+  transform:scale(0.985);
+  box-shadow:0 2px 12px rgba(0,0,0,0.4);
+}
+.sg-store-card-thumb{
+  aspect-ratio:1 / 1.08;
+  background:linear-gradient(165deg,#f4f6fa 0%,#e8ecf4 35%,#dce2ee 100%);
+}
+.sg-store-card-thumb::after{
+  background:linear-gradient(180deg,transparent 35%,rgba(0,0,0,0.22) 100%);
+}
+.sg-store-card-thumb .game-card-cover{
+  mix-blend-mode:normal;
+}
+.sg-store-card-info{
+  flex:1;
+  display:flex;
+  flex-direction:column;
+  padding:10px 11px 11px;
+  gap:4px;
+  min-height:0;
+}
+.sg-store-card-cat{
+  font-size:10px;
+  font-weight:700;
+  letter-spacing:0.06em;
+  text-transform:uppercase;
+  color:rgba(255,255,255,0.38);
+  line-height:1.2;
+}
+.sg-store-card-title{
+  font-family:'Space Grotesk',sans-serif;
+  font-size:13px;
+  font-weight:700;
+  line-height:1.28;
+  color:rgba(255,255,255,0.96);
+  display:-webkit-box;
+  -webkit-line-clamp:2;
+  -webkit-box-orient:vertical;
+  overflow:hidden;
+  min-height:2.56em;
+}
+.sg-store-card-author{
+  font-size:11px;
+  font-weight:600;
+  color:rgba(255,255,255,0.45);
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  margin-top:1px;
+}
+.sg-store-card-desc{
+  margin:2px 0 0;
+  font-size:11px;
+  line-height:1.35;
+  color:rgba(255,255,255,0.4);
+  display:-webkit-box;
+  -webkit-line-clamp:2;
+  -webkit-box-orient:vertical;
+  overflow:hidden;
+  flex:1;
+  min-height:0;
+}
+.sg-store-card-meta{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  margin-top:auto;
+  padding-top:8px;
+  border-top:1px solid rgba(255,255,255,0.06);
+}
+.sg-store-card-stats{
+  display:flex;
+  align-items:center;
+  flex-wrap:wrap;
+  gap:0;
+  font-size:11px;
+  color:rgba(255,255,255,0.42);
+  min-width:0;
+}
+.sg-store-card-badge{
+  flex-shrink:0;
+  font-size:9px;
+  font-weight:800;
+  letter-spacing:0.04em;
+  text-transform:uppercase;
+  padding:4px 8px;
+  border-radius:8px;
+  color:rgba(126,214,160,0.98);
+  background:rgba(46,160,90,0.2);
+  border:1px solid rgba(102,200,140,0.35);
+}
+
 /* ══════════════════════════════
    ЭКРАН: ПОИСК
 ══════════════════════════════ */
@@ -2658,36 +2763,7 @@ textarea.field-input{
   color:rgba(255,255,255,0.85);
 }
 
-.search-game-card .game-card-title-row{
-  display:flex;
-  align-items:flex-start;
-  gap:6px;
-  min-width:0;
-  margin-bottom:2px;
-}
-.search-game-card .game-card-genre-ic{
-  flex-shrink:0;
-  margin-top:1px;
-}
-.search-game-card .game-card-name{
-  display:-webkit-box;
-  -webkit-line-clamp:2;
-  -webkit-box-orient:vertical;
-  overflow:hidden;
-  line-height:1.2;
-  min-width:0;
-}
-.search-game-card .game-card-genre-str{
-  font-size:10px;
-  font-weight:600;
-  color:rgba(255,255,255,0.35);
-  text-transform:uppercase;
-  letter-spacing:0.04em;
-  margin:0 0 4px;
-  white-space:nowrap;
-  overflow:hidden;
-  text-overflow:ellipsis;
-}
+/* Поиск: карточки используют .sg-store-card; старые классы title-row убраны из разметки */
 
 /* ══════════════════════════════
    ЭКРАН: РЕГИСТРАЦИЯ

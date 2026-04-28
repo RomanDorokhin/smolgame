@@ -110,6 +110,52 @@ function hapticWarning() {
   } catch (err) { /* ignore */ }
 }
 
+/** Короткая строка описания для карточки «как товар» (профиль / поиск). */
+function sgCardDescSnippet(text, maxLen) {
+  const t = String(text || '').trim().replace(/\s+/g, ' ');
+  if (!t) return '';
+  const m = Math.max(8, Number(maxLen) || 64);
+  if (t.length <= m) return t;
+  return t.slice(0, m - 1).trimEnd() + '…';
+}
+
+/**
+ * Нижняя часть карточки в стиле маркетплейса: категория, название, опционально автор и описание, статистика + «Бесплатно».
+ * @param {object} g — объект игры из ленты/API
+ * @param {{ author?: boolean, desc?: boolean }} [opts]
+ */
+function sgStorefrontCardInfoHtml(g, opts) {
+  const o = opts || {};
+  const showAuthor = Boolean(o.author);
+  const showDesc = o.desc !== false;
+  const genreLine = esc((g && g.genre && String(g.genre).trim()) ? g.genre : 'Игра');
+  const title = esc((g && g.title && String(g.title).trim()) ? g.title : 'Игра');
+  const snippet = showDesc ? sgCardDescSnippet(g && g.description, 72) : '';
+  const snippetHtml = snippet ? `<p class="sg-store-card-desc">${esc(snippet)}</p>` : '';
+  let authorHtml = '';
+  if (showAuthor) {
+    const an = g && g.authorName != null ? String(g.authorName).trim() : '';
+    const ah = g && g.authorHandle != null ? String(g.authorHandle).trim() : '';
+    const line = an || (ah ? '@' + ah : '');
+    if (line) authorHtml = `<div class="sg-store-card-author">${esc(line)}</div>`;
+  }
+  return `
+    <div class="sg-store-card-info">
+      <div class="sg-store-card-cat">${genreLine}</div>
+      <div class="sg-store-card-title">${title}</div>
+      ${authorHtml}
+      ${snippetHtml}
+      <div class="sg-store-card-meta">
+        <div class="sg-store-card-stats">
+          <span class="sg-mini-stat">${sgStatHeartSvg()}${fmtNum(g && g.likes)}</span>
+          <span class="sg-mini-sep">·</span>
+          <span class="sg-mini-stat">${sgStatEyeSvg()}${fmtNum(g && g.plays)}</span>
+        </div>
+        <span class="sg-store-card-badge">Бесплатно</span>
+      </div>
+    </div>`;
+}
+
 /** Единый блок «пусто» в сетках (профиль, автор). */
 function sgEmptyGridHtml(title, sub) {
   const t = esc(title || '');
@@ -149,6 +195,8 @@ window.hapticLight = hapticLight;
 window.hapticSuccess = hapticSuccess;
 window.hapticWarning = hapticWarning;
 window.sgEmptyGridHtml = sgEmptyGridHtml;
+window.sgCardDescSnippet = sgCardDescSnippet;
+window.sgStorefrontCardInfoHtml = sgStorefrontCardInfoHtml;
 window.esc = esc;
 window.safeHttpUrl = safeHttpUrl;
 window.normalizeToHttpsUrl = normalizeToHttpsUrl;

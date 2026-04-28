@@ -188,15 +188,12 @@ async function renderProfile() {
       </div>` : '';
       return `
       <div class="profile-game-row" id="profileGameRow-${idRaw}" data-profile-game-id="${idRaw}" data-title="${titleEsc}" data-description="${descEsc}" data-genre="${genreEsc}" data-url="${urlEsc}" data-image-url="${imgEsc}" data-status="${statEsc}">
-        <div class="game-card" data-action="open-game-profile" data-game-id="${gid}">
-          <div class="game-card-thumb">
+        <div class="game-card sg-store-card" data-action="open-game-profile" data-game-id="${gid}">
+          <div class="game-card-thumb sg-store-card-thumb">
             ${gameStatusBadgeHtml(g.status)}
             ${gameThumbHtml(g)}
           </div>
-          <div class="game-card-info">
-            <div class="game-card-name">${esc(g.title)}</div>
-            <div class="game-card-stats"><span class="sg-mini-stat">${sgStatHeartSvg()}${fmtNum(g.likes)}</span><span class="sg-mini-sep">·</span><span class="sg-mini-stat">${sgStatEyeSvg()}${fmtNum(g.plays)}</span></div>
-          </div>
+          ${typeof sgStorefrontCardInfoHtml === 'function' ? sgStorefrontCardInfoHtml(g, { author: false, desc: true }) : `<div class="game-card-info"><div class="game-card-name">${esc(g.title)}</div><div class="game-card-stats"><span class="sg-mini-stat">${sgStatHeartSvg()}${fmtNum(g.likes)}</span><span class="sg-mini-sep">·</span><span class="sg-mini-stat">${sgStatEyeSvg()}${fmtNum(g.plays)}</span></div></div>`}
         </div>
         <div class="profile-game-actions">
           ${canEdit ? `<button type="button" class="profile-text-btn" data-action="toggle-profile-game-editor" data-game-id="${idRaw}" title="Редактировать карточку в ленте">Правки</button>` : ''}

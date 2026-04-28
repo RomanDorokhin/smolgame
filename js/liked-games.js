@@ -21,12 +21,9 @@ function renderGamesGridSection(gridId, games, emptyTitle, emptySub, emptyCtaTab
   grid.innerHTML = games
     .map(
       g => `
-    <div class="game-card" data-action="open-game-library" data-game-id="${esc(g.id)}">
-      <div class="game-card-thumb">${typeof gameThumbHtml === 'function' ? gameThumbHtml(g) : ''}</div>
-      <div class="game-card-info">
-        <div class="game-card-name">${esc(g.title)}</div>
-        <div class="game-card-stats"><span class="sg-mini-stat">${typeof sgStatHeartSvg === 'function' ? sgStatHeartSvg() : ''}${typeof fmtNum === 'function' ? fmtNum(g.likes) : g.likes}</span><span class="sg-mini-sep">·</span><span class="sg-mini-stat">${typeof sgStatEyeSvg === 'function' ? sgStatEyeSvg() : ''}${typeof fmtNum === 'function' ? fmtNum(g.plays) : g.plays}</span></div>
-      </div>
+    <div class="game-card sg-store-card" data-action="open-game-library" data-game-id="${esc(g.id)}">
+      <div class="game-card-thumb sg-store-card-thumb">${typeof gameThumbHtml === 'function' ? gameThumbHtml(g) : ''}</div>
+      ${typeof sgStorefrontCardInfoHtml === 'function' ? sgStorefrontCardInfoHtml(g, { author: false, desc: true }) : `<div class="game-card-info"><div class="game-card-name">${esc(g.title)}</div><div class="game-card-stats"><span class="sg-mini-stat">${typeof sgStatHeartSvg === 'function' ? sgStatHeartSvg() : ''}${typeof fmtNum === 'function' ? fmtNum(g.likes) : g.likes}</span><span class="sg-mini-sep">·</span><span class="sg-mini-stat">${typeof sgStatEyeSvg === 'function' ? sgStatEyeSvg() : ''}${typeof fmtNum === 'function' ? fmtNum(g.plays) : g.plays}</span></div></div>`}
     </div>`
     )
     .join('');
