@@ -6,6 +6,8 @@ SmolGame — вертикальная лента HTML5-игр внутри Teleg
 
 **Профиль** в первую очередь для разработчика (мои опубликованные игры, модерация для админа).
 
+**Документация для авторов игр** (iframe, GitHub Pages, тач, модерация): [docs/DEVELOPER_GUIDE.md](docs/DEVELOPER_GUIDE.md)
+
 Основные возможности:
 
 - Запуск игр в WebView Telegram (iframe)
@@ -23,6 +25,7 @@ SmolGame — вертикальная лента HTML5-игр внутри Teleg
 index.html, styles.css, js/   — фронтенд (живёт на GitHub Pages)
 backend/                      — API на Cloudflare Workers + D1
 docs/DESIGN.md                 — дизайн-система, токены, свайп, бренд (для команды)
+docs/DEVELOPER_GUIDE.md       — правила для разработчиков HTML5-игр под ленту (iframe, GitHub Pages, ввод)
 ```
 
 ---
