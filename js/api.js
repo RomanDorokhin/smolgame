@@ -26,15 +26,41 @@ async function apiFetch(path, { method = 'GET', body } = {}) {
     });
   } catch (e) {
     const net = String(e?.message || e || '');
+    const low = net.toLowerCase();
+    const webkitBroke =
+      low.includes('load failed') ||
+      low.includes('failed to fetch') ||
+      low.includes('network') ||
+      low.includes('network connection was lost') ||
+      low.includes('internet connection appears to be offline') ||
+      low.includes('cancelled') ||
+      low.includes('canceled');
     throw new Error(
-      net.toLowerCase().includes('failed to fetch') || net.toLowerCase().includes('network')
-        ? 'Нет сети или сервер не отвечает. Попробуй позже.'
+      webkitBroke
+        ? 'Сеть или WebView оборвали запрос. Закрой мини-апп полностью и открой снова из бота; выключи VPN; проверь Wi‑Fi.'
         : 'Запрос не выполнился: ' + (net || 'ошибка сети')
     );
   }
 
   let data = null;
-  try { data = await resp.json(); } catch (e) {}
+  try {
+    data = await resp.json();
+  } catch (e) {
+    data = null;
+  }
+
+  // POST /api/upload-image должен вернуть JSON с imageUrl; иначе фронт «молча» шлёт игру без обложки.
+  if (resp.ok && path === '/api/upload-image') {
+    const u = data?.imageUrl;
+    if (typeof u !== 'string' || !u.trim()) {
+      const errText = typeof data?.error === 'string' ? data.error.trim() : '';
+      throw new Error(
+        errText ||
+          'Сервер не вернул ссылку на файл. В Cloudflare у Worker: binding IMAGES на R2 и переменная PUBLIC_IMAGE_BASE_URL (публичный https://pub-….r2.dev, не S3 API).'
+      );
+    }
+  }
+
   if (!resp.ok) {
     const raw = data?.error;
     let msg = (typeof raw === 'string' && raw.trim()) || resp.statusText || 'request failed';
