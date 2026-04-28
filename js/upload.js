@@ -305,10 +305,55 @@ async function githubUploadSubmit() {
       gameTitle,
       gameDescription,
     });
-    showToast(out?.pagesReady ? '✅ GitHub Pages отвечает' : '✅ Репозиторий создан, Pages могут подняться через минуту');
     window._ghPublishedPlayUrl = out.pagesUrl || '';
     resetGithubInlineForm();
     if (typeof selectMethod === 'function') await selectMethod('github');
+
+    const canSubmit =
+      typeof hasTelegramInitData === 'function' && hasTelegramInitData();
+    let submittedToModeration = false;
+    if (canSubmit) {
+      try {
+        const coverRes = await resolveGhCodeWizardCover();
+        const imageUrl = coverRes?.error ? null : coverRes?.imageUrl ?? null;
+        await performGithubPathSubmit({
+          playUrl: out.pagesUrl,
+          title: gameTitle,
+          description: gameDescription,
+          imageUrl,
+        });
+        submittedToModeration = true;
+      } catch (subErr) {
+        console.warn('githubUploadSubmit moderation', subErr);
+        const msg = subErr?.message || 'не удалось записать в очередь';
+        showToast('⚠️ ' + msg + ' — открой шаг 2 ниже и нажми «Отправить на модерацию».');
+        beginGhCodeWizardAfterPublish(out);
+        return;
+      }
+    }
+
+    if (submittedToModeration) {
+      showToast(
+        out?.pagesReady
+          ? '✅ Репозиторий готов — игра на модерации'
+          : '✅ Репозиторий создан — игра на модерации (Pages до 1–3 мин)'
+      );
+      resetGhCodeWizard();
+      const done = USER.isGithubConnected && USER.hasGithubPublishToken;
+      document.getElementById('github-inline-upload')?.toggleAttribute('hidden', !done);
+      document.getElementById('code-branch-github')?.setAttribute('hidden', '');
+      document.getElementById('gh-after-publish-panel')?.setAttribute('hidden', '');
+      if (typeof loadAdminPending === 'function') loadAdminPending();
+      return;
+    }
+
+    showToast(
+      canSubmit
+        ? out?.pagesReady
+          ? '✅ GitHub Pages отвечает'
+          : '✅ Репозиторий создан — заверши шаг 2'
+        : '✅ Репозиторий создан. Открой мини-апп из бота и нажми «Отправить на модерацию».'
+    );
     beginGhCodeWizardAfterPublish(out);
   } catch (e) {
     const msg = e?.message || 'ошибка';
@@ -330,6 +375,26 @@ function beginGhCodeWizardAfterPublish(apiOut) {
   document.getElementById('gh-after-publish-panel')?.removeAttribute('hidden');
   if (typeof renderGenrePills === 'function') renderGenrePills('genrePillsGhCode', 'ghCode');
   refreshGhPublishReviewBox();
+}
+
+/** Общая отправка карточки игры (pending) по сценарию GitHub — шаг 2 и авто после создания репо. */
+async function performGithubPathSubmit({ playUrl, title, description, imageUrl }) {
+  const u = normalizeToHttpsUrl(String(playUrl || '').trim()) || String(playUrl || '').trim();
+  if (!u || !/github\.io/i.test(u)) {
+    throw new Error('Некорректная ссылка GitHub Pages');
+  }
+  const t = String(title || '').trim();
+  if (!t) throw new Error('Укажи название игры');
+  const genre = window.selectedGenres.ghCode || 'Прочее';
+  const genreEmoji = typeof genreKeyForApiLabel === 'function' ? genreKeyForApiLabel(genre) : 'other';
+  await API.submit({
+    title: t,
+    description: String(description || '').trim(),
+    genre,
+    genreEmoji,
+    url: u,
+    imageUrl: imageUrl || null,
+  });
 }
 
 function refreshGhPublishReviewBox() {
@@ -443,24 +508,21 @@ async function ghCodeWizardPublish() {
     return;
   }
   const desc = document.getElementById('ghCodeWizardDesc')?.value?.trim() || '';
-  const genre = window.selectedGenres.ghCode || 'Прочее';
-  const genreEmoji = typeof genreKeyForApiLabel === 'function' ? genreKeyForApiLabel(genre) : 'other';
 
   showToast('🔍 Отправляем…');
   try {
     const { imageUrl, error } = await resolveGhCodeWizardCover();
     if (error) return;
 
-    await API.submit({
+    await performGithubPathSubmit({
+      playUrl,
       title,
       description: desc,
-      genre,
-      genreEmoji,
-      url: playUrl,
       imageUrl: imageUrl || null,
     });
     showToast('✅ Отправлено на модерацию!');
     resetGhCodeWizard();
+    if (typeof loadAdminPending === 'function') loadAdminPending();
     if (typeof closeUpload === 'function') closeUpload();
   } catch (e) {
     const m = e?.message || 'не получилось';
