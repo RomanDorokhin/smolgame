@@ -37,7 +37,7 @@ async function apiFetch(path, { method = 'GET', body } = {}) {
       low.includes('canceled');
     throw new Error(
       webkitBroke
-        ? 'Сеть/WebView: запрос к API оборвался. Чаще всего: не задеплоен Worker с фиксом CORS — в папке backend: git pull && npx wrangler deploy. Либо открой мини-апп с телефона.'
+        ? 'Сеть/WebView: не удалось связаться с API. Подожди минуту, выключи VPN, обнови мини-апп (закрой полностью). Если с телефона работает — обнови Worker: backend → git pull && npx wrangler deploy.'
         : 'Запрос не выполнился: ' + (net || 'ошибка сети')
     );
   }
