@@ -214,6 +214,23 @@ html,body,#root,#feed,.slide{margin:0;padding:0;border:0;width:100%;height:100%;
 }
 .upload-steps-dot.done{background:rgba(255,255,255,0.28);}
 .upload-steps-dot.current{background:linear-gradient(90deg,rgba(255,255,255,0.38),rgba(255,255,255,0.14));}
+/* Цвета шагов как у жанров: 1 головоломка, 2 аркада, 3 стратегия, 4 казуал */
+.upload-steps-dot--1.done{
+  background:linear-gradient(90deg,rgba(201,166,255,0.55),rgba(201,166,255,0.2));
+  box-shadow:0 0 10px rgba(201,166,255,0.12);
+}
+.upload-steps-dot--2.done{
+  background:linear-gradient(90deg,rgba(93,212,240,0.55),rgba(93,212,240,0.22));
+  box-shadow:0 0 10px rgba(93,212,240,0.12);
+}
+.upload-steps-dot--3.done{
+  background:linear-gradient(90deg,rgba(240,200,106,0.5),rgba(240,200,106,0.2));
+  box-shadow:0 0 10px rgba(240,200,106,0.1);
+}
+.upload-steps-dot--4.current{
+  background:linear-gradient(90deg,rgba(126,224,168,0.7),rgba(126,224,168,0.28));
+  box-shadow:0 0 12px rgba(126,224,168,0.2);
+}
 
 /* ══════════════════════════════
    BUTTONS — единый язык контролов (Telegram-like)
@@ -1406,6 +1423,31 @@ body:has(#feed-nav-tip-overlay.feed-nav-tip-visible) #feed-coach-fab{
   border-color:rgba(var(--accent-rgb),0.45);
   background:var(--accent-soft);
 }
+/* Вкладки способа: оттенки как у жанров (ссылка / GitHub / премиум) */
+.method-card--url:not(.selected) .m-icon--svg{color:rgba(140,213,255,0.62);}
+.method-card--url.selected{
+  border-color:rgba(140,213,255,0.48);
+  background:linear-gradient(165deg,rgba(140,213,255,0.12) 0%,rgba(19,20,26,0.96) 55%);
+  box-shadow:0 0 0 1px rgba(140,213,255,0.08) inset;
+}
+.method-card--url.selected .m-icon--svg{color:#8cd5ff;}
+
+.method-card--github:not(.selected) .m-icon--svg{color:rgba(201,166,255,0.55);}
+.method-card--github.selected{
+  border-color:rgba(201,166,255,0.5);
+  background:linear-gradient(165deg,rgba(201,166,255,0.1) 0%,rgba(19,20,26,0.96) 55%);
+  box-shadow:0 0 0 1px rgba(201,166,255,0.08) inset;
+}
+.method-card--github.selected .m-icon--svg{color:#c9a6ff;}
+
+.method-card--premium:not(.selected) .m-icon--svg{color:rgba(240,200,106,0.5);}
+.method-card--premium.selected{
+  border-color:rgba(240,200,106,0.5);
+  background:linear-gradient(165deg,rgba(240,200,106,0.1) 0%,rgba(19,20,26,0.96) 55%);
+  box-shadow:0 0 0 1px rgba(240,200,106,0.08) inset;
+}
+.method-card--premium.selected .m-icon--svg{color:#f0c86a;}
+
 .method-card .m-icon{font-size:32px;margin-bottom:8px;}
 .method-card .m-icon--svg{width:34px;height:34px;margin:0 auto 10px;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,0.92);}
 .method-card .m-icon--svg svg{width:100%;height:100%;display:block;}
@@ -2274,6 +2316,46 @@ textarea.field-input{
   display:flex;
   align-items:center;
   justify-content:center;
+}
+.help-acc--step1{
+  border-color:rgba(201,166,255,0.16);
+  background:linear-gradient(180deg,rgba(201,166,255,0.04) 0%,var(--surface) 32px);
+}
+.help-acc--step1[open]{border-color:rgba(201,166,255,0.32);}
+.help-acc--step1 .help-acc-num{
+  background:rgba(201,166,255,0.2);
+  color:#c9a6ff;
+  box-shadow:0 0 0 1px rgba(201,166,255,0.2) inset;
+}
+.help-acc--step2{
+  border-color:rgba(93,212,240,0.16);
+  background:linear-gradient(180deg,rgba(93,212,240,0.04) 0%,var(--surface) 32px);
+}
+.help-acc--step2[open]{border-color:rgba(93,212,240,0.3);}
+.help-acc--step2 .help-acc-num{
+  background:rgba(93,212,240,0.18);
+  color:#5dd4f0;
+  box-shadow:0 0 0 1px rgba(93,212,240,0.2) inset;
+}
+.help-acc--step3{
+  border-color:rgba(240,200,106,0.14);
+  background:linear-gradient(180deg,rgba(240,200,106,0.05) 0%,var(--surface) 32px);
+}
+.help-acc--step3[open]{border-color:rgba(240,200,106,0.28);}
+.help-acc--step3 .help-acc-num{
+  background:rgba(240,200,106,0.16);
+  color:#f0c86a;
+  box-shadow:0 0 0 1px rgba(240,200,106,0.2) inset;
+}
+.help-acc--step4{
+  border-color:rgba(126,224,168,0.16);
+  background:linear-gradient(180deg,rgba(126,224,168,0.04) 0%,var(--surface) 32px);
+}
+.help-acc--step4[open]{border-color:rgba(126,224,168,0.3);}
+.help-acc--step4 .help-acc-num{
+  background:rgba(126,224,168,0.18);
+  color:#7ee0a8;
+  box-shadow:0 0 0 1px rgba(126,224,168,0.2) inset;
 }
 .help-acc-body{
   padding:0 16px 16px;
