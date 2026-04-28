@@ -1600,11 +1600,74 @@ body.feed-layout-vertical #game-info{
   font-size:24px;
   font-weight:800;
 }
+.upload-active-panel{
+  margin-top:4px;
+}
+.upload-panel-lead{
+  font-size:14px;
+  line-height:1.5;
+  color:rgba(255,255,255,0.72);
+  margin:0 0 18px;
+}
+.upload-step-indicator{
+  font-size:11px;
+  font-weight:700;
+  letter-spacing:0.08em;
+  text-transform:uppercase;
+  color:rgba(255,255,255,0.38);
+  margin-bottom:10px;
+}
+.upload-flow-step{margin-bottom:8px;}
+.upload-flow-actions{
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+  align-items:center;
+  margin-top:8px;
+}
+.upload-flow-actions .submit-btn{flex:1;min-width:160px;}
+.upload-meta-panel{
+  padding-top:4px;
+  border-top:1px solid var(--border);
+  margin-top:8px;
+}
+.upload-premium-stub{
+  text-align:center;
+  padding:28px 20px 32px;
+  border-radius:20px;
+  border:1px solid var(--border);
+  background:linear-gradient(165deg, rgba(32,34,42,0.95) 0%, rgba(18,19,24,0.98) 100%);
+  margin-bottom:8px;
+}
+.upload-premium-stub-icon{
+  font-size:28px;
+  line-height:1;
+  margin-bottom:12px;
+  opacity:0.55;
+  color:rgba(240,200,106,0.85);
+}
+.upload-premium-stub-title{
+  font-family:'Syne',sans-serif;
+  font-size:20px;
+  font-weight:800;
+  margin:0 0 10px;
+  color:#fff;
+}
+.upload-premium-stub-text{
+  margin:0;
+  font-size:14px;
+  line-height:1.55;
+  color:var(--muted);
+  max-width:320px;
+  margin-left:auto;
+  margin-right:auto;
+}
+
 .upload-methods{
   display:grid;
   grid-template-columns:1fr 1fr;
   gap:12px;
-  margin-bottom:28px;
+  margin-bottom:20px;
 }
 
 .method-card{
@@ -1727,7 +1790,6 @@ textarea.field-input{
   grid-template-columns:repeat(auto-fill,minmax(108px,1fr));
   gap:10px;
 }
-#btn-premium-tab-advance{margin-top:14px;width:100%;}
 #btn-code-tab-advance{margin-top:14px;width:100%;}
 .github-reauth-btn{margin-top:8px;}
 .gh-paste-strip{margin-bottom:12px;padding:10px 12px;border-radius:12px;background:rgba(255,255,255,0.06);font-size:14px;line-height:1.45;}

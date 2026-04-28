@@ -217,6 +217,8 @@ function switchTab(tab) {
     if (chrome) chrome.textContent = 'Загрузить';
     const upload = document.getElementById('upload-screen');
     upload?.classList.add('open');
+    upload.scrollTop = 0;
+    if (typeof resetGhCodeWizard === 'function') resetGhCodeWizard();
     if (typeof renderGenrePills === 'function') {
       renderGenrePills('genrePillsCodeOnly', 'codeOnly');
       renderGenrePills('genrePillsGhCode', 'ghCode');

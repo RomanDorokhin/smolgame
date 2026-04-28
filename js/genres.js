@@ -6,6 +6,7 @@ function genrePillHtml(g) {
 
 function renderGenrePills(containerId, stateKey) {
   const el = document.getElementById(containerId);
+  if (!el) return;
   el.innerHTML = '';
   GENRES.forEach(g => {
     const pill = document.createElement('div');

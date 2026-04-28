@@ -16,7 +16,7 @@ async function refreshUploadCapabilities() {
 function updateGithubUploadUi() {
   const premCard = document.getElementById('method-premium');
   if (premCard) {
-    premCard.hidden = !USER.isPremium;
+    premCard.hidden = false;
   }
   const hint = document.getElementById('github-connect-hint');
   if (hint) {
@@ -53,29 +53,78 @@ async function selectMethod(m) {
   if (m === 'github' || m === 'premium') {
     await refreshUploadCapabilities();
   }
-  if (m === 'premium' && !USER.isPremium) {
-    showToast('⚠️ Вкладка «Премиум» только для премиум-аккаунта');
-    m = 'url';
+  if (m === 'premium') {
+    window.selectedUploadMethod = 'premium';
+    document.getElementById('method-url')?.classList.remove('selected');
+    document.getElementById('method-github')?.classList.remove('selected');
+    document.getElementById('method-premium')?.classList.add('selected');
+    document.getElementById('form-url')?.classList.remove('visible');
+    document.getElementById('form-github')?.classList.remove('visible');
+    document.getElementById('form-premium')?.classList.add('visible');
+    return;
   }
   window.selectedUploadMethod = m;
   document.getElementById('method-url')?.classList.toggle('selected', m === 'url');
   document.getElementById('method-github')?.classList.toggle('selected', m === 'github');
-  document.getElementById('method-premium')?.classList.toggle('selected', m === 'premium');
+  document.getElementById('method-premium')?.classList.remove('selected');
   document.getElementById('form-url')?.classList.toggle('visible', m === 'url');
   document.getElementById('form-github')?.classList.toggle('visible', m === 'github');
-  document.getElementById('form-premium')?.classList.toggle('visible', m === 'premium');
+  document.getElementById('form-premium')?.classList.remove('visible');
+
+  if (m === 'url' && typeof setUrlUploadStep === 'function') setUrlUploadStep(1);
+
+  if (m !== 'github' && typeof resetGhCodeWizard === 'function') {
+    resetGhCodeWizard();
+    const done = USER.isGithubConnected && USER.hasGithubPublishToken;
+    document.getElementById('github-inline-upload')?.toggleAttribute('hidden', !done);
+  }
 
   if (m === 'github') {
     const connect = document.getElementById('code-branch-connect');
     const gh = document.getElementById('code-branch-github');
+    const inline = document.getElementById('github-inline-upload');
+    const post = document.getElementById('gh-after-publish-panel');
     const done = USER.isGithubConnected && USER.hasGithubPublishToken;
     if (connect) connect.hidden = Boolean(done);
-    if (gh) gh.hidden = !done;
+    if (inline) inline.hidden = !done;
+    const postOpen = Boolean(post && !post.hasAttribute('hidden'));
+    if (gh) gh.hidden = !postOpen;
   }
-  if (m === 'premium' && USER.isPremium && typeof resetCodeWizard === 'function') {
-    resetCodeWizard();
-    if (typeof renderGenrePills === 'function') renderGenrePills('genrePillsCodeOnly', 'codeOnly');
+}
+
+function setUrlUploadStep(step) {
+  const link = document.getElementById('url-step-link');
+  const meta = document.getElementById('url-step-meta');
+  const ind = document.getElementById('url-step-indicator');
+  if (step === 2) {
+    link?.setAttribute('hidden', '');
+    meta?.removeAttribute('hidden');
+    if (ind) ind.textContent = 'Шаг 2 из 2';
+  } else {
+    meta?.setAttribute('hidden', '');
+    link?.removeAttribute('hidden');
+    if (ind) ind.textContent = 'Шаг 1 из 2';
   }
+  window._urlUploadStep = step;
+}
+
+function urlFlowNext() {
+  const rawUrl = document.getElementById('urlInput')?.value?.trim() || '';
+  if (!rawUrl) {
+    showToast('⚠️ Вставь ссылку на игру');
+    return;
+  }
+  const safeUrl = normalizeToHttpsUrl(rawUrl);
+  if (!safeUrl) {
+    showToast('⚠️ Нужна рабочая ссылка (https://… или http://)');
+    return;
+  }
+  setUrlUploadStep(2);
+  if (typeof renderGenrePills === 'function') renderGenrePills('genrePills2', 'url');
+}
+
+function urlFlowBack() {
+  setUrlUploadStep(1);
 }
 
 async function githubUnlink() {
@@ -256,15 +305,35 @@ function beginGhCodeWizardAfterPublish(apiOut) {
   const inp = document.getElementById('ghCodeWizardPagesUrl');
   if (inp) inp.value = urlRaw || '';
   window._ghPublishedPlayUrl = normalizeToHttpsUrl(urlRaw) || urlRaw || '';
-  setGhCodeWizardStep(1);
+  document.getElementById('github-inline-upload')?.setAttribute('hidden', '');
+  document.getElementById('code-branch-github')?.removeAttribute('hidden');
+  document.getElementById('gh-after-publish-panel')?.removeAttribute('hidden');
+  if (typeof renderGenrePills === 'function') renderGenrePills('genrePillsGhCode', 'ghCode');
+  refreshGhPublishReviewBox();
 }
 
-function setGhCodeWizardStep(n) {
-  for (let i = 1; i <= 3; i++) {
-    const el = document.getElementById('gh-code-wizard-step' + i);
-    if (el) el.hidden = i !== n;
+function refreshGhPublishReviewBox() {
+  const playUrl = window._ghPublishedPlayUrl || document.getElementById('ghCodeWizardPagesUrl')?.value?.trim() || '';
+  const title = document.getElementById('ghCodeWizardTitle')?.value?.trim() || '';
+  const desc = document.getElementById('ghCodeWizardDesc')?.value?.trim() || '';
+  const genre = window.selectedGenres.ghCode || 'Прочее';
+  const gIcon =
+    typeof genreIconSvg === 'function' && typeof genreIconKeyFromLabel === 'function'
+      ? genreIconSvg(genreIconKeyFromLabel(genre), 'sg-genre-ic--inline')
+      : '';
+  const coverUrl = document.getElementById('ghCodeWizardCoverUrl')?.value?.trim() || '';
+  const hasFile = Boolean(document.getElementById('ghCodeWizardCoverFile')?.files?.[0]);
+  const coverLine = coverUrl ? esc(coverUrl) : hasFile ? 'файл (загрузится при отправке)' : 'нет';
+  const box = document.getElementById('ghCodeWizardReview');
+  if (box) {
+    box.innerHTML = `
+      <p><strong>Ссылка на игру:</strong> ${esc(playUrl || '')}</p>
+      <p><strong>Название:</strong> ${esc(title)}</p>
+      <p><strong>Описание:</strong> ${esc(desc || '—')}</p>
+      <p class="upload-genre-line"><strong>Жанр:</strong>${gIcon}<span>${esc(genre)}</span></p>
+      <p><strong>Обложка:</strong> ${coverLine}</p>
+    `;
   }
-  window._ghCodeWizardStep = n;
 }
 
 function resetGhCodeWizard() {
@@ -285,10 +354,11 @@ function resetGhCodeWizard() {
     prev.classList.remove('has-image');
   }
   window.selectedGenres.ghCode = '';
+  document.getElementById('gh-after-publish-panel')?.setAttribute('hidden', '');
+  document.getElementById('code-branch-github')?.setAttribute('hidden', '');
   if (typeof renderGenrePills === 'function') {
     renderGenrePills('genrePillsGhCode', 'ghCode');
   }
-  setGhCodeWizardStep(1);
 }
 
 async function resolveGhCodeWizardCover() {
@@ -318,50 +388,19 @@ async function resolveGhCodeWizardCover() {
 }
 
 function ghCodeWizardNext() {
-  const step = window._ghCodeWizardStep || 1;
-  if (step === 1) {
-    setGhCodeWizardStep(2);
-    if (typeof renderGenrePills === 'function') {
-      renderGenrePills('genrePillsGhCode', 'ghCode');
-    }
-    return;
-  }
-  if (step === 2) {
-    setGhCodeWizardStep(3);
-    const playUrl = window._ghPublishedPlayUrl || document.getElementById('ghCodeWizardPagesUrl')?.value?.trim() || '';
-    const title = document.getElementById('ghCodeWizardTitle')?.value?.trim() || '';
-    const desc = document.getElementById('ghCodeWizardDesc')?.value?.trim() || '';
-    const genre = window.selectedGenres.ghCode || 'Прочее';
-    const gIcon =
-      typeof genreIconSvg === 'function' && typeof genreIconKeyFromLabel === 'function'
-        ? genreIconSvg(genreIconKeyFromLabel(genre), 'sg-genre-ic--inline')
-        : '';
-    const coverUrl = document.getElementById('ghCodeWizardCoverUrl')?.value?.trim() || '';
-    const hasFile = Boolean(document.getElementById('ghCodeWizardCoverFile')?.files?.[0]);
-    const coverLine = coverUrl ? esc(coverUrl) : hasFile ? 'файл (загрузится при отправке)' : 'нет';
-    const box = document.getElementById('ghCodeWizardReview');
-    if (box) {
-      box.innerHTML = `
-        <p><strong>Ссылка на игру:</strong> ${esc(playUrl || '')}</p>
-        <p><strong>Название:</strong> ${esc(title)}</p>
-        <p><strong>Описание:</strong> ${esc(desc || '—')}</p>
-        <p class="upload-genre-line"><strong>Жанр:</strong>${gIcon}<span>${esc(genre)}</span></p>
-        <p><strong>Обложка:</strong> ${coverLine}</p>
-      `;
-    }
-  }
+  refreshGhPublishReviewBox();
 }
 
 function ghCodeWizardBack() {
-  const step = window._ghCodeWizardStep || 1;
-  if (step <= 1) return;
-  setGhCodeWizardStep(step - 1);
+  refreshGhPublishReviewBox();
 }
 
 function ghCodeWizardCancel() {
   resetGhCodeWizard();
   if (typeof selectMethod === 'function') selectMethod('github');
-  showToast('Черновик сброшен');
+  const done = USER.isGithubConnected && USER.hasGithubPublishToken;
+  document.getElementById('github-inline-upload')?.toggleAttribute('hidden', !done);
+  showToast('Можно изменить код и отправить снова');
 }
 
 async function ghCodeWizardPublish() {
@@ -675,12 +714,13 @@ function previewCodeWizardCover(input) {
 
 async function submitGame(method) {
   if (method === 'premium') {
-    await refreshUploadCapabilities();
-    if (!USER.isPremium) {
-      showToast('⚠️ Только для премиум');
-      return;
-    }
-    if (typeof codeWizardNext === 'function') codeWizardNext();
+    showToast('Премиум пока в разработке — используй «Ссылка» или «GitHub»');
+    return;
+  }
+
+  const metaHidden = document.getElementById('url-step-meta')?.hasAttribute('hidden');
+  if (metaHidden !== false) {
+    showToast('⚠️ Сначала нажми «Дальше» и заполни название и жанр');
     return;
   }
 
@@ -760,12 +800,22 @@ window.ghCodeWizardBack = ghCodeWizardBack;
 window.ghCodeWizardCancel = ghCodeWizardCancel;
 window.ghCodeWizardPublish = ghCodeWizardPublish;
 window.previewGhCodeWizardCover = previewGhCodeWizardCover;
+window.setUrlUploadStep = setUrlUploadStep;
+window.urlFlowNext = urlFlowNext;
+window.urlFlowBack = urlFlowBack;
+window.refreshGhPublishReviewBox = refreshGhPublishReviewBox;
 
 document.addEventListener('change', (ev) => {
   if (ev.target?.id === 'gameImageInput') previewCover(ev.target);
   if (ev.target?.id === 'codeWizardCoverFile') previewCodeWizardCover(ev.target);
   if (ev.target?.id === 'ghCodeWizardCoverFile') previewGhCodeWizardCover(ev.target);
   if (ev.target?.id === 'githubMultiFiles') onGithubMultiFilesChange(ev.target);
+});
+
+document.getElementById('upload-screen')?.addEventListener('click', ev => {
+  if (ev.target.closest('#genrePillsGhCode .genre-pill') && typeof refreshGhPublishReviewBox === 'function') {
+    setTimeout(() => refreshGhPublishReviewBox(), 0);
+  }
 });
 
 /** После OAuth в браузере возврат в мини-апп — подтянуть /api/me и обновить вкладку GitHub. */
