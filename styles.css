@@ -560,43 +560,41 @@ body.tg-only-wall #app-boot-splash{
   letter-spacing:0.04em;
 }
 
-/* Крупные цветные иконки жанров: снизу справа → вверх влево, как «летающий» фон */
+/* Иконки жанров на сплэше: старт в разных точках экрана, полёт по диагонали (--boot-dx/dy задаёт JS) */
 .sg-genre-ic--boot-drift{
-  width:76px;
-  height:76px;
+  width:64px;
+  height:64px;
   display:block;
 }
 .app-boot-genre-drift__item{
   position:absolute;
-  right:max(-4%, env(safe-area-inset-right, 0px));
-  bottom:max(-6%, env(safe-area-inset-bottom, 0px));
-  width:76px;
-  height:76px;
+  width:64px;
+  height:64px;
   display:flex;
   align-items:center;
   justify-content:center;
   opacity:0;
-  filter:drop-shadow(0 4px 20px rgba(0,0,0,0.35));
-  animation:bootGenreDriftFly 16s linear infinite;
+  filter:drop-shadow(0 4px 18px rgba(0,0,0,0.4));
+  --boot-dx: -85vw;
+  --boot-dy: -85vh;
+  --boot-rot: -18deg;
+  --boot-dur: 16s;
+  --boot-delay: 0s;
+  transform:translate3d(0,0,0) rotate(var(--boot-rot)) scale(0.9);
+  animation:bootGenreDriftDiag var(--boot-dur) linear infinite;
+  animation-delay:var(--boot-delay);
   will-change:transform, opacity;
 }
-.app-boot-genre-drift__item--1{animation-duration:17s;animation-delay:-1s;}
-.app-boot-genre-drift__item--2{animation-duration:19s;animation-delay:-4s;}
-.app-boot-genre-drift__item--3{animation-duration:15s;animation-delay:-2.5s;}
-.app-boot-genre-drift__item--4{animation-duration:18s;animation-delay:-7s;}
-.app-boot-genre-drift__item--5{animation-duration:20s;animation-delay:-5s;}
-.app-boot-genre-drift__item--6{animation-duration:16s;animation-delay:-9s;}
-.app-boot-genre-drift__item--7{animation-duration:21s;animation-delay:-3s;}
-@keyframes bootGenreDriftFly{
+@keyframes bootGenreDriftDiag{
   0%{
-    transform:translate3d(0,0,0) rotate(-14deg) scale(0.92);
+    transform:translate3d(0,0,0) rotate(var(--boot-rot)) scale(0.88);
     opacity:0;
   }
-  6%{opacity:0.22;}
-  45%{opacity:0.32;}
-  88%{opacity:0.12;}
+  5%{opacity:0.2;}
+  40%{opacity:0.3;}
+  92%{opacity:0.1;}
   100%{
-    transform:translate3d(calc(-115vw - 40px),calc(-115vh - 40px),0) rotate(-14deg) scale(1.02);
+    transform:translate3d(var(--boot-dx),var(--boot-dy),0) rotate(var(--boot-rot)) scale(1.04);
     opacity:0;
   }
 }
