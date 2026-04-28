@@ -53,7 +53,10 @@ function resolveCorsOrigin(req, env) {
     return requestOrigin;
   }
   const configured = String(env.FRONTEND_ORIGIN || '').trim().replace(/\/$/, '');
-  const reqNorm = String(requestOrigin).trim().replace(/\/$/, '');
+  const raw = String(requestOrigin).trim();
+  const reqNorm = raw.replace(/\/$/, '');
+  // WebView Telegram иногда шлёт пустой Origin или буквально "null" — тогда echo github.io ломает CORS.
+  if (!raw || raw.toLowerCase() === 'null') return '*';
   if (configured && reqNorm === configured) return requestOrigin || configured;
   if (isAllowedMiniAppOrigin(requestOrigin)) return requestOrigin;
   return configured || '*';

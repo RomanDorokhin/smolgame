@@ -16,9 +16,15 @@ export function error(message, status = 400) {
  */
 export function withCors(resp, origin) {
   const h = new Headers(resp.headers);
-  h.set('access-control-allow-origin', origin);
-  h.set('access-control-allow-credentials', 'true');
-  h.set('access-control-allow-methods', 'GET,POST,DELETE,OPTIONS');
+  const allowOrigin = origin === '*' || !origin ? '*' : origin;
+  h.set('access-control-allow-origin', allowOrigin);
+  // С `*` браузер не принимает credentials: true — у нас нет cookie, только заголовок initData.
+  if (allowOrigin === '*') {
+    h.delete('access-control-allow-credentials');
+  } else {
+    h.set('access-control-allow-credentials', 'true');
+  }
+  h.set('access-control-allow-methods', 'GET,POST,DELETE,OPTIONS,PATCH');
   h.set('access-control-allow-headers', 'content-type, x-telegram-init-data');
   h.set('vary', 'origin');
   return new Response(resp.body, { status: resp.status, headers: h });
