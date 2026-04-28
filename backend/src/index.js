@@ -30,15 +30,38 @@ export default {
   },
 };
 
+function isAllowedMiniAppOrigin(originHeader) {
+  const raw = String(originHeader || '').trim();
+  if (!raw || !/^https:\/\//i.test(raw)) return false;
+  try {
+    const { hostname } = new URL(raw);
+    const h = hostname.toLowerCase();
+    if (h === 't.me' || h.endsWith('.t.me')) return true;
+    if (h === 'telegram.org' || h.endsWith('.telegram.org')) return true;
+    if (h === 'telegram.dog' || h.endsWith('.telegram.dog')) return true;
+    if (h.endsWith('.github.io') || h.endsWith('.github.dev')) return true;
+    return false;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * CORS для мини-аппа: Origin у Telegram/WebView разный (github.io, web.telegram.org, пустой, буквально "null").
+ * Пустой / "null" → только `*` (echo FRONTEND_ORIGIN ломает preflight).
+ * Неизвестный https-origin → `*` (аутентификация всё равно по x-telegram-init-data).
+ */
 function resolveCorsOrigin(req, env) {
   const requestOrigin = req.headers.get('origin') || '';
-  // Локально — echo origin (credentials не используем, но так привычнее).
   if (/^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(requestOrigin)) {
     return requestOrigin;
   }
-  // Прод: всегда * — Telegram Desktop/Web шлют разный Origin (github.io, web.telegram.org, null…).
-  // API всё равно требует x-telegram-init-data; cookie не используем.
-  void env;
+  const configured = String(env.FRONTEND_ORIGIN || '').trim().replace(/\/$/, '');
+  const raw = String(requestOrigin).trim();
+  const reqNorm = raw.replace(/\/$/, '');
+  if (!raw || raw.toLowerCase() === 'null') return '*';
+  if (configured && reqNorm === configured) return requestOrigin || configured;
+  if (isAllowedMiniAppOrigin(requestOrigin)) return requestOrigin;
   return '*';
 }
 

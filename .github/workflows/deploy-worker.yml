@@ -1,0 +1,27 @@
+# Деплой Cloudflare Worker при изменениях в backend/ (чтобы CORS и API не отставали от репозитория).
+# В репозитории: Settings → Secrets → Actions → добавь CLOUDFLARE_API_TOKEN (Workers Edit).
+# При ошибке «No account id»: добавь CLOUDFLARE_ACCOUNT_ID или account_id в backend/wrangler.toml.
+
+name: Deploy Worker
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'backend/**'
+      - '.github/workflows/deploy-worker.yml'
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Deploy to Cloudflare
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: backend
+          command: deploy
