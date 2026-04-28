@@ -19,8 +19,9 @@ database_id = "bc1e52ac-4a7f-4b2c-bcb8-353269568a24"
 # Telegram ID админов через запятую (только они видят очередь модерации).
 ADMIN_TG_IDS = "336216597"
 # Telegram numeric id через запятую: только эти аккаунты видят вкладку «Премиум» в мини-аппе (жёсткий allowlist).
+# Важно: значение в [vars] попадает в Worker при каждом `wrangler deploy` — не оставляй пустым, если премиум нужен.
 # Игровой HTML на Worker не принимаем — премиум не открывает загрузку кода на сервер.
-PREMIUM_TG_IDS = ""
+PREMIUM_TG_IDS = "336216597"
 
 # Origin фронтенда для CORS. GitHub Pages = <username>.github.io.
 FRONTEND_ORIGIN = "https://romandorokhin.github.io"
