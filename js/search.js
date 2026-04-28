@@ -24,12 +24,12 @@ function renderSearchEmptyState() {
     results.innerHTML = `
       <div class="search-empty-state">
         <div class="search-empty-icon-wrap">${typeof genreIconSvg === 'function' ? genreIconSvg('all', 'sg-genre-ic--hero') : ''}</div>
-        <p class="search-empty-title">Ищи по названию или автору</p>
-        <p class="search-empty-sub">Фильтр по жанру — полоска выше. Начни ввод или выбери категорию.</p>
+        <p class="search-empty-title">Поиск по играм</p>
+        <p class="search-empty-sub">Введи название или ник. Жанр — полоска выше.</p>
       </div>`;
     return;
   }
-  results.innerHTML = `<div class="search-no-results"><p>Ничего не нашли</p><p class="search-no-results-hint">Попробуй другой запрос или жанр.</p></div>`;
+  results.innerHTML = `<div class="search-no-results"><p>Ничего не нашли</p><p class="search-no-results-hint">Смени запрос или жанр.</p></div>`;
 }
 
 function onSearch(query) {

@@ -99,7 +99,8 @@ function toggleAuthorFollow(btn) {
     saveSet(STORAGE_KEYS.followed, followedSet);
     updateOverlay();
     loadAuthorProfile(authorId);
-    showToast('⚠️ Не удалось');
+    showToast(typeof userFacingError === 'function' ? userFacingError(err) : 'Не вышло');
+    if (typeof hapticWarning === 'function') hapticWarning();
     console.warn('author follow failed', err);
   });
 }
@@ -139,7 +140,10 @@ async function loadAuthorProfile(authorId) {
     const games = Array.isArray(gamesData.games) ? gamesData.games : [];
     const grid = document.getElementById('authorGamesGrid');
     if (games.length === 0) {
-      grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:40px 0;color:var(--muted);font-size:14px;">Нет игр</div>`;
+      grid.innerHTML =
+        typeof sgEmptyGridHtml === 'function'
+          ? sgEmptyGridHtml('Нет игр', 'У этого автора пока ничего не опубликовано.')
+          : `<div class="sg-empty-state sg-empty-state--grid"><div class="sg-empty-state-title">Нет игр</div><div class="sg-empty-state-sub">У этого автора пока ничего не опубликовано.</div></div>`;
     } else {
       grid.innerHTML = games.map(g => `
         <div class="game-card" data-action="open-game" data-game-id="${esc(g.id)}">
@@ -159,6 +163,7 @@ async function loadAuthorProfile(authorId) {
 
 function switchTab(tab) {
   if (!tab) return;
+  if (typeof hapticLight === 'function') hapticLight();
   setBottomNavActive(tab);
 
   if (tab === 'feed') {

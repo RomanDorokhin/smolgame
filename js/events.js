@@ -19,6 +19,7 @@ const CLICK_ACTIONS = {
 
   'feed-nav-prev':  () => feedNavPrev(),
   'feed-nav-next':  () => feedNavNext(),
+  'feed-retry':     () => { if (typeof loadGames === 'function') loadGames(); },
   'dismiss-feed-nav-tip': () => ackFeedNavTip(),
   'ack-feed-nav-tip':      () => ackFeedNavTip(),
   'open-feed-help':        () => openFeedHelp(),

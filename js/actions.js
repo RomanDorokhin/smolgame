@@ -39,7 +39,8 @@ function toggleLike() {
     saveSet(STORAGE_KEYS.liked, likedSet);
     saveSet(STORAGE_KEYS.bookmarked, bookmarkedSet);
     updateOverlay();
-    showToast('⚠️ Не удалось, попробуй ещё раз');
+    showToast(typeof userFacingError === 'function' ? userFacingError(err) : 'Не вышло. Попробуй ещё раз');
+    if (typeof hapticWarning === 'function') hapticWarning();
     console.warn('like/bookmark failed', err);
   });
 }
@@ -67,7 +68,8 @@ function toggleFollow() {
     if (wasFollowing) followedSet.add(g.authorId); else followedSet.delete(g.authorId);
     saveSet(STORAGE_KEYS.followed, followedSet);
     updateOverlay();
-    showToast('⚠️ Не удалось');
+    showToast(typeof userFacingError === 'function' ? userFacingError(err) : 'Не вышло. Попробуй ещё раз');
+    if (typeof hapticWarning === 'function') hapticWarning();
     console.warn('follow failed', err);
   });
 }

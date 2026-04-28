@@ -1364,10 +1364,13 @@ body:has(#feed-nav-tip-overlay.feed-nav-tip-visible) #feed-coach-fab{
   cursor:pointer;
   padding:6px 16px;
   border-radius:12px;
-  transition:background 0.2s;
+  transition:transform 0.12s ease, background 0.2s;
   min-width:60px;
 }
-.nav-item:active{background:rgba(255,255,255,0.06);}
+.nav-item:active{
+  background:rgba(255,255,255,0.06);
+  transform:scale(0.96);
+}
 .nav-item .nav-icon{
   display:flex;
   align-items:center;
@@ -1471,8 +1474,9 @@ body:has(#feed-nav-tip-overlay.feed-nav-tip-visible) #feed-coach-fab{
 .profile-brand-downloads{
   display:flex;
   flex-direction:column;
+  flex-wrap:wrap;
   gap:10px;
-  max-width:320px;
+  max-width:340px;
   margin:14px auto 0;
 }
 .profile-brand-download{
@@ -2542,6 +2546,42 @@ textarea.field-input{
 }
 #empty-state > *{position:relative;z-index:1;}
 #empty-state.show{display:flex;}
+.sg-empty-state{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:12px;
+  max-width:340px;
+}
+.sg-empty-state--grid{
+  grid-column:1 / -1;
+  padding:40px 16px 48px;
+  text-align:center;
+}
+.sg-empty-state-icon{
+  width:72px;
+  height:72px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:rgba(255,255,255,0.55);
+  margin-bottom:4px;
+}
+.sg-empty-state-icon .sg-icon{width:100%;height:100%;}
+.sg-empty-state-icon--warn{color:rgba(255,180,120,0.85);}
+.sg-empty-state-title{
+  font-family:'Syne',sans-serif;
+  font-size:22px;
+  font-weight:800;
+  color:rgba(255,255,255,0.92);
+  line-height:1.2;
+}
+.sg-empty-state-sub{
+  font-size:14px;
+  color:var(--muted);
+  line-height:1.5;
+  margin:0;
+}
 .empty-icon{font-size:64px;}
 .empty-title{font-family:'Syne',sans-serif;font-size:24px;font-weight:800;}
 .empty-sub{font-size:15px;color:var(--muted);line-height:1.5;}

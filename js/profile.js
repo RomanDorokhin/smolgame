@@ -106,7 +106,10 @@ async function renderProfile() {
 
   const grid = document.getElementById('myGamesGrid');
   if (myGames.length === 0) {
-    grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:40px 0;color:var(--muted);font-size:14px;">Нет игр — вкладка «Загрузить»</div>`;
+    grid.innerHTML =
+      typeof sgEmptyGridHtml === 'function'
+        ? sgEmptyGridHtml('Пока без своих игр', 'Добавь через вкладку «Загрузить» (＋).')
+        : `<div class="sg-empty-state sg-empty-state--grid"><div class="sg-empty-state-title">Пока без своих игр</div><div class="sg-empty-state-sub">Добавь через вкладку «Загрузить» (＋).</div></div>`;
   } else {
     grid.innerHTML = myGames.map(g => `
       <div class="game-card" data-action="open-game-profile" data-game-id="${esc(g.id)}">
@@ -157,11 +160,13 @@ async function saveProfile() {
       document.getElementById('profileDisplayName').value = USER.displayName || USER.name || '';
       document.getElementById('profileBioInput').value = USER.bio || '';
     }
-    showToast('✅ Профиль сохранён');
+    showToast('Сохранено');
+    if (typeof hapticSuccess === 'function') hapticSuccess();
     if (typeof updateOverlay === 'function') updateOverlay();
     cancelProfileEdit();
   } catch (e) {
-    showToast('⚠️ ' + (e.message || 'не сохранилось'));
+    showToast(typeof userFacingError === 'function' ? userFacingError(e) : 'Не сохранилось');
+    if (typeof hapticWarning === 'function') hapticWarning();
   }
 }
 

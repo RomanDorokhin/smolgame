@@ -40,7 +40,12 @@ async function bootstrap() {
   } catch (e) {
     console.error('bootstrap failed', e);
     if (typeof showToast === 'function') {
-      showToast('⚠️ ' + (e?.message || 'Не удалось загрузить'));
+      const m =
+        typeof userFacingError === 'function'
+          ? userFacingError(e)
+          : String(e?.message || 'Не загрузилось');
+      showToast(m);
+      if (typeof hapticWarning === 'function') hapticWarning();
     }
   } finally {
     if (!needOnboarding && typeof hideBootSplash === 'function') hideBootSplash();

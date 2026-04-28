@@ -80,6 +80,43 @@ function showToast(msg) {
   toastTimer = setTimeout(() => t.classList.remove('show'), 2200);
 }
 
+/** Короткое сообщение для пользователя из Error / строки (без длинных тех. текстов в тосте). */
+function userFacingError(e) {
+  const raw = String(e?.message || e || '').trim();
+  if (!raw) return 'Что-то пошло не так. Попробуй ещё раз.';
+  const low = raw.toLowerCase();
+  if (low.includes('нет сети') || low.includes('network') || low.includes('failed to fetch')) {
+    return 'Нет сети. Проверь интернет и попробуй снова.';
+  }
+  if (raw.length > 120) return raw.slice(0, 117) + '…';
+  return raw;
+}
+
+function hapticLight() {
+  try {
+    Telegram?.WebApp?.HapticFeedback?.impactOccurred?.('light');
+  } catch (err) { /* ignore */ }
+}
+
+function hapticSuccess() {
+  try {
+    Telegram?.WebApp?.HapticFeedback?.notificationOccurred?.('success');
+  } catch (err) { /* ignore */ }
+}
+
+function hapticWarning() {
+  try {
+    Telegram?.WebApp?.HapticFeedback?.notificationOccurred?.('warning');
+  } catch (err) { /* ignore */ }
+}
+
+/** Единый блок «пусто» в сетках (профиль, автор). */
+function sgEmptyGridHtml(title, sub) {
+  const t = esc(title || '');
+  const s = esc(sub || '');
+  return `<div class="sg-empty-state sg-empty-state--grid"><div class="sg-empty-state-title">${t}</div><div class="sg-empty-state-sub">${s}</div></div>`;
+}
+
 // Localstorage-хелперы для Set<string>.
 // Тихо падают в no-op, если storage недоступен (приватный режим, квота и т.п.).
 function loadSet(key) {
@@ -107,6 +144,11 @@ window.sgStatHeartSvg = sgStatHeartSvg;
 window.sgStatEyeSvg = sgStatEyeSvg;
 window.sgLogoMarkLoaderHtml = sgLogoMarkLoaderHtml;
 window.showToast = showToast;
+window.userFacingError = userFacingError;
+window.hapticLight = hapticLight;
+window.hapticSuccess = hapticSuccess;
+window.hapticWarning = hapticWarning;
+window.sgEmptyGridHtml = sgEmptyGridHtml;
 window.esc = esc;
 window.safeHttpUrl = safeHttpUrl;
 window.normalizeToHttpsUrl = normalizeToHttpsUrl;

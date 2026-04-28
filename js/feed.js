@@ -36,6 +36,8 @@ async function loadGames() {
   window.feedHasMore = true;
   window.feedLoadingMore = false;
   window.feedPublishedLoaded = 0;
+  window.feedLoadFailed = false;
+  window.lastFeedLoadError = '';
   try {
     const data = await API.feed({ offset: 0, limit: FEED_PAGE_SIZE });
     const published = Array.isArray(data?.games) ? data.games : [];
@@ -64,6 +66,9 @@ async function loadGames() {
     console.error('feed load failed', e);
     window.GAMES = [];
     window.feedHasMore = false;
+    window.feedLoadFailed = true;
+    window.lastFeedLoadError =
+      typeof userFacingError === 'function' ? userFacingError(e) : String(e?.message || e || 'Ошибка');
   }
   renderFeed();
 }
@@ -264,7 +269,19 @@ function renderFeed() {
   window.slides = [];
 
   if (GAMES.length === 0) {
-    document.getElementById('empty-state').classList.add('show');
+    const empty = document.getElementById('empty-state');
+    const def = document.getElementById('empty-state-default');
+    const err = document.getElementById('empty-state-error');
+    const errMsg = document.getElementById('empty-state-error-msg');
+    if (window.feedLoadFailed && def && err) {
+      def.hidden = true;
+      err.hidden = false;
+      if (errMsg) errMsg.textContent = window.lastFeedLoadError || 'Проверь интернет и попробуй снова.';
+    } else if (def && err) {
+      def.hidden = false;
+      err.hidden = true;
+    }
+    empty.classList.add('show');
     document.getElementById('side-actions').style.display = 'none';
     document.getElementById('game-info').style.display = 'none';
     document.getElementById('swipe-strip').style.display = 'none';
@@ -277,10 +294,16 @@ function renderFeed() {
     }
     clearTimeout(feedTransHideT1);
     clearTimeout(feedTransHideT2);
+    if (typeof clearFeedSwipeTeaseCoaching === 'function') clearFeedSwipeTeaseCoaching();
     return;
   }
 
   document.getElementById('empty-state').classList.remove('show');
+  const def = document.getElementById('empty-state-default');
+  const err = document.getElementById('empty-state-error');
+  if (def) def.hidden = false;
+  if (err) err.hidden = true;
+  window.feedLoadFailed = false;
   document.getElementById('side-actions').style.display = '';
   document.getElementById('game-info').style.display = '';
   document.getElementById('swipe-strip').style.display = '';
@@ -289,6 +312,7 @@ function renderFeed() {
   goTo(0, true);
   if (typeof refreshFeedCoachState === 'function') refreshFeedCoachState();
   if (typeof queueMaybeOfferFeedSwipeTease === 'function') queueMaybeOfferFeedSwipeTease();
+  updateSwipeStripHintForGameCount();
 }
 
 function lazyLoadAround(idx) {
@@ -303,9 +327,7 @@ function lazyLoadAround(idx) {
 }
 
 function hapticFeedNav() {
-  try {
-    Telegram?.WebApp?.HapticFeedback?.impactOccurred?.('light');
-  } catch (e) { /* ignore */ }
+  if (typeof hapticLight === 'function') hapticLight();
 }
 
 /** Длительность «карточки» в секундах — совпадает с CSS-ощущением Tinder-like */
@@ -339,6 +361,23 @@ function updateFeedNavArrows() {
   const i = window.currentIdx;
   if (prevBtn) prevBtn.disabled = n < 2 || i <= 0;
   if (nextBtn) nextBtn.disabled = n < 2 || i >= n - 1;
+  updateSwipeStripHintForGameCount();
+}
+
+const SWIPE_HINT_DEFAULT = 'Влево — следующая · вправо — назад';
+const SWIPE_HINT_ONE_GAME = 'Сейчас одна игра в ленте. Свайп по полоске заработает, когда появятся ещё игры.';
+
+function updateSwipeStripHintForGameCount() {
+  const label = document.getElementById('swipe-hint-label');
+  if (!label) return;
+  if (GAMES.length === 1) {
+    label.textContent = SWIPE_HINT_ONE_GAME;
+    label.style.display = '';
+    label.style.opacity = '';
+    swipeHintHidden = false;
+  } else {
+    label.textContent = SWIPE_HINT_DEFAULT;
+  }
 }
 
 function updateSlidePointerEvents() {
@@ -384,6 +423,7 @@ function goTo(idx, instant = false) {
   if (prevIdx !== window.currentIdx && !instant && typeof scheduleFeedSwipeTeaseBoredom === 'function') {
     scheduleFeedSwipeTeaseBoredom();
   }
+  if (instant && typeof updateSwipeStripHintForGameCount === 'function') updateSwipeStripHintForGameCount();
 }
 
 function updateOverlay() {

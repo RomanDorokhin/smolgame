@@ -14,7 +14,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <!-- ?v= сбрасывает кэш WebView Telegram после правок JS/CSS (меняй при каждом релизе фронта). -->
-<link rel="stylesheet" href="styles.css?v=20260465">
+<link rel="stylesheet" href="styles.css?v=20260466">
 </head>
 <body>
 
@@ -73,12 +73,20 @@
   </div>
 </div>
 
-<!-- ══ ПУСТАЯ ЛЕНТА ══ -->
+<!-- ══ ПУСТАЯ ЛЕНТА / ОШИБКА ЗАГРУЗКИ ══ -->
 <div id="empty-state">
-  <div class="empty-icon" aria-hidden="true"><svg class="sg-icon" style="width:72px;height:72px;opacity:0.6" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M7.5 8.25h9a3 3 0 013 3v7.5a1.5 1.5 0 01-1.5 1.5h-12A1.5 1.5 0 015 18.75v-7.5a3 3 0 013-3zM9 8.25V6a3 3 0 013-3h0a3 3 0 013 3v2.25" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="9.75" cy="13.5" r="0.9" fill="currentColor"/><circle cx="14.25" cy="13.5" r="0.9" fill="currentColor"/><path d="M9.75 17.25h4.5a2.25 2.25 0 002.045-1.31l.022-.047" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg></div>
-  <div class="empty-title">Игр пока нет</div>
-  <div class="empty-sub">Загрузи игру — она появится в ленте после модерации.</div>
-  <button class="empty-btn" data-action="switch-tab" data-tab="upload">Загрузить игру</button>
+  <div id="empty-state-default" class="sg-empty-state">
+    <div class="sg-empty-state-icon" aria-hidden="true"><svg class="sg-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M7.5 8.25h9a3 3 0 013 3v7.5a1.5 1.5 0 01-1.5 1.5h-12A1.5 1.5 0 015 18.75v-7.5a3 3 0 013-3zM9 8.25V6a3 3 0 013-3h0a3 3 0 013 3v2.25" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="9.75" cy="13.5" r="0.9" fill="currentColor"/><circle cx="14.25" cy="13.5" r="0.9" fill="currentColor"/><path d="M9.75 17.25h4.5a2.25 2.25 0 002.045-1.31l.022-.047" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg></div>
+    <div class="sg-empty-state-title">Пока без игр</div>
+    <div class="sg-empty-state-sub">Загрузи свою — после модерации она появится здесь.</div>
+    <button type="button" class="empty-btn" data-action="switch-tab" data-tab="upload">Загрузить игру</button>
+  </div>
+  <div id="empty-state-error" class="sg-empty-state" hidden>
+    <div class="sg-empty-state-icon sg-empty-state-icon--warn" aria-hidden="true"><svg class="sg-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 9v4M12 17h.01M10.3 3.6h3.4l8.1 14.2a1 1 0 01-.87 1.5H3.07a1 1 0 01-.87-1.5L10.3 3.6z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+    <div class="sg-empty-state-title">Лента не загрузилась</div>
+    <div class="sg-empty-state-sub" id="empty-state-error-msg">Проверь интернет и попробуй снова.</div>
+    <button type="button" class="empty-btn" data-action="feed-retry">Повторить</button>
+  </div>
 </div>
 
 <!-- ══ ИНФО ОБ ИГРЕ (автор + мета игры в одну линию) ══ -->
@@ -539,8 +547,10 @@
     </div>
     <p class="profile-upload-hint">Как добавить игру, шаги и FAQ — на экране <strong>Загрузить</strong> (＋).</p>
     <div class="profile-brand-downloads">
-      <a class="profile-brand-download sg-btn sg-btn--ghost" href="brand/smolgame-wordmark-transparent.svg" download="smolgame-wordmark-transparent.svg">Скачать SVG (без фона)</a>
-      <a class="profile-brand-download sg-btn sg-btn--ghost" href="brand/smolgame-wordmark.png" download="smolgame-wordmark.png">Скачать PNG (прозрачный фон)</a>
+      <a class="profile-brand-download sg-btn sg-btn--ghost" href="brand/smolgame-wordmark-transparent.svg" download="smolgame-wordmark-transparent.svg">SVG — без фона</a>
+      <a class="profile-brand-download sg-btn sg-btn--ghost" href="brand/smolgame-wordmark.png" download="smolgame-wordmark.png">PNG — прозрачный фон</a>
+      <a class="profile-brand-download sg-btn sg-btn--ghost" href="brand/smolgame-wordmark.svg" download="smolgame-wordmark.svg">SVG — тёмная подложка</a>
+      <a class="profile-brand-download sg-btn sg-btn--ghost" href="brand/smolgame-wordmark-dark.png" download="smolgame-wordmark-dark.png">PNG — тёмная подложка</a>
     </div>
   </div>
   <!-- Модерация — видна только админу (body.is-admin) -->
@@ -623,27 +633,27 @@
 
 <!-- ══ SCRIPTS ══ -->
 <!-- Порядок важен: config/utils/telegram → state → api → модули логики → события → main. -->
-<script src="js/config.js?v=20260465"></script>
-<script src="js/genre-icons.js?v=20260465"></script>
-<script src="js/utils.js?v=20260465"></script>
-<script src="js/telegram.js?v=20260465"></script>
-<script src="js/tg-gate.js?v=20260465"></script>
-<script src="js/boot-splash.js?v=20260465"></script>
-<script src="js/state.js?v=20260465"></script>
-<script src="js/api.js?v=20260465"></script>
-<script src="js/onboarding.js?v=20260465"></script>
-<script src="js/help-screens.js?v=20260465"></script>
-<script src="js/feed.js?v=20260465"></script>
-<script src="js/feed-nav-tip.js?v=20260465"></script>
-<script src="js/actions.js?v=20260465"></script>
-<script src="js/upload.js?v=20260465"></script>
-<script src="js/genres.js?v=20260465"></script>
-<script src="js/search.js?v=20260465"></script>
-<script src="js/profile.js?v=20260465"></script>
-<script src="js/admin.js?v=20260465"></script>
-<script src="js/screens.js?v=20260465"></script>
-<script src="js/events.js?v=20260465"></script>
-<script src="js/overlay-pull-close.js?v=20260465"></script>
-<script src="js/main.js?v=20260465"></script>
+<script src="js/config.js?v=20260466"></script>
+<script src="js/genre-icons.js?v=20260466"></script>
+<script src="js/utils.js?v=20260466"></script>
+<script src="js/telegram.js?v=20260466"></script>
+<script src="js/tg-gate.js?v=20260466"></script>
+<script src="js/boot-splash.js?v=20260466"></script>
+<script src="js/state.js?v=20260466"></script>
+<script src="js/api.js?v=20260466"></script>
+<script src="js/onboarding.js?v=20260466"></script>
+<script src="js/help-screens.js?v=20260466"></script>
+<script src="js/feed.js?v=20260466"></script>
+<script src="js/feed-nav-tip.js?v=20260466"></script>
+<script src="js/actions.js?v=20260466"></script>
+<script src="js/upload.js?v=20260466"></script>
+<script src="js/genres.js?v=20260466"></script>
+<script src="js/search.js?v=20260466"></script>
+<script src="js/profile.js?v=20260466"></script>
+<script src="js/admin.js?v=20260466"></script>
+<script src="js/screens.js?v=20260466"></script>
+<script src="js/events.js?v=20260466"></script>
+<script src="js/overlay-pull-close.js?v=20260466"></script>
+<script src="js/main.js?v=20260466"></script>
 </body>
 </html>

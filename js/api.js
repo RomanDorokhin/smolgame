@@ -28,7 +28,7 @@ async function apiFetch(path, { method = 'GET', body } = {}) {
     const net = String(e?.message || e || '');
     throw new Error(
       net.toLowerCase().includes('failed to fetch') || net.toLowerCase().includes('network')
-        ? 'Нет сети или API недоступен. Проверь интернет и что Worker задеплоен.'
+        ? 'Нет сети или сервер не отвечает. Попробуй позже.'
         : 'Запрос не выполнился: ' + (net || 'ошибка сети')
     );
   }
