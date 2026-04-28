@@ -1,0 +1,11 @@
+{
+  "name": "smolgame-brand-assets",
+  "private": true,
+  "description": "PNG export for wordmark (transparent)",
+  "scripts": {
+    "export-png": "node export-png.mjs"
+  },
+  "devDependencies": {
+    "@resvg/resvg-js": "^2.6.2"
+  }
+}
