@@ -283,7 +283,6 @@ function renderFeed() {
   appendSlides(0, GAMES);
   goTo(0, true);
   if (typeof refreshFeedCoachState === 'function') refreshFeedCoachState();
-  if (typeof scheduleSwipeStripIdleNudge === 'function') scheduleSwipeStripIdleNudge();
 }
 
 function lazyLoadAround(idx) {
@@ -376,9 +375,6 @@ function goTo(idx, instant = false) {
   maybeLoadMoreFeed();
   updateFeedNavArrows();
   updateSlidePointerEvents();
-  if (prevIdx !== window.currentIdx && !instant && typeof onSwipeStripUserActivity === 'function') {
-    onSwipeStripUserActivity();
-  }
 }
 
 function updateOverlay() {
@@ -459,6 +455,27 @@ function clearTelegramSwipePass() {
   swipeNavStrip()?.classList.remove('telegram-swipe-pass');
 }
 
+/** Визуал «трека» свайпа: ручка и подсветка следуют за горизонтальным жестом */
+function resetSwipeStripDragVisual(stripEl) {
+  const s = stripEl || document.getElementById('swipe-strip');
+  if (!s) return;
+  s.style.removeProperty('--swipe-dx');
+  s.style.removeProperty('--swipe-pull-abs');
+}
+
+function updateSwipeStripDragVisual(stripEl, dx) {
+  const strip = stripEl || document.getElementById('swipe-strip');
+  const track = document.getElementById('swipe-strip-track');
+  if (!strip || !track) return;
+  const w = track.getBoundingClientRect().width;
+  const halfHandle = 20;
+  const max = Math.max(12, w / 2 - halfHandle - 2);
+  const clamped = Math.max(-max, Math.min(max, dx));
+  strip.style.setProperty('--swipe-dx', clamped + 'px');
+  const pull = Math.min(1, Math.abs(dx) / Math.max(36, max * 1.1));
+  strip.style.setProperty('--swipe-pull-abs', String(pull));
+}
+
 let swipeDragHost = null;
 
 function feedPointerDown(e, dragHost) {
@@ -470,6 +487,7 @@ function feedPointerDown(e, dragHost) {
   if (dragHost === strip && typeof onSwipeStripUserActivity === 'function') {
     onSwipeStripUserActivity();
   }
+  if (dragHost === strip) resetSwipeStripDragVisual(strip);
 
   touching = true;
   activePointerId = e.pointerId;
@@ -489,6 +507,7 @@ function feedPointerDown(e, dragHost) {
 
 function feedPointerMove(e, dragHost) {
   if (!touching || e.pointerId !== activePointerId || dragHost !== swipeDragHost) return;
+  const strip = swipeNavStrip();
   const dx = e.clientX - touchStartX;
   const dy = e.clientY - touchStartY;
   const verticalDominant = Math.abs(dy) > Math.abs(dx) * 1.15;
@@ -500,6 +519,7 @@ function feedPointerMove(e, dragHost) {
     activePointerId = null;
     swipeDragHost = null;
     dragHost.classList.remove('dragging');
+    resetSwipeStripDragVisual(strip);
     swipeNavStrip()?.classList.add('telegram-swipe-pass');
     const onLift = ev => {
       if (ev.pointerId !== passPid) return;
@@ -523,6 +543,11 @@ function feedPointerMove(e, dragHost) {
   if (dragHost === strip && Math.abs(dx) > 8 && Math.abs(dx) >= Math.abs(dy) * 0.75) {
     if (typeof markFeedSwipeLearned === 'function') markFeedSwipeLearned();
   }
+
+  if (dragHost === strip) {
+    const horiz = Math.abs(dx) >= Math.abs(dy) * 0.55 || Math.abs(dx) > 6;
+    updateSwipeStripDragVisual(strip, horiz ? dx : dx * 0.2);
+  }
 }
 
 function feedPointerUp(e, dragHost) {
@@ -531,6 +556,7 @@ function feedPointerUp(e, dragHost) {
   activePointerId = null;
   swipeDragHost = null;
   dragHost.classList.remove('dragging');
+  if (dragHost === swipeNavStrip()) resetSwipeStripDragVisual(dragHost);
 
   if (dragHost.classList.contains('telegram-swipe-pass')) {
     clearTelegramSwipePass();
@@ -569,6 +595,7 @@ function feedPointerCancel(e, dragHost) {
   activePointerId = null;
   swipeDragHost = null;
   dragHost.classList.remove('dragging');
+  if (dragHost === swipeNavStrip()) resetSwipeStripDragVisual(dragHost);
   clearTelegramSwipePass();
 }
 
@@ -597,8 +624,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     hideSwipeHint();
   }, { passive: false });
-
-  if (typeof scheduleSwipeStripIdleNudge === 'function') scheduleSwipeStripIdleNudge();
 });
 
 document.addEventListener('keydown', e => {
@@ -632,32 +657,13 @@ function hideSwipeHint() {
   }
 }
 
-const SWIPE_IDLE_NUDGE_MS = 12000;
-let swipeStripIdleT = 0;
-
-function clearSwipeStripIdleTimer() {
-  if (swipeStripIdleT) {
-    clearTimeout(swipeStripIdleT);
-    swipeStripIdleT = 0;
-  }
-}
-
+/** Раньше: idle-пульсация центра полоски. Отключено — мешала; отклик только от жеста. */
+function clearSwipeStripIdleTimer() {}
 function scheduleSwipeStripIdleNudge() {
-  clearSwipeStripIdleTimer();
-  const strip = document.getElementById('swipe-strip');
-  strip?.classList.remove('swipe-strip--idle-nudge');
-  if (!strip || GAMES.length < 2 || isOverlayOpen() || strip.style.display === 'none') return;
-  swipeStripIdleT = setTimeout(() => {
-    swipeStripIdleT = 0;
-    const s = document.getElementById('swipe-strip');
-    if (!s || s.style.display === 'none' || GAMES.length < 2 || isOverlayOpen()) return;
-    s.classList.add('swipe-strip--idle-nudge');
-  }, SWIPE_IDLE_NUDGE_MS);
+  document.getElementById('swipe-strip')?.classList.remove('swipe-strip--idle-nudge');
 }
-
 function onSwipeStripUserActivity() {
   document.getElementById('swipe-strip')?.classList.remove('swipe-strip--idle-nudge');
-  scheduleSwipeStripIdleNudge();
 }
 
 window.scheduleSwipeStripIdleNudge = scheduleSwipeStripIdleNudge;
