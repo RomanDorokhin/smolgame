@@ -36,6 +36,7 @@ function refreshFeedCoachState() {
 function maybeShowFeedNavTipAfterGames() {
   const overlay = document.getElementById('feed-nav-tip-overlay');
   if (!overlay) return;
+  if (document.body.classList.contains('feed-onboarding-ui')) return;
   if (document.getElementById('onboarding-screen')?.classList.contains('open')) return;
   if (!GAMES || GAMES.length === 0) return;
   try {

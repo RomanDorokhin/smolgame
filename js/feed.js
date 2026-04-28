@@ -342,6 +342,7 @@ function renderFeed() {
     clearTimeout(feedTransHideT1);
     clearTimeout(feedTransHideT2);
     if (typeof clearFeedSwipeTeaseCoaching === 'function') clearFeedSwipeTeaseCoaching();
+    if (typeof maybeStartFeedOnboarding === 'function') maybeStartFeedOnboarding();
     return;
   }
 
@@ -359,6 +360,9 @@ function renderFeed() {
   goTo(0, true);
   if (typeof refreshFeedCoachState === 'function') refreshFeedCoachState();
   if (typeof queueMaybeOfferFeedSwipeTease === 'function') queueMaybeOfferFeedSwipeTease();
+  if (typeof maybeStartFeedOnboarding === 'function') {
+    requestAnimationFrame(() => maybeStartFeedOnboarding());
+  }
 }
 
 function lazyLoadAround(idx) {
@@ -504,7 +508,9 @@ function isOverlayOpen() {
     '#upload-screen.open, #profile-screen.open, #search-screen.open, #games-library-screen.open, #author-screen.open, #onboarding-screen.open, #feed-nav-tip-overlay.feed-nav-tip-visible'
   )) ||
     document.body.classList.contains('game-detail-open') ||
-    Boolean(document.getElementById('feed-reviews-drawer') && !document.getElementById('feed-reviews-drawer').hidden);
+    Boolean(document.getElementById('feed-reviews-drawer') && !document.getElementById('feed-reviews-drawer').hidden) ||
+    document.body.classList.contains('feed-onboarding-active') ||
+    document.body.classList.contains('feed-onboarding-demo');
 }
 
 let swipeDragHost = null;
@@ -601,9 +607,14 @@ function feedPointerUp(e, dragHost) {
     const vVert = Math.abs(dyNav) / duration;
     const vertIntent = Math.abs(dyNav) >= Math.abs(dx) * 0.82;
     if (vertIntent) {
-      if (dyNav > SWIPE_VERT_PX || (dyNav > 26 && vVert > SWIPE_VERT_VELOCITY)) {
+      const up = dyNav > SWIPE_VERT_PX || (dyNav > 26 && vVert > SWIPE_VERT_VELOCITY);
+      const down = dyNav < -SWIPE_VERT_PX || (dyNav < -26 && vVert > SWIPE_VERT_VELOCITY);
+      if (up || down) {
+        if (typeof notifyFeedOnboardingUserSwipe === 'function') notifyFeedOnboardingUserSwipe();
+      }
+      if (up) {
         goTo(window.currentIdx + 1);
-      } else if (dyNav < -SWIPE_VERT_PX || (dyNav < -26 && vVert > SWIPE_VERT_VELOCITY)) {
+      } else if (down) {
         if (window.currentIdx > 0) goTo(window.currentIdx - 1);
       }
     }
@@ -645,7 +656,14 @@ document.addEventListener('DOMContentLoaded', () => {
     feed.addEventListener(
       'wheel',
       e => {
-        if (isOverlayOpen() || GAMES.length < 2 || document.body.classList.contains('feed-game-focus')) return;
+        if (
+          isOverlayOpen() ||
+          GAMES.length < 2 ||
+          document.body.classList.contains('feed-game-focus') ||
+          document.body.classList.contains('feed-onboarding-ui')
+        ) {
+          return;
+        }
         e.preventDefault();
         scheduleFeedSwipeTeaseBoredom();
         const absX = Math.abs(e.deltaX);
@@ -668,6 +686,7 @@ document.addEventListener('keydown', e => {
   if (!['ArrowDown', 'ArrowUp', 'ArrowLeft', 'ArrowRight'].includes(e.key)) return;
   if (isOverlayOpen() || GAMES.length === 0) return;
   if (document.body.classList.contains('feed-game-focus')) return;
+  if (document.body.classList.contains('feed-onboarding-ui')) return;
   e.preventDefault();
   if (FEED_VERTICAL) {
     if (e.key === 'ArrowDown') goTo(window.currentIdx + 1);
@@ -709,6 +728,7 @@ function canRunFeedSwipeTeaseBurst() {
   if (FEED_VERTICAL) return false;
   if (isFeedSwipeLearned()) return false;
   if (!document.body.classList.contains('is-tab-feed')) return false;
+  if (document.body.classList.contains('feed-onboarding-ui')) return false;
   if (typeof isOverlayOpen === 'function' && isOverlayOpen()) return false;
   if (document.getElementById('onboarding-screen')?.classList.contains('open')) return false;
   if (GAMES.length < 2) return false;

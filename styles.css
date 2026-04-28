@@ -1133,6 +1133,169 @@ body.feed-layout-vertical #game-info{
 .feed-nav-tip-actions .sg-btn{width:100%;}
 .feed-nav-tip-secondary{font-size:14px !important;}
 
+/* ── Первый запуск: онбординг ленты (welcome + демо свайпа) ── */
+.feed-onboarding-root{
+  position:fixed;
+  inset:0;
+  z-index:510;
+  pointer-events:none;
+}
+.feed-onboarding-root:not([hidden]){
+  pointer-events:none;
+}
+.feed-onboarding-welcome,
+.feed-onboarding-dismiss{
+  pointer-events:auto;
+}
+.feed-onboarding-welcome{
+  position:absolute;
+  inset:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:max(20px, env(safe-area-inset-top, 0px)) 20px max(28px, env(safe-area-inset-bottom, 0px));
+  background:rgba(6,7,10,0.94);
+  opacity:0;
+  visibility:hidden;
+  transition:opacity 0.38s ease, visibility 0.38s ease;
+}
+.feed-onboarding-welcome--visible{
+  opacity:1;
+  visibility:visible;
+}
+.feed-onboarding-welcome-inner{
+  width:100%;
+  max-width:360px;
+  text-align:center;
+}
+.feed-onboarding-brand{
+  justify-content:center;
+  margin:0 auto 28px;
+  opacity:0;
+  transform:scale(0.9);
+  transition:opacity 0.55s ease, transform 0.55s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  will-change:transform, opacity;
+}
+.feed-onboarding-brand--in{
+  opacity:1;
+  transform:scale(1);
+}
+.feed-onboarding-welcome-title{
+  font-family:'Syne',sans-serif;
+  font-size:clamp(22px, 6vw, 28px);
+  font-weight:800;
+  color:#fff;
+  margin:0 0 10px;
+  line-height:1.15;
+  opacity:0;
+  transform:translate3d(0, 10px, 0);
+  transition:opacity 0.45s ease 0.08s, transform 0.45s cubic-bezier(0.25, 0.46, 0.45, 0.94) 0.08s;
+}
+.feed-onboarding-welcome-sub{
+  margin:0;
+  font-size:15px;
+  line-height:1.45;
+  color:rgba(255,255,255,0.68);
+  opacity:0;
+  transform:translate3d(0, 10px, 0);
+  transition:opacity 0.45s ease 0.16s, transform 0.45s cubic-bezier(0.25, 0.46, 0.45, 0.94) 0.16s;
+}
+.feed-onboarding-welcome--visible .feed-onboarding-welcome-title,
+.feed-onboarding-welcome--visible .feed-onboarding-welcome-sub{
+  opacity:1;
+  transform:translate3d(0, 0, 0);
+}
+.feed-onboarding-welcome-cta{
+  margin-top:28px;
+  width:100%;
+  max-width:320px;
+}
+.feed-onboarding-dismiss{
+  position:absolute;
+  inset:0;
+  z-index:2;
+  background:transparent;
+  cursor:default;
+}
+.feed-onboarding-hand{
+  position:absolute;
+  left:50%;
+  bottom:max(20px, calc(env(safe-area-inset-bottom, 0px) + 8px));
+  z-index:3;
+  font-size:44px;
+  line-height:1;
+  transform:translate3d(-50%, 0, 0);
+  filter:drop-shadow(0 4px 14px rgba(0,0,0,0.5));
+  opacity:0;
+  pointer-events:none;
+  transition:opacity 0.28s ease, transform 600ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  will-change:transform, opacity;
+}
+.feed-onboarding-hand--show{
+  opacity:1;
+}
+.feed-onboarding-hand--lift{
+  transform:translate3d(-50%, calc(-1 * min(50dvh, 50vh)), 0);
+}
+.feed-onboarding-hand--hide{
+  opacity:0;
+  transform:translate3d(-50%, 18px, 0);
+  transition:opacity 0.4s ease, transform 500ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+body.feed-onboarding-demo #slide-0{z-index:5;}
+body.feed-onboarding-demo #slide-1{z-index:4;}
+body.feed-onboarding-ui #bottom-nav,
+body.feed-onboarding-ui #side-actions,
+body.feed-onboarding-ui #game-info,
+body.feed-onboarding-ui #dots{
+  pointer-events:none !important;
+  opacity:0.38;
+  transition:opacity 0.22s ease;
+}
+body.feed-onboarding-ui .app-tab-chrome{
+  opacity:0.38;
+  pointer-events:none !important;
+}
+.feed-onboarding-swipe-hint{
+  position:absolute;
+  left:50%;
+  top:40%;
+  transform:translate3d(-50%, -50%, 0);
+  z-index:55;
+  width:min(100%, 300px);
+  padding:0 18px;
+  text-align:center;
+  pointer-events:none;
+  opacity:0;
+  transition:opacity 0.35s ease;
+  will-change:opacity;
+}
+.feed-onboarding-swipe-hint--visible{
+  opacity:1;
+}
+.feed-onboarding-swipe-hint-arrow{
+  display:block;
+  font-size:30px;
+  font-weight:700;
+  color:#fff;
+  margin-bottom:10px;
+  text-shadow:0 2px 14px rgba(0,0,0,0.85);
+  animation:feedOnboardingArrowBounce 0.9s ease-in-out infinite;
+  will-change:transform;
+}
+@keyframes feedOnboardingArrowBounce{
+  0%,100%{transform:translate3d(0, 0, 0);}
+  50%{transform:translate3d(0, -12px, 0);}
+}
+.feed-onboarding-swipe-hint-text{
+  margin:0;
+  font-size:15px;
+  font-weight:600;
+  line-height:1.35;
+  color:rgba(255,255,255,0.96);
+  text-shadow:0 2px 18px rgba(0,0,0,0.9);
+}
+
 .placeholder-icon{
   font-size:56px;
   animation:breathe 2s ease-in-out infinite;

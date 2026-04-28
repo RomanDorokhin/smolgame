@@ -26,6 +26,8 @@ window.STORAGE_KEYS = {
   /** Один раз показали «дёргни экран» при первом coach — дальше только по таймауту скуки */
   feedSwipeTeaseShown: 'smolgame:feedSwipeTeaseShown:' + (USER.id || 'anon'),
   welcomeOnboarding: 'smolgame:welcome3:' + (USER.id || 'anon'),
+  /** Первый запуск: анимация онбординга ленты (welcome + демо свайпа) */
+  feedOnboardingDone: 'smolgame:feedOnboard1:' + (USER.id || 'anon'),
 };
 
 window.likedSet      = loadSet(STORAGE_KEYS.liked);

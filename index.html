@@ -14,7 +14,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <!-- ?v= сбрасывает кэш WebView Telegram после правок JS/CSS (меняй при каждом релизе фронта). -->
-<link rel="stylesheet" href="styles.css?v=20260443">
+<link rel="stylesheet" href="styles.css?v=20260444">
 </head>
 <body>
 
@@ -193,6 +193,25 @@
       <button type="button" class="sg-btn sg-btn--primary" data-action="ack-feed-nav-tip">Понятно</button>
     </div>
   </div>
+</div>
+
+<!-- Первый запуск: welcome + демо свайпа по ленте (см. js/feed-onboarding.js) -->
+<div id="feed-onboarding-root" class="feed-onboarding-root" hidden aria-hidden="true">
+  <div id="feed-onboarding-welcome" class="feed-onboarding-welcome">
+    <div class="feed-onboarding-welcome-inner">
+      <div class="feed-onboarding-brand sg-brand sg-brand--splash">
+        <div class="sg-brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs><linearGradient id="sgLogoGradFeedOnb" x1="10" y1="14" x2="38" y2="38" gradientUnits="userSpaceOnUse"><stop offset="0%" stop-color="#b4c7e0"/><stop offset="100%" stop-color="#7d90a8"/></linearGradient></defs><rect x="13" y="13" width="22" height="22" rx="8" fill="none" stroke="url(#sgLogoGradFeedOnb)" stroke-width="2.25"/><circle cx="24" cy="24" r="4.5" fill="url(#sgLogoGradFeedOnb)" opacity=".95"/></svg>
+        </div>
+        <div class="sg-brand-wordmark"><span class="sg-brand-word-muted">smol</span><span class="sg-brand-word-accent">game</span></div>
+      </div>
+      <h1 class="feed-onboarding-welcome-title">Добро пожаловать в smolgame</h1>
+      <p class="feed-onboarding-welcome-sub">Бесконечная лента игр</p>
+      <button type="button" class="sg-btn sg-btn--primary feed-onboarding-welcome-cta" data-action="feed-onboarding-welcome-cta">Показать как это работает</button>
+    </div>
+  </div>
+  <div id="feed-onboarding-dismiss" class="feed-onboarding-dismiss" hidden aria-hidden="true"></div>
+  <div id="feed-onboarding-hand" class="feed-onboarding-hand" hidden aria-hidden="true">👆</div>
 </div>
 
 <!-- ══ НИЖНИЙ НАВ ══ -->
@@ -643,13 +662,14 @@
 <script src="js/telegram.js?v=20260439"></script>
 <script src="js/tg-gate.js?v=20260439"></script>
 <script src="js/boot-splash.js?v=20260439"></script>
-<script src="js/state.js?v=20260439"></script>
+<script src="js/state.js?v=20260444"></script>
 <script src="js/api.js?v=20260442"></script>
 <script src="js/onboarding.js?v=20260439"></script>
 <script src="js/help-screens.js?v=20260439"></script>
-<script src="js/feed.js?v=20260442"></script>
-<script src="js/feed-nav-tip.js?v=20260439"></script>
-<script src="js/actions.js?v=20260439"></script>
+<script src="js/feed.js?v=20260444"></script>
+<script src="js/feed-nav-tip.js?v=20260444"></script>
+<script src="js/feed-onboarding.js?v=20260444"></script>
+<script src="js/actions.js?v=20260444"></script>
 <script src="js/upload.js?v=20260439"></script>
 <script src="js/genres.js?v=20260439"></script>
 <script src="js/search.js?v=20260441"></script>
@@ -658,8 +678,8 @@
 <script src="js/admin.js?v=20260439"></script>
 <script src="js/game-editor.js?v=20260439"></script>
 <script src="js/game-detail.js?v=20260442"></script>
-<script src="js/screens.js?v=20260441"></script>
-<script src="js/events.js?v=20260442"></script>
+<script src="js/screens.js?v=20260444"></script>
+<script src="js/events.js?v=20260444"></script>
 <script src="js/overlay-pull-close.js?v=20260439"></script>
 <script src="js/main.js?v=20260439"></script>
 </body>

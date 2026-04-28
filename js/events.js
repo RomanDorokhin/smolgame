@@ -31,6 +31,9 @@ const CLICK_ACTIONS = {
   'welcome-next': () => welcomeNext(),
   'welcome-browse': () => welcomeFinishBrowse(),
   'welcome-upload': () => welcomeFinishUpload(),
+  'feed-onboarding-welcome-cta': () => {
+    if (typeof onFeedOnboardingWelcomeCta === 'function') onFeedOnboardingWelcomeCta();
+  },
   'upload-scroll-to-form': () => uploadScrollToForm(),
 
   'open-author':    () => openAuthorProfile(),

@@ -165,6 +165,7 @@ async function loadAuthorProfile(authorId) {
 
 function switchTab(tab) {
   if (!tab) return;
+  if (typeof isFeedOnboardingBlocking === 'function' && isFeedOnboardingBlocking()) return;
   if (typeof hapticLight === 'function') hapticLight();
   setBottomNavActive(tab);
   document.body.classList.toggle(
@@ -179,6 +180,7 @@ function switchTab(tab) {
     if (chrome) chrome.textContent = 'Лента';
     if (typeof refreshFeedCoachState === 'function') refreshFeedCoachState();
     if (typeof scheduleFeedSwipeTeaseBoredom === 'function') scheduleFeedSwipeTeaseBoredom();
+    if (typeof maybeStartFeedOnboarding === 'function') requestAnimationFrame(() => maybeStartFeedOnboarding());
     return;
   }
 
