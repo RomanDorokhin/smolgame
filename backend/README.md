@@ -96,6 +96,8 @@ npm run db:migrate:remote:github-token
 
 **Старая D1 без `display_name`:** если профиль автора падает с `no such column: display_name`, выполни `npm run db:migrate:remote:display-name` в `backend/` (файл `migrations/0007_users_display_name.sql`). Worker сам перебирает варианты SQL, но колонка нужна для редактирования имени в профиле.
 
+**Старая D1 без `bio`:** `npm run db:migrate:remote:bio` (`migrations/0008_users_bio.sql`). В коде профиль автора обходит отсутствие `bio`, но для PATCH профиля колонка в БД всё равно нужна.
+
 Если в D1 в таблице `users` **нет** колонок `github_user_id` и `github_login` (старая база), OAuth не сможет сохранить привязку — выполни:
 
 ```bash

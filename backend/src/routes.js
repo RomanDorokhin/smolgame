@@ -973,9 +973,20 @@ const GET_USER_PROFILE_SQL_VARIANTS = [
           display_name AS displayName, bio AS bio,
           COALESCE(NULLIF(TRIM(avatar_override_url), ''), photo_url) AS avatarUrl
      FROM users WHERE id = ?`,
+  /* Нет колонки bio — не читаем bio, остальное как в полной схеме */
   `SELECT id, site_handle AS siteHandle, first_name AS firstName,
           last_name AS lastName, photo_url AS photoUrl,
-          CAST(NULL AS TEXT) AS displayName, bio AS bio,
+          display_name AS displayName, CAST(NULL AS TEXT) AS bio,
+          COALESCE(NULLIF(TRIM(avatar_override_url), ''), photo_url) AS avatarUrl
+     FROM users WHERE id = ?`,
+  `SELECT id, site_handle AS siteHandle, first_name AS firstName,
+          last_name AS lastName, photo_url AS photoUrl,
+          display_name AS displayName, CAST(NULL AS TEXT) AS bio,
+          photo_url AS avatarUrl
+     FROM users WHERE id = ?`,
+  `SELECT id, site_handle AS siteHandle, first_name AS firstName,
+          last_name AS lastName, photo_url AS photoUrl,
+          CAST(NULL AS TEXT) AS displayName, CAST(NULL AS TEXT) AS bio,
           COALESCE(NULLIF(TRIM(avatar_override_url), ''), photo_url) AS avatarUrl
      FROM users WHERE id = ?`,
   `SELECT id, site_handle AS siteHandle, first_name AS firstName,
