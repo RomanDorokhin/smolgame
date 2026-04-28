@@ -124,5 +124,18 @@ function handleDelegatedInput(ev) {
   }
 }
 
+/** Файловые input во многих WebView (Telegram и др.) шлют change, а не input — без этого превью и coverFile в редакторе игры не обновляются. */
+function handleDelegatedFileChange(ev) {
+  if (ev.target?.type !== 'file') return;
+  const target = ev.target.closest('[data-input]');
+  if (!target) return;
+  const kind = target.dataset.input;
+  if (kind === 'cover') previewCover(target);
+  if (kind === 'cover-profile' && typeof previewProfileGameCover === 'function') {
+    previewProfileGameCover(target, target.dataset.gameId);
+  }
+}
+
 document.addEventListener('click', handleDelegatedClick);
 document.addEventListener('input', handleDelegatedInput);
+document.addEventListener('change', handleDelegatedFileChange);
