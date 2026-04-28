@@ -283,6 +283,7 @@ function renderFeed() {
   appendSlides(0, GAMES);
   goTo(0, true);
   if (typeof refreshFeedCoachState === 'function') refreshFeedCoachState();
+  if (typeof queueMaybeOfferFeedSwipeTease === 'function') queueMaybeOfferFeedSwipeTease();
 }
 
 function lazyLoadAround(idx) {
@@ -375,6 +376,9 @@ function goTo(idx, instant = false) {
   maybeLoadMoreFeed();
   updateFeedNavArrows();
   updateSlidePointerEvents();
+  if (prevIdx !== window.currentIdx && !instant && typeof scheduleFeedSwipeTeaseBoredom === 'function') {
+    scheduleFeedSwipeTeaseBoredom();
+  }
 }
 
 function updateOverlay() {
@@ -487,7 +491,10 @@ function feedPointerDown(e, dragHost) {
   if (dragHost === strip && typeof onSwipeStripUserActivity === 'function') {
     onSwipeStripUserActivity();
   }
-  if (dragHost === strip) resetSwipeStripDragVisual(strip);
+  if (dragHost === strip) {
+    resetSwipeStripDragVisual(strip);
+    document.body.classList.remove('feed-swipe-tease-burst');
+  }
 
   touching = true;
   activePointerId = e.pointerId;
@@ -600,6 +607,8 @@ function feedPointerCancel(e, dragHost) {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+  document.body.addEventListener('animationend', onFeedSwipeTeaseBurstAnimationEnd);
+
   const strip = swipeNavStrip();
   if (!strip) return;
 
@@ -664,10 +673,143 @@ function scheduleSwipeStripIdleNudge() {
 }
 function onSwipeStripUserActivity() {
   document.getElementById('swipe-strip')?.classList.remove('swipe-strip--idle-nudge');
+  scheduleFeedSwipeTeaseBoredom();
 }
 
 window.scheduleSwipeStripIdleNudge = scheduleSwipeStripIdleNudge;
 window.onSwipeStripUserActivity = onSwipeStripUserActivity;
+
+/* ── «Дёрни экран» подсказка свайпа: короткие всплески, не бесконечный loop ── */
+const FEED_SWIPE_TEASE_BOREDOM_MS = 3 * 60 * 1000; /* 3 мин без действий на ленте */
+let feedSwipeTeaseBoredomT = 0;
+let feedSwipeTeaseOfferQueued = false;
+
+function isFeedSwipeLearned() {
+  try {
+    return localStorage.getItem(STORAGE_KEYS.feedSwipeLearned) === '1';
+  } catch (e) {
+    return true;
+  }
+}
+
+function hasFeedSwipeTeaseShownOnce() {
+  try {
+    return localStorage.getItem(STORAGE_KEYS.feedSwipeTeaseShown) === '1';
+  } catch (e) {
+    return false;
+  }
+}
+
+function canRunFeedSwipeTeaseBurst() {
+  if (typeof isOverlayOpen === 'function' && isOverlayOpen()) return false;
+  if (document.getElementById('onboarding-screen')?.classList.contains('open')) return false;
+  const strip = document.getElementById('swipe-strip');
+  if (!strip || strip.style.display === 'none') return false;
+  if (!strip.classList.contains('swipe-strip--coach')) return false;
+  if (GAMES.length < 2) return false;
+  return true;
+}
+
+function clearFeedSwipeTeaseTimers() {
+  if (feedSwipeTeaseBoredomT) {
+    clearTimeout(feedSwipeTeaseBoredomT);
+    feedSwipeTeaseBoredomT = 0;
+  }
+  if (feedSwipeTeaseFinishT) {
+    clearTimeout(feedSwipeTeaseFinishT);
+    feedSwipeTeaseFinishT = 0;
+  }
+}
+
+/** Учился свайпать или ушли с coach — убрать всплеск и таймеры */
+function clearFeedSwipeTeaseCoaching() {
+  document.body.classList.remove('feed-swipe-tease-burst');
+  clearFeedSwipeTeaseTimers();
+}
+
+let feedSwipeTeaseFinishT = 0;
+
+function finishFeedSwipeTeaseBurst() {
+  if (!document.body.classList.contains('feed-swipe-tease-burst')) return;
+  document.body.classList.remove('feed-swipe-tease-burst');
+  if (feedSwipeTeaseFinishT) {
+    clearTimeout(feedSwipeTeaseFinishT);
+    feedSwipeTeaseFinishT = 0;
+  }
+  if (!hasFeedSwipeTeaseShownOnce()) {
+    try {
+      localStorage.setItem(STORAGE_KEYS.feedSwipeTeaseShown, '1');
+    } catch (e) { /* ignore */ }
+  }
+  scheduleFeedSwipeTeaseBoredom();
+}
+
+function startFeedSwipeTeaseBurst() {
+  document.body.classList.remove('feed-swipe-tease-burst');
+  void document.body.offsetWidth;
+  document.body.classList.add('feed-swipe-tease-burst');
+  if (feedSwipeTeaseFinishT) clearTimeout(feedSwipeTeaseFinishT);
+  /* animationend не срабатывает при prefers-reduced-motion — подстраховка */
+  feedSwipeTeaseFinishT = setTimeout(() => {
+    feedSwipeTeaseFinishT = 0;
+    finishFeedSwipeTeaseBurst();
+  }, 2800);
+}
+
+function scheduleFeedSwipeTeaseBoredom() {
+  clearFeedSwipeTeaseTimers();
+  if (isFeedSwipeLearned()) return;
+  if (!hasFeedSwipeTeaseShownOnce()) return;
+  if (!canRunFeedSwipeTeaseBurst()) return;
+  feedSwipeTeaseBoredomT = setTimeout(() => {
+    feedSwipeTeaseBoredomT = 0;
+    if (canRunFeedSwipeTeaseBurst()) offerFeedSwipeTeaseIfDue();
+  }, FEED_SWIPE_TEASE_BOREDOM_MS);
+}
+
+function onFeedSwipeTeaseBurstAnimationEnd(ev) {
+  if (ev.target !== document.body || ev.animationName !== 'feedSwipeTeaseBurst') return;
+  if (feedSwipeTeaseFinishT) {
+    clearTimeout(feedSwipeTeaseFinishT);
+    feedSwipeTeaseFinishT = 0;
+  }
+  finishFeedSwipeTeaseBurst();
+}
+
+function offerFeedSwipeTeaseIfDue() {
+  if (!canRunFeedSwipeTeaseBurst()) {
+    if (!isFeedSwipeLearned() && hasFeedSwipeTeaseShownOnce()) scheduleFeedSwipeTeaseBoredom();
+    return;
+  }
+  startFeedSwipeTeaseBurst();
+}
+
+function queueMaybeOfferFeedSwipeTease() {
+  if (feedSwipeTeaseOfferQueued) return;
+  feedSwipeTeaseOfferQueued = true;
+  requestAnimationFrame(() => {
+    feedSwipeTeaseOfferQueued = false;
+    if (!canRunFeedSwipeTeaseBurst()) return;
+    if (document.getElementById('feed-nav-tip-overlay')?.classList.contains('feed-nav-tip-visible')) return;
+    if (!hasFeedSwipeTeaseShownOnce()) offerFeedSwipeTeaseIfDue();
+    else scheduleFeedSwipeTeaseBoredom();
+  });
+}
+
+function maybeFeedSwipeTeaseAfterOverlayClosed() {
+  setTimeout(() => {
+    if (!canRunFeedSwipeTeaseBurst()) return;
+    if (document.getElementById('feed-nav-tip-overlay')?.classList.contains('feed-nav-tip-visible')) return;
+    if (!hasFeedSwipeTeaseShownOnce()) offerFeedSwipeTeaseIfDue();
+    else scheduleFeedSwipeTeaseBoredom();
+  }, 160);
+}
+
+window.clearFeedSwipeTeaseCoaching = clearFeedSwipeTeaseCoaching;
+window.clearFeedSwipeTeaseTimers = clearFeedSwipeTeaseTimers;
+window.scheduleFeedSwipeTeaseBoredom = scheduleFeedSwipeTeaseBoredom;
+window.queueMaybeOfferFeedSwipeTease = queueMaybeOfferFeedSwipeTease;
+window.maybeFeedSwipeTeaseAfterOverlayClosed = maybeFeedSwipeTeaseAfterOverlayClosed;
 
 window.loadGames = loadGames;
 window.loadMoreFeed = loadMoreFeed;

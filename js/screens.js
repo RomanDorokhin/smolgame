@@ -5,6 +5,7 @@ function setBottomNavActive(tab) {
 
 /** Закрыть основные вкладки и оверлей автора (нижний таб не должен «застревать» под #author-screen). */
 function closeAllMainTabs() {
+  if (typeof clearFeedSwipeTeaseTimers === 'function') clearFeedSwipeTeaseTimers();
   const upload = document.getElementById('upload-screen');
   if (upload?.classList.contains('open')) {
     upload.classList.remove('open');
@@ -158,6 +159,7 @@ function switchTab(tab) {
     closeAllMainTabs();
     if (typeof refreshFeedCoachState === 'function') refreshFeedCoachState();
     if (typeof scheduleSwipeStripIdleNudge === 'function') scheduleSwipeStripIdleNudge();
+    if (typeof scheduleFeedSwipeTeaseBoredom === 'function') scheduleFeedSwipeTeaseBoredom();
     return;
   }
 

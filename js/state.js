@@ -23,6 +23,8 @@ window.STORAGE_KEYS = {
   feedNavTip: 'smolgame:feedNavTip2:' + (USER.id || 'anon'),
   /** После первого успешного свайпа/переключения игры — выключаем пульсацию полоски */
   feedSwipeLearned: 'smolgame:feedSwipeLearned:' + (USER.id || 'anon'),
+  /** Один раз показали «дёргни экран» при первом coach — дальше только по таймауту скуки */
+  feedSwipeTeaseShown: 'smolgame:feedSwipeTeaseShown:' + (USER.id || 'anon'),
   welcomeOnboarding: 'smolgame:welcome3:' + (USER.id || 'anon'),
 };
 

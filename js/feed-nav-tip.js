@@ -3,6 +3,9 @@
  */
 function closeFeedNavTip() {
   document.getElementById('feed-nav-tip-overlay')?.classList.remove('feed-nav-tip-visible');
+  if (typeof maybeFeedSwipeTeaseAfterOverlayClosed === 'function') {
+    maybeFeedSwipeTeaseAfterOverlayClosed();
+  }
 }
 
 function ackFeedNavTip() {
@@ -24,6 +27,7 @@ function markFeedSwipeLearned() {
   } catch (e) { /* ignore */ }
   document.getElementById('swipe-strip')?.classList.remove('swipe-strip--coach');
   document.getElementById('feed-coach-fab')?.setAttribute('hidden', '');
+  if (typeof clearFeedSwipeTeaseCoaching === 'function') clearFeedSwipeTeaseCoaching();
 }
 
 function refreshFeedCoachState() {
@@ -39,14 +43,17 @@ function refreshFeedCoachState() {
   if (!multi || !visible) {
     strip.classList.remove('swipe-strip--coach');
     fab?.setAttribute('hidden', '');
+    if (typeof clearFeedSwipeTeaseCoaching === 'function') clearFeedSwipeTeaseCoaching();
     return;
   }
   if (learned) {
     strip.classList.remove('swipe-strip--coach');
     fab?.setAttribute('hidden', '');
+    if (typeof clearFeedSwipeTeaseCoaching === 'function') clearFeedSwipeTeaseCoaching();
   } else {
     strip.classList.add('swipe-strip--coach');
     fab?.removeAttribute('hidden');
+    if (typeof queueMaybeOfferFeedSwipeTease === 'function') queueMaybeOfferFeedSwipeTease();
   }
 }
 

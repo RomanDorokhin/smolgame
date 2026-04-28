@@ -335,23 +335,25 @@ html,body,#root,#feed,.slide{margin:0;padding:0;border:0;width:100%;height:100%;
   box-shadow:0 -1px 0 rgba(255,255,255,0.06);
 }
 /*
-  Подсказка «свайп влево»: анимация на body — все fixed-слои (игра, стрелки, FAB)
-  едут одним куском, без «дёрганья только по центру».
+  Подсказка «свайп влево»: короткий всплеск на body (не бесконечно — только класс
+  .feed-swipe-tease-burst из JS: первый заход + редко при скуке на ленте).
 */
-body:has(#swipe-strip.swipe-strip--coach):not(:has(#swipe-strip.dragging)){
-  animation:feedSwipeTeaseNudge 2.35s cubic-bezier(0.33,0,0.2,1) infinite;
+body.feed-swipe-tease-burst:not(:has(#swipe-strip.dragging)){
+  animation:feedSwipeTeaseBurst 2.45s cubic-bezier(0.33,0,0.2,1) forwards;
   will-change:transform;
 }
 #swipe-strip.dragging{will-change:auto;}
 body:has(#feed-nav-tip-overlay.feed-nav-tip-visible),
 body:has(#swipe-strip.dragging){
   animation:none !important;
+}
+body:has(#feed-nav-tip-overlay.feed-nav-tip-visible).feed-swipe-tease-burst,
+body:has(#swipe-strip.dragging).feed-swipe-tease-burst{
   transform:none !important;
   will-change:auto;
 }
-@keyframes feedSwipeTeaseNudge{
+@keyframes feedSwipeTeaseBurst{
   0%,100%{transform:translate3d(0,0,0);}
-  /* Чуть сильнее «подтяжка» влево, как начало свайпа к следующей игре */
   5%{transform:translate3d(calc(-1 * min(6vw, 30px)),0,0);}
   6%{transform:translate3d(calc(-1 * min(5.2vw, 26px)),0,0);}
   14%{transform:translate3d(0,0,0);}
@@ -360,7 +362,7 @@ body:has(#swipe-strip.dragging){
   64%{transform:translate3d(0,0,0);}
 }
 @media (prefers-reduced-motion: reduce){
-  body:has(#swipe-strip.swipe-strip--coach){
+  body.feed-swipe-tease-burst{
     animation:none !important;
     transform:none !important;
     will-change:auto;
