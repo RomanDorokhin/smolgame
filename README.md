@@ -16,6 +16,7 @@ molGame — это TikTok для HTML5-игр внутри Telegram.
 ```
 index.html, styles.css, js/   — фронтенд (живёт на GitHub Pages)
 backend/                      — API на Cloudflare Workers + D1
+docs/DESIGN.md                 — дизайн-система, токены, свайп, бренд (для команды)
 ```
 
 ---
