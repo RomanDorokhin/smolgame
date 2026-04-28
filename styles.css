@@ -1570,36 +1570,55 @@ body.feed-layout-vertical #game-info{
 .upload-welcome-card .onboarding-body{margin:0 0 14px;}
 .upload-welcome-card .welcome-footer{display:flex;flex-direction:column;gap:10px;}
 
-.game-editor-panel{
-  margin-bottom:22px;
-  padding:18px;
-  border-radius:18px;
+/* Строка «моя игра»: карточка + раскрывающийся редактор на всю ширину сетки */
+#myGamesGrid .profile-game-row{
+  grid-column:1 / -1;
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+#myGamesGrid .profile-game-row .game-card{
+  max-width:220px;
+  align-self:center;
+}
+.profile-game-row--editing .game-card{
+  outline:1px solid rgba(180,199,224,0.35);
+  border-radius:14px;
+}
+.profile-game-editor{
+  padding:16px;
+  border-radius:16px;
   border:1px solid var(--border);
   background:var(--surface);
 }
-.game-editor-panel[hidden]{display:none !important;}
-.game-editor-lead{margin-top:0;}
-.game-editor-url-hint{
+.profile-game-editor[hidden]{display:none !important;}
+.profile-game-editor-lead{
+  margin:0 0 14px;
+  font-size:13px;
+  line-height:1.45;
+  color:var(--muted);
+}
+.profile-game-editor-url-hint{
   font-size:12px;
   color:var(--muted);
   margin:12px 0 0;
   line-height:1.4;
   word-break:break-all;
 }
-.game-editor-url-hint code{
+.profile-game-editor-url-hint code{
   font-size:11px;
   color:var(--text);
   background:rgba(255,255,255,0.06);
   padding:2px 6px;
   border-radius:6px;
 }
-.game-editor-actions{
+.profile-game-editor-actions{
   display:flex;
   flex-wrap:wrap;
   gap:12px;
   align-items:center;
   justify-content:flex-end;
-  margin-top:20px;
+  margin-top:18px;
 }
 
 .upload-guide-block{

@@ -11,6 +11,7 @@ function closeAllMainTabs() {
     upload.classList.remove('open');
     if (typeof hideUploadWelcomeBlock === 'function') hideUploadWelcomeBlock();
   }
+  if (typeof closeAllProfileGameEditors === 'function') closeAllProfileGameEditors();
   const profile = document.getElementById('profile-screen');
   profile?.classList.remove('open', 'profile-edit-active');
   document.getElementById('search-screen')?.classList.remove('open');
@@ -24,7 +25,6 @@ function openUpload() {
 function closeUpload() {
   document.getElementById('upload-screen')?.classList.remove('open');
   if (typeof hideUploadWelcomeBlock === 'function') hideUploadWelcomeBlock();
-  if (typeof closeGameEditorUi === 'function') closeGameEditorUi();
   switchTab('feed');
 }
 
@@ -32,6 +32,7 @@ function openProfile() {
   switchTab('profile');
 }
 function closeProfile() {
+  if (typeof closeAllProfileGameEditors === 'function') closeAllProfileGameEditors();
   document.getElementById('profile-screen')?.classList.remove('open', 'profile-edit-active');
   switchTab('feed');
 }
@@ -216,8 +217,6 @@ function switchTab(tab) {
   } else if (tab === 'upload') {
     const chrome = document.getElementById('app-tab-chrome-label');
     if (chrome) chrome.textContent = 'Загрузить';
-    const editorOpen = document.getElementById('game-editor-panel') && !document.getElementById('game-editor-panel').hidden;
-    if (!editorOpen && typeof closeGameEditorUi === 'function') closeGameEditorUi();
     const upload = document.getElementById('upload-screen');
     upload?.classList.add('open');
     upload.scrollTop = 0;

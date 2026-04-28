@@ -144,20 +144,73 @@ async function renderProfile() {
         ? sgEmptyGridHtml('Пока без своих игр', 'Добавь через вкладку «Загрузить» (＋).')
         : `<div class="sg-empty-state sg-empty-state--grid"><div class="sg-empty-state-title">Пока без своих игр</div><div class="sg-empty-state-sub">Добавь через вкладку «Загрузить» (＋).</div></div>`;
   } else {
-    grid.innerHTML = myGames.map(g => `
-      <div class="game-card" data-action="open-game-profile" data-game-id="${esc(g.id)}">
-        <div class="game-card-thumb">
-          ${gameStatusBadgeHtml(g.status)}
-          ${gameThumbHtml(g)}
-          ${g.status !== 'rejected' ? `<button type="button" class="edit-game-btn" data-action="open-game-editor" data-game-id="${esc(g.id)}" aria-label="Редактировать карточку"><svg class="sg-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M12 20h9M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button>` : ''}
-          <button type="button" class="delete-game-btn" data-action="delete-game" data-game-id="${esc(g.id)}" aria-label="Удалить"><svg class="sg-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M9 3h6M5 7h14M10 11v8M14 11v8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M8 7l1 14h6l1-14" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg></button>
+    grid.innerHTML = myGames.map(g => {
+      const idRaw = String(g.id || '');
+      const gid = esc(idRaw);
+      const canEdit = g.status !== 'rejected';
+      const genreEsc = esc(g.genre || 'Прочее');
+      const titleEsc = esc(g.title || '');
+      const descEsc = esc(g.description || '');
+      const urlEsc = esc(g.url || '');
+      const imgEsc = esc(g.imageUrl || '');
+      const statEsc = esc(g.status || '');
+      const pillsId = 'genrePillsEdit-' + idRaw;
+      const editorHtml = canEdit ? `
+      <div id="profileGameEditor-${idRaw}" class="profile-game-editor" hidden>
+        <p class="profile-game-editor-lead">Карточка в ленте: название, описание, жанр, обложка. Ссылка на игру не меняется. После сохранения снова на модерацию.</p>
+        <div class="field-group">
+          <div class="field-label">Название</div>
+          <input class="field-input profile-game-editor-title" type="text" maxlength="40" placeholder="Название игры" value="${titleEsc}">
         </div>
-        <div class="game-card-info">
-          <div class="game-card-name">${esc(g.title)}</div>
-          <div class="game-card-stats"><span class="sg-mini-stat">${sgStatHeartSvg()}${fmtNum(g.likes)}</span><span class="sg-mini-sep">·</span><span class="sg-mini-stat">${sgStatEyeSvg()}${fmtNum(g.plays)}</span></div>
+        <div class="field-group">
+          <div class="field-label">Описание</div>
+          <textarea class="field-input profile-game-editor-desc" maxlength="120" rows="3" placeholder="Кратко о игре">${descEsc}</textarea>
         </div>
-      </div>
-    `).join('');
+        <div class="field-group">
+          <div class="field-label">Жанр</div>
+          <div class="genre-pills" id="${pillsId}"></div>
+        </div>
+        <div class="field-group">
+          <div class="field-label">Обложка (необязательно)</div>
+          <input class="field-input profile-game-editor-cover-url" type="url" placeholder="https://… jpg/png" value="${imgEsc}">
+          <label class="image-upload">
+            <input type="file" accept="image/*" class="profile-game-editor-cover-file" data-input="cover-profile" data-game-id="${idRaw}">
+            <span>Выбрать файл</span>
+          </label>
+          <div class="image-preview profile-game-editor-preview">${g.imageUrl ? `<img src="${imgEsc}" alt="">` : '<span>Без обложки</span>'}</div>
+          <button type="button" class="profile-text-btn" data-action="game-editor-clear-cover" data-game-id="${idRaw}">Убрать обложку</button>
+        </div>
+        <p class="field-hint profile-game-editor-url-hint">URL игры: <code class="profile-game-editor-url">${urlEsc || '—'}</code></p>
+        <div class="profile-game-editor-actions">
+          <button type="button" class="profile-text-btn" data-action="profile-game-editor-cancel" data-game-id="${idRaw}">Отмена</button>
+          <button type="button" class="submit-btn" data-action="profile-game-editor-save" data-game-id="${idRaw}">Сохранить и на модерацию</button>
+        </div>
+      </div>` : '';
+      return `
+      <div class="profile-game-row" id="profileGameRow-${idRaw}" data-profile-game-id="${idRaw}" data-title="${titleEsc}" data-description="${descEsc}" data-genre="${genreEsc}" data-url="${urlEsc}" data-image-url="${imgEsc}" data-status="${statEsc}">
+        <div class="game-card" data-action="open-game-profile" data-game-id="${gid}">
+          <div class="game-card-thumb">
+            ${gameStatusBadgeHtml(g.status)}
+            ${gameThumbHtml(g)}
+            ${canEdit ? `<button type="button" class="edit-game-btn" data-action="toggle-profile-game-editor" data-game-id="${idRaw}" aria-label="Редактировать карточку"><svg class="sg-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M12 20h9M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button>` : ''}
+            <button type="button" class="delete-game-btn" data-action="delete-game" data-game-id="${gid}" aria-label="Удалить"><svg class="sg-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M9 3h6M5 7h14M10 11v8M14 11v8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M8 7l1 14h6l1-14" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg></button>
+          </div>
+          <div class="game-card-info">
+            <div class="game-card-name">${esc(g.title)}</div>
+            <div class="game-card-stats"><span class="sg-mini-stat">${sgStatHeartSvg()}${fmtNum(g.likes)}</span><span class="sg-mini-sep">·</span><span class="sg-mini-stat">${sgStatEyeSvg()}${fmtNum(g.plays)}</span></div>
+          </div>
+        </div>
+        ${editorHtml}
+      </div>`;
+    }).join('');
+    myGames.forEach(g => {
+      if (g.status === 'rejected') return;
+      const sk = 'edit_' + g.id;
+      if (typeof renderGenrePills === 'function') {
+        window.selectedGenres[sk] = (g.genre && String(g.genre).trim()) ? g.genre : 'Прочее';
+        renderGenrePills('genrePillsEdit-' + g.id, sk);
+      }
+    });
   }
 }
 

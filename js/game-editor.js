@@ -1,55 +1,35 @@
-/** Редактирование карточки своей игры: PATCH → pending; синхронизация ленты и поиска. */
+/** Редактирование карточки своей игры в профиле: PATCH → pending; синхронизация ленты и поиска. */
 
 window.gameEditorState = {
-  gameId: null,
-  originalImageUrl: null,
   coverFile: null,
   clearCover: false,
 };
 
-function gameEditorPanel() {
-  return document.getElementById('game-editor-panel');
+window.profileActiveEditGameId = null;
+
+function profileEditorRoot(gameId) {
+  return document.getElementById('profileGameEditor-' + gameId);
 }
 
-function uploadDefaultSections() {
-  return document.querySelectorAll(
-    '#upload-welcome-block, #form-github, #form-url, #form-premium, #upload-guide-block'
-  );
+function profileGameRowEl(gameId) {
+  const id = String(gameId ?? '').replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+  return document.querySelector('.profile-game-row[data-profile-game-id="' + id + '"]');
 }
 
-function setUploadEditorMode(on) {
-  const panel = gameEditorPanel();
-  const methods = document.getElementById('upload-methods-anchor');
-  const title = document.getElementById('uploadScreenTitle');
-  if (panel) panel.hidden = !on;
-  if (methods) methods.hidden = on;
-  if (title) title.textContent = on ? 'Редактировать игру' : 'Загрузить игру';
-  uploadDefaultSections().forEach(el => {
-    if (!el) return;
-    if (on) el.setAttribute('hidden', '');
-    else el.removeAttribute('hidden');
-  });
+function resetGameEditorState() {
+  window.gameEditorState = { coverFile: null, clearCover: false };
+  window.profileActiveEditGameId = null;
 }
 
-function resetGameEditorForm() {
-  window.gameEditorState = {
-    gameId: null,
-    originalImageUrl: null,
-    coverFile: null,
-    clearCover: false,
-  };
-  const f = document.getElementById('gameEditorCoverFile');
-  if (f) f.value = '';
-}
-
-function previewGameEditorCover(input) {
-  const preview = document.getElementById('gameEditorCoverPreview');
+function previewProfileGameCover(input, gameId) {
+  const root = profileEditorRoot(gameId);
+  const preview = root?.querySelector('.profile-game-editor-preview');
   const file = input?.files?.[0];
-  if (!preview) return;
+  if (!preview || !root) return;
   window.gameEditorState.coverFile = file || null;
   window.gameEditorState.clearCover = false;
   if (!file) {
-    const cur = window.gameEditorState.originalImageUrl;
+    const cur = root.dataset.originalImageUrl || '';
     if (cur) {
       preview.innerHTML = `<img src="${esc(cur)}" alt="">`;
       preview.classList.add('has-image');
@@ -67,89 +47,104 @@ function previewGameEditorCover(input) {
   reader.readAsDataURL(file);
 }
 
-function gameEditorClearCover() {
+function gameEditorClearCover(gameId) {
+  const root = profileEditorRoot(gameId);
+  const input = root?.querySelector('.profile-game-editor-cover-file');
   window.gameEditorState.coverFile = null;
   window.gameEditorState.clearCover = true;
-  const input = document.getElementById('gameEditorCoverFile');
   if (input) input.value = '';
-  const preview = document.getElementById('gameEditorCoverPreview');
+  const preview = root?.querySelector('.profile-game-editor-preview');
   if (preview) {
     preview.innerHTML = '<span>Без обложки</span>';
     preview.classList.remove('has-image');
   }
 }
 
-async function openGameEditor(gameId) {
+function closeAllProfileGameEditors() {
+  document.querySelectorAll('.profile-game-editor').forEach(el => {
+    el.hidden = true;
+  });
+  document.querySelectorAll('.profile-game-row').forEach(row => row.classList.remove('profile-game-row--editing'));
+  resetGameEditorState();
+}
+
+function toggleProfileGameEditor(gameId) {
   if (!gameId) return;
-  let g = (window.GAMES || []).find(x => x.id === gameId);
-  if (!g) {
-    try {
-      const data = await API.game(gameId);
-      g = data?.game;
-    } catch (e) {
-      showToast('⚠️ ' + (e?.message || 'не удалось загрузить игру'));
-      return;
-    }
-  }
-  if (!g) {
-    showToast('⚠️ Игра не найдена');
-    return;
-  }
-  if (!USER?.id || g.authorId !== USER.id) {
-    showToast('⚠️ Редактировать можно только свои игры');
-    return;
-  }
-  if (g.status === 'rejected') {
-    showToast('⚠️ Отклонённые игры не редактируются — загрузи новую');
+  const row = profileGameRowEl(gameId);
+  const panel = profileEditorRoot(gameId);
+  if (!row || !panel) return;
+
+  if (!panel.hidden) {
+    cancelProfileGameEditor(gameId);
     return;
   }
 
-  resetGameEditorForm();
-  window.gameEditorState.gameId = gameId;
-  window.gameEditorState.originalImageUrl = g.imageUrl || null;
+  if (row.dataset.status === 'rejected') {
+    showToast('⚠️ Отклонённые игры не редактируются');
+    return;
+  }
 
-  document.getElementById('gameEditorTitle').value = g.title || '';
-  document.getElementById('gameEditorDesc').value = g.description || '';
-  const urlEl = document.getElementById('gameEditorUrlReadonly');
-  if (urlEl) urlEl.textContent = g.url || '—';
+  closeAllProfileGameEditors();
 
-  const genre = g.genre && String(g.genre).trim() ? g.genre : 'Прочее';
-  window.selectedGenres.edit = genre;
-  if (typeof renderGenrePills === 'function') renderGenrePills('genrePillsEdit', 'edit');
+  window.profileActiveEditGameId = gameId;
+  const titleEl = panel.querySelector('.profile-game-editor-title');
+  const descEl = panel.querySelector('.profile-game-editor-desc');
+  const urlEl = panel.querySelector('.profile-game-editor-url');
+  const coverUrlEl = panel.querySelector('.profile-game-editor-cover-url');
+  const fileInput = panel.querySelector('.profile-game-editor-cover-file');
 
-  const preview = document.getElementById('gameEditorCoverPreview');
+  if (titleEl) titleEl.value = row.dataset.title || '';
+  if (descEl) descEl.value = row.dataset.description || '';
+  if (urlEl) urlEl.textContent = row.dataset.url || '—';
+  if (coverUrlEl) coverUrlEl.value = row.dataset.imageUrl || '';
+
+  panel.dataset.originalImageUrl = row.dataset.imageUrl || '';
+
+  const genre = row.dataset.genre && String(row.dataset.genre).trim() ? row.dataset.genre : 'Прочее';
+  const sk = 'edit_' + gameId;
+  window.selectedGenres[sk] = genre;
+  if (typeof renderGenrePills === 'function') {
+    renderGenrePills('genrePillsEdit-' + gameId, sk);
+  }
+
+  const preview = panel.querySelector('.profile-game-editor-preview');
   if (preview) {
-    if (g.imageUrl) {
-      preview.innerHTML = `<img src="${esc(g.imageUrl)}" alt="">`;
+    if (row.dataset.imageUrl) {
+      preview.innerHTML = `<img src="${esc(row.dataset.imageUrl)}" alt="">`;
       preview.classList.add('has-image');
     } else {
       preview.innerHTML = '<span>Без обложки</span>';
       preview.classList.remove('has-image');
     }
   }
-  document.getElementById('gameEditorCoverUrl').value = g.imageUrl || '';
+  if (fileInput) fileInput.value = '';
+  window.gameEditorState = { coverFile: null, clearCover: false };
 
-  setUploadEditorMode(true);
-  if (typeof openUpload === 'function') openUpload();
+  panel.hidden = false;
+  row.classList.add('profile-game-row--editing');
+  try {
+    panel.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  } catch (e) {
+    panel.scrollIntoView();
+  }
 }
 
-function closeGameEditorUi() {
-  setUploadEditorMode(false);
-  resetGameEditorForm();
+function cancelProfileGameEditor(gameId) {
+  const panel = profileEditorRoot(gameId);
+  if (panel) panel.hidden = true;
+  profileGameRowEl(gameId)?.classList.remove('profile-game-row--editing');
+  resetGameEditorState();
 }
 
-function cancelGameEditor() {
-  closeGameEditorUi();
-  if (typeof closeUpload === 'function') closeUpload();
-}
-
-async function saveGameEditor() {
-  const gameId = window.gameEditorState.gameId;
+async function saveProfileGameEditor(gameId) {
   if (!gameId) return;
+  const root = profileEditorRoot(gameId);
+  if (!root) return;
 
-  const title = document.getElementById('gameEditorTitle')?.value?.trim() || '';
-  const description = document.getElementById('gameEditorDesc')?.value?.trim() || '';
-  const genre = window.selectedGenres?.edit || 'Прочее';
+  const title = root.querySelector('.profile-game-editor-title')?.value?.trim() || '';
+  const description = root.querySelector('.profile-game-editor-desc')?.value?.trim() || '';
+  const sk = 'edit_' + gameId;
+  const genre = window.selectedGenres?.[sk] || 'Прочее';
   const genreEmoji =
     typeof genreKeyForApiLabel === 'function' ? genreKeyForApiLabel(genre) : 'other';
 
@@ -159,7 +154,7 @@ async function saveGameEditor() {
   }
 
   let imageUrl;
-  const coverUrlField = document.getElementById('gameEditorCoverUrl')?.value?.trim() || '';
+  const coverUrlField = root.querySelector('.profile-game-editor-cover-url')?.value?.trim() || '';
   const file = window.gameEditorState.coverFile;
 
   if (file) {
@@ -198,8 +193,8 @@ async function saveGameEditor() {
 
     showToast('✅ Отправлено на модерацию');
     if (typeof hapticSuccess === 'function') hapticSuccess();
-    cancelGameEditor();
-    if (typeof renderProfile === 'function') renderProfile();
+    cancelProfileGameEditor(gameId);
+    if (typeof renderProfile === 'function') await renderProfile();
   } catch (e) {
     showToast(typeof userFacingError === 'function' ? userFacingError(e) : (e?.message || 'ошибка'));
     if (typeof hapticWarning === 'function') hapticWarning();
@@ -286,10 +281,10 @@ function applyGamePatchToClientState(game) {
   }
 }
 
-window.openGameEditor = openGameEditor;
-window.cancelGameEditor = cancelGameEditor;
-window.saveGameEditor = saveGameEditor;
-window.previewGameEditorCover = previewGameEditorCover;
+window.toggleProfileGameEditor = toggleProfileGameEditor;
+window.cancelProfileGameEditor = cancelProfileGameEditor;
+window.saveProfileGameEditor = saveProfileGameEditor;
+window.previewProfileGameCover = previewProfileGameCover;
 window.gameEditorClearCover = gameEditorClearCover;
 window.applyGamePatchToClientState = applyGamePatchToClientState;
-window.closeGameEditorUi = closeGameEditorUi;
+window.closeAllProfileGameEditors = closeAllProfileGameEditors;

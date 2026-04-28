@@ -65,14 +65,21 @@ const CLICK_ACTIONS = {
     document.getElementById('feed-exit-focus')?.setAttribute('hidden', '');
   },
   'delete-game':    (el, ev) => { ev.stopPropagation(); deleteGame(el.dataset.gameId); },
-  'open-game-editor': (el, ev) => {
+  'toggle-profile-game-editor': (el, ev) => {
     ev.stopPropagation();
-    if (typeof openGameEditor === 'function') openGameEditor(el.dataset.gameId);
+    if (typeof toggleProfileGameEditor === 'function') toggleProfileGameEditor(el.dataset.gameId);
   },
-  'game-editor-save': () => { if (typeof saveGameEditor === 'function') saveGameEditor(); },
-  'game-editor-cancel': () => { if (typeof cancelGameEditor === 'function') cancelGameEditor(); },
-  'game-editor-clear-cover': () => {
-    if (typeof gameEditorClearCover === 'function') gameEditorClearCover();
+  'profile-game-editor-save': (el, ev) => {
+    ev.stopPropagation();
+    if (typeof saveProfileGameEditor === 'function') saveProfileGameEditor(el.dataset.gameId);
+  },
+  'profile-game-editor-cancel': (el, ev) => {
+    ev.stopPropagation();
+    if (typeof cancelProfileGameEditor === 'function') cancelProfileGameEditor(el.dataset.gameId);
+  },
+  'game-editor-clear-cover': (el, ev) => {
+    ev.stopPropagation();
+    if (typeof gameEditorClearCover === 'function') gameEditorClearCover(el.dataset.gameId);
   },
   'save-profile':   () => saveProfile(),
   'reset-profile-photo': () => resetProfilePhoto(),
@@ -103,7 +110,9 @@ function handleDelegatedInput(ev) {
   const kind = target.dataset.input;
   if (kind === 'search') onSearch(target.value);
   if (kind === 'cover') previewCover(target);
-  if (kind === 'cover-edit' && typeof previewGameEditorCover === 'function') previewGameEditorCover(target);
+  if (kind === 'cover-profile' && typeof previewProfileGameCover === 'function') {
+    previewProfileGameCover(target, target.dataset.gameId);
+  }
 }
 
 document.addEventListener('click', handleDelegatedClick);
