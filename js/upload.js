@@ -35,8 +35,9 @@ function updateGithubUploadUi() {
   }
   const primary = document.getElementById('btn-github-primary');
   const done = USER.isGithubConnected && USER.hasGithubPublishToken;
+  // Всегда показываем кнопку под вкладкой GitHub: вход или смена аккаунта (не прячем после привязки).
   if (primary) {
-    primary.hidden = Boolean(done);
+    primary.hidden = false;
   }
   const unlinkBtn = document.getElementById('btn-github-unlink');
   if (unlinkBtn) {
