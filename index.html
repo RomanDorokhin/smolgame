@@ -14,7 +14,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <!-- ?v= сбрасывает кэш WebView Telegram после правок JS/CSS (меняй при каждом релизе фронта). -->
-<link rel="stylesheet" href="styles.css?v=20260434">
+<link rel="stylesheet" href="styles.css?v=20260435">
 </head>
 <body>
 
@@ -179,7 +179,7 @@
 <!-- ══ ЭКРАН: ЗАГРУЗИТЬ ИГРУ (гайд и FAQ только здесь — лента без отвлечений) ══ -->
 <div id="upload-screen">
   <div class="screen-header">
-    <div class="screen-title">Загрузить игру</div>
+    <div class="screen-title" id="uploadScreenTitle">Загрузить игру</div>
   </div>
 
   <!-- Три карточки в один ряд у всех; доступ к разделу премиум — по PREMIUM_TG_IDS на Worker -->
@@ -202,6 +202,37 @@
   </div>
 
   <div class="upload-active-panel" id="upload-active-panel">
+
+  <div id="game-editor-panel" class="game-editor-panel" hidden>
+    <p class="upload-panel-lead game-editor-lead">Меняется только карточка в ленте (название, описание, жанр, обложка). Ссылка на игру та же. После сохранения карточка снова уходит на модерацию.</p>
+    <div class="field-group">
+      <div class="field-label">Название</div>
+      <input class="field-input" type="text" id="gameEditorTitle" maxlength="40" placeholder="Название игры">
+    </div>
+    <div class="field-group">
+      <div class="field-label">Описание</div>
+      <textarea class="field-input" id="gameEditorDesc" maxlength="120" rows="3" placeholder="Кратко о игре"></textarea>
+    </div>
+    <div class="field-group">
+      <div class="field-label">Жанр</div>
+      <div class="genre-pills" id="genrePillsEdit"></div>
+    </div>
+    <div class="field-group">
+      <div class="field-label">Обложка (необязательно)</div>
+      <input class="field-input" type="url" id="gameEditorCoverUrl" placeholder="https://… jpg/png">
+      <label class="image-upload">
+        <input type="file" accept="image/*" id="gameEditorCoverFile" data-input="cover-edit">
+        <span>Выбрать файл</span>
+      </label>
+      <div class="image-preview" id="gameEditorCoverPreview">Текущая обложка или новая после выбора файла</div>
+      <button type="button" class="profile-text-btn" data-action="game-editor-clear-cover">Убрать обложку</button>
+    </div>
+    <p class="field-hint game-editor-url-hint">URL игры: <code id="gameEditorUrlReadonly">—</code></p>
+    <div class="game-editor-actions">
+      <button type="button" class="profile-text-btn" data-action="game-editor-cancel">Отмена</button>
+      <button type="button" class="submit-btn" data-action="game-editor-save">Сохранить и на модерацию</button>
+    </div>
+  </div>
 
   <div id="upload-welcome-block" class="upload-welcome-block" hidden>
     <div class="upload-welcome-card">
@@ -589,28 +620,29 @@
 
 <!-- ══ SCRIPTS ══ -->
 <!-- Порядок важен: config/utils/telegram → state → api → модули логики → события → main. -->
-<script src="js/config.js?v=20260434"></script>
-<script src="js/genre-icons.js?v=20260434"></script>
-<script src="js/utils.js?v=20260434"></script>
-<script src="js/telegram.js?v=20260434"></script>
-<script src="js/tg-gate.js?v=20260434"></script>
-<script src="js/boot-splash.js?v=20260434"></script>
-<script src="js/state.js?v=20260434"></script>
-<script src="js/api.js?v=20260434"></script>
-<script src="js/onboarding.js?v=20260434"></script>
-<script src="js/help-screens.js?v=20260434"></script>
-<script src="js/feed.js?v=20260434"></script>
-<script src="js/feed-nav-tip.js?v=20260434"></script>
-<script src="js/actions.js?v=20260434"></script>
-<script src="js/upload.js?v=20260434"></script>
-<script src="js/genres.js?v=20260434"></script>
-<script src="js/search.js?v=20260434"></script>
-<script src="js/liked-games.js?v=20260434"></script>
-<script src="js/profile.js?v=20260434"></script>
-<script src="js/admin.js?v=20260434"></script>
-<script src="js/screens.js?v=20260434"></script>
-<script src="js/events.js?v=20260434"></script>
-<script src="js/overlay-pull-close.js?v=20260434"></script>
-<script src="js/main.js?v=20260434"></script>
+<script src="js/config.js?v=20260435"></script>
+<script src="js/genre-icons.js?v=20260435"></script>
+<script src="js/utils.js?v=20260435"></script>
+<script src="js/telegram.js?v=20260435"></script>
+<script src="js/tg-gate.js?v=20260435"></script>
+<script src="js/boot-splash.js?v=20260435"></script>
+<script src="js/state.js?v=20260435"></script>
+<script src="js/api.js?v=20260435"></script>
+<script src="js/onboarding.js?v=20260435"></script>
+<script src="js/help-screens.js?v=20260435"></script>
+<script src="js/feed.js?v=20260435"></script>
+<script src="js/feed-nav-tip.js?v=20260435"></script>
+<script src="js/actions.js?v=20260435"></script>
+<script src="js/upload.js?v=20260435"></script>
+<script src="js/genres.js?v=20260435"></script>
+<script src="js/search.js?v=20260435"></script>
+<script src="js/liked-games.js?v=20260435"></script>
+<script src="js/profile.js?v=20260435"></script>
+<script src="js/admin.js?v=20260435"></script>
+<script src="js/game-editor.js?v=20260435"></script>
+<script src="js/screens.js?v=20260435"></script>
+<script src="js/events.js?v=20260435"></script>
+<script src="js/overlay-pull-close.js?v=20260435"></script>
+<script src="js/main.js?v=20260435"></script>
 </body>
 </html>

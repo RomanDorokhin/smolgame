@@ -92,6 +92,8 @@ window.API = {
   githubPublishGame: (payload) => apiFetch('/api/github/publish-game', { method: 'POST', body: payload }),
   uploadImage:  (formData) => apiFetch('/api/upload-image', { method: 'POST', body: formData }),
   delete:       (gameId)   => apiFetch(`/api/games/${encodeURIComponent(gameId)}`, { method: 'DELETE' }),
+  updateGame:   (gameId, payload) =>
+    apiFetch(`/api/games/${encodeURIComponent(gameId)}`, { method: 'PATCH', body: payload }),
 
   like:         (gameId)   => apiFetch(`/api/games/${encodeURIComponent(gameId)}/like`,   { method: 'POST' }),
   unlike:       (gameId)   => apiFetch(`/api/games/${encodeURIComponent(gameId)}/like`,   { method: 'DELETE' }),

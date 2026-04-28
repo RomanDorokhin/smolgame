@@ -24,6 +24,7 @@ function openUpload() {
 function closeUpload() {
   document.getElementById('upload-screen')?.classList.remove('open');
   if (typeof hideUploadWelcomeBlock === 'function') hideUploadWelcomeBlock();
+  if (typeof closeGameEditorUi === 'function') closeGameEditorUi();
   switchTab('feed');
 }
 
@@ -215,6 +216,8 @@ function switchTab(tab) {
   } else if (tab === 'upload') {
     const chrome = document.getElementById('app-tab-chrome-label');
     if (chrome) chrome.textContent = 'Загрузить';
+    const editorOpen = document.getElementById('game-editor-panel') && !document.getElementById('game-editor-panel').hidden;
+    if (!editorOpen && typeof closeGameEditorUi === 'function') closeGameEditorUi();
     const upload = document.getElementById('upload-screen');
     upload?.classList.add('open');
     upload.scrollTop = 0;

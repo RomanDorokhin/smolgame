@@ -39,4 +39,4 @@ window.slides = [];
 
 window.selectedGenre = '';
 window.selectedUploadMethod = 'url';
-window.selectedGenres = { code: '', url: '', ghCode: '' };
+window.selectedGenres = { code: '', url: '', ghCode: '', edit: '' };

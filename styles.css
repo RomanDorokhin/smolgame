@@ -1570,6 +1570,38 @@ body.feed-layout-vertical #game-info{
 .upload-welcome-card .onboarding-body{margin:0 0 14px;}
 .upload-welcome-card .welcome-footer{display:flex;flex-direction:column;gap:10px;}
 
+.game-editor-panel{
+  margin-bottom:22px;
+  padding:18px;
+  border-radius:18px;
+  border:1px solid var(--border);
+  background:var(--surface);
+}
+.game-editor-panel[hidden]{display:none !important;}
+.game-editor-lead{margin-top:0;}
+.game-editor-url-hint{
+  font-size:12px;
+  color:var(--muted);
+  margin:12px 0 0;
+  line-height:1.4;
+  word-break:break-all;
+}
+.game-editor-url-hint code{
+  font-size:11px;
+  color:var(--text);
+  background:rgba(255,255,255,0.06);
+  padding:2px 6px;
+  border-radius:6px;
+}
+.game-editor-actions{
+  display:flex;
+  flex-wrap:wrap;
+  gap:12px;
+  align-items:center;
+  justify-content:flex-end;
+  margin-top:20px;
+}
+
 .upload-guide-block{
   margin-top:28px;
   padding-top:22px;
@@ -2329,6 +2361,27 @@ textarea.field-input{
 .game-card-status-badge.pending{border-color:rgba(255,193,7,0.5);color:#ffe082;}
 .game-card-status-badge.rejected{border-color:rgba(229,115,115,0.5);color:#ffc9c9;}
 
+.edit-game-btn{
+  position:absolute;
+  right:48px;
+  top:8px;
+  z-index:3;
+  width:36px;
+  height:36px;
+  border:1px solid rgba(255,255,255,0.12);
+  border-radius:50%;
+  background:rgba(0,0,0,0.72);
+  color:rgba(255,255,255,0.9);
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:15px;
+  line-height:1;
+  transition:opacity 0.18s ease, transform 0.14s ease;
+}
+.edit-game-btn:active{transform:scale(0.92);opacity:0.85;}
+
 .delete-game-btn{
   position:absolute;
   right:8px;
@@ -2987,6 +3040,7 @@ body.is-admin .admin-only{display:block;}
 
   .game-card{border-radius:16px;}
   .game-card-thumb{aspect-ratio:1/1.1;font-size:40px;}
+  .edit-game-btn{width:34px;height:34px;right:44px;}
   .delete-game-btn{width:34px;height:34px;}
 }
 

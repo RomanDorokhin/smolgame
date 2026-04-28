@@ -65,6 +65,15 @@ const CLICK_ACTIONS = {
     document.getElementById('feed-exit-focus')?.setAttribute('hidden', '');
   },
   'delete-game':    (el, ev) => { ev.stopPropagation(); deleteGame(el.dataset.gameId); },
+  'open-game-editor': (el, ev) => {
+    ev.stopPropagation();
+    if (typeof openGameEditor === 'function') openGameEditor(el.dataset.gameId);
+  },
+  'game-editor-save': () => { if (typeof saveGameEditor === 'function') saveGameEditor(); },
+  'game-editor-cancel': () => { if (typeof cancelGameEditor === 'function') cancelGameEditor(); },
+  'game-editor-clear-cover': () => {
+    if (typeof gameEditorClearCover === 'function') gameEditorClearCover();
+  },
   'save-profile':   () => saveProfile(),
   'reset-profile-photo': () => resetProfilePhoto(),
   'profile-start-edit': () => startProfileEdit(),
@@ -94,6 +103,7 @@ function handleDelegatedInput(ev) {
   const kind = target.dataset.input;
   if (kind === 'search') onSearch(target.value);
   if (kind === 'cover') previewCover(target);
+  if (kind === 'cover-edit' && typeof previewGameEditorCover === 'function') previewGameEditorCover(target);
 }
 
 document.addEventListener('click', handleDelegatedClick);

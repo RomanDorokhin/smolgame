@@ -1,7 +1,7 @@
 import { json, error, newId } from './http.js';
 import { isMissingColumnError } from './db-errors.js';
 import { authenticate, upsertUser } from './auth.js';
-import { safeHttpsUrl, validateSubmission, validateProfilePatch } from './validators.js';
+import { safeHttpsUrl, validateSubmission, validateGameListingPatch, validateProfilePatch } from './validators.js';
 
 // ──────────────────────────────────────────────────────────────
 // PUBLIC
@@ -943,6 +943,68 @@ export async function deleteGame(req, env, gameId) {
   await env.DB.prepare(`DELETE FROM bookmarks WHERE game_id = ?`).bind(gameId).run();
   await env.DB.prepare(`DELETE FROM games WHERE id = ?`).bind(gameId).run();
   return json({ ok: true });
+}
+
+export async function updateGameListing(req, env, gameId) {
+  const user = await authenticate(req, env);
+  if (!user) return error('unauthorized', 401);
+
+  const row = await env.DB.prepare(
+    `SELECT author_id AS authorId, status FROM games WHERE id = ?`
+  ).bind(gameId).first();
+  if (!row) return error('not found', 404);
+  if (row.authorId !== user.id) return error('forbidden', 403);
+  if (row.status === 'rejected') {
+    return error('Игра отклонена — создай новую карточку через «Загрузить».', 403);
+  }
+
+  let body;
+  try { body = await req.json(); } catch (e) { return error('invalid json'); }
+  const { ok, error: verr } = validateGameListingPatch(body);
+  if (verr) return error(verr);
+
+  const desc = ok.description ?? '';
+  const emoji = ok.genreEmoji ?? '🎮';
+
+  try {
+    if (ok.imageUrlPatch !== undefined) {
+      await env.DB.prepare(
+        `UPDATE games
+            SET title = ?, description = ?, genre = ?, genre_emoji = ?,
+                image_url = ?, status = 'pending', updated_at = unixepoch()
+          WHERE id = ? AND author_id = ?`
+      ).bind(ok.title, desc, ok.genre, emoji, ok.imageUrlPatch, gameId, user.id).run();
+    } else {
+      await env.DB.prepare(
+        `UPDATE games
+            SET title = ?, description = ?, genre = ?, genre_emoji = ?,
+                status = 'pending', updated_at = unixepoch()
+          WHERE id = ? AND author_id = ?`
+      ).bind(ok.title, desc, ok.genre, emoji, gameId, user.id).run();
+    }
+  } catch (e) {
+    if (isMissingColumnError(e)) {
+      if (ok.imageUrlPatch !== undefined) {
+        await env.DB.prepare(
+          `UPDATE games
+              SET title = ?, description = ?, genre = ?,
+                  image_url = ?, status = 'pending', updated_at = unixepoch()
+            WHERE id = ? AND author_id = ?`
+        ).bind(ok.title, desc, ok.genre, ok.imageUrlPatch, gameId, user.id).run();
+      } else {
+        await env.DB.prepare(
+          `UPDATE games
+              SET title = ?, description = ?, genre = ?,
+                  status = 'pending', updated_at = unixepoch()
+            WHERE id = ? AND author_id = ?`
+        ).bind(ok.title, desc, ok.genre, gameId, user.id).run();
+      }
+    } else {
+      throw e;
+    }
+  }
+
+  return getGameById(req, env, gameId);
 }
 
 export async function toggleLike(req, env, gameId, method) {

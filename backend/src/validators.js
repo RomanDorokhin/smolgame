@@ -46,6 +46,29 @@ export function validateSubmission(body) {
   return { ok: { title, description, genre, genreEmoji, url, imageUrl } };
 }
 
+/** PATCH карточки игры автором: название, описание, жанр, обложка; URL игры не меняется. */
+export function validateGameListingPatch(body) {
+  const title = String(body.title || '').trim().slice(0, 40);
+  const description = String(body.description || '').trim().slice(0, 120);
+  const genre = GENRES.has(body.genre) ? body.genre : 'Прочее';
+  const genreEmoji = String(body.genreEmoji || '🎮').slice(0, 8);
+  if (!title) return { error: 'Название игры обязательно' };
+
+  let imageUrlPatch;
+  if (Object.prototype.hasOwnProperty.call(body, 'imageUrl')) {
+    const raw = body.imageUrl;
+    if (raw === null || raw === '') {
+      imageUrlPatch = null;
+    } else {
+      const u = safeHttpsUrl(String(raw).trim());
+      if (!u) return { error: 'Некорректная ссылка на обложку' };
+      imageUrlPatch = u;
+    }
+  }
+
+  return { ok: { title, description, genre, genreEmoji, imageUrlPatch } };
+}
+
 const HANDLE_RE = /^[a-z0-9_]{3,24}$/;
 
 /** PATCH /api/me: displayName, bio, siteHandle, photoUrl (optional). */

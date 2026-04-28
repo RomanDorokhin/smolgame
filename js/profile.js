@@ -149,6 +149,7 @@ async function renderProfile() {
         <div class="game-card-thumb">
           ${gameStatusBadgeHtml(g.status)}
           ${gameThumbHtml(g)}
+          ${g.status !== 'rejected' ? `<button type="button" class="edit-game-btn" data-action="open-game-editor" data-game-id="${esc(g.id)}" aria-label="Редактировать карточку"><svg class="sg-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M12 20h9M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button>` : ''}
           <button type="button" class="delete-game-btn" data-action="delete-game" data-game-id="${esc(g.id)}" aria-label="Удалить"><svg class="sg-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M9 3h6M5 7h14M10 11v8M14 11v8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M8 7l1 14h6l1-14" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg></button>
         </div>
         <div class="game-card-info">
