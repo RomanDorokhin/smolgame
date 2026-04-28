@@ -4,7 +4,7 @@
   <desc id="desc">Логотип и название SmolGame — вектор для печати и соцсетей</desc>
   <defs>
     <style type="text/css"><![CDATA[
-      @import url("https://fonts.googleapis.com/css2?family=Syne:wght@800&amp;display=swap");
+      @import url("https://fonts.googleapis.com/css2?family=Syne:wght@800&display=swap");
     ]]></style>
     <linearGradient id="sgMarkGrad" x1="10" y1="14" x2="38" y2="38" gradientUnits="userSpaceOnUse">
       <stop offset="0%" stop-color="#b4c7e0"/>
