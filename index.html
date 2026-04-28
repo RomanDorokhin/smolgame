@@ -14,7 +14,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <!-- ?v= сбрасывает кэш WebView Telegram после правок JS/CSS (меняй при каждом релизе фронта). -->
-<link rel="stylesheet" href="styles.css?v=20260433">
+<link rel="stylesheet" href="styles.css?v=20260434">
 </head>
 <body>
 
@@ -289,12 +289,41 @@
     </div>
   </div>
 
-  <!-- Вкладка: премиум (открывается только с PREMIUM_TG_IDS; не GitHub и не загрузка кода на сервер) -->
+  <!-- Вкладка: премиум — один экран для всех; доступ к ранним функциям по списку на Worker -->
   <div class="form-section" id="form-premium">
-    <div class="upload-premium-stub">
-      <div class="upload-premium-stub-icon" aria-hidden="true">✦</div>
-      <p class="upload-premium-stub-title">Премиум</p>
-      <p class="upload-premium-stub-text">Доступ по списку Telegram ID (<code>PREMIUM_TG_IDS</code> на Worker). Этот раздел <strong>не</strong> создаёт репозиторий и <strong>не</strong> дублирует вкладку «GitHub» выше. Игровой код на сервер SmolGame не загружается — публикация игры только через <strong>Ссылка</strong> или <strong>GitHub</strong>.</p>
+    <div class="upload-premium-page">
+      <div class="upload-premium-hero">
+        <div class="upload-premium-stub-icon" aria-hidden="true">✦</div>
+        <h2 class="upload-premium-stub-title">SmolGame Премиум</h2>
+        <p class="upload-premium-lead">Подписка для тех, кто хочет больше от платформы: приоритет, ранние фичи и поддержка продукта. Сейчас раздел в <strong>активной разработке</strong> — мы наращиваем возможности по мере роста сервиса.</p>
+      </div>
+
+      <div class="upload-premium-block">
+        <h3 class="upload-premium-h3">Что это не делает</h3>
+        <p class="upload-premium-p">Это <strong>не</strong> замена вкладке <strong>«GitHub»</strong>. Код игры по-прежнему публикуешь в <strong>свой</strong> репозиторий и GitHub Pages (или даёшь готовую ссылку во вкладке «Ссылка»). Премиум не забирает и не перенаправляет загрузку кода с GitHub.</p>
+      </div>
+
+      <div class="upload-premium-block">
+        <h3 class="upload-premium-h3">Зачем это может быть полезно</h3>
+        <ul class="upload-premium-list">
+          <li>Ранний доступ к экспериментальным функциям мини-аппа.</li>
+          <li>Поддержка команды и приоритет в очереди идей (по мере появления платёжной модели).</li>
+          <li>Один аккаунт — один сценарий: GitHub остаётся для <em>хостинга игры</em>, премиум — для <em>расширений платформы</em>.</li>
+        </ul>
+      </div>
+
+      <div class="upload-premium-block upload-premium-block--muted">
+        <h3 class="upload-premium-h3">Статус</h3>
+        <p class="upload-premium-p">Полный набор премиум-опций ещё подключается. Публикация игр в ленту по-прежнему через <strong>Ссылка</strong> или <strong>GitHub</strong> — это уже работает у всех.</p>
+      </div>
+
+      <div id="premium-access-active" class="upload-premium-callout upload-premium-callout--ok" hidden>
+        <p class="upload-premium-p"><strong>У тебя включён ранний доступ</strong> (аккаунт в списке на сервере). Спасибо, что тестируешь продукт — новые премиум-фичи будут появляться здесь.</p>
+      </div>
+
+      <div id="premium-access-waitlist" class="upload-premium-callout">
+        <p class="upload-premium-p"><strong>Ранний список.</strong> Чтобы попасть в allowlist премиум-тестеров, напиши владельцу бота / проекта — в Worker добавляется твой Telegram numeric id в <code>PREMIUM_TG_IDS</code>. Пока список закрыт, всё равно можно пользоваться <strong>Ссылка</strong> и <strong>GitHub</strong> без ограничений.</p>
+      </div>
     </div>
   </div>
 
@@ -560,28 +589,28 @@
 
 <!-- ══ SCRIPTS ══ -->
 <!-- Порядок важен: config/utils/telegram → state → api → модули логики → события → main. -->
-<script src="js/config.js?v=20260433"></script>
-<script src="js/genre-icons.js?v=20260433"></script>
-<script src="js/utils.js?v=20260433"></script>
-<script src="js/telegram.js?v=20260433"></script>
-<script src="js/tg-gate.js?v=20260433"></script>
-<script src="js/boot-splash.js?v=20260433"></script>
-<script src="js/state.js?v=20260433"></script>
-<script src="js/api.js?v=20260433"></script>
-<script src="js/onboarding.js?v=20260433"></script>
-<script src="js/help-screens.js?v=20260433"></script>
-<script src="js/feed.js?v=20260433"></script>
-<script src="js/feed-nav-tip.js?v=20260433"></script>
-<script src="js/actions.js?v=20260433"></script>
-<script src="js/upload.js?v=20260433"></script>
-<script src="js/genres.js?v=20260433"></script>
-<script src="js/search.js?v=20260433"></script>
-<script src="js/liked-games.js?v=20260433"></script>
-<script src="js/profile.js?v=20260433"></script>
-<script src="js/admin.js?v=20260433"></script>
-<script src="js/screens.js?v=20260433"></script>
-<script src="js/events.js?v=20260433"></script>
-<script src="js/overlay-pull-close.js?v=20260433"></script>
-<script src="js/main.js?v=20260433"></script>
+<script src="js/config.js?v=20260434"></script>
+<script src="js/genre-icons.js?v=20260434"></script>
+<script src="js/utils.js?v=20260434"></script>
+<script src="js/telegram.js?v=20260434"></script>
+<script src="js/tg-gate.js?v=20260434"></script>
+<script src="js/boot-splash.js?v=20260434"></script>
+<script src="js/state.js?v=20260434"></script>
+<script src="js/api.js?v=20260434"></script>
+<script src="js/onboarding.js?v=20260434"></script>
+<script src="js/help-screens.js?v=20260434"></script>
+<script src="js/feed.js?v=20260434"></script>
+<script src="js/feed-nav-tip.js?v=20260434"></script>
+<script src="js/actions.js?v=20260434"></script>
+<script src="js/upload.js?v=20260434"></script>
+<script src="js/genres.js?v=20260434"></script>
+<script src="js/search.js?v=20260434"></script>
+<script src="js/liked-games.js?v=20260434"></script>
+<script src="js/profile.js?v=20260434"></script>
+<script src="js/admin.js?v=20260434"></script>
+<script src="js/screens.js?v=20260434"></script>
+<script src="js/events.js?v=20260434"></script>
+<script src="js/overlay-pull-close.js?v=20260434"></script>
+<script src="js/main.js?v=20260434"></script>
 </body>
 </html>

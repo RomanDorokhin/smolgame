@@ -1668,6 +1668,69 @@ body.feed-layout-vertical #game-info{
 }
 .upload-premium-stub-text code{font-size:12px;}
 
+.upload-premium-page{
+  padding:4px 0 24px;
+  max-width:440px;
+  margin:0 auto;
+}
+.upload-premium-hero{
+  text-align:center;
+  margin-bottom:22px;
+}
+.upload-premium-lead{
+  margin:0;
+  font-size:15px;
+  line-height:1.55;
+  color:rgba(255,255,255,0.78);
+  text-align:left;
+}
+.upload-premium-block{
+  margin-bottom:20px;
+  padding:16px 18px;
+  border-radius:16px;
+  border:1px solid var(--border);
+  background:rgba(255,255,255,0.03);
+}
+.upload-premium-block--muted{
+  background:rgba(255,255,255,0.02);
+}
+.upload-premium-h3{
+  font-family:'Syne',sans-serif;
+  font-size:15px;
+  font-weight:800;
+  margin:0 0 10px;
+  color:#fff;
+  letter-spacing:-0.02em;
+}
+.upload-premium-p{
+  margin:0;
+  font-size:14px;
+  line-height:1.55;
+  color:var(--muted);
+}
+.upload-premium-list{
+  margin:0;
+  padding-left:1.15em;
+  font-size:14px;
+  line-height:1.55;
+  color:var(--muted);
+}
+.upload-premium-list li{margin-bottom:8px;}
+.upload-premium-list li:last-child{margin-bottom:0;}
+.upload-premium-callout{
+  padding:16px 18px;
+  border-radius:16px;
+  border:1px dashed rgba(240,200,106,0.45);
+  background:rgba(240,200,106,0.08);
+  margin-top:8px;
+}
+.upload-premium-callout--ok{
+  border-style:solid;
+  border-color:rgba(140,213,255,0.4);
+  background:rgba(140,213,255,0.08);
+}
+.upload-premium-callout .upload-premium-p{color:rgba(255,255,255,0.82);}
+
 .upload-methods{
   display:grid;
   grid-template-columns:1fr 1fr;

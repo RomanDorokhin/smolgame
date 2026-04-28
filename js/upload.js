@@ -19,14 +19,22 @@ function syncPremiumMethodCard() {
   if (!premCard) return;
   const locked = !USER.isPremium;
   premCard.classList.toggle('method-card--premium-locked', locked);
-  premCard.setAttribute('aria-disabled', locked ? 'true' : 'false');
+  premCard.setAttribute('aria-disabled', 'false');
   if (premDesc) {
-    premDesc.textContent = locked ? 'По списку на сервере' : 'Подписка';
+    premDesc.textContent = locked ? 'Смотри раздел' : 'Подписка';
   }
+}
+
+function refreshPremiumPanelAccess() {
+  const ok = document.getElementById('premium-access-active');
+  const wait = document.getElementById('premium-access-waitlist');
+  if (ok) ok.hidden = !USER.isPremium;
+  if (wait) wait.hidden = USER.isPremium;
 }
 
 function updateGithubUploadUi() {
   syncPremiumMethodCard();
+  refreshPremiumPanelAccess();
   const hint = document.getElementById('github-connect-hint');
   if (hint) {
     if (!USER.isGithubConnected) {
@@ -64,13 +72,6 @@ function updateGithubUploadUi() {
 async function selectMethod(m) {
   if (m === 'github' || m === 'premium') {
     await refreshUploadCapabilities();
-  }
-  if (m === 'premium' && !USER.isPremium) {
-    showToast('⚠️ Премиум по списку на сервере (PREMIUM_TG_IDS). Загрузка в GitHub — вкладка «GitHub», без изменений.');
-    let recover = window.selectedUploadMethod;
-    if (recover !== 'github' && recover !== 'url') recover = 'url';
-    await selectMethod(recover);
-    return;
   }
   if (m === 'premium') {
     window.selectedUploadMethod = 'premium';
