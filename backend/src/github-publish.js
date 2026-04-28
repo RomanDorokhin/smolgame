@@ -210,7 +210,25 @@ export async function publishGameToGithub(req, env) {
     );
   }
 
-  const pagesUrl = `https://${owner}.github.io/${repoName}/`;
+  /** Канонический URL из API GitHub (учёт регистра и формата), иначе собираем сами. */
+  let pagesUrl = '';
+  const pagesMeta = await ghJson(`https://api.github.com/repos/${fullName}/pages`, { method: 'GET' }, token);
+  if (pagesMeta.ok && pagesMeta.data?.html_url) {
+    try {
+      const u = new URL(String(pagesMeta.data.html_url));
+      u.protocol = 'https:';
+      let path = u.pathname || '/';
+      if (!path.endsWith('/')) path += '/';
+      pagesUrl = `${u.origin}${path}`;
+    } catch (e) {
+      pagesUrl = '';
+    }
+  }
+  if (!pagesUrl) {
+    const own = String(owner).toLowerCase();
+    const rn = String(repoName).toLowerCase();
+    pagesUrl = `https://${own}.github.io/${rn}/`;
+  }
 
   let probeOk = false;
   try {
