@@ -35,7 +35,13 @@ function resolveCorsOrigin(req, env) {
   if (/^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(requestOrigin)) {
     return requestOrigin;
   }
-  return env.FRONTEND_ORIGIN || '*';
+  const configured = String(env.FRONTEND_ORIGIN || '').trim().replace(/\/$/, '');
+  const reqNorm = String(requestOrigin).trim().replace(/\/$/, '');
+  // GitHub Pages и т.п. — как в [vars] FRONTEND_ORIGIN
+  if (configured && reqNorm === configured) return requestOrigin || configured;
+  // Telegram (Desktop/Web/часть клиентов) — Origin *.telegram.org, не GitHub Pages.
+  if (/^https:\/\/([a-z0-9-]+\.)*telegram\.org$/i.test(reqNorm)) return requestOrigin;
+  return configured || '*';
 }
 
 async function route(req, env, pathname) {
