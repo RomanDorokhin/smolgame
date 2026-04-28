@@ -1721,6 +1721,12 @@ body.feed-layout-vertical #game-info{
   box-shadow:0 0 0 1px rgba(240,200,106,0.08) inset;
 }
 .method-card--premium.selected .m-icon--svg{color:#f0c86a;}
+.method-card--premium-locked{
+  opacity:0.72;
+  border-style:dashed;
+}
+.method-card--premium-locked .m-title,
+.method-card--premium-locked .m-desc{color:rgba(255,255,255,0.5);}
 
 .method-card .m-icon{font-size:32px;margin-bottom:8px;}
 .method-card .m-icon--svg{width:34px;height:34px;margin:0 auto 10px;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,0.92);}

@@ -13,11 +13,20 @@ async function refreshUploadCapabilities() {
   updateGithubUploadUi();
 }
 
-function updateGithubUploadUi() {
+function syncPremiumMethodCard() {
   const premCard = document.getElementById('method-premium');
-  if (premCard) {
-    premCard.hidden = !USER.isPremium;
+  const premDesc = document.getElementById('method-premium-desc');
+  if (!premCard) return;
+  const locked = !USER.isPremium;
+  premCard.classList.toggle('method-card--premium-locked', locked);
+  premCard.setAttribute('aria-disabled', locked ? 'true' : 'false');
+  if (premDesc) {
+    premDesc.textContent = locked ? 'По списку на сервере' : 'Подписка';
   }
+}
+
+function updateGithubUploadUi() {
+  syncPremiumMethodCard();
   const hint = document.getElementById('github-connect-hint');
   if (hint) {
     if (!USER.isGithubConnected) {
@@ -28,10 +37,7 @@ function updateGithubUploadUi() {
         'Токен не сохранён: проверь миграцию D1 (github_access_token_enc) и снова нажми «Войти через GitHub».';
     } else {
       hint.textContent =
-        'Готово — код или файлы, название, описание, затем «Создать репозиторий на GitHub». Код уходит в GitHub, не на сервер SmolGame.' +
-        (USER.isPremium
-          ? ' Карточка «Премиум» справа — не GitHub: без репозитория.'
-          : '');
+        'Готово — код или файлы, название, описание, затем «Создать репозиторий на GitHub». Код уходит в GitHub, не на сервер SmolGame. Карточка «Премиум» — отдельный раздел, не репозиторий.';
     }
   }
   const btnLabel = document.getElementById('btn-github-primary-label');
@@ -60,8 +66,10 @@ async function selectMethod(m) {
     await refreshUploadCapabilities();
   }
   if (m === 'premium' && !USER.isPremium) {
-    showToast('⚠️ Премиум только для аккаунтов из списка на сервере');
-    await selectMethod('url');
+    showToast('⚠️ Премиум по списку на сервере (PREMIUM_TG_IDS). Загрузка в GitHub — вкладка «GitHub», без изменений.');
+    let recover = window.selectedUploadMethod;
+    if (recover !== 'github' && recover !== 'url') recover = 'url';
+    await selectMethod(recover);
     return;
   }
   if (m === 'premium') {
@@ -300,7 +308,7 @@ async function githubUploadSubmit() {
     window._ghPublishedPlayUrl = out.pagesUrl || '';
     resetGithubInlineForm();
     if (typeof selectMethod === 'function') await selectMethod('github');
-    if (!USER.isPremium) beginGhCodeWizardAfterPublish(out);
+    beginGhCodeWizardAfterPublish(out);
   } catch (e) {
     const msg = e?.message || 'ошибка';
     if (resBox) {
