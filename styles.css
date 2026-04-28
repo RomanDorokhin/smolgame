@@ -1589,22 +1589,6 @@ body.feed-layout-vertical #game-info{
   text-align:center;
   margin:14px 12px 0;
 }
-.profile-brand-downloads{
-  display:flex;
-  flex-direction:column;
-  flex-wrap:wrap;
-  gap:10px;
-  max-width:340px;
-  margin:14px auto 0;
-}
-.profile-brand-download{
-  display:block;
-  width:100%;
-  text-align:center;
-  text-decoration:none;
-  box-sizing:border-box;
-}
-
 .screen-header{
   display:flex;
   justify-content:space-between;
