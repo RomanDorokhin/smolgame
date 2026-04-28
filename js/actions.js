@@ -2,6 +2,7 @@ function toggleLike() {
   if (GAMES.length === 0) return;
   const g = GAMES[window.currentIdx];
   const icon = document.getElementById('likeIcon');
+  const likeWrap = icon?.closest('.action-btn');
 
   const wasLiked = likedSet.has(g.id);
   // Лайк = и избранное: оба набора и оба API держим вместе.
@@ -10,11 +11,13 @@ function toggleLike() {
     bookmarkedSet.delete(g.id);
     icon.innerHTML = likeIconMarkup(false);
     icon.classList.remove('active-like');
+    likeWrap?.classList.remove('active-like-row');
   } else {
     likedSet.add(g.id);
     bookmarkedSet.add(g.id);
     icon.innerHTML = likeIconMarkup(true);
     icon.classList.add('active-like', 'pop');
+    likeWrap?.classList.add('active-like-row');
     setTimeout(() => icon.classList.remove('pop'), 400);
   }
   saveSet(STORAGE_KEYS.liked, likedSet);

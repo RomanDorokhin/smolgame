@@ -420,6 +420,7 @@ function updateOverlay() {
   const likeIcon = document.getElementById('likeIcon');
   likeIcon.innerHTML = likeIconMarkup(liked);
   likeIcon.classList.toggle('active-like', liked);
+  document.querySelector('[data-action="toggle-like"]')?.classList.toggle('active-like-row', liked);
   document.getElementById('likeCount').textContent = fmtNum(g.likes + (liked ? 1 : 0));
   document.getElementById('playsCount').textContent = fmtNum(g.plays);
 

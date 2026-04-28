@@ -21,6 +21,10 @@ html,body,#root,#feed,.slide{margin:0;padding:0;border:0;width:100%;height:100%;
   --border:rgba(255,255,255,0.06);
   --text:#fff;
   --muted:rgba(255,255,255,0.42);
+  /* Лайк в ленте: тёплый кораллово-розовый (отдельно от холодного accent) */
+  --like-on:#ff7a8a;
+  --like-on-rgb:255,122,138;
+  --like-on-soft:rgba(255,122,138,0.16);
   --nav-active:rgba(255,255,255,0.92);
   --btn-radius-md:12px;
   --btn-radius-lg:14px;
@@ -1117,9 +1121,13 @@ body:has(#feed-nav-tip-overlay.feed-nav-tip-visible) #feed-coach-fab{
 }
 .action-icon:active{transform:scale(0.85);}
 .action-icon.active-like{
-  background:var(--accent-soft);
-  border-color:rgba(var(--accent-rgb),0.35);
+  background:var(--like-on-soft);
+  border-color:rgba(var(--like-on-rgb),0.48);
+  box-shadow:0 0 0 1px rgba(var(--like-on-rgb),0.08) inset, 0 8px 22px rgba(var(--like-on-rgb),0.18);
 }
+.action-icon.active-like .sg-icon--heart{color:rgba(var(--like-on-rgb),0.92);}
+.action-icon.active-like .sg-icon--heart.sg-icon--heart-filled{color:var(--like-on);}
+.action-btn.active-like-row .action-label{color:rgba(var(--like-on-rgb),0.95);}
 
 /* Анимация лайка */
 @keyframes likePop{
