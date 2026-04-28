@@ -9,8 +9,9 @@ function feedEl() {
   return document.getElementById('feed');
 }
 
-function feedSwipeTeaseHost() {
-  return feedEl();
+/** Класс всплеска на body — двигаются #feed и стрелка «следующая» синхронно */
+function feedSwipeTeaseBurstBody() {
+  return document.body;
 }
 
 function mergePendingIntoFeed(pendingQueue, published) {
@@ -497,7 +498,7 @@ function feedPointerDown(e, dragHost) {
   }
   if (dragHost === strip) {
     resetSwipeStripDragVisual(strip);
-    feedSwipeTeaseHost()?.classList.remove('feed-swipe-tease-burst');
+    feedSwipeTeaseBurstBody().classList.remove('feed-swipe-tease-burst');
   }
 
   touching = true;
@@ -614,7 +615,7 @@ document.addEventListener('DOMContentLoaded', () => {
   if (document.getElementById('nav-feed')?.classList.contains('active')) {
     document.body.classList.add('is-tab-feed');
   }
-  feedSwipeTeaseHost()?.addEventListener('animationend', onFeedSwipeTeaseBurstAnimationEnd);
+  feedEl()?.addEventListener('animationend', onFeedSwipeTeaseBurstAnimationEnd);
 
   const strip = swipeNavStrip();
   if (!strip) return;
@@ -687,7 +688,7 @@ window.scheduleSwipeStripIdleNudge = scheduleSwipeStripIdleNudge;
 window.onSwipeStripUserActivity = onSwipeStripUserActivity;
 
 /* ── «Дёрни экран» подсказка свайпа: короткие всплески, не бесконечный loop ── */
-const FEED_SWIPE_TEASE_BOREDOM_MS = 3 * 60 * 1000; /* 3 мин без действий на ленте */
+const FEED_SWIPE_TEASE_BOREDOM_MS = 18 * 1000; /* без действий на ленте — снова намекнуть */
 let feedSwipeTeaseBoredomT = 0;
 let feedSwipeTeaseOfferQueued = false;
 
@@ -707,14 +708,19 @@ function hasFeedSwipeTeaseShownOnce() {
   }
 }
 
+function canGoNextInFeed() {
+  return Array.isArray(GAMES) && GAMES.length >= 2 && window.currentIdx < GAMES.length - 1;
+}
+
 function canRunFeedSwipeTeaseBurst() {
+  if (isFeedSwipeLearned()) return false;
   if (!document.body.classList.contains('is-tab-feed')) return false;
   if (typeof isOverlayOpen === 'function' && isOverlayOpen()) return false;
   if (document.getElementById('onboarding-screen')?.classList.contains('open')) return false;
   const strip = document.getElementById('swipe-strip');
   if (!strip || strip.style.display === 'none') return false;
-  if (!strip.classList.contains('swipe-strip--coach')) return false;
   if (GAMES.length < 2) return false;
+  if (!canGoNextInFeed()) return false;
   return true;
 }
 
@@ -731,22 +737,22 @@ function clearFeedSwipeTeaseTimers() {
 
 /** Учился свайпать или ушли с coach — убрать всплеск и таймеры */
 function clearFeedSwipeTeaseCoaching() {
-  feedSwipeTeaseHost()?.classList.remove('feed-swipe-tease-burst');
+  feedSwipeTeaseBurstBody().classList.remove('feed-swipe-tease-burst');
   clearFeedSwipeTeaseTimers();
 }
 
 /** Ушли с вкладки ленты (поиск, профиль, загрузка, карточка автора) — сразу убрать дёрганье */
 function stopFeedSwipeTeaseForLeavingFeed() {
-  feedSwipeTeaseHost()?.classList.remove('feed-swipe-tease-burst');
+  feedSwipeTeaseBurstBody().classList.remove('feed-swipe-tease-burst');
   clearFeedSwipeTeaseTimers();
 }
 
 let feedSwipeTeaseFinishT = 0;
 
 function finishFeedSwipeTeaseBurst() {
-  const host = feedSwipeTeaseHost();
-  if (!host?.classList.contains('feed-swipe-tease-burst')) return;
-  host.classList.remove('feed-swipe-tease-burst');
+  const b = feedSwipeTeaseBurstBody();
+  if (!b.classList.contains('feed-swipe-tease-burst')) return;
+  b.classList.remove('feed-swipe-tease-burst');
   if (feedSwipeTeaseFinishT) {
     clearTimeout(feedSwipeTeaseFinishT);
     feedSwipeTeaseFinishT = 0;
@@ -760,11 +766,10 @@ function finishFeedSwipeTeaseBurst() {
 }
 
 function startFeedSwipeTeaseBurst() {
-  const host = feedSwipeTeaseHost();
-  if (!host) return;
-  host.classList.remove('feed-swipe-tease-burst');
-  void host.offsetWidth;
-  host.classList.add('feed-swipe-tease-burst');
+  const b = feedSwipeTeaseBurstBody();
+  b.classList.remove('feed-swipe-tease-burst');
+  void b.offsetWidth;
+  b.classList.add('feed-swipe-tease-burst');
   if (feedSwipeTeaseFinishT) clearTimeout(feedSwipeTeaseFinishT);
   /* animationend не срабатывает при prefers-reduced-motion — подстраховка */
   feedSwipeTeaseFinishT = setTimeout(() => {
@@ -774,18 +779,22 @@ function startFeedSwipeTeaseBurst() {
 }
 
 function scheduleFeedSwipeTeaseBoredom() {
-  clearFeedSwipeTeaseTimers();
+  if (feedSwipeTeaseBoredomT) {
+    clearTimeout(feedSwipeTeaseBoredomT);
+    feedSwipeTeaseBoredomT = 0;
+  }
   if (isFeedSwipeLearned()) return;
-  if (!hasFeedSwipeTeaseShownOnce()) return;
+  if (!document.body.classList.contains('is-tab-feed')) return;
   if (!canRunFeedSwipeTeaseBurst()) return;
   feedSwipeTeaseBoredomT = setTimeout(() => {
     feedSwipeTeaseBoredomT = 0;
     if (canRunFeedSwipeTeaseBurst()) offerFeedSwipeTeaseIfDue();
+    else scheduleFeedSwipeTeaseBoredom();
   }, FEED_SWIPE_TEASE_BOREDOM_MS);
 }
 
 function onFeedSwipeTeaseBurstAnimationEnd(ev) {
-  if (ev.target !== feedSwipeTeaseHost() || ev.animationName !== 'feedSwipeTeaseBurst') return;
+  if (ev.target !== feedEl() || ev.animationName !== 'feedSwipeTeaseBurst') return;
   if (feedSwipeTeaseFinishT) {
     clearTimeout(feedSwipeTeaseFinishT);
     feedSwipeTeaseFinishT = 0;
@@ -795,7 +804,7 @@ function onFeedSwipeTeaseBurstAnimationEnd(ev) {
 
 function offerFeedSwipeTeaseIfDue() {
   if (!canRunFeedSwipeTeaseBurst()) {
-    if (!isFeedSwipeLearned() && hasFeedSwipeTeaseShownOnce()) scheduleFeedSwipeTeaseBoredom();
+    scheduleFeedSwipeTeaseBoredom();
     return;
   }
   startFeedSwipeTeaseBurst();
@@ -807,9 +816,9 @@ function queueMaybeOfferFeedSwipeTease() {
   requestAnimationFrame(() => {
     feedSwipeTeaseOfferQueued = false;
     if (!canRunFeedSwipeTeaseBurst()) return;
-    if (document.getElementById('feed-nav-tip-overlay')?.classList.contains('feed-nav-tip-visible')) return;
-    if (!hasFeedSwipeTeaseShownOnce()) offerFeedSwipeTeaseIfDue();
-    else scheduleFeedSwipeTeaseBoredom();
+    const tipOpen = document.getElementById('feed-nav-tip-overlay')?.classList.contains('feed-nav-tip-visible');
+    if (!tipOpen && !hasFeedSwipeTeaseShownOnce()) offerFeedSwipeTeaseIfDue();
+    scheduleFeedSwipeTeaseBoredom();
   });
 }
 
@@ -818,7 +827,7 @@ function maybeFeedSwipeTeaseAfterOverlayClosed() {
     if (!canRunFeedSwipeTeaseBurst()) return;
     if (document.getElementById('feed-nav-tip-overlay')?.classList.contains('feed-nav-tip-visible')) return;
     if (!hasFeedSwipeTeaseShownOnce()) offerFeedSwipeTeaseIfDue();
-    else scheduleFeedSwipeTeaseBoredom();
+    scheduleFeedSwipeTeaseBoredom();
   }, 160);
 }
 

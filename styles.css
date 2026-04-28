@@ -335,31 +335,38 @@ html,body,#root,#feed,.slide{margin:0;padding:0;border:0;width:100%;height:100%;
   box-shadow:0 -1px 0 rgba(255,255,255,0.06);
 }
 /*
-  Подсказка «ещё игры»: дёргается только #feed (область iframe), не нав/полоска/стрелки.
-  Только на вкладке ленты (.is-tab-feed).
+  Подсказка «ещё игры справа»: #feed + стрелка «следующая» двигаются вместе влево.
+  Класс на body: .feed-swipe-tease-burst (только вкладка ленты .is-tab-feed).
 */
-body.is-tab-feed:not(:has(#feed-nav-tip-overlay.feed-nav-tip-visible)):not(:has(#swipe-strip.dragging)) #feed.feed-swipe-tease-burst{
+body.is-tab-feed.feed-swipe-tease-burst:not(:has(#feed-nav-tip-overlay.feed-nav-tip-visible)):not(:has(#swipe-strip.dragging)) #feed{
+  animation:feedSwipeTeaseBurst 2.45s cubic-bezier(0.33,0,0.2,1) forwards;
+  will-change:transform;
+}
+body.is-tab-feed.feed-swipe-tease-burst:not(:has(#feed-nav-tip-overlay.feed-nav-tip-visible)):not(:has(#swipe-strip.dragging)) .feed-nav-arrow-next{
   animation:feedSwipeTeaseBurst 2.45s cubic-bezier(0.33,0,0.2,1) forwards;
   will-change:transform;
 }
 #swipe-strip.dragging{will-change:auto;}
-body:has(#feed-nav-tip-overlay.feed-nav-tip-visible) #feed.feed-swipe-tease-burst,
-body:has(#swipe-strip.dragging) #feed.feed-swipe-tease-burst{
+body:has(#feed-nav-tip-overlay.feed-nav-tip-visible).feed-swipe-tease-burst #feed,
+body:has(#swipe-strip.dragging).feed-swipe-tease-burst #feed,
+body:has(#feed-nav-tip-overlay.feed-nav-tip-visible).feed-swipe-tease-burst .feed-nav-arrow-next,
+body:has(#swipe-strip.dragging).feed-swipe-tease-burst .feed-nav-arrow-next{
   animation:none !important;
   transform:none !important;
   will-change:auto;
 }
 @keyframes feedSwipeTeaseBurst{
   0%,100%{transform:translate3d(0,0,0);}
-  5%{transform:translate3d(calc(-1 * min(6vw, 30px)),0,0);}
-  6%{transform:translate3d(calc(-1 * min(5.2vw, 26px)),0,0);}
+  5%{transform:translate3d(calc(-1 * min(7vw, 34px)),0,0);}
+  6%{transform:translate3d(calc(-1 * min(6vw, 30px)),0,0);}
   14%{transform:translate3d(0,0,0);}
   52%{transform:translate3d(0,0,0);}
-  57%{transform:translate3d(calc(-1 * min(4.2vw, 20px)),0,0);}
+  57%{transform:translate3d(calc(-1 * min(5vw, 24px)),0,0);}
   64%{transform:translate3d(0,0,0);}
 }
 @media (prefers-reduced-motion: reduce){
-  #feed.feed-swipe-tease-burst{
+  body.feed-swipe-tease-burst #feed,
+  body.feed-swipe-tease-burst .feed-nav-arrow-next{
     animation:none !important;
     transform:none !important;
     will-change:auto;
