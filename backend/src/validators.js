@@ -69,6 +69,14 @@ export function validateGameListingPatch(body) {
   return { ok: { title, description, genre, genreEmoji, imageUrlPatch } };
 }
 
+/** POST /api/games/:id/reviews — текст отзыва. */
+export function validateGameReview(body) {
+  const text = String(body?.text ?? body?.body ?? '').trim();
+  if (!text) return { error: 'Напиши текст отзыва' };
+  if (text.length > 500) return { error: 'Не больше 500 символов' };
+  return { ok: { text } };
+}
+
 const HANDLE_RE = /^[a-z0-9_]{3,24}$/;
 
 /** PATCH /api/me: displayName, bio, siteHandle, photoUrl (optional). */

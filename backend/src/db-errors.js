@@ -16,3 +16,9 @@ export function isMissingColumnError(e) {
   const m = errorTextChain(e);
   return /no such column/i.test(m) || /has no column named/i.test(m);
 }
+
+/** Таблица ещё не создана (миграция не прогнана). */
+export function isMissingTableError(e) {
+  const m = errorTextChain(e);
+  return /no such table/i.test(m);
+}

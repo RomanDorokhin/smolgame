@@ -1,7 +1,13 @@
 import { json, error, newId } from './http.js';
-import { isMissingColumnError } from './db-errors.js';
+import { isMissingColumnError, isMissingTableError } from './db-errors.js';
 import { authenticate, upsertUser } from './auth.js';
-import { safeHttpsUrl, validateSubmission, validateGameListingPatch, validateProfilePatch } from './validators.js';
+import {
+  safeHttpsUrl,
+  validateSubmission,
+  validateGameListingPatch,
+  validateProfilePatch,
+  validateGameReview,
+} from './validators.js';
 
 // ──────────────────────────────────────────────────────────────
 // PUBLIC
@@ -15,6 +21,7 @@ const PUBLISHED_FEED_SQL_VARIANTS = [
   // Полная схема
   `SELECT g.id, g.title, g.description, g.genre, g.genre_emoji AS genreEmoji,
           g.url, g.image_url AS imageUrl, g.likes, g.plays, g.author_id AS authorId,
+          g.created_at AS createdAt, g.updated_at AS updatedAt,
           u.site_handle AS authorHandle, u.first_name AS authorFirst, u.last_name AS authorLast,
           u.display_name AS authorDisplayName,
           COALESCE(NULLIF(TRIM(u.avatar_override_url), ''), u.photo_url) AS authorPhoto
@@ -26,6 +33,7 @@ const PUBLISHED_FEED_SQL_VARIANTS = [
   // Старые games без genre_emoji / image_url; полные users
   `SELECT g.id, g.title, g.description, g.genre, CAST(NULL AS TEXT) AS genreEmoji,
           g.url, CAST(NULL AS TEXT) AS imageUrl, g.likes, g.plays, g.author_id AS authorId,
+          g.created_at AS createdAt, g.updated_at AS updatedAt,
           u.site_handle AS authorHandle, u.first_name AS authorFirst, u.last_name AS authorLast,
           u.display_name AS authorDisplayName,
           COALESCE(NULLIF(TRIM(u.avatar_override_url), ''), u.photo_url) AS authorPhoto
@@ -37,6 +45,7 @@ const PUBLISHED_FEED_SQL_VARIANTS = [
   // Полные games; users только «старые» поля (без site_handle / display_name / avatar_override)
   `SELECT g.id, g.title, g.description, g.genre, g.genre_emoji AS genreEmoji,
           g.url, g.image_url AS imageUrl, g.likes, g.plays, g.author_id AS authorId,
+          g.created_at AS createdAt, g.updated_at AS updatedAt,
           COALESCE(NULLIF(TRIM(u.username), ''), u.id) AS authorHandle,
           u.first_name AS authorFirst, u.last_name AS authorLast,
           CAST(NULL AS TEXT) AS authorDisplayName,
@@ -49,6 +58,7 @@ const PUBLISHED_FEED_SQL_VARIANTS = [
   // Минимум и games, и users
   `SELECT g.id, g.title, g.description, g.genre, CAST(NULL AS TEXT) AS genreEmoji,
           g.url, CAST(NULL AS TEXT) AS imageUrl, g.likes, g.plays, g.author_id AS authorId,
+          g.created_at AS createdAt, g.updated_at AS updatedAt,
           COALESCE(NULLIF(TRIM(u.username), ''), u.id) AS authorHandle,
           u.first_name AS authorFirst, u.last_name AS authorLast,
           CAST(NULL AS TEXT) AS authorDisplayName,
@@ -144,6 +154,8 @@ function mapFeedGameRow(g, likedSet, followedSet, bookmarkedSet, extra = {}) {
     imageUrl: g.imageUrl,
     likes: g.likes,
     plays: g.plays,
+    createdAt: g.createdAt != null ? Number(g.createdAt) : null,
+    updatedAt: g.updatedAt != null ? Number(g.updatedAt) : null,
     authorId: g.authorId,
     authorName: (g.authorDisplayName && String(g.authorDisplayName).trim())
       || [g.authorFirst, g.authorLast].filter(Boolean).join(' ')
@@ -161,7 +173,7 @@ function mapFeedGameRow(g, likedSet, followedSet, bookmarkedSet, extra = {}) {
 const GAME_BY_ID_SQL_VARIANTS = [
   `SELECT g.id, g.title, g.description, g.genre, g.genre_emoji AS genreEmoji,
           g.url, g.image_url AS imageUrl, g.likes, g.plays, g.author_id AS authorId,
-          g.status,
+          g.status, g.created_at AS createdAt, g.updated_at AS updatedAt,
           u.site_handle AS authorHandle, u.first_name AS authorFirst, u.last_name AS authorLast,
           u.display_name AS authorDisplayName,
           COALESCE(NULLIF(TRIM(u.avatar_override_url), ''), u.photo_url) AS authorPhoto
@@ -170,7 +182,7 @@ const GAME_BY_ID_SQL_VARIANTS = [
     WHERE g.id = ?`,
   `SELECT g.id, g.title, g.description, g.genre, CAST(NULL AS TEXT) AS genreEmoji,
           g.url, CAST(NULL AS TEXT) AS imageUrl, g.likes, g.plays, g.author_id AS authorId,
-          g.status,
+          g.status, g.created_at AS createdAt, g.updated_at AS updatedAt,
           u.site_handle AS authorHandle, u.first_name AS authorFirst, u.last_name AS authorLast,
           u.display_name AS authorDisplayName,
           COALESCE(NULLIF(TRIM(u.avatar_override_url), ''), u.photo_url) AS authorPhoto
@@ -179,7 +191,7 @@ const GAME_BY_ID_SQL_VARIANTS = [
     WHERE g.id = ?`,
   `SELECT g.id, g.title, g.description, g.genre, g.genre_emoji AS genreEmoji,
           g.url, g.image_url AS imageUrl, g.likes, g.plays, g.author_id AS authorId,
-          g.status,
+          g.status, g.created_at AS createdAt, g.updated_at AS updatedAt,
           COALESCE(NULLIF(TRIM(u.username), ''), u.id) AS authorHandle,
           u.first_name AS authorFirst, u.last_name AS authorLast,
           CAST(NULL AS TEXT) AS authorDisplayName,
@@ -189,7 +201,7 @@ const GAME_BY_ID_SQL_VARIANTS = [
     WHERE g.id = ?`,
   `SELECT g.id, g.title, g.description, g.genre, CAST(NULL AS TEXT) AS genreEmoji,
           g.url, CAST(NULL AS TEXT) AS imageUrl, g.likes, g.plays, g.author_id AS authorId,
-          g.status,
+          g.status, g.created_at AS createdAt, g.updated_at AS updatedAt,
           COALESCE(NULLIF(TRIM(u.username), ''), u.id) AS authorHandle,
           u.first_name AS authorFirst, u.last_name AS authorLast,
           CAST(NULL AS TEXT) AS authorDisplayName,
@@ -914,6 +926,8 @@ export async function getGameById(req, env, gameId) {
       imageUrl: g.imageUrl,
       likes: g.likes,
       plays: g.plays,
+      createdAt: g.createdAt != null ? Number(g.createdAt) : null,
+      updatedAt: g.updatedAt != null ? Number(g.updatedAt) : null,
       authorId: g.authorId,
       authorName: (g.authorDisplayName && String(g.authorDisplayName).trim())
         || [g.authorFirst, g.authorLast].filter(Boolean).join(' ')
@@ -927,6 +941,92 @@ export async function getGameById(req, env, gameId) {
       status: g.status,
     },
   });
+}
+
+const REVIEWS_LIST_SQL_VARIANTS = [
+  `SELECT r.id, r.body, r.created_at AS createdAt, r.user_id AS authorId,
+          u.display_name AS authorDisplayName, u.first_name AS authorFirst, u.last_name AS authorLast,
+          u.site_handle AS authorHandle
+     FROM game_reviews r
+     LEFT JOIN users u ON u.id = r.user_id
+    WHERE r.game_id = ?
+    ORDER BY r.created_at DESC
+    LIMIT 50`,
+  `SELECT r.id, r.body, r.created_at AS createdAt, r.user_id AS authorId,
+          CAST(NULL AS TEXT) AS authorDisplayName, u.first_name AS authorFirst, u.last_name AS authorLast,
+          u.site_handle AS authorHandle
+     FROM game_reviews r
+     LEFT JOIN users u ON u.id = r.user_id
+    WHERE r.game_id = ?
+    ORDER BY r.created_at DESC
+    LIMIT 50`,
+];
+
+function mapReviewRow(r) {
+  const authorName =
+    (r.authorDisplayName && String(r.authorDisplayName).trim())
+    || [r.authorFirst, r.authorLast].filter(Boolean).join(' ')
+    || r.authorHandle
+    || 'Игрок';
+  return {
+    id: r.id,
+    body: r.body,
+    createdAt: r.createdAt != null ? Number(r.createdAt) : null,
+    authorId: r.authorId,
+    authorName,
+  };
+}
+
+export async function listGameReviews(req, env, gameId) {
+  const viewer = await authenticate(req, env);
+  const viewerId = viewer?.id ?? null;
+  const g = await gameByIdRow(env.DB, gameId);
+  if (!g) return error('not found', 404);
+  if (g.status !== 'published' && g.authorId !== viewerId) return error('not found', 404);
+
+  try {
+    const { results } = await firstSuccessfulAll(env.DB, REVIEWS_LIST_SQL_VARIANTS, [gameId]);
+    return json({ reviews: (results || []).map(mapReviewRow) });
+  } catch (e) {
+    if (isMissingTableError(e)) return json({ reviews: [] });
+    throw e;
+  }
+}
+
+export async function postGameReview(req, env, gameId) {
+  const user = await authenticate(req, env);
+  if (!user) return error('unauthorized', 401);
+
+  const g = await gameByIdRow(env.DB, gameId);
+  if (!g) return error('not found', 404);
+  if (g.status !== 'published' && g.authorId !== user.id) return error('not found', 404);
+
+  let body;
+  try {
+    body = await req.json();
+  } catch (e) {
+    return error('invalid json');
+  }
+  const { ok, error: verr } = validateGameReview(body);
+  if (verr) return error(verr);
+
+  const id = newId();
+  try {
+    await env.DB.prepare(
+      `INSERT INTO game_reviews (id, game_id, user_id, body, created_at)
+       VALUES (?, ?, ?, ?, unixepoch())
+       ON CONFLICT(user_id, game_id) DO UPDATE SET
+         body = excluded.body,
+         created_at = unixepoch()`
+    ).bind(id, gameId, user.id, ok.text).run();
+  } catch (e) {
+    if (isMissingTableError(e)) {
+      return error('Отзывы пока недоступны — админ должен выполнить миграцию БД (game_reviews).', 503);
+    }
+    throw e;
+  }
+
+  return json({ ok: true });
 }
 
 export async function deleteGame(req, env, gameId) {

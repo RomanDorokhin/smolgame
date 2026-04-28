@@ -112,6 +112,9 @@ window.API = {
   likedGames:   ()         => apiFetch('/api/me/liked-games'),
   playedGames:  ()         => apiFetch('/api/me/played-games'),
   game:         (gameId)   => apiFetch(`/api/games/${encodeURIComponent(gameId)}`),
+  gameReviews:  (gameId)   => apiFetch(`/api/games/${encodeURIComponent(gameId)}/reviews`),
+  postGameReview: (gameId, payload) =>
+    apiFetch(`/api/games/${encodeURIComponent(gameId)}/reviews`, { method: 'POST', body: payload }),
   register:     (payload)  => apiFetch('/api/register', { method: 'POST', body: payload }),
   checkRegistered: ()      => apiFetch('/api/me/registered'),
   submit:       (payload)  => apiFetch('/api/submit', { method: 'POST', body: payload }),

@@ -480,6 +480,7 @@ function updateOverlay() {
   followBtn.textContent = following ? 'Вы подписаны' : '+ Подписаться';
   followBtn.classList.toggle('following', following);
 
+  if (typeof loadFeedReviewCount === 'function') loadFeedReviewCount();
 }
 
 /** Горизонт в полоске: влево = следующая, вправо = предыдущая (как карточки) */
@@ -501,7 +502,9 @@ let activePointerId = null;
 function isOverlayOpen() {
   return Boolean(document.querySelector(
     '#upload-screen.open, #profile-screen.open, #search-screen.open, #games-library-screen.open, #author-screen.open, #onboarding-screen.open, #feed-nav-tip-overlay.feed-nav-tip-visible'
-  ));
+  )) ||
+    document.body.classList.contains('game-detail-open') ||
+    Boolean(document.getElementById('feed-reviews-drawer') && !document.getElementById('feed-reviews-drawer').hidden);
 }
 
 let swipeDragHost = null;

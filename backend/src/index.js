@@ -1,7 +1,7 @@
 import { withCors, preflight, error } from './http.js';
 import {
   getFeed, getMe, updateMe, githubUnlink, getMyGames, getLikedGames, getPlayedGames, getMyGamesLibraryBatch, checkRegistered, register, submitGame, uploadImage, deleteGame,
-  getGameById, updateGameListing,
+  getGameById, updateGameListing, listGameReviews, postGameReview,
   toggleLike, toggleFollow, toggleBookmark, getUserProfile, getUserGames, play,
   adminPending, adminApprove, adminReject,
 } from './routes.js';
@@ -110,6 +110,10 @@ async function route(req, env, pathname) {
   }
   if ((match = pathname.match(/^\/api\/games\/([^/]+)\/play$/))) {
     if (m === 'POST') return play(req, env, match[1]);
+  }
+  if ((match = pathname.match(/^\/api\/games\/([^/]+)\/reviews$/))) {
+    if (m === 'GET') return listGameReviews(req, env, match[1]);
+    if (m === 'POST') return postGameReview(req, env, match[1]);
   }
   if ((match = pathname.match(/^\/api\/users\/([^/]+)$/))) {
     if (m === 'GET') return getUserProfile(req, env, match[1]);

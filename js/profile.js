@@ -188,17 +188,17 @@ async function renderProfile() {
       </div>` : '';
       return `
       <div class="profile-game-row" id="profileGameRow-${idRaw}" data-profile-game-id="${idRaw}" data-title="${titleEsc}" data-description="${descEsc}" data-genre="${genreEsc}" data-url="${urlEsc}" data-image-url="${imgEsc}" data-status="${statEsc}">
-        <div class="game-card sg-store-card" data-action="open-game-profile" data-game-id="${gid}">
+        <div class="game-card sg-store-card" data-action="open-game-detail" data-game-id="${gid}">
           <div class="game-card-thumb sg-store-card-thumb">
             ${gameStatusBadgeHtml(g.status)}
             ${gameThumbHtml(g)}
           </div>
           ${typeof sgStorefrontCardInfoHtml === 'function' ? sgStorefrontCardInfoHtml(g, { author: false, desc: true }) : `<div class="game-card-info"><div class="game-card-name">${esc(g.title)}</div><div class="game-card-stats"><span class="sg-mini-stat">${sgStatHeartSvg()}${fmtNum(g.likes)}</span><span class="sg-mini-sep">·</span><span class="sg-mini-stat">${sgStatEyeSvg()}${fmtNum(g.plays)}</span></div></div>`}
         </div>
-        <div class="profile-game-actions">
-          ${canEdit ? `<button type="button" class="profile-text-btn" data-action="toggle-profile-game-editor" data-game-id="${idRaw}" title="Редактировать карточку в ленте">Правки</button>` : ''}
-          <button type="button" class="profile-text-btn profile-game-play-btn" data-action="open-game-profile" data-game-id="${gid}" title="Открыть в ленте">Лента</button>
-          <button type="button" class="profile-text-btn profile-game-delete-btn" data-action="delete-game" data-game-id="${gid}" data-game-title="${titleEsc}" title="Удалить игру" aria-label="Удалить игру">Удалить</button>
+        <div class="profile-game-actions profile-game-actions--icons" role="toolbar" aria-label="Действия с игрой">
+          ${canEdit ? `<button type="button" class="profile-game-icon-btn" data-action="toggle-profile-game-editor" data-game-id="${idRaw}" title="Редактировать" aria-label="Редактировать"><svg class="sg-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M15 6l3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></button>` : ''}
+          <button type="button" class="profile-game-icon-btn" data-action="open-game-in-feed" data-game-id="${gid}" title="В ленту" aria-label="Открыть в ленте"><svg class="sg-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 6h16M4 12h10M4 18h14" stroke="currentColor" stroke-width="1.65" stroke-linecap="round"/></svg></button>
+          <button type="button" class="profile-game-icon-btn profile-game-icon-btn--danger" data-action="delete-game" data-game-id="${gid}" data-game-title="${titleEsc}" title="Удалить" aria-label="Удалить игру"><svg class="sg-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M9 3h6M4 7h16M6 7l1 14h10l1-14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M10 11v6M14 11v6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></button>
         </div>
         ${editorHtml}
       </div>`;
@@ -347,10 +347,15 @@ async function onProfileAvatarFileChange(ev) {
 
 async function openGameFromProfile(gameId) {
   if (!gameId) return;
+  if (typeof openGameDetail === 'function') openGameDetail(gameId);
+}
+
+async function openGameInFeedFromProfile(gameId) {
+  if (!gameId) return;
   if (typeof closeProfile === 'function') closeProfile();
   if (typeof switchTab === 'function') switchTab('feed');
-  const idx = await injectGameIntoFeed(gameId);
-  if (typeof goTo === 'function') goTo(idx, false);
+  const idx = typeof injectGameIntoFeed === 'function' ? await injectGameIntoFeed(gameId) : -1;
+  if (idx >= 0 && typeof goTo === 'function') goTo(idx, false);
 }
 
 async function deleteGame(gameId, titleHint) {
@@ -379,6 +384,7 @@ window.deleteGame = deleteGame;
 window.saveProfile = saveProfile;
 window.resetProfilePhoto = resetProfilePhoto;
 window.openGameFromProfile = openGameFromProfile;
+window.openGameInFeedFromProfile = openGameInFeedFromProfile;
 window.startProfileEdit = startProfileEdit;
 window.cancelProfileEdit = cancelProfileEdit;
 window.discardProfileEdit = discardProfileEdit;

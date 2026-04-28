@@ -104,6 +104,15 @@ npm run db:migrate:remote:github-token
 
 **Старая D1 без `bio`:** `npm run db:migrate:remote:bio` (`migrations/0008_users_bio.sql`). В коде профиль автора обходит отсутствие `bio`, но для PATCH профиля колонка в БД всё равно нужна.
 
+**Отзывы к играм:** таблица `game_reviews`. Один раз на проде:
+
+```bash
+cd backend
+npm run db:migrate:remote:reviews
+```
+
+Без миграции отзывы в UI пустые; `POST` вернёт 503 с подсказкой.
+
 Если в D1 в таблице `users` **нет** колонок `github_user_id` и `github_login` (старая база), OAuth не сможет сохранить привязку — выполни:
 
 ```bash

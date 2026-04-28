@@ -55,7 +55,47 @@ const CLICK_ACTIONS = {
 
   'open-game':      (el) => openGameFromSearch(el.dataset.gameId),
   'open-game-profile': (el) => openGameFromProfile(el.dataset.gameId),
+  'open-game-in-feed': (el) => {
+    if (typeof openGameInFeedFromProfile === 'function') openGameInFeedFromProfile(el.dataset.gameId);
+  },
+  'open-game-detail': (el) => {
+    if (typeof openGameDetail === 'function') openGameDetail(el.dataset.gameId);
+  },
   'open-game-library': (el) => openGameFromLibrary(el.dataset.gameId),
+  'close-game-detail': () => {
+    if (typeof closeGameDetail === 'function') closeGameDetail();
+  },
+  'game-detail-play': () => {
+    if (typeof gameDetailPlay === 'function') gameDetailPlay();
+  },
+  'game-detail-submit-review': () => {
+    if (typeof gameDetailSubmitReview === 'function') gameDetailSubmitReview();
+  },
+  'game-detail-follow': (el, ev) => {
+    ev.stopPropagation();
+    if (typeof gameDetailToggleFollow === 'function') gameDetailToggleFollow(el);
+  },
+  'game-detail-owner-edit': (el) => {
+    if (typeof gameDetailOwnerEdit === 'function') gameDetailOwnerEdit(el.dataset.gameId);
+  },
+  'game-detail-owner-feed': (el) => {
+    if (typeof gameDetailOwnerFeed === 'function') gameDetailOwnerFeed(el.dataset.gameId);
+  },
+  'game-detail-owner-delete': (el, ev) => {
+    ev.stopPropagation();
+    if (typeof gameDetailOwnerDelete === 'function') {
+      gameDetailOwnerDelete(el.dataset.gameId, el.dataset.gameTitle);
+    }
+  },
+  'toggle-feed-reviews': () => {
+    if (typeof openFeedReviewsDrawer === 'function') openFeedReviewsDrawer();
+  },
+  'close-feed-reviews': () => {
+    if (typeof closeFeedReviewsDrawer === 'function') closeFeedReviewsDrawer();
+  },
+  'submit-feed-review': () => {
+    if (typeof submitFeedReview === 'function') submitFeedReview();
+  },
   'feed-enter-focus': () => {
     if (typeof enterGameFocusMode === 'function') enterGameFocusMode();
     document.getElementById('feed-exit-focus')?.removeAttribute('hidden');

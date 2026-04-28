@@ -14,7 +14,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <!-- ?v= сбрасывает кэш WebView Telegram после правок JS/CSS (меняй при каждом релизе фронта). -->
-<link rel="stylesheet" href="styles.css?v=20260441">
+<link rel="stylesheet" href="styles.css?v=20260442">
 </head>
 <body>
 
@@ -112,6 +112,51 @@
       <div class="author-role" id="authorRole">Разработчик</div>
     </div>
     <div class="follow-btn" id="followBtn" data-action="toggle-follow">+ Подписаться</div>
+  </div>
+  <button type="button" class="feed-reviews-chip" id="feedReviewsChip" data-action="toggle-feed-reviews">
+    <span class="feed-reviews-chip-lbl">Отзывы</span>
+    <span class="feed-reviews-chip-count" id="feedReviewCount">0</span>
+  </button>
+</div>
+
+<div id="feed-reviews-drawer" class="feed-reviews-drawer" hidden aria-hidden="true">
+  <div class="feed-reviews-drawer-handle" aria-hidden="true"></div>
+  <div class="feed-reviews-drawer-head">
+    <span class="feed-reviews-drawer-title">Отзывы</span>
+    <button type="button" class="feed-reviews-drawer-close" data-action="close-feed-reviews" aria-label="Закрыть">×</button>
+  </div>
+  <div id="feedReviewsDrawerList" class="feed-reviews-drawer-list"></div>
+  <div class="feed-reviews-drawer-compose">
+    <textarea id="feedReviewInput" class="feed-reviews-input" maxlength="500" rows="2" placeholder="Коротко о игре…" data-input="feed-review"></textarea>
+    <button type="button" class="sg-btn sg-btn--primary feed-reviews-send" data-action="submit-feed-review">Отправить</button>
+  </div>
+</div>
+
+<!-- Полноэкранная карточка игры (профиль / поиск / библиотека) -->
+<div id="game-detail-screen" class="game-detail-screen" hidden aria-hidden="true">
+  <div class="game-detail-topbar">
+    <button type="button" class="game-detail-back sg-btn sg-btn--ghost" data-action="close-game-detail" aria-label="Назад">←</button>
+    <span class="game-detail-topbar-title" id="gameDetailTopTitle">Игра</span>
+  </div>
+  <div class="game-detail-scroll" id="gameDetailScroll">
+    <div class="game-detail-hero" id="gameDetailHero"></div>
+    <div class="game-detail-body">
+      <div class="game-detail-badges" id="gameDetailBadges"></div>
+      <h1 class="game-detail-title" id="gameDetailTitle">—</h1>
+      <p class="game-detail-desc" id="gameDetailDesc"></p>
+      <div class="game-detail-meta-grid" id="gameDetailMeta"></div>
+      <button type="button" class="game-detail-play sg-btn sg-btn--primary" id="gameDetailPlayBtn" data-action="game-detail-play">Играть</button>
+      <div class="game-detail-author-card" id="gameDetailAuthorCard"></div>
+      <section class="game-detail-section">
+        <h2 class="game-detail-section-title">Отзывы</h2>
+        <div id="gameDetailReviews"></div>
+        <div class="game-detail-review-form" id="gameDetailReviewForm">
+          <textarea id="gameDetailReviewInput" class="field-input" maxlength="500" rows="3" placeholder="Написать отзыв…"></textarea>
+          <button type="button" class="sg-btn sg-btn--secondary" data-action="game-detail-submit-review">Отправить отзыв</button>
+        </div>
+      </section>
+      <div class="game-detail-owner-actions" id="gameDetailOwnerActions" hidden></div>
+    </div>
   </div>
 </div>
 
@@ -599,21 +644,22 @@
 <script src="js/tg-gate.js?v=20260439"></script>
 <script src="js/boot-splash.js?v=20260439"></script>
 <script src="js/state.js?v=20260439"></script>
-<script src="js/api.js?v=20260440"></script>
+<script src="js/api.js?v=20260442"></script>
 <script src="js/onboarding.js?v=20260439"></script>
 <script src="js/help-screens.js?v=20260439"></script>
-<script src="js/feed.js?v=20260439"></script>
+<script src="js/feed.js?v=20260442"></script>
 <script src="js/feed-nav-tip.js?v=20260439"></script>
 <script src="js/actions.js?v=20260439"></script>
 <script src="js/upload.js?v=20260439"></script>
 <script src="js/genres.js?v=20260439"></script>
 <script src="js/search.js?v=20260441"></script>
 <script src="js/liked-games.js?v=20260441"></script>
-<script src="js/profile.js?v=20260441"></script>
+<script src="js/profile.js?v=20260442"></script>
 <script src="js/admin.js?v=20260439"></script>
 <script src="js/game-editor.js?v=20260439"></script>
+<script src="js/game-detail.js?v=20260442"></script>
 <script src="js/screens.js?v=20260441"></script>
-<script src="js/events.js?v=20260440"></script>
+<script src="js/events.js?v=20260442"></script>
 <script src="js/overlay-pull-close.js?v=20260439"></script>
 <script src="js/main.js?v=20260439"></script>
 </body>
