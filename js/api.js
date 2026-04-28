@@ -120,7 +120,11 @@ window.API = {
   submit:       (payload)  => apiFetch('/api/submit', { method: 'POST', body: payload }),
   githubPublishGame: (payload) => apiFetch('/api/github/publish-game', { method: 'POST', body: payload }),
   uploadImage:  (formData) => apiFetch('/api/upload-image', { method: 'POST', body: formData }),
-  delete:       (gameId)   => apiFetch(`/api/games/${encodeURIComponent(gameId)}`, { method: 'DELETE' }),
+  delete:       (gameId, opts) =>
+    apiFetch(`/api/games/${encodeURIComponent(gameId)}`, {
+      method: 'DELETE',
+      body: opts && typeof opts === 'object' ? opts : undefined,
+    }),
   updateGame:   (gameId, payload) =>
     apiFetch(`/api/games/${encodeURIComponent(gameId)}`, { method: 'PATCH', body: payload }),
 

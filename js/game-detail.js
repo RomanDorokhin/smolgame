@@ -216,7 +216,7 @@ async function openGameDetail(gameId) {
       <div class="game-detail-owner-btns">
         <button type="button" class="sg-btn sg-btn--secondary" data-action="game-detail-owner-edit" data-game-id="${esc(game.id)}">Редактировать</button>
         <button type="button" class="sg-btn sg-btn--secondary" data-action="game-detail-owner-feed" data-game-id="${esc(game.id)}">Открыть в ленте</button>
-        <button type="button" class="sg-btn sg-btn--ghost game-detail-owner-del" data-action="game-detail-owner-delete" data-game-id="${esc(game.id)}" data-game-title="${esc(game.title || '')}">Удалить</button>
+        <button type="button" class="sg-btn sg-btn--ghost game-detail-owner-del" data-action="game-detail-owner-delete" data-game-id="${esc(game.id)}" data-game-title="${esc(game.title || '')}" data-game-url="${esc(game.url || '')}">Удалить</button>
       </div>
     `;
     } else {
@@ -316,9 +316,16 @@ async function gameDetailOwnerFeed(gameId) {
   if (idx >= 0 && typeof goTo === 'function') goTo(idx, false);
 }
 
-function gameDetailOwnerDelete(gameId, title) {
-  if (typeof deleteGame === 'function') deleteGame(gameId, title);
-  closeGameDetail();
+async function gameDetailOwnerDelete(gameId, title, playUrl) {
+  if (typeof deleteGame === 'function') {
+    try {
+      await deleteGame(gameId, title, playUrl);
+    } finally {
+      closeGameDetail();
+    }
+  } else {
+    closeGameDetail();
+  }
 }
 
 window.openGameDetail = openGameDetail;

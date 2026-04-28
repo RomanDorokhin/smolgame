@@ -87,7 +87,7 @@ const CLICK_ACTIONS = {
   'game-detail-owner-delete': (el, ev) => {
     ev.stopPropagation();
     if (typeof gameDetailOwnerDelete === 'function') {
-      gameDetailOwnerDelete(el.dataset.gameId, el.dataset.gameTitle);
+      gameDetailOwnerDelete(el.dataset.gameId, el.dataset.gameTitle, el.dataset.gameUrl);
     }
   },
   'toggle-feed-reviews': () => {

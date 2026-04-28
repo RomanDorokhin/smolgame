@@ -358,20 +358,47 @@ async function openGameInFeedFromProfile(gameId) {
   if (idx >= 0 && typeof goTo === 'function') goTo(idx, false);
 }
 
-async function deleteGame(gameId, titleHint) {
+function isGithubPagesGameUrl(urlRaw) {
+  try {
+    const u = new URL(String(urlRaw || '').trim());
+    if (u.protocol !== 'https:' && u.protocol !== 'http:') return false;
+    return u.hostname.toLowerCase().endsWith('.github.io');
+  } catch {
+    return false;
+  }
+}
+
+async function deleteGame(gameId, titleHint, playUrlHint) {
   if (!gameId) return;
   const idEsc = String(gameId).replace(/\\/g, '\\\\').replace(/"/g, '\\"');
   const row = document.querySelector('.profile-game-row[data-profile-game-id="' + idEsc + '"]');
   const fromRow = row?.dataset?.title?.trim();
   const label = (titleHint && String(titleHint).trim()) || fromRow || 'эту игру';
+  const playUrl =
+    (playUrlHint && String(playUrlHint).trim()) ||
+    row?.dataset?.url?.trim() ||
+    '';
   const question =
     label === 'эту игру'
-      ? 'Удалить игру? Это действие нельзя отменить.'
-      : `Удалить «${label}»? Это действие нельзя отменить.`;
+      ? 'Удалить игру из SmolGame? Это действие нельзя отменить.'
+      : `Удалить «${label}» из SmolGame? Это действие нельзя отменить.`;
   if (!confirm(question)) return;
+
+  let deleteGithubRepo = false;
+  if (playUrl && isGithubPagesGameUrl(playUrl)) {
+    deleteGithubRepo = confirm(
+      'Удалить также репозиторий на GitHub (страница ' +
+        playUrl.split('/')[2] +
+        ')?\n\nOK — да, убрать и репозиторий (если ты автор и вход через GitHub сохранён).\nОтмена — удалить только карточку в SmolGame.'
+    );
+  }
+
   try {
-    await API.delete(gameId);
-    showToast('🗑 Игра удалена');
+    const res = await API.delete(gameId, { deleteGithubRepo });
+    let msg = '🗑 Игра удалена из SmolGame';
+    if (res?.githubDeleted) msg += '; репозиторий на GitHub удалён';
+    else if (res?.githubDeleteNote) msg += '. ' + res.githubDeleteNote;
+    showToast(msg);
     await loadGames();
     renderProfile();
   } catch (e) {

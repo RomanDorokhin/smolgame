@@ -1,6 +1,7 @@
 import { json, error, newId } from './http.js';
 import { isMissingColumnError, isMissingTableError } from './db-errors.js';
 import { authenticate, upsertUser } from './auth.js';
+import { tryDeleteGithubRepoForAuthor } from './github-repo-delete.js';
 import {
   safeHttpsUrl,
   validateSubmission,
@@ -1034,10 +1035,39 @@ export async function deleteGame(req, env, gameId) {
   if (!user) return error('unauthorized', 401);
 
   const game = await env.DB.prepare(
-    `SELECT author_id AS authorId FROM games WHERE id = ?`
+    `SELECT author_id AS authorId, url AS url FROM games WHERE id = ?`
   ).bind(gameId).first();
   if (!game) return error('not found', 404);
   if (game.authorId !== user.id && user.isAdmin !== true) return error('forbidden', 403);
+
+  let deleteGithubRepo = false;
+  try {
+    const body = await req.json();
+    deleteGithubRepo = Boolean(body?.deleteGithubRepo);
+  } catch {
+    deleteGithubRepo = false;
+  }
+
+  let githubDeleted = false;
+  let githubDeleteNote = '';
+  const isAuthorSelf = game.authorId === user.id;
+  if (deleteGithubRepo && isAuthorSelf && game.url) {
+    const gh = await tryDeleteGithubRepoForAuthor(env, game.authorId, game.url);
+    if (gh.ok) {
+      githubDeleted = true;
+    } else if (gh.error === 'not_github_pages') {
+      githubDeleteNote = '';
+    } else if (gh.error === 'repo_not_owned' || gh.error === 'github_not_linked') {
+      githubDeleteNote =
+        'Репозиторий на GitHub под другим аккаунтом или ссылка не Pages — удалили только карточку в SmolGame.';
+    } else if (gh.error === 'no_token' || gh.error === 'token_invalid') {
+      githubDeleteNote =
+        'Репозиторий на GitHub не удалён: заново войди через GitHub в «Загрузить» и при необходимости удали репозиторий вручную на github.com.';
+    } else {
+      githubDeleteNote =
+        `GitHub: ${String(gh.error || 'ошибка').slice(0, 120)} — карточку в SmolGame всё равно удалим.`;
+    }
+  }
 
   await env.DB.prepare(`DELETE FROM likes WHERE game_id = ?`).bind(gameId).run();
   await env.DB.prepare(`DELETE FROM bookmarks WHERE game_id = ?`).bind(gameId).run();
@@ -1052,7 +1082,11 @@ export async function deleteGame(req, env, gameId) {
     if (!isMissingTableError(e)) throw e;
   }
   await env.DB.prepare(`DELETE FROM games WHERE id = ?`).bind(gameId).run();
-  return json({ ok: true });
+  return json({
+    ok: true,
+    githubDeleted,
+    ...(githubDeleteNote ? { githubDeleteNote } : {}),
+  });
 }
 
 export async function updateGameListing(req, env, gameId) {
