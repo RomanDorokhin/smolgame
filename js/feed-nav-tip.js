@@ -41,8 +41,13 @@ function maybeShowFeedNavTipAfterGames() {
   try {
     if (localStorage.getItem(STORAGE_KEYS.feedNavTip) === '1') return;
   } catch (e) { /* ignore */ }
-  overlay.classList.add('feed-nav-tip-visible');
-  refreshFeedCoachState();
+  // После сплэша не всплывать сразу поверх ленты — короткая пауза и плавное появление (CSS).
+  setTimeout(() => {
+    if (document.getElementById('onboarding-screen')?.classList.contains('open')) return;
+    if (!GAMES || GAMES.length === 0) return;
+    overlay.classList.add('feed-nav-tip-visible');
+    refreshFeedCoachState();
+  }, 450);
 }
 
 window.closeFeedNavTip = closeFeedNavTip;

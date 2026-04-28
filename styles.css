@@ -1013,7 +1013,7 @@ body.feed-layout-vertical #game-info{
   position:fixed;
   inset:0;
   z-index:480;
-  display:none;
+  display:flex;
   align-items:flex-end;
   justify-content:center;
   padding:24px;
@@ -1022,9 +1022,13 @@ body.feed-layout-vertical #game-info{
   backdrop-filter:blur(10px);
   -webkit-backdrop-filter:blur(10px);
   pointer-events:none;
+  visibility:hidden;
+  opacity:0;
+  transition:opacity 0.28s ease, visibility 0.28s ease;
 }
 .feed-nav-tip-overlay.feed-nav-tip-visible{
-  display:flex;
+  visibility:visible;
+  opacity:1;
   pointer-events:auto;
 }
 .feed-nav-tip-card{
