@@ -1289,29 +1289,13 @@ body.feed-layout-vertical #game-info{
   gap:2px;
 }
 
-.game-meta-row{
-  display:flex;
-  align-items:center;
-  gap:6px;
-  min-width:0;
+.author-role{
   font-size:12px;
-  font-weight:500;
-  color:rgba(255,255,255,0.55);
-  line-height:1.3;
-}
-
-.game-title-inline{
-  min-width:0;
-  white-space:nowrap;
-  overflow:hidden;
-  text-overflow:ellipsis;
-  color:rgba(245,247,252,0.92);
   font-weight:600;
-}
-
-.game-meta-sep{
-  flex-shrink:0;
-  opacity:0.55;
+  letter-spacing:0.04em;
+  text-transform:uppercase;
+  color:rgba(255,255,255,0.38);
+  line-height:1.25;
 }
 
 .author-avatar{
@@ -2830,7 +2814,7 @@ body.is-admin .admin-only{display:block;}
 
   .author-avatar{width:38px;height:38px;font-size:15px;}
   .author-name{font-size:14px;}
-  .game-meta-row{font-size:11px;}
+  .author-role{font-size:11px;}
   .follow-btn{font-size:12px;padding:7px 11px;}
 
   #bottom-nav{

@@ -451,24 +451,10 @@ function updateOverlay() {
   const g = GAMES[window.currentIdx];
   if (!g) return;
 
-  const titleEl = document.getElementById('gameTitle');
-  const sepEl = document.getElementById('gameMetaSep');
-  const genreEl = document.getElementById('gameGenreInline');
-
-  titleEl.textContent = g.title || '—';
-
-  if (g.genre) {
-    const icon =
-      typeof genreIconForGame === 'function'
-        ? genreIconForGame(g)
-        : '';
-    genreEl.innerHTML = `${icon}<span class="game-genre-label">${esc(g.genre)}</span>`;
-    genreEl.hidden = false;
-    sepEl.hidden = false;
-  } else {
-    genreEl.innerHTML = '';
-    genreEl.hidden = true;
-    sepEl.hidden = true;
+  const roleEl = document.getElementById('authorRole');
+  if (roleEl) {
+    const isSelf = Boolean(g.authorId && USER?.id && g.authorId === USER.id);
+    roleEl.textContent = isSelf ? 'Это вы' : 'Разработчик';
   }
 
   document.getElementById('authorName').textContent = g.authorName;
