@@ -14,7 +14,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <!-- ?v= сбрасывает кэш WebView Telegram после правок JS/CSS (меняй при каждом релизе фронта). -->
-<link rel="stylesheet" href="styles.css?v=20260469">
+<link rel="stylesheet" href="styles.css?v=20260470">
 </head>
 <body>
 
@@ -122,25 +122,7 @@
 <!-- ══ ПРОГРЕСС ══ -->
 <div id="dots"></div>
 
-<!-- Как листать: повторный вызов справки (до первого успешного свайпа — с пульсацией полоски) -->
-<button type="button" id="feed-coach-fab" class="feed-coach-fab sg-btn sg-btn--ghost sg-btn--fab" data-action="open-feed-help" aria-label="Как листать ленту" hidden>
-  <svg class="sg-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.5"/><path d="M12 16.5v-.75a3 3 0 013-3h.75a3 3 0 003-3 3 3 0 00-3-3 3 3 0 00-3 3M12 9h.01" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-</button>
-
-<!-- ══ Зона ленты: только здесь горизонтальный свайп (как карточки), не трогаем игру ══ -->
-<div id="swipe-strip" aria-hidden="true">
-  <button type="button" class="feed-nav-arrow feed-nav-arrow-prev" data-action="feed-nav-prev" aria-label="Предыдущая игра"><svg class="sg-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
-  <div class="swipe-strip-mid">
-    <div class="swipe-strip-track" id="swipe-strip-track" aria-hidden="true">
-      <span class="swipe-strip-track-fill" id="swipe-strip-track-fill"></span>
-      <span class="swipe-strip-handle swipe-strip-handle-h" id="swipe-strip-handle"></span>
-    </div>
-    <span class="swipe-strip-hint" id="swipe-hint-label">Влево — следующая · вправо — назад</span>
-  </div>
-  <button type="button" class="feed-nav-arrow feed-nav-arrow-next" data-action="feed-nav-next" aria-label="Следующая игра"><svg class="sg-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M18 15l-6-6-6 6" stroke="currentColor" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
-</div>
-
-<!-- Подсказка по ленте (первый вход или по кнопке «?») -->
+<!-- Подсказка по ленте (первый вход) -->
 <div id="feed-nav-tip-overlay" class="feed-nav-tip-overlay">
   <div class="feed-nav-tip-card">
     <button type="button" class="feed-nav-tip-close sg-btn sg-btn--ghost sg-btn--icon" data-action="close-feed-nav-tip" aria-label="Закрыть">
@@ -162,8 +144,8 @@
     <ul class="feed-nav-tip-list">
       <li><strong>Вверх</strong> — следующая игра</li>
       <li><strong>Вниз</strong> — предыдущая</li>
-      <li><strong>«Играть»</strong> — режим без рамок; <strong>«← Лента»</strong> — выход</li>
-      <li><strong>Внизу</strong> — стрелки и подсказка</li>
+      <li><strong>«Играть»</strong> — только игра, без лайков и табов; <strong>«← Лента»</strong> — выход</li>
+      <li>В режиме игры <strong>свайп ленты отключён</strong></li>
     </ul>
     <div class="feed-nav-tip-actions">
       <button type="button" class="sg-btn sg-btn--secondary feed-nav-tip-secondary" data-action="close-feed-nav-tip">Закрыть</button>
@@ -687,8 +669,8 @@
 <script src="js/api.js?v=20260469"></script>
 <script src="js/onboarding.js?v=20260466"></script>
 <script src="js/help-screens.js?v=20260466"></script>
-<script src="js/feed.js?v=20260469"></script>
-<script src="js/feed-nav-tip.js?v=20260469"></script>
+<script src="js/feed.js?v=20260470"></script>
+<script src="js/feed-nav-tip.js?v=20260470"></script>
 <script src="js/actions.js?v=20260469"></script>
 <script src="js/upload.js?v=20260466"></script>
 <script src="js/genres.js?v=20260466"></script>
@@ -697,7 +679,7 @@
 <script src="js/profile.js?v=20260466"></script>
 <script src="js/admin.js?v=20260466"></script>
 <script src="js/screens.js?v=20260469"></script>
-<script src="js/events.js?v=20260469"></script>
+<script src="js/events.js?v=20260470"></script>
 <script src="js/overlay-pull-close.js?v=20260467"></script>
 <script src="js/main.js?v=20260466"></script>
 </body>

@@ -41,11 +41,9 @@ html,body,#root,#feed,.slide{margin:0;padding:0;border:0;width:100%;height:100%;
   /* Чуть выше классического таббара — под центральную кнопку «загрузка» */
   --nav-h: 72px;
   --info-h: 76px;
-  /* Полоска свайпа между iframe и блоком автора — только здесь листаем ленту */
-  --swipe-strip-h: 52px;
   --feed-chrome-h: 44px;
   --game-top: var(--safe-top);
-  --game-bottom: calc(var(--safe-bottom) + var(--nav-h) + var(--info-h) + var(--swipe-strip-h));
+  --game-bottom: calc(var(--safe-bottom) + var(--nav-h) + var(--info-h));
 }
 
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;touch-action:none;}
@@ -65,8 +63,6 @@ html,body,#root,#feed,.slide{margin:0;padding:0;border:0;width:100%;height:100%;
 .sg-mini-stat{display:inline-flex;align-items:center;gap:5px;vertical-align:middle;}
 .sg-mini-stat .sg-icon{width:13px;height:13px;opacity:0.72;}
 .sg-mini-sep{margin:0 5px;opacity:0.35;}
-
-.feed-nav-arrow .sg-icon{width:18px;height:18px;}
 
 /* Иконки жанров: яркие оттенки на тёмном фоне */
 .sg-genre-ic{
@@ -314,45 +310,15 @@ html,body,#root,#feed,.slide{margin:0;padding:0;border:0;width:100%;height:100%;
 }
 .sg-btn--icon .sg-icon{flex-shrink:0;}
 
-.sg-btn--fab{
-  position:fixed;
-  right:max(12px, env(safe-area-inset-right, 0px));
-  bottom:calc(var(--safe-bottom) + var(--nav-h) + var(--info-h) + var(--swipe-strip-h) + 12px);
-  z-index:345;
-  width:44px;
-  height:44px;
-  padding:0;
-  border-radius:50%;
-  background:rgba(28,28,30,0.9);
-  border:1px solid var(--border);
-  color:rgba(255,255,255,0.9);
-  box-shadow:0 8px 28px rgba(0,0,0,0.45);
-  backdrop-filter:blur(16px);
-  -webkit-backdrop-filter:blur(16px);
-}
-.feed-coach-fab[hidden]{display:none !important;}
-
-#swipe-strip.swipe-strip--coach{
-  border-top-color:rgba(255,255,255,0.12);
-  box-shadow:0 -1px 0 rgba(255,255,255,0.06);
-}
 /*
-  Подсказка «ещё игры справа»: #feed + стрелка «следующая» двигаются вместе влево.
-  Класс на body: .feed-swipe-tease-burst (только вкладка ленты .is-tab-feed).
+  Подсказка «ещё игры»: лёгкий сдвиг #feed (без полоски/стрелок).
 */
-body.is-tab-feed.feed-swipe-tease-burst:not(:has(#feed-nav-tip-overlay.feed-nav-tip-visible)):not(:has(#swipe-strip.dragging)) #feed{
+body.is-tab-feed.feed-swipe-tease-burst:not(:has(#feed-nav-tip-overlay.feed-nav-tip-visible)):not(:has(#feed.feed-dragging)) #feed{
   animation:feedSwipeTeaseBurst 2.45s cubic-bezier(0.33,0,0.2,1) forwards;
   will-change:transform;
 }
-body.is-tab-feed.feed-swipe-tease-burst:not(:has(#feed-nav-tip-overlay.feed-nav-tip-visible)):not(:has(#swipe-strip.dragging)) .feed-nav-arrow-next{
-  animation:feedSwipeTeaseBurst 2.45s cubic-bezier(0.33,0,0.2,1) forwards;
-  will-change:transform;
-}
-#swipe-strip.dragging{will-change:auto;}
 body:has(#feed-nav-tip-overlay.feed-nav-tip-visible).feed-swipe-tease-burst #feed,
-body:has(#swipe-strip.dragging).feed-swipe-tease-burst #feed,
-body:has(#feed-nav-tip-overlay.feed-nav-tip-visible).feed-swipe-tease-burst .feed-nav-arrow-next,
-body:has(#swipe-strip.dragging).feed-swipe-tease-burst .feed-nav-arrow-next{
+body:has(#feed.feed-dragging).feed-swipe-tease-burst #feed{
   animation:none !important;
   transform:none !important;
   will-change:auto;
@@ -367,8 +333,7 @@ body:has(#swipe-strip.dragging).feed-swipe-tease-burst .feed-nav-arrow-next{
   64%{transform:translate3d(0,0,0);}
 }
 @media (prefers-reduced-motion: reduce){
-  body.feed-swipe-tease-burst #feed,
-  body.feed-swipe-tease-burst .feed-nav-arrow-next{
+  body.feed-swipe-tease-burst #feed{
     animation:none !important;
     transform:none !important;
     will-change:auto;
@@ -376,8 +341,8 @@ body:has(#swipe-strip.dragging).feed-swipe-tease-burst .feed-nav-arrow-next{
 }
 
 /*
-  Лента: НЕ ставить pan-x pan-y на #feed * — в Telegram WebView это ломает drag по canvas
-  внутри iframe (фигуры «залипают»). Горизонтальный свайп карточек только на #swipe-strip.
+  Лента: не ставить pan-x/y на потомков #feed пачкой — ломает canvas в iframe.
+  В режиме discovery iframe не получает касания (свайп по всему экрану как в TikTok).
 */
 #feed,
 .slide{
@@ -649,8 +614,6 @@ body.tg-only-wall #empty-state,
 body.tg-only-wall #side-actions,
 body.tg-only-wall #game-info,
 body.tg-only-wall #dots,
-body.tg-only-wall #swipe-strip,
-body.tg-only-wall #feed-coach-fab,
 body.tg-only-wall #feed-nav-tip-overlay,
 body.tg-only-wall #bottom-nav,
 body.tg-only-wall #app-tab-chrome,
@@ -740,7 +703,7 @@ body.feed-layout-vertical .slide-game{
   position:absolute;
   left:0;
   right:0;
-  bottom:calc(var(--safe-bottom) + var(--nav-h) + var(--info-h) + var(--swipe-strip-h) + 8px);
+  bottom:calc(var(--game-bottom) + 10px);
   z-index:30;
   pointer-events:none;
   display:flex;
@@ -813,11 +776,17 @@ body.feed-game-focus.feed-layout-vertical .slide.feed-slide--active .slide-game{
   height:calc(100vh - var(--safe-top) - var(--safe-bottom));
   max-height:none;
   z-index:120;
+  pointer-events:auto;
+}
+body.feed-game-focus #bottom-nav,
+body.feed-game-focus #side-actions,
+body.feed-game-focus #game-info,
+body.feed-game-focus #dots{
+  visibility:hidden !important;
+  pointer-events:none !important;
 }
 body.feed-game-focus .app-tab-chrome{
-  opacity:0;
-  transition:opacity 0.2s ease;
-  pointer-events:none;
+  display:none !important;
 }
 
 /* Шапка-якорь */
@@ -879,39 +848,14 @@ body.app-main-chrome .app-tab-chrome{display:flex;}
 
 body.feed-layout-vertical #dots{
   top:auto;
-  bottom:calc(var(--safe-bottom) + var(--nav-h) + var(--info-h) + var(--swipe-strip-h) + 18px);
+  bottom:calc(var(--game-bottom) + 10px);
   transform:none;
   right:max(8px, env(safe-area-inset-right, 0px));
 }
 
-body.feed-layout-vertical #swipe-strip{
-  flex-direction:row;
-  align-items:center;
-  justify-content:space-between;
-  gap:8px;
-  padding:0 12px;
-}
-body.feed-layout-vertical .swipe-strip-mid{
-  flex:1;
-  order:0;
-}
-body.feed-layout-vertical .feed-nav-arrow-prev{order:-1;}
-body.feed-layout-vertical .feed-nav-arrow-next{order:1;}
-body.feed-layout-vertical .swipe-strip-handle-h{
-  width:4px;
-  height:36px;
-  margin:-18px 0 0 -2px;
-  transform:translateY(var(--swipe-dy, 0px));
-}
-body.feed-layout-vertical #swipe-strip{
-  --swipe-dy:0px;
-}
-body.feed-layout-vertical .swipe-strip-track{
-  width:22px;
-  height:min(120px, 28vh);
-}
-body.feed-layout-vertical .swipe-strip-track-fill{
-  transform:translate(-50%,-50%) scaleY(calc(0.18 + var(--swipe-pull-abs,0) * 0.82));
+/* Свайп ленты по всему экрану: iframe не перехватывает тач до режима «Играть» */
+body.feed-layout-vertical:not(.feed-game-focus) .slide.feed-slide--active .slide-game{
+  pointer-events:none;
 }
 
 body.feed-layout-vertical #game-info{
@@ -1065,150 +1009,6 @@ body.feed-layout-vertical #game-info{
   color:#ffc9c9;
 }
 
-#swipe-strip{
-  position:fixed;
-  left:0;
-  right:0;
-  bottom:calc(var(--safe-bottom) + var(--nav-h) + var(--info-h));
-  height:var(--swipe-strip-h);
-  z-index:310;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  gap:10px;
-  padding:0 10px;
-  box-sizing:border-box;
-  pointer-events:auto;
-  touch-action:none;
-  background:linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.5) 100%);
-  border-top:1px solid rgba(255,255,255,0.06);
-  backdrop-filter:blur(16px) saturate(1.1);
-  -webkit-backdrop-filter:blur(16px) saturate(1.1);
-}
-
-#swipe-strip.dragging{z-index:315;}
-
-/* На первом слайде вертикальный жест вниз в полоске — отдать закрытию Telegram */
-#swipe-strip.telegram-swipe-pass{
-  pointer-events:none !important;
-}
-
-.swipe-strip-mid{
-  flex:1;
-  min-width:0;
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  justify-content:center;
-  gap:6px;
-  pointer-events:none;
-}
-
-/* Трек свайпа: ручка едет за пальцем — видно что зона живая */
-#swipe-strip{
-  --swipe-dx:0px;
-  --swipe-pull-abs:0;
-}
-.swipe-strip-track{
-  position:relative;
-  width:min(220px,78vw);
-  height:22px;
-  margin:0 auto;
-  border-radius:999px;
-  background:rgba(255,255,255,0.06);
-  box-shadow:inset 0 1px 0 rgba(255,255,255,0.07), 0 0 0 1px rgba(0,0,0,0.2);
-  overflow:hidden;
-}
-.swipe-strip-track-fill{
-  position:absolute;
-  left:50%;
-  top:50%;
-  width:100%;
-  height:100%;
-  transform-origin:center;
-  transform:translate(-50%,-50%) scaleX(calc(0.18 + var(--swipe-pull-abs,0) * 0.82));
-  border-radius:999px;
-  background:linear-gradient(
-    90deg,
-    rgba(var(--accent-rgb),0.35),
-    rgba(var(--like-on-rgb),0.28)
-  );
-  opacity:calc(0.25 + var(--swipe-pull-abs,0) * 0.55);
-  pointer-events:none;
-  transition:opacity 0.12s ease, transform 0.04s ease;
-}
-#swipe-strip.dragging .swipe-strip-track-fill{transition:none;}
-.swipe-strip-handle{
-  position:absolute;
-  left:50%;
-  top:50%;
-  width:40px;
-  height:4px;
-  margin:-2px 0 0 -20px;
-  border-radius:999px;
-  background:rgba(255,255,255,0.88);
-  box-shadow:0 0 0 1px rgba(0,0,0,0.35), 0 2px 10px rgba(0,0,0,0.35);
-  transform:translateX(var(--swipe-dx,0px));
-  pointer-events:none;
-  transition:transform 0.08s ease-out, background 0.15s ease, box-shadow 0.15s ease;
-}
-#swipe-strip.dragging .swipe-strip-handle{
-  transition:none;
-  background:rgba(255,255,255,0.95);
-  box-shadow:0 0 0 1px rgba(var(--accent-rgb),0.35), 0 3px 14px rgba(0,0,0,0.45);
-}
-.swipe-strip-handle-h{
-  width:40px;
-  height:4px;
-}
-#swipe-strip.dragging .swipe-strip-track{
-  background:rgba(255,255,255,0.09);
-  box-shadow:inset 0 1px 0 rgba(255,255,255,0.1), 0 0 0 1px rgba(var(--accent-rgb),0.22);
-}
-
-.swipe-strip-hint{
-  font-size:10px;
-  font-weight:500;
-  letter-spacing:0.04em;
-  text-transform:none;
-  color:rgba(255,255,255,0.38);
-  user-select:none;
-  pointer-events:none;
-  transition:opacity 0.35s ease;
-  text-align:center;
-  line-height:1.2;
-}
-
-.feed-nav-arrow{
-  flex-shrink:0;
-  width:38px;
-  height:38px;
-  border-radius:50%;
-  border:1px solid rgba(255,255,255,0.1);
-  background:rgba(28,28,30,0.82);
-  color:rgba(255,255,255,0.88);
-  font-size:16px;
-  font-weight:700;
-  line-height:1;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  cursor:pointer;
-  touch-action:manipulation;
-  -webkit-tap-highlight-color:transparent;
-  transition:transform 0.15s, background 0.2s, border-color 0.2s;
-}
-.feed-nav-arrow:active{
-  transform:scale(0.94);
-  background:rgba(255,255,255,0.08);
-  border-color:rgba(255,255,255,0.14);
-}
-.feed-nav-arrow:disabled{
-  opacity:0.35;
-  pointer-events:none;
-}
-
-
 .feed-nav-tip-overlay{
   position:fixed;
   inset:0;
@@ -1330,26 +1130,6 @@ body.feed-layout-vertical #game-info{
 }
 .feed-nav-tip-actions .sg-btn{width:100%;}
 .feed-nav-tip-secondary{font-size:14px !important;}
-
-body:has(#upload-screen.open) #swipe-strip,
-body:has(#profile-screen.open) #swipe-strip,
-body:has(#author-screen.open) #swipe-strip,
-body:has(#search-screen.open) #swipe-strip,
-body:has(#games-library-screen.open) #swipe-strip,
-body:has(#onboarding-screen.open) #swipe-strip{
-  display:none;
-}
-
-body:has(#upload-screen.open) #feed-coach-fab,
-body:has(#profile-screen.open) #feed-coach-fab,
-body:has(#author-screen.open) #feed-coach-fab,
-body:has(#search-screen.open) #feed-coach-fab,
-body:has(#games-library-screen.open) #feed-coach-fab,
-body:has(#onboarding-screen.open) #feed-coach-fab,
-body:has(#feed-nav-tip-overlay.feed-nav-tip-visible) #feed-coach-fab{
-  visibility:hidden !important;
-  pointer-events:none !important;
-}
 
 .placeholder-icon{
   font-size:56px;

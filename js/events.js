@@ -18,12 +18,9 @@ const CLICK_ACTIONS = {
   'share-game':     () => shareGame(),
   'report-game':    () => reportGame(),
 
-  'feed-nav-prev':  () => feedNavPrev(),
-  'feed-nav-next':  () => feedNavNext(),
   'feed-retry':     () => { if (typeof loadGames === 'function') loadGames(); },
   'dismiss-feed-nav-tip': () => ackFeedNavTip(),
   'ack-feed-nav-tip':      () => ackFeedNavTip(),
-  'open-feed-help':        () => openFeedHelp(),
   'close-feed-nav-tip':    () => closeFeedNavTip(),
   'search-clear-genre':    () => {
     window.selectedGenre = '';
