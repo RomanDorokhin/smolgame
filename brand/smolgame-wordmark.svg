@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="320" height="80" viewBox="0 0 320 80" fill="none" aria-labelledby="title desc" role="img">
+  <title id="title">SmolGame</title>
+  <desc id="desc">Логотип и название SmolGame — вектор для печати и соцсетей</desc>
+  <defs>
+    <style type="text/css"><![CDATA[
+      @import url("https://fonts.googleapis.com/css2?family=Syne:wght@800&amp;display=swap");
+    ]]></style>
+    <linearGradient id="sgMarkGrad" x1="10" y1="14" x2="38" y2="38" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#b4c7e0"/>
+      <stop offset="100%" stop-color="#7d90a8"/>
+    </linearGradient>
+    <linearGradient id="sgWordGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#b4c7e0"/>
+      <stop offset="100%" stop-color="#7d90a8"/>
+    </linearGradient>
+  </defs>
+  <g transform="translate(8, 14)">
+    <rect x="13" y="13" width="22" height="22" rx="8" fill="none" stroke="url(#sgMarkGrad)" stroke-width="2.25"/>
+    <circle cx="24" cy="24" r="4.5" fill="url(#sgMarkGrad)" opacity="0.95"/>
+  </g>
+  <text x="76" y="52" font-family="Syne, system-ui, sans-serif" font-weight="800" font-size="34" letter-spacing="-0.04em">
+    <tspan fill="#ffffff" fill-opacity="0.42">smol</tspan><tspan fill="url(#sgWordGrad)">game</tspan>
+  </text>
+</svg>

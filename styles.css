@@ -1468,6 +1468,15 @@ body:has(#feed-nav-tip-overlay.feed-nav-tip-visible) #feed-coach-fab{
   text-align:center;
   margin:14px 12px 0;
 }
+.profile-brand-download{
+  display:block;
+  width:100%;
+  max-width:320px;
+  margin:14px auto 0;
+  text-align:center;
+  text-decoration:none;
+  box-sizing:border-box;
+}
 
 .screen-header{
   display:flex;
