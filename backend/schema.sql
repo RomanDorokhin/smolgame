@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS users (
   display_name TEXT,                     -- публичное имя (иначе Telegram имя)
   bio         TEXT,                      -- короткое описание профиля
   avatar_override_url TEXT,              -- своё фото; иначе photo_url из Telegram
-  github_user_id TEXT,                   -- id пользователя GitHub (уникален)
+  github_user_id TEXT,                   -- id пользователя GitHub (не уникален: один GH может быть у нескольких TG после отдельного OAuth)
   github_login TEXT,                     -- логин @github
   github_access_token_enc TEXT,          -- OAuth token (AES-GCM), см. github-token-crypto.js
   date_of_birth TEXT,
@@ -24,8 +24,6 @@ CREATE TABLE IF NOT EXISTS users (
 );
 
 CREATE UNIQUE INDEX IF NOT EXISTS idx_users_site_handle ON users(site_handle);
-CREATE UNIQUE INDEX IF NOT EXISTS idx_users_github_user_id ON users(github_user_id) WHERE github_user_id IS NOT NULL;
-
 CREATE TABLE IF NOT EXISTS oauth_states (
   id          TEXT PRIMARY KEY,
   user_id     TEXT NOT NULL,
@@ -50,7 +48,7 @@ CREATE INDEX IF NOT EXISTS idx_oauth_states_expires ON oauth_states(expires_at);
 -- ALTER TABLE users ADD COLUMN avatar_override_url TEXT;
 -- ALTER TABLE users ADD COLUMN github_user_id TEXT;
 -- ALTER TABLE users ADD COLUMN github_login TEXT;
--- CREATE UNIQUE INDEX IF NOT EXISTS idx_users_github_user_id ON users(github_user_id) WHERE github_user_id IS NOT NULL;
+-- Уникальный индекс по github_user_id убран: один GitHub может быть у нескольких Telegram после отдельного OAuth. См. migrations/0006_github_user_id_drop_unique_index.sql
 
 CREATE TABLE IF NOT EXISTS games (
   id           TEXT PRIMARY KEY,          -- nanoid / uuid

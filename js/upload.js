@@ -5,7 +5,6 @@ async function refreshUploadCapabilities() {
       USER.isGithubConnected = Boolean(me.user.isGithubConnected);
       USER.githubUsername = me.user.githubUsername || null;
       USER.hasGithubPublishToken = Boolean(me.user.hasGithubPublishToken);
-      USER.isPremium = Boolean(me.user.isPremium);
     }
   } catch (e) {
     console.warn('refreshUploadCapabilities', e);
@@ -14,19 +13,17 @@ async function refreshUploadCapabilities() {
 }
 
 function updateGithubUploadUi() {
-  const premCard = document.getElementById('method-premium');
-  if (premCard) {
-    premCard.hidden = false;
-  }
   const hint = document.getElementById('github-connect-hint');
   if (hint) {
     if (!USER.isGithubConnected) {
-      hint.textContent = 'Привяжи GitHub — ниже появится поле для кода или файлов.';
+      hint.textContent =
+        'Привяжи GitHub — ниже появится поле для кода или файлов. Каждый вход с этого Telegram — отдельное подтверждение в GitHub (даже если тот же аккаунт GitHub).';
     } else if (!USER.hasGithubPublishToken) {
       hint.textContent =
         'Токен не сохранён: проверь миграцию D1 (github_access_token_enc) и снова нажми «Войти через GitHub».';
     } else {
-      hint.textContent = 'Готово — код или файлы, название, описание, затем «Отправить на GitHub».';
+      hint.textContent =
+        'Готово — код или файлы, название, описание, затем «Создать репозиторий на GitHub». Код уходит в GitHub, не на сервер SmolGame.';
     }
   }
   const btnLabel = document.getElementById('btn-github-primary-label');
@@ -51,26 +48,14 @@ function updateGithubUploadUi() {
 }
 
 async function selectMethod(m) {
-  if (m === 'github' || m === 'premium') {
+  if (m === 'github') {
     await refreshUploadCapabilities();
-  }
-  if (m === 'premium') {
-    window.selectedUploadMethod = 'premium';
-    document.getElementById('method-url')?.classList.remove('selected');
-    document.getElementById('method-github')?.classList.remove('selected');
-    document.getElementById('method-premium')?.classList.add('selected');
-    document.getElementById('form-url')?.classList.remove('visible');
-    document.getElementById('form-github')?.classList.remove('visible');
-    document.getElementById('form-premium')?.classList.add('visible');
-    return;
   }
   window.selectedUploadMethod = m;
   document.getElementById('method-url')?.classList.toggle('selected', m === 'url');
   document.getElementById('method-github')?.classList.toggle('selected', m === 'github');
-  document.getElementById('method-premium')?.classList.remove('selected');
   document.getElementById('form-url')?.classList.toggle('visible', m === 'url');
   document.getElementById('form-github')?.classList.toggle('visible', m === 'github');
-  document.getElementById('form-premium')?.classList.remove('visible');
 
   if (m === 'url' && typeof setUrlUploadStep === 'function') setUrlUploadStep(1);
 
@@ -290,7 +275,7 @@ async function githubUploadSubmit() {
     window._ghPublishedPlayUrl = out.pagesUrl || '';
     resetGithubInlineForm();
     if (typeof selectMethod === 'function') await selectMethod('github');
-    if (!USER.isPremium) beginGhCodeWizardAfterPublish(out);
+    beginGhCodeWizardAfterPublish(out);
   } catch (e) {
     const msg = e?.message || 'ошибка';
     if (resBox) {
@@ -502,64 +487,6 @@ async function resolveCoverImageUrl() {
   }
 }
 
-/** Обложка для мастера «вставить код» */
-async function resolveCodeWizardCover() {
-  const urlRaw = document.getElementById('codeWizardCoverUrl')?.value?.trim() || '';
-  if (urlRaw) {
-    const u = normalizeToHttpsUrl(urlRaw);
-    if (!u) {
-      showToast('⚠️ Некорректная ссылка на обложку');
-      return { error: true };
-    }
-    return { imageUrl: u };
-  }
-  const file = document.getElementById('codeWizardCoverFile')?.files?.[0];
-  if (!file) return { imageUrl: null };
-  try {
-    const formData = new FormData();
-    formData.append('image', file);
-    const uploaded = await API.uploadImage(formData);
-    return { imageUrl: uploaded?.imageUrl || null };
-  } catch (e) {
-    if (isStorageUnavailableError(e)) {
-      showToast('⚠️ Загрузка файла недоступна — укажи URL обложки или без обложки');
-      return { imageUrl: null };
-    }
-    throw e;
-  }
-}
-
-function setCodeWizardStep(n) {
-  for (let i = 1; i <= 5; i++) {
-    const el = document.getElementById('code-wizard-step' + i);
-    if (el) el.hidden = i !== n;
-  }
-  window._codeWizardStep = n;
-}
-
-function resetCodeWizard() {
-  const ta = document.getElementById('codeInputWizard');
-  if (ta) ta.value = '';
-  const t = document.getElementById('codeWizardTitle');
-  if (t) t.value = '';
-  const d = document.getElementById('codeWizardDesc');
-  if (d) d.value = '';
-  const cu = document.getElementById('codeWizardCoverUrl');
-  if (cu) cu.value = '';
-  const cf = document.getElementById('codeWizardCoverFile');
-  if (cf) cf.value = '';
-  const prev = document.getElementById('codeWizardCoverPreview');
-  if (prev) {
-    prev.innerHTML = 'Обложка не выбрана';
-    prev.classList.remove('has-image');
-  }
-  window.selectedGenres.codeOnly = '';
-  if (typeof renderGenrePills === 'function') {
-    renderGenrePills('genrePillsCodeOnly', 'codeOnly');
-  }
-  setCodeWizardStep(1);
-}
-
 function validateWizardHtml(html) {
   const s = String(html || '').trim();
   if (!s) {
@@ -578,147 +505,7 @@ function validateWizardHtml(html) {
   return true;
 }
 
-function codeWizardNext() {
-  const step = window._codeWizardStep || 1;
-  if (step === 1) {
-    const html = document.getElementById('codeInputWizard')?.value || '';
-    if (!validateWizardHtml(html)) return;
-    setCodeWizardStep(2);
-    return;
-  }
-  if (step === 2) {
-    const title = document.getElementById('codeWizardTitle')?.value?.trim() || '';
-    if (!title) {
-      showToast('⚠️ Укажи название игры');
-      return;
-    }
-    setCodeWizardStep(3);
-    return;
-  }
-  if (step === 3) {
-    setCodeWizardStep(4);
-    if (typeof renderGenrePills === 'function') {
-      renderGenrePills('genrePillsCodeOnly', 'codeOnly');
-    }
-    return;
-  }
-  if (step === 4) {
-    setCodeWizardStep(5);
-    const html = document.getElementById('codeInputWizard')?.value?.trim() || '';
-    const title = document.getElementById('codeWizardTitle')?.value?.trim() || '';
-    const desc = document.getElementById('codeWizardDesc')?.value?.trim() || '';
-    const genre = window.selectedGenres.codeOnly || 'Прочее';
-    const gIcon =
-      typeof genreIconSvg === 'function' && typeof genreIconKeyFromLabel === 'function'
-        ? genreIconSvg(genreIconKeyFromLabel(genre), 'sg-genre-ic--inline')
-        : '';
-    const coverUrl = document.getElementById('codeWizardCoverUrl')?.value?.trim() || '';
-    const hasFile = Boolean(document.getElementById('codeWizardCoverFile')?.files?.[0]);
-    const coverLine = coverUrl
-      ? esc(coverUrl)
-      : hasFile
-        ? 'файл (загрузится при отправке)'
-        : 'нет';
-    const box = document.getElementById('codeWizardReview');
-    if (box) {
-      box.innerHTML = `
-        <p><strong>Название:</strong> ${esc(title)}</p>
-        <p><strong>Описание:</strong> ${esc(desc || '—')}</p>
-        <p class="upload-genre-line"><strong>Жанр:</strong>${gIcon}<span>${esc(genre)}</span></p>
-        <p><strong>Обложка:</strong> ${coverLine}</p>
-        <p><strong>Код:</strong> ${esc(String(html.length))} символов</p>
-      `;
-    }
-    return;
-  }
-}
-
-function codeWizardBack() {
-  const step = window._codeWizardStep || 1;
-  if (step <= 1) return;
-  setCodeWizardStep(step - 1);
-}
-
-function codeWizardCancel() {
-  resetCodeWizard();
-  if (typeof selectMethod === 'function') selectMethod('url');
-  showToast('Черновик сброшен');
-}
-
-async function codeWizardPublish() {
-  await refreshUploadCapabilities();
-  if (!USER.isPremium) {
-    showToast('⚠️ Хостинг кода на SmolGame только для премиум. Используй вкладку «Ссылка».');
-    resetCodeWizard();
-    selectMethod('url');
-    return;
-  }
-  if (typeof hasTelegramInitData === 'function' && !hasTelegramInitData()) {
-    showToast('⚠️ Открой мини-апп из Telegram-бота');
-    return;
-  }
-  const html = document.getElementById('codeInputWizard')?.value?.trim() || '';
-  if (!validateWizardHtml(html)) {
-    setCodeWizardStep(1);
-    return;
-  }
-  const title = document.getElementById('codeWizardTitle')?.value?.trim() || '';
-  if (!title) {
-    showToast('⚠️ Укажи название');
-    setCodeWizardStep(2);
-    return;
-  }
-  const desc = document.getElementById('codeWizardDesc')?.value?.trim() || '';
-  const genre = window.selectedGenres.codeOnly || 'Прочее';
-  const genreEmoji = typeof genreKeyForApiLabel === 'function' ? genreKeyForApiLabel(genre) : 'other';
-
-  showToast('🔍 Отправляем…');
-  try {
-    const { imageUrl, error } = await resolveCodeWizardCover();
-    if (error) return;
-
-    await API.submitHtmlGame({
-      html,
-      title,
-      description: desc,
-      genre,
-      genreEmoji,
-      imageUrl: imageUrl || null,
-    });
-    showToast('✅ Отправлено на модерацию!');
-    resetCodeWizard();
-    if (typeof closeUpload === 'function') closeUpload();
-  } catch (e) {
-    const m = e?.message || 'не получилось';
-    console.error('submitHtmlGame failed', e);
-    showToast('⚠️ ' + m);
-  }
-}
-
-function previewCodeWizardCover(input) {
-  const preview = document.getElementById('codeWizardCoverPreview');
-  if (!preview || !input?.files?.[0]) {
-    if (preview && !input?.files?.[0]) {
-      preview.innerHTML = '<span>Обложка не выбрана</span>';
-      preview.classList.remove('has-image');
-    }
-    return;
-  }
-  const file = input.files[0];
-  const reader = new FileReader();
-  reader.onload = () => {
-    preview.innerHTML = `<img src="${esc(reader.result)}" alt="">`;
-    preview.classList.add('has-image');
-  };
-  reader.readAsDataURL(file);
-}
-
 async function submitGame(method) {
-  if (method === 'premium') {
-    showToast('Премиум пока в разработке — используй «Ссылка» или «GitHub»');
-    return;
-  }
-
   const metaHidden = document.getElementById('url-step-meta')?.hasAttribute('hidden');
   if (metaHidden !== false) {
     showToast('⚠️ Сначала нажми «Дальше» и заполни название и жанр');
@@ -787,11 +574,6 @@ window.refreshUploadCapabilities = refreshUploadCapabilities;
 window.authGithub = authGithub;
 window.submitGame = submitGame;
 window.previewCover = previewCover;
-window.resetCodeWizard = resetCodeWizard;
-window.codeWizardNext = codeWizardNext;
-window.codeWizardBack = codeWizardBack;
-window.codeWizardCancel = codeWizardCancel;
-window.codeWizardPublish = codeWizardPublish;
 window.githubUnlink = githubUnlink;
 window.githubUploadSetMode = githubUploadSetMode;
 window.githubUploadSubmit = githubUploadSubmit;
@@ -808,7 +590,6 @@ window.refreshGhPublishReviewBox = refreshGhPublishReviewBox;
 
 document.addEventListener('change', (ev) => {
   if (ev.target?.id === 'gameImageInput') previewCover(ev.target);
-  if (ev.target?.id === 'codeWizardCoverFile') previewCodeWizardCover(ev.target);
   if (ev.target?.id === 'ghCodeWizardCoverFile') previewGhCodeWizardCover(ev.target);
   if (ev.target?.id === 'githubMultiFiles') onGithubMultiFilesChange(ev.target);
 });

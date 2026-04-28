@@ -77,11 +77,11 @@ https://smolgame.dorokhin731.workers.dev
 
 ### Обложки игр (файл)
 
-Загрузка файла идёт в **R2** (`IMAGES` binding) и публичный URL (`PUBLIC_IMAGE_BASE_URL` или `R2_PUBLIC_URL`). Если R2 не подключён, режим **«Вставить код»** вернёт 501 — настрой bucket и binding в `wrangler.toml` (см. комментарий в конце файла). В форме **«Ссылка»** без R2 можно указать **HTTPS-ссылку на обложку** или отправить игру **без обложки**; сама игра тогда только по внешнему URL.
+Загрузка файла обложки идёт в **R2** (`IMAGES` binding) и публичный URL (`PUBLIC_IMAGE_BASE_URL` или `R2_PUBLIC_URL`). Если R2 не подключён, в форме **«Ссылка»** и на GitHub-ветке можно указать **HTTPS-ссылку на обложку** или отправить игру **без обложки**. Сам HTML игры на Worker **не хранится**: код публикуешь через **GitHub** (репозиторий + Pages) или даёшь готовую ссылку. Эндпоинт `POST /api/submit-html-game` отключён (410).
 
-**Вставить код (хостинг на SmolGame):** только для пользователей из **`PREMIUM_TG_IDS`** (Telegram numeric id через запятую в `wrangler.toml`). HTML в R2, URL игры `https://<worker>/g/<id>/`.
+**Загрузка на GitHub:** при каждом «Войти через GitHub» для текущего Telegram id сначала сбрасывается привязка в D1, затем после OAuth снова записываются логин и токен — один и тот же аккаунт GitHub можно подключать с **разных** Telegram, каждый раз с отдельным подтверждением в GitHub. Один GitHub может быть привязан к нескольким TG (на проде один раз выполни `migrations/0006_github_user_id_drop_unique_index.sql`, если раньше создавали уникальный индекс по `github_user_id`).
 
-**Загрузка на GitHub (все с привязанным GitHub):** после OAuth Worker сохраняет **зашифрованный** access token в D1 (`github_access_token_enc`, ключ — `GITHUB_CLIENT_SECRET`). Эндпоинт `POST /api/github/publish-game` создаёт публичный репозиторий, заливает файлы, включает GitHub Pages и возвращает URL `https://<login>.github.io/<repo>/`. Нужна миграция:
+После OAuth Worker сохраняет **зашифрованный** access token в D1 (`github_access_token_enc`, ключ — `GITHUB_CLIENT_SECRET`). Эндпоинт `POST /api/github/publish-game` создаёт публичный репозиторий, заливает файлы, включает GitHub Pages и возвращает URL `https://<login>.github.io/<repo>/`. Нужна миграция:
 
 ```bash
 cd backend

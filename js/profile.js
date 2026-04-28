@@ -69,7 +69,6 @@ async function renderProfile() {
       USER.isGithubConnected = Boolean(me.user.isGithubConnected);
       USER.githubUsername = me.user.githubUsername || null;
       USER.hasGithubPublishToken = Boolean(me.user.hasGithubPublishToken);
-      USER.isPremium = Boolean(me.user.isPremium);
       USER.displayName = me.user.displayName != null ? me.user.displayName : '';
       USER.bio = me.user.bio != null ? me.user.bio : '';
       document.getElementById('profileName').textContent = USER.name;

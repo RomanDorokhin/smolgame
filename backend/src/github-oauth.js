@@ -84,6 +84,27 @@ function countRunMeta(r) {
   return 0;
 }
 
+async function clearGithubBindingForUser(db, telegramUserId) {
+  try {
+    await db
+      .prepare(
+        `UPDATE users SET github_user_id = NULL, github_login = NULL, github_access_token_enc = NULL WHERE id = ?`
+      )
+      .bind(telegramUserId)
+      .run();
+  } catch (e) {
+    if (!isMissingColumnError(e)) throw e;
+    try {
+      await db
+        .prepare(`UPDATE users SET github_user_id = NULL, github_login = NULL WHERE id = ?`)
+        .bind(telegramUserId)
+        .run();
+    } catch (e2) {
+      if (!isMissingColumnError(e2)) throw e2;
+    }
+  }
+}
+
 /**
  * GET /api/auth/github/start — JSON { url } для открытия в браузере (избегаем fetch-follow на GitHub).
  */
@@ -113,6 +134,9 @@ export async function githubOAuthStart(req, env) {
 
   await upsertUser(env.DB, user);
 
+  // Каждый запуск OAuth — заново: сбрасываем привязку для этого Telegram id (даже если тот же GitHub потом выберешь).
+  await clearGithubBindingForUser(env.DB, user.id);
+
   const cs = githubClientSecret(env);
   if (!cs) {
     return error(
@@ -129,7 +153,6 @@ export async function githubOAuthStart(req, env) {
   u.searchParams.set('client_id', clientId);
   u.searchParams.set('redirect_uri', redirectUri);
   u.searchParams.set('state', state);
-  /* read:user + repo — для будущего «залить в репозиторий пользователя»; сейчас callback сохраняет только профиль */
   u.searchParams.set('scope', 'read:user repo');
 
   return json({
@@ -226,14 +249,6 @@ export async function githubOAuthCallback(req, env) {
 
   const ghId = String(gh.id);
   const ghLogin = String(gh.login || '').slice(0, 39) || null;
-
-  const other = await env.DB.prepare(
-    `SELECT id FROM users WHERE github_user_id = ? AND id <> ?`
-  ).bind(ghId, tgUid).first();
-
-  if (other) {
-    return back(`?github=error&message=${encodeURIComponent('Этот GitHub уже привязан к другому аккаунту')}`);
-  }
 
   const enc = await encryptGithubToken(accessToken, githubClientSecret(env));
   if (!enc) {

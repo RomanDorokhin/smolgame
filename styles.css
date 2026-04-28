@@ -1631,38 +1631,6 @@ body.feed-layout-vertical #game-info{
   border-top:1px solid var(--border);
   margin-top:8px;
 }
-.upload-premium-stub{
-  text-align:center;
-  padding:28px 20px 32px;
-  border-radius:20px;
-  border:1px solid var(--border);
-  background:linear-gradient(165deg, rgba(32,34,42,0.95) 0%, rgba(18,19,24,0.98) 100%);
-  margin-bottom:8px;
-}
-.upload-premium-stub-icon{
-  font-size:28px;
-  line-height:1;
-  margin-bottom:12px;
-  opacity:0.55;
-  color:rgba(240,200,106,0.85);
-}
-.upload-premium-stub-title{
-  font-family:'Syne',sans-serif;
-  font-size:20px;
-  font-weight:800;
-  margin:0 0 10px;
-  color:#fff;
-}
-.upload-premium-stub-text{
-  margin:0;
-  font-size:14px;
-  line-height:1.55;
-  color:var(--muted);
-  max-width:320px;
-  margin-left:auto;
-  margin-right:auto;
-}
-
 .upload-methods{
   display:grid;
   grid-template-columns:1fr 1fr;
@@ -1683,7 +1651,7 @@ body.feed-layout-vertical #game-info{
   border-color:rgba(var(--accent-rgb),0.45);
   background:var(--accent-soft);
 }
-/* Вкладки способа: оттенки как у жанров (ссылка / GitHub / премиум) */
+/* Вкладки способа: оттенки как у жанров (ссылка / GitHub) */
 .method-card--url:not(.selected) .m-icon--svg{color:rgba(140,213,255,0.62);}
 .method-card--url.selected{
   border-color:rgba(140,213,255,0.48);
@@ -1699,14 +1667,6 @@ body.feed-layout-vertical #game-info{
   box-shadow:0 0 0 1px rgba(201,166,255,0.08) inset;
 }
 .method-card--github.selected .m-icon--svg{color:#c9a6ff;}
-
-.method-card--premium:not(.selected) .m-icon--svg{color:rgba(240,200,106,0.5);}
-.method-card--premium.selected{
-  border-color:rgba(240,200,106,0.5);
-  background:linear-gradient(165deg,rgba(240,200,106,0.1) 0%,rgba(19,20,26,0.96) 55%);
-  box-shadow:0 0 0 1px rgba(240,200,106,0.08) inset;
-}
-.method-card--premium.selected .m-icon--svg{color:#f0c86a;}
 
 .method-card .m-icon{font-size:32px;margin-bottom:8px;}
 .method-card .m-icon--svg{width:34px;height:34px;margin:0 auto 10px;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,0.92);}
@@ -1783,12 +1743,10 @@ textarea.field-input{
 .code-area:focus{border-color:rgba(var(--accent-rgb),0.45);}
 .code-area::placeholder{color:rgba(255,255,255,0.2);}
 
-#form-github .code-area,
-#form-premium .code-area{min-height:220px;height:min(42vh,320px);}
-.upload-methods--triple{
-  display:grid;
-  grid-template-columns:repeat(auto-fill,minmax(108px,1fr));
-  gap:10px;
+#form-github .code-area{min-height:220px;height:min(42vh,320px);}
+.upload-methods--double{
+  grid-template-columns:1fr 1fr;
+  gap:12px;
 }
 #btn-code-tab-advance{margin-top:14px;width:100%;}
 .github-reauth-btn{margin-top:8px;}

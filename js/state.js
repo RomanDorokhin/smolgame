@@ -12,7 +12,6 @@ window.USER = {
   isGithubConnected: false,
   githubUsername: null,
   hasGithubPublishToken: false,
-  isPremium: false,
 };
 
 // Ключи локального хранилища — привязаны к Telegram id.
@@ -39,4 +38,4 @@ window.slides = [];
 
 window.selectedGenre = '';
 window.selectedUploadMethod = 'url';
-window.selectedGenres = { code: '', url: '', codeOnly: '', ghCode: '' };
+window.selectedGenres = { code: '', url: '', ghCode: '' };

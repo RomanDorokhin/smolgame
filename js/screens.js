@@ -220,7 +220,6 @@ function switchTab(tab) {
     upload.scrollTop = 0;
     if (typeof resetGhCodeWizard === 'function') resetGhCodeWizard();
     if (typeof renderGenrePills === 'function') {
-      renderGenrePills('genrePillsCodeOnly', 'codeOnly');
       renderGenrePills('genrePillsGhCode', 'ghCode');
       renderGenrePills('genrePills2', 'url');
     }

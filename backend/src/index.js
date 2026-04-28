@@ -60,7 +60,7 @@ async function route(req, env, pathname) {
   if (pathname === '/api/me/registered' && m === 'GET') return checkRegistered(req, env);
   if (pathname === '/api/register' && m === 'POST') return register(req, env);
   if (pathname === '/api/submit' && m === 'POST') return submitGame(req, env);
-  if (pathname === '/api/submit-html-game' && m === 'POST') return submitHtmlGame(req, env);
+  if (pathname === '/api/submit-html-game' && m === 'POST') return submitHtmlGame();
   if (pathname === '/api/github/publish-game' && m === 'POST') return publishGameToGithub(req, env);
   if (pathname === '/api/upload-image' && m === 'POST') return uploadImage(req, env);
   if (pathname === '/api/auth/github/start' && m === 'GET') return githubOAuthStart(req, env);
