@@ -35,6 +35,8 @@ TELEGRAM_BOT_USERNAME = "smolgame_bot"
 # GitHub OAuth App → Client ID (публичный). ОБЯЗАТЕЛЬНО держи здесь: иначе `wrangler deploy`
 # сотрёт переменные, заданные только в Dashboard, и вход через GitHub сломается.
 GITHUB_CLIENT_ID = "Ov23linmpKR0Bab5Fogn"
+# Публичный URL бакета R2 (R2 → smolgame-images → Settings → Public access → r2.dev). Без слэша в конце.
+PUBLIC_IMAGE_BASE_URL = "https://pub-9c943142cdab48678d0f35f859561262.r2.dev"
 # Если Worker на своём домене, укажи полный origin без слэша (иначе берётся из запроса).
 # GITHUB_OAUTH_REDIRECT_BASE = "https://smolgame.dorokhin731.workers.dev"
 
