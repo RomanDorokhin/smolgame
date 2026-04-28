@@ -464,6 +464,17 @@ body.tg-only-wall #app-boot-splash{
   position:relative;
   z-index:1;
 }
+#app-boot-splash > .app-boot-genre-drift{
+  position:absolute;
+  inset:0;
+  z-index:0;
+  overflow:hidden;
+  pointer-events:none;
+}
+#app-boot-splash > .sg-brand--splash,
+#app-boot-splash > .app-boot-sub{
+  z-index:2;
+}
 #app-boot-splash:not([hidden]){display:flex;}
 #app-boot-splash[hidden]{display:none !important;}
 #app-boot-splash.visible{
@@ -523,6 +534,10 @@ body.tg-only-wall #app-boot-splash{
 .sg-brand-mark--loader{
   animation:sgLogoSpin 1.1s linear infinite;
 }
+/* Экран входа: марка без вращения — спокойнее первый кадр */
+#app-boot-splash .sg-brand-mark{
+  animation:none;
+}
 .sg-brand-mark--loader{
   width:40px;
   height:40px;
@@ -533,9 +548,6 @@ body.tg-only-wall #app-boot-splash{
 }
 @keyframes sgLogoSpin{
   to{transform:rotate(360deg);}
-}
-#app-boot-splash .sg-brand-mark--spin{
-  animation-duration:1.05s;
 }
 #feed-transition .sg-brand-mark--spin{
   animation-duration:0.85s;
@@ -569,6 +581,54 @@ body.tg-only-wall #app-boot-splash{
   font-weight:600;
   color:var(--muted);
   letter-spacing:0.04em;
+}
+
+/* Крупные цветные иконки жанров: снизу справа → вверх влево, как «летающий» фон */
+.sg-genre-ic--boot-drift{
+  width:76px;
+  height:76px;
+  display:block;
+}
+.app-boot-genre-drift__item{
+  position:absolute;
+  right:max(-4%, env(safe-area-inset-right, 0px));
+  bottom:max(-6%, env(safe-area-inset-bottom, 0px));
+  width:76px;
+  height:76px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  opacity:0;
+  filter:drop-shadow(0 4px 20px rgba(0,0,0,0.35));
+  animation:bootGenreDriftFly 16s linear infinite;
+  will-change:transform, opacity;
+}
+.app-boot-genre-drift__item--1{animation-duration:17s;animation-delay:-1s;}
+.app-boot-genre-drift__item--2{animation-duration:19s;animation-delay:-4s;}
+.app-boot-genre-drift__item--3{animation-duration:15s;animation-delay:-2.5s;}
+.app-boot-genre-drift__item--4{animation-duration:18s;animation-delay:-7s;}
+.app-boot-genre-drift__item--5{animation-duration:20s;animation-delay:-5s;}
+.app-boot-genre-drift__item--6{animation-duration:16s;animation-delay:-9s;}
+.app-boot-genre-drift__item--7{animation-duration:21s;animation-delay:-3s;}
+@keyframes bootGenreDriftFly{
+  0%{
+    transform:translate3d(0,0,0) rotate(-14deg) scale(0.92);
+    opacity:0;
+  }
+  6%{opacity:0.22;}
+  45%{opacity:0.32;}
+  88%{opacity:0.12;}
+  100%{
+    transform:translate3d(calc(-115vw - 40px),calc(-115vh - 40px),0) rotate(-14deg) scale(1.02);
+    opacity:0;
+  }
+}
+@media (prefers-reduced-motion: reduce){
+  .app-boot-genre-drift__item{
+    animation:none !important;
+    opacity:0;
+    display:none;
+  }
 }
 
 body.tg-only-wall #feed,
