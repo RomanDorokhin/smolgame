@@ -518,6 +518,10 @@ function feedPointerMove(e, dragHost) {
     touchMoved = true;
     e.preventDefault();
   }
+
+  if (dragHost === strip && Math.abs(dx) > 8 && Math.abs(dx) >= Math.abs(dy) * 0.75) {
+    if (typeof markFeedSwipeLearned === 'function') markFeedSwipeLearned();
+  }
 }
 
 function feedPointerUp(e, dragHost) {
