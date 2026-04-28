@@ -94,6 +94,8 @@ npm run db:migrate:remote:github-token
 
 **Отвязать GitHub:** в мини-аппе кнопка вызывает `POST /api/auth/github/unlink` (очищает `github_user_id`, `github_login`, `github_access_token_enc`).
 
+**Старая D1 без `display_name`:** если профиль автора падает с `no such column: display_name`, выполни `npm run db:migrate:remote:display-name` в `backend/` (файл `migrations/0007_users_display_name.sql`). Worker сам перебирает варианты SQL, но колонка нужна для редактирования имени в профиле.
+
 Если в D1 в таблице `users` **нет** колонок `github_user_id` и `github_login` (старая база), OAuth не сможет сохранить привязку — выполни:
 
 ```bash

@@ -1679,6 +1679,7 @@ body.feed-layout-vertical #game-info{
   cursor:pointer;
   text-align:center;
   transition:border-color 0.2s,background 0.2s;
+  touch-action:manipulation;
 }
 .method-card.selected{
   border-color:rgba(var(--accent-rgb),0.45);

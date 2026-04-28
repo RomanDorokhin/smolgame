@@ -585,28 +585,18 @@ export async function getLikedGames(req, env) {
   const user = await authenticate(req, env);
   if (!user) return error('unauthorized', 401);
 
-  let likedSet = new Set();
-  let followedSet = new Set();
-  let bookmarkedSet = new Set();
-  const likes = await env.DB
-    .prepare(`SELECT game_id FROM likes WHERE user_id = ?`)
-    .bind(user.id)
-    .all();
-  likedSet = new Set(likes.results.map(r => r.game_id));
+  const [likes, follows, bookmarks, gamesRes] = await Promise.all([
+    env.DB.prepare(`SELECT game_id FROM likes WHERE user_id = ?`).bind(user.id).all(),
+    env.DB.prepare(`SELECT author_id FROM follows WHERE user_id = ?`).bind(user.id).all(),
+    env.DB.prepare(`SELECT game_id FROM bookmarks WHERE user_id = ?`).bind(user.id).all(),
+    firstSuccessfulAll(env.DB, LIKED_GAMES_SQL_VARIANTS, [user.id]),
+  ]);
 
-  const follows = await env.DB
-    .prepare(`SELECT author_id FROM follows WHERE user_id = ?`)
-    .bind(user.id)
-    .all();
-  followedSet = new Set(follows.results.map(r => r.author_id));
+  const likedSet = new Set((likes.results || []).map(r => r.game_id));
+  const followedSet = new Set((follows.results || []).map(r => r.author_id));
+  const bookmarkedSet = new Set((bookmarks.results || []).map(r => r.game_id));
 
-  const bookmarks = await env.DB
-    .prepare(`SELECT game_id FROM bookmarks WHERE user_id = ?`)
-    .bind(user.id)
-    .all();
-  bookmarkedSet = new Set(bookmarks.results.map(r => r.game_id));
-
-  const { results } = await firstSuccessfulAll(env.DB, LIKED_GAMES_SQL_VARIANTS, [user.id]);
+  const { results } = gamesRes;
   const games = (results || []).map(g => mapFeedGameRow(g, likedSet, followedSet, bookmarkedSet));
   return json({ games });
 }
@@ -660,27 +650,18 @@ export async function getPlayedGames(req, env) {
   const user = await authenticate(req, env);
   if (!user) return error('unauthorized', 401);
 
-  let likedSet = new Set();
-  let followedSet = new Set();
-  let bookmarkedSet = new Set();
-  const likes = await env.DB
-    .prepare(`SELECT game_id FROM likes WHERE user_id = ?`)
-    .bind(user.id)
-    .all();
-  likedSet = new Set(likes.results.map(r => r.game_id));
-  const follows = await env.DB
-    .prepare(`SELECT author_id FROM follows WHERE user_id = ?`)
-    .bind(user.id)
-    .all();
-  followedSet = new Set(follows.results.map(r => r.author_id));
-  const bookmarks = await env.DB
-    .prepare(`SELECT game_id FROM bookmarks WHERE user_id = ?`)
-    .bind(user.id)
-    .all();
-  bookmarkedSet = new Set(bookmarks.results.map(r => r.game_id));
-
   try {
-    const { results } = await firstSuccessfulAll(env.DB, PLAYED_GAMES_SQL_VARIANTS, [user.id]);
+    const [likes, follows, bookmarks, gamesRes] = await Promise.all([
+      env.DB.prepare(`SELECT game_id FROM likes WHERE user_id = ?`).bind(user.id).all(),
+      env.DB.prepare(`SELECT author_id FROM follows WHERE user_id = ?`).bind(user.id).all(),
+      env.DB.prepare(`SELECT game_id FROM bookmarks WHERE user_id = ?`).bind(user.id).all(),
+      firstSuccessfulAll(env.DB, PLAYED_GAMES_SQL_VARIANTS, [user.id]),
+    ]);
+
+    const likedSet = new Set((likes.results || []).map(r => r.game_id));
+    const followedSet = new Set((follows.results || []).map(r => r.author_id));
+    const bookmarkedSet = new Set((bookmarks.results || []).map(r => r.game_id));
+    const { results } = gamesRes;
     const games = (results || []).map(g => mapFeedGameRow(g, likedSet, followedSet, bookmarkedSet));
     return json({ games });
   } catch (e) {
@@ -986,31 +967,53 @@ export async function toggleBookmark(req, env, gameId, method) {
   return json({ ok: true, bookmarked: true });
 }
 
+const GET_USER_PROFILE_SQL_VARIANTS = [
+  `SELECT id, site_handle AS siteHandle, first_name AS firstName,
+          last_name AS lastName, photo_url AS photoUrl,
+          display_name AS displayName, bio AS bio,
+          COALESCE(NULLIF(TRIM(avatar_override_url), ''), photo_url) AS avatarUrl
+     FROM users WHERE id = ?`,
+  `SELECT id, site_handle AS siteHandle, first_name AS firstName,
+          last_name AS lastName, photo_url AS photoUrl,
+          CAST(NULL AS TEXT) AS displayName, bio AS bio,
+          COALESCE(NULLIF(TRIM(avatar_override_url), ''), photo_url) AS avatarUrl
+     FROM users WHERE id = ?`,
+  `SELECT id, site_handle AS siteHandle, first_name AS firstName,
+          last_name AS lastName, photo_url AS photoUrl,
+          CAST(NULL AS TEXT) AS displayName, CAST(NULL AS TEXT) AS bio,
+          photo_url AS avatarUrl
+     FROM users WHERE id = ?`,
+  `SELECT id, COALESCE(NULLIF(TRIM(username), ''), id) AS siteHandle, first_name AS firstName,
+          last_name AS lastName, photo_url AS photoUrl,
+          CAST(NULL AS TEXT) AS displayName, CAST(NULL AS TEXT) AS bio,
+          photo_url AS avatarUrl
+     FROM users WHERE id = ?`,
+];
+
 export async function getUserProfile(req, env, userId) {
   const viewer = await authenticate(req, env);
-  const user = await env.DB.prepare(
-    `SELECT id, site_handle AS siteHandle, first_name AS firstName,
-            last_name AS lastName, photo_url AS photoUrl,
-            display_name AS displayName, bio AS bio,
-            COALESCE(NULLIF(TRIM(avatar_override_url), ''), photo_url) AS avatarUrl
-       FROM users WHERE id = ?`
-  ).bind(userId).first();
+  const statsSql = env.DB
+    .prepare(
+      `SELECT
+         (SELECT COUNT(*) FROM games   WHERE author_id = ?1 AND status='published') AS games,
+         (SELECT COALESCE(SUM(likes),0) FROM games WHERE author_id = ?1) AS likes,
+         (SELECT COUNT(*) FROM follows WHERE author_id = ?1) AS followers`
+    )
+    .bind(userId);
+
+  const [user, stats, followRow] = await Promise.all([
+    firstSuccessfulFirst(env.DB, GET_USER_PROFILE_SQL_VARIANTS, [userId]),
+    statsSql.first(),
+    viewer
+      ? env.DB
+          .prepare(`SELECT 1 AS ok FROM follows WHERE user_id = ? AND author_id = ?`)
+          .bind(viewer.id, userId)
+          .first()
+      : Promise.resolve(null),
+  ]);
+
   if (!user) return error('not found', 404);
-
-  const stats = await env.DB.prepare(
-    `SELECT
-       (SELECT COUNT(*) FROM games   WHERE author_id = ?1 AND status='published') AS games,
-       (SELECT COALESCE(SUM(likes),0) FROM games WHERE author_id = ?1) AS likes,
-       (SELECT COUNT(*) FROM follows WHERE author_id = ?1) AS followers`
-  ).bind(userId).first();
-
-  let isFollowing = false;
-  if (viewer) {
-    const follow = await env.DB.prepare(
-      `SELECT 1 FROM follows WHERE user_id = ? AND author_id = ?`
-    ).bind(viewer.id, userId).first();
-    isFollowing = Boolean(follow);
-  }
+  const isFollowing = Boolean(followRow?.ok ?? followRow);
 
   return json({
     user: publicUser(user),
