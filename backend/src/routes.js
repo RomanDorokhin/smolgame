@@ -1041,6 +1041,16 @@ export async function deleteGame(req, env, gameId) {
 
   await env.DB.prepare(`DELETE FROM likes WHERE game_id = ?`).bind(gameId).run();
   await env.DB.prepare(`DELETE FROM bookmarks WHERE game_id = ?`).bind(gameId).run();
+  try {
+    await env.DB.prepare(`DELETE FROM user_game_plays WHERE game_id = ?`).bind(gameId).run();
+  } catch (e) {
+    if (!isMissingTableError(e)) throw e;
+  }
+  try {
+    await env.DB.prepare(`DELETE FROM game_reviews WHERE game_id = ?`).bind(gameId).run();
+  } catch (e) {
+    if (!isMissingTableError(e)) throw e;
+  }
   await env.DB.prepare(`DELETE FROM games WHERE id = ?`).bind(gameId).run();
   return json({ ok: true });
 }
