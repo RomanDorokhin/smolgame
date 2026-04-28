@@ -14,7 +14,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <!-- ?v= сбрасывает кэш WebView Telegram после правок JS/CSS (меняй при каждом релизе фронта). -->
-<link rel="stylesheet" href="styles.css?v=20260474">
+<link rel="stylesheet" href="styles.css?v=20260475">
 </head>
 <body>
 
@@ -211,61 +211,6 @@
     </div>
   </div>
 
-  <div id="upload-guide-block" class="upload-guide-block">
-    <p class="help-intro">Как добавить игру: четыре шага (открывай по одному). Ниже — форма.</p>
-
-    <details class="help-acc help-acc--step1">
-      <summary><span class="help-acc-num">1</span> Создай игру с ИИ</summary>
-      <div class="help-acc-body">
-        <p>Зайди на <strong>claude.ai</strong> или <strong>chatgpt.com</strong> — оба бесплатны. Напиши (можно скопировать):</p>
-        <pre class="help-prompt">Напиши мне простую браузерную игру на HTML + JavaScript.
-Один файл, без внешних библиотек.
-Жанр: [змейка / тетрис / кликер / своё]
-Игра должна работать на мобильном телефоне.</pre>
-        <p>ИИ выдаст код — скопируй целиком. Не понравилось — попроси переделать.</p>
-      </div>
-    </details>
-
-    <details class="help-acc help-acc--step2">
-      <summary><span class="help-acc-num">2</span> Выложи на GitHub Pages</summary>
-      <div class="help-acc-body">
-        <p>Бесплатный хостинг от GitHub, без карты и серверов.</p>
-        <ol class="help-ol">
-          <li>github.com → регистрация (если нет)</li>
-          <li>+ → New repository, имя например <code>my-game</code>, <strong>Public</strong> → Create</li>
-          <li>Add file → Create new file → имя <code>index.html</code> → вставь код → Commit changes</li>
-          <li>Settings → Pages → Branch: <strong>main</strong> → Save</li>
-        </ol>
-        <p>Через 1–2 мин ссылка вида <code>https://твой-ник.github.io/my-game</code> — это URL игры.</p>
-      </div>
-    </details>
-
-    <details class="help-acc help-acc--step3">
-      <summary><span class="help-acc-num">3</span> Скопируй ссылку</summary>
-      <div class="help-acc-body">
-        <p>В <strong>Settings → Pages</strong> зелёная плашка: <em>Your site is live at https://…</em> — скопируй её. Подожди 1–3 мин после публикации, если не открывается сразу.</p>
-      </div>
-    </details>
-
-    <details class="help-acc help-acc--step4">
-      <summary><span class="help-acc-num">4</span> Заполни форму ниже</summary>
-      <div class="help-acc-body">
-        <p><strong>Ссылка</strong> — URL игры уже на хостинге. <strong>GitHub</strong> — привязка аккаунта, код или файлы уходят в твой репозиторий и Pages. <strong>Премиум</strong> — отдельно: HTML хранится на SmolGame (нужен R2 у Worker).</p>
-      </div>
-    </details>
-
-    <p class="upload-faq-title">FAQ</p>
-    <details class="help-faq-item"><summary>Это правда бесплатно?</summary><div class="help-acc-body"><p>Да. У Claude и ChatGPT есть бесплатные режимы. GitHub Pages бесплатен.</p></div></details>
-    <details class="help-faq-item"><summary>Нужно уметь программировать?</summary><div class="help-acc-body"><p>Нет. Ты описываешь желаемое ИИ — он пишет код.</p></div></details>
-    <details class="help-faq-item"><summary>Игра не работает — что делать?</summary><div class="help-acc-body"><p>Скопируй текст ошибки из браузера и отправь ИИ: «Вот ошибка, исправь код».</p></div></details>
-    <details class="help-faq-item"><summary>Какие игры подходят?</summary><div class="help-acc-body"><p>Браузерные на HTML, один файл <code>index.html</code>, без серверной части.</p></div></details>
-    <details class="help-faq-item"><summary>Можно обновить игру после публикации?</summary><div class="help-acc-body"><p>Да. Измени <code>index.html</code> в репозитории — через пару минут обновится по той же ссылке.</p></div></details>
-    <details class="help-faq-item"><summary>На телефоне перетаскивание в игре «залипает»</summary><div class="help-acc-body"><p>Частая причина: <code>touchstart</code> на маленьком canvas, а <code>touchmove</code>/<code>touchend</code> только на <code>document</code>. В iOS и в iframe жест рвётся. Делай через <strong>Pointer Events</strong> и <code>setPointerCapture</code> на элементе, с которого начали драг, или вешай move/end на <code>window</code> с <code>capture: true</code> и обрабатывай <code>touchcancel</code>.</p></div></details>
-    <details class="help-faq-item"><summary>Почему GitHub?</summary><div class="help-acc-body"><p>Простой и надёжный бесплатный вариант: без карты и сложной настройки.</p></div></details>
-
-    <button type="button" class="submit-btn upload-scroll-to-form" data-action="upload-scroll-to-form">К форме загрузки</button>
-  </div>
-
   <!-- Вкладка: GitHub -->
   <div class="form-section" id="form-github">
     <div class="field-group" id="github-connect-row">
@@ -405,6 +350,61 @@
         <button type="button" class="submit-btn" data-action="submit-game" data-method="url">Отправить на модерацию</button>
       </div>
     </div>
+  </div>
+
+  <div id="upload-guide-block" class="upload-guide-block">
+    <p class="help-intro">Как добавить игру: четыре шага (открывай по одному). Форма — сразу под карточками «Ссылка / GitHub / Премиум» выше.</p>
+
+    <details class="help-acc help-acc--step1">
+      <summary><span class="help-acc-num">1</span> Создай игру с ИИ</summary>
+      <div class="help-acc-body">
+        <p>Зайди на <strong>claude.ai</strong> или <strong>chatgpt.com</strong> — оба бесплатны. Напиши (можно скопировать):</p>
+        <pre class="help-prompt">Напиши мне простую браузерную игру на HTML + JavaScript.
+Один файл, без внешних библиотек.
+Жанр: [змейка / тетрис / кликер / своё]
+Игра должна работать на мобильном телефоне.</pre>
+        <p>ИИ выдаст код — скопируй целиком. Не понравилось — попроси переделать.</p>
+      </div>
+    </details>
+
+    <details class="help-acc help-acc--step2">
+      <summary><span class="help-acc-num">2</span> Выложи на GitHub Pages</summary>
+      <div class="help-acc-body">
+        <p>Бесплатный хостинг от GitHub, без карты и серверов.</p>
+        <ol class="help-ol">
+          <li>github.com → регистрация (если нет)</li>
+          <li>+ → New repository, имя например <code>my-game</code>, <strong>Public</strong> → Create</li>
+          <li>Add file → Create new file → имя <code>index.html</code> → вставь код → Commit changes</li>
+          <li>Settings → Pages → Branch: <strong>main</strong> → Save</li>
+        </ol>
+        <p>Через 1–2 мин ссылка вида <code>https://твой-ник.github.io/my-game</code> — это URL игры.</p>
+      </div>
+    </details>
+
+    <details class="help-acc help-acc--step3">
+      <summary><span class="help-acc-num">3</span> Скопируй ссылку</summary>
+      <div class="help-acc-body">
+        <p>В <strong>Settings → Pages</strong> зелёная плашка: <em>Your site is live at https://…</em> — скопируй её. Подожди 1–3 мин после публикации, если не открывается сразу.</p>
+      </div>
+    </details>
+
+    <details class="help-acc help-acc--step4">
+      <summary><span class="help-acc-num">4</span> Заполни форму над этим блоком</summary>
+      <div class="help-acc-body">
+        <p><strong>Ссылка</strong> — URL игры уже на хостинге. <strong>GitHub</strong> — привязка аккаунта, код или файлы уходят в твой репозиторий и Pages. <strong>Премиум</strong> — отдельно: HTML хранится на SmolGame (нужен R2 у Worker).</p>
+      </div>
+    </details>
+
+    <p class="upload-faq-title">FAQ</p>
+    <details class="help-faq-item"><summary>Это правда бесплатно?</summary><div class="help-acc-body"><p>Да. У Claude и ChatGPT есть бесплатные режимы. GitHub Pages бесплатен.</p></div></details>
+    <details class="help-faq-item"><summary>Нужно уметь программировать?</summary><div class="help-acc-body"><p>Нет. Ты описываешь желаемое ИИ — он пишет код.</p></div></details>
+    <details class="help-faq-item"><summary>Игра не работает — что делать?</summary><div class="help-acc-body"><p>Скопируй текст ошибки из браузера и отправь ИИ: «Вот ошибка, исправь код».</p></div></details>
+    <details class="help-faq-item"><summary>Какие игры подходят?</summary><div class="help-acc-body"><p>Браузерные на HTML, один файл <code>index.html</code>, без серверной части.</p></div></details>
+    <details class="help-faq-item"><summary>Можно обновить игру после публикации?</summary><div class="help-acc-body"><p>Да. Измени <code>index.html</code> в репозитории — через пару минут обновится по той же ссылке.</p></div></details>
+    <details class="help-faq-item"><summary>На телефоне перетаскивание в игре «залипает»</summary><div class="help-acc-body"><p>Частая причина: <code>touchstart</code> на маленьком canvas, а <code>touchmove</code>/<code>touchend</code> только на <code>document</code>. В iOS и в iframe жест рвётся. Делай через <strong>Pointer Events</strong> и <code>setPointerCapture</code> на элементе, с которого начали драг, или вешай move/end на <code>window</code> с <code>capture: true</code> и обрабатывай <code>touchcancel</code>.</p></div></details>
+    <details class="help-faq-item"><summary>Почему GitHub?</summary><div class="help-acc-body"><p>Простой и надёжный бесплатный вариант: без карты и сложной настройки.</p></div></details>
+
+    <button type="button" class="submit-btn upload-scroll-to-form" data-action="upload-scroll-to-form">К полю ввода</button>
   </div>
 
   </div><!-- /.upload-active-panel -->
@@ -580,7 +580,7 @@
 <script src="js/state.js?v=20260466"></script>
 <script src="js/api.js?v=20260469"></script>
 <script src="js/onboarding.js?v=20260466"></script>
-<script src="js/help-screens.js?v=20260474"></script>
+<script src="js/help-screens.js?v=20260475"></script>
 <script src="js/feed.js?v=20260471"></script>
 <script src="js/feed-nav-tip.js?v=20260470"></script>
 <script src="js/actions.js?v=20260469"></script>

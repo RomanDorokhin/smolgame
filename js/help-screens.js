@@ -81,8 +81,8 @@ function welcomeNext() {
 }
 
 function scrollUploadToForm() {
-  document.getElementById('upload-active-panel')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-    || document.getElementById('upload-methods-anchor')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  document.getElementById('upload-methods-anchor')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    || document.getElementById('form-url')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 function welcomeAfterSlides() {
