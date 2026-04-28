@@ -14,9 +14,9 @@ async function refreshUploadCapabilities() {
 }
 
 function updateGithubUploadUi() {
-  const premDeck = document.getElementById('upload-premium-deck');
-  if (premDeck) {
-    premDeck.hidden = !USER.isPremium;
+  const premCard = document.getElementById('method-premium');
+  if (premCard) {
+    premCard.hidden = !USER.isPremium;
   }
   const hint = document.getElementById('github-connect-hint');
   if (hint) {
@@ -30,7 +30,7 @@ function updateGithubUploadUi() {
       hint.textContent =
         'Готово — код или файлы, название, описание, затем «Создать репозиторий на GitHub». Код уходит в GitHub, не на сервер SmolGame.' +
         (USER.isPremium
-          ? ' Вкладка «Премиум» ниже — другой раздел, без репозитория GitHub.'
+          ? ' Карточка «Премиум» справа — не GitHub: без репозитория.'
           : '');
     }
   }

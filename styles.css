@@ -1668,51 +1668,16 @@ body.feed-layout-vertical #game-info{
 }
 .upload-premium-stub-text code{font-size:12px;}
 
-.upload-method-groups{
-  margin-bottom:20px;
-}
-.upload-method-group-label{
-  font-size:11px;
-  font-weight:700;
-  letter-spacing:0.12em;
-  text-transform:uppercase;
-  color:var(--muted);
-  margin:0 0 6px 2px;
-}
-.upload-method-group-label--premium{
-  margin-top:4px;
-  color:rgba(240,200,106,0.75);
-}
-.upload-method-group-hint{
-  font-size:12px;
-  color:rgba(255,255,255,0.45);
-  line-height:1.4;
-  margin:0 0 14px 2px;
-  max-width:420px;
-}
-.upload-premium-deck{margin-top:6px;}
-.upload-premium-sep{
-  height:1px;
-  background:linear-gradient(90deg, transparent, var(--border), transparent);
-  margin:18px 0 14px;
-}
-.upload-premium-deck-hint{
-  font-size:12px;
-  color:rgba(240,200,106,0.55);
-  line-height:1.45;
-  margin:0 0 12px 2px;
-  max-width:420px;
-}
-.upload-methods--premium-solo{
-  grid-template-columns:1fr;
-  max-width:220px;
-}
-
 .upload-methods{
   display:grid;
   grid-template-columns:1fr 1fr;
   gap:12px;
   margin-bottom:20px;
+}
+.upload-methods--triple{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(108px,1fr));
+  gap:10px;
 }
 
 .method-card{
@@ -1833,11 +1798,6 @@ textarea.field-input{
 .code-area::placeholder{color:rgba(255,255,255,0.2);}
 
 #form-github .code-area{min-height:220px;height:min(42vh,320px);}
-.upload-methods--triple{
-  display:grid;
-  grid-template-columns:repeat(auto-fill,minmax(108px,1fr));
-  gap:10px;
-}
 #btn-code-tab-advance{margin-top:14px;width:100%;}
 .github-reauth-btn{margin-top:8px;}
 .gh-paste-strip{margin-bottom:12px;padding:10px 12px;border-radius:12px;background:rgba(255,255,255,0.06);font-size:14px;line-height:1.45;}
