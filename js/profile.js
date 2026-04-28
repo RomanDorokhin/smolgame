@@ -199,9 +199,9 @@ async function renderProfile() {
           </div>
         </div>
         <div class="profile-game-actions">
-          ${canEdit ? `<button type="button" class="profile-text-btn" data-action="toggle-profile-game-editor" data-game-id="${idRaw}">Карточка</button>` : ''}
-          <button type="button" class="profile-text-btn profile-game-play-btn" data-action="open-game-profile" data-game-id="${gid}">В ленту</button>
-          <button type="button" class="profile-text-btn profile-game-delete-btn" data-action="delete-game" data-game-id="${gid}" data-game-title="${titleEsc}" aria-label="Удалить игру">Удалить</button>
+          ${canEdit ? `<button type="button" class="profile-text-btn" data-action="toggle-profile-game-editor" data-game-id="${idRaw}" title="Редактировать карточку в ленте">Правки</button>` : ''}
+          <button type="button" class="profile-text-btn profile-game-play-btn" data-action="open-game-profile" data-game-id="${gid}" title="Открыть в ленте">Лента</button>
+          <button type="button" class="profile-text-btn profile-game-delete-btn" data-action="delete-game" data-game-id="${gid}" data-game-title="${titleEsc}" title="Удалить игру" aria-label="Удалить игру">Удалить</button>
         </div>
         ${editorHtml}
       </div>`;

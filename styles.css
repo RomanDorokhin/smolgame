@@ -1575,9 +1575,11 @@ body.feed-layout-vertical #game-info{
   flex-direction:column;
   gap:10px;
 }
+/* Одна колонка на всю ширину сетки: карточка и кнопки выровнены по левому краю, не «остров» по центру */
 #myGamesGrid .profile-game-row .game-card{
-  max-width:220px;
-  align-self:center;
+  width:100%;
+  max-width:none;
+  align-self:stretch;
 }
 .profile-game-row--editing .game-card{
   outline:1px solid rgba(180,199,224,0.35);
@@ -1619,33 +1621,38 @@ body.feed-layout-vertical #game-info{
   margin-top:18px;
 }
 
-/* Действия под карточкой: не перекрывают превью, крупная зона тапа */
+/* Действия под карточкой: полная ширина строки, без центрирования; один ряд без переноса текста */
 .profile-game-actions{
   display:flex;
-  flex-wrap:wrap;
-  gap:8px;
-  justify-content:center;
-  align-items:center;
+  flex-wrap:nowrap;
+  gap:6px;
+  justify-content:flex-start;
+  align-items:stretch;
+  align-self:stretch;
   width:100%;
-  max-width:220px;
-  margin:0 auto;
-  padding:0 2px 4px;
+  box-sizing:border-box;
+  padding:2px 0 6px;
 }
 .profile-game-actions .profile-text-btn{
-  flex:1;
+  flex:1 1 0;
   min-width:0;
   text-align:center;
   justify-content:center;
+  white-space:nowrap;
+  font-size:11px;
+  font-weight:600;
+  letter-spacing:0.01em;
+  padding:10px 8px;
+  line-height:1.2;
 }
 .profile-game-actions .profile-game-play-btn{
-  flex:1.15;
-  min-width:0;
+  flex:1 1 0;
 }
 .profile-game-actions .profile-game-delete-btn{
   flex:0 0 auto;
   min-width:44px;
-  padding-left:12px;
-  padding-right:12px;
+  padding-left:10px;
+  padding-right:10px;
   color:rgba(255,170,170,0.95);
   border-color:rgba(229,115,115,0.35);
 }
@@ -3100,8 +3107,6 @@ body.is-admin .admin-only{display:block;}
 
   .game-card{border-radius:16px;}
   .game-card-thumb{aspect-ratio:1/1.1;font-size:40px;}
-  .edit-game-btn{width:34px;height:34px;right:44px;}
-  .delete-game-btn{width:34px;height:34px;}
 }
 
 @media (max-width: 380px) {
