@@ -38,6 +38,7 @@ CREATE INDEX IF NOT EXISTS idx_oauth_states_expires ON oauth_states(expires_at);
 -- ALTER TABLE users ADD COLUMN tg_username TEXT;
 -- ALTER TABLE users ADD COLUMN site_handle TEXT;
 -- CREATE UNIQUE INDEX IF NOT EXISTS idx_users_site_handle ON users(site_handle);
+-- Регистрация: см. migrations/0009_users_dob_consent.sql (прогон на прод D1).
 -- ALTER TABLE users ADD COLUMN date_of_birth TEXT;
 -- ALTER TABLE users ADD COLUMN consented_at INTEGER;
 -- ALTER TABLE users ADD COLUMN tos_accepted_at INTEGER;

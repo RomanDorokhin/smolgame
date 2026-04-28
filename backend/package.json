@@ -16,7 +16,8 @@
     "db:migrate:remote:user-game-plays": "wrangler d1 execute smolgame --remote --file=./migrations/0005_user_game_plays.sql",
     "db:migrate:remote:github-user-id-not-unique": "wrangler d1 execute smolgame --remote --file=./migrations/0006_github_user_id_drop_unique_index.sql",
     "db:migrate:remote:display-name": "wrangler d1 execute smolgame --remote --file=./migrations/0007_users_display_name.sql",
-    "db:migrate:remote:bio": "wrangler d1 execute smolgame --remote --file=./migrations/0008_users_bio.sql"
+    "db:migrate:remote:bio": "wrangler d1 execute smolgame --remote --file=./migrations/0008_users_bio.sql",
+    "db:migrate:remote:dob-consent": "wrangler d1 execute smolgame --remote --file=./migrations/0009_users_dob_consent.sql"
   },
   "devDependencies": {
     "wrangler": "^3.90.0"
