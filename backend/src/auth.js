@@ -19,8 +19,15 @@ export async function authenticate(req, env) {
       .map(s => s.trim())
       .filter(Boolean)
   );
+  const premiumIds = new Set(
+    String(env.PREMIUM_TG_IDS || '')
+      .split(',')
+      .map(s => s.trim())
+      .filter(Boolean)
+  );
   const uid = String(user.id);
   user.isAdmin = [...adminIds].some(a => String(a) === uid);
+  user.isPremium = [...premiumIds].some(a => String(a) === uid);
   return user;
 }
 

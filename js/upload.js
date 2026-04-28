@@ -5,6 +5,7 @@ async function refreshUploadCapabilities() {
       USER.isGithubConnected = Boolean(me.user.isGithubConnected);
       USER.githubUsername = me.user.githubUsername || null;
       USER.hasGithubPublishToken = Boolean(me.user.hasGithubPublishToken);
+      USER.isPremium = Boolean(me.user.isPremium);
     }
   } catch (e) {
     console.warn('refreshUploadCapabilities', e);
@@ -13,6 +14,10 @@ async function refreshUploadCapabilities() {
 }
 
 function updateGithubUploadUi() {
+  const premCard = document.getElementById('method-premium');
+  if (premCard) {
+    premCard.hidden = !USER.isPremium;
+  }
   const hint = document.getElementById('github-connect-hint');
   if (hint) {
     if (!USER.isGithubConnected) {
@@ -48,14 +53,31 @@ function updateGithubUploadUi() {
 }
 
 async function selectMethod(m) {
-  if (m === 'github') {
+  if (m === 'github' || m === 'premium') {
     await refreshUploadCapabilities();
+  }
+  if (m === 'premium' && !USER.isPremium) {
+    showToast('⚠️ Премиум только для аккаунтов из списка на сервере');
+    await selectMethod('url');
+    return;
+  }
+  if (m === 'premium') {
+    window.selectedUploadMethod = 'premium';
+    document.getElementById('method-url')?.classList.remove('selected');
+    document.getElementById('method-github')?.classList.remove('selected');
+    document.getElementById('method-premium')?.classList.add('selected');
+    document.getElementById('form-url')?.classList.remove('visible');
+    document.getElementById('form-github')?.classList.remove('visible');
+    document.getElementById('form-premium')?.classList.add('visible');
+    return;
   }
   window.selectedUploadMethod = m;
   document.getElementById('method-url')?.classList.toggle('selected', m === 'url');
   document.getElementById('method-github')?.classList.toggle('selected', m === 'github');
+  document.getElementById('method-premium')?.classList.remove('selected');
   document.getElementById('form-url')?.classList.toggle('visible', m === 'url');
   document.getElementById('form-github')?.classList.toggle('visible', m === 'github');
+  document.getElementById('form-premium')?.classList.remove('visible');
 
   if (m === 'url' && typeof setUrlUploadStep === 'function') setUrlUploadStep(1);
 
@@ -275,7 +297,7 @@ async function githubUploadSubmit() {
     window._ghPublishedPlayUrl = out.pagesUrl || '';
     resetGithubInlineForm();
     if (typeof selectMethod === 'function') await selectMethod('github');
-    beginGhCodeWizardAfterPublish(out);
+    if (!USER.isPremium) beginGhCodeWizardAfterPublish(out);
   } catch (e) {
     const msg = e?.message || 'ошибка';
     if (resBox) {

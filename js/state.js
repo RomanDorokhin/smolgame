@@ -12,6 +12,7 @@ window.USER = {
   isGithubConnected: false,
   githubUsername: null,
   hasGithubPublishToken: false,
+  isPremium: false,
 };
 
 // Ключи локального хранилища — привязаны к Telegram id.

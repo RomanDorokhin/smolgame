@@ -439,6 +439,7 @@ export async function getMe(req, env) {
       githubUsername: dbUser?.githubLogin || null,
       hasGithubPublishToken: Boolean(dbUser?.githubAccessTokenEnc),
       isAdmin: user.isAdmin === true,
+      isPremium: user.isPremium === true,
     },
     stats: {
       games: s.gamesCount ?? 0,

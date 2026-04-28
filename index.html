@@ -184,7 +184,7 @@
   </div>
 
   <!-- Способ: сразу под заголовком -->
-  <div class="upload-methods upload-methods--double" id="upload-methods-anchor">
+  <div class="upload-methods upload-methods--triple" id="upload-methods-anchor">
     <div class="method-card method-card--url selected" id="method-url" data-action="select-method" data-method="url">
       <div class="m-icon m-icon--svg" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M10 13a5 5 0 010-7l1.5-1.5a5 5 0 017.07 7.07l-.88.88M14 11a5 5 0 010 7l-1.5 1.5a5 5 0 01-7.07-7.07l.88-.88" stroke="currentColor" stroke-width="1.65" stroke-linecap="round"/></svg></div>
       <div class="m-title">Ссылка</div>
@@ -194,6 +194,11 @@
       <div class="m-icon m-icon--svg" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0-2-1.5-3-1.5-3-1.5-.3 1.15-.3 2.35 0 3.5a5.4 5.4 0 0 0-1 3.5c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M9 18c-4.51 2-5-2-7-2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
       <div class="m-title">GitHub</div>
       <div class="m-desc">Код в твой репозиторий</div>
+    </div>
+    <div class="method-card method-card--premium" id="method-premium" data-action="select-method" data-method="premium" hidden>
+      <div class="m-icon m-icon--svg" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 3l2.39 5.42L20 9.27l-4.5 4.08L16.78 21 12 17.77 7.22 21 8.5 13.35 4 9.27l5.61-.85L12 3z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg></div>
+      <div class="m-title">Премиум</div>
+      <div class="m-desc">Только по списку</div>
     </div>
   </div>
 
@@ -285,6 +290,15 @@
     </div>
   </div>
 
+  <!-- Вкладка: премиум (видна только allowlist PREMIUM_TG_IDS; без загрузки HTML на сервер) -->
+  <div class="form-section" id="form-premium">
+    <div class="upload-premium-stub">
+      <div class="upload-premium-stub-icon" aria-hidden="true">✦</div>
+      <p class="upload-premium-stub-title">Премиум</p>
+      <p class="upload-premium-stub-text">Доступ по списку Telegram ID на Worker (<code>PREMIUM_TG_IDS</code>). Игровой код не хранится на SmolGame — только <strong>Ссылка</strong> или <strong>GitHub</strong>. Дополнительные премиум-функции подключайте отдельно в коде Worker.</p>
+    </div>
+  </div>
+
   <!-- Форма: ссылка (пошагово) -->
   <div class="form-section visible" id="form-url">
     <div class="upload-step-indicator" id="url-step-indicator" aria-hidden="true">Шаг 1 из 2</div>
@@ -328,7 +342,7 @@
   </div>
 
   <div id="upload-guide-block" class="upload-guide-block">
-    <p class="help-intro">Как добавить игру: четыре шага (открывай по одному). Форма — сразу под карточками «Ссылка» и «GitHub» выше.</p>
+    <p class="help-intro">Как добавить игру: четыре шага (открывай по одному). Форма — сразу под карточками «Ссылка», «GitHub» и при доступе — «Премиум».</p>
 
     <details class="help-acc help-acc--step1">
       <summary><span class="help-acc-num">1</span> Создай игру с ИИ</summary>
@@ -366,7 +380,7 @@
     <details class="help-acc help-acc--step4">
       <summary><span class="help-acc-num">4</span> Заполни форму над этим блоком</summary>
       <div class="help-acc-body">
-        <p><strong>Ссылка</strong> — URL игры уже на хостинге (например GitHub Pages). <strong>GitHub</strong> — привязка аккаунта, код или файлы уходят в твой репозиторий и Pages; каждый Telegram-аккаунт подтверждает доступ в GitHub отдельно.</p>
+        <p><strong>Ссылка</strong> — URL игры уже на хостинге (например GitHub Pages). <strong>GitHub</strong> — привязка аккаунта, код или файлы уходят в твой репозиторий и Pages; каждый Telegram-аккаунт подтверждает доступ в GitHub отдельно. <strong>Премиум</strong> — только для аккаунтов из списка на сервере; загрузка HTML игры на сервер SmolGame не используется.</p>
       </div>
     </details>
 
