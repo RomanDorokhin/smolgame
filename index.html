@@ -14,7 +14,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <!-- ?v= сбрасывает кэш WebView Telegram после правок JS/CSS (меняй при каждом релизе фронта). -->
-<link rel="stylesheet" href="styles.css?v=20260454">
+<link rel="stylesheet" href="styles.css?v=20260455">
 </head>
 <body>
 
@@ -130,12 +130,14 @@
   <div class="feed-reviews-drawer-handle" aria-hidden="true"></div>
   <div class="feed-reviews-drawer-head">
     <span class="feed-reviews-drawer-title">Отзывы</span>
-    <button type="button" class="feed-reviews-drawer-close" data-action="close-feed-reviews" aria-label="Закрыть">×</button>
+    <button type="button" class="feed-reviews-drawer-close sg-btn sg-btn--ghost sg-btn--icon" data-action="close-feed-reviews" aria-label="Закрыть">
+      <svg class="sg-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="1.85" stroke-linecap="round"/></svg>
+    </button>
   </div>
   <div id="feedReviewsDrawerList" class="feed-reviews-drawer-list"></div>
   <div class="feed-reviews-drawer-compose">
-    <textarea id="feedReviewInput" class="feed-reviews-input" maxlength="500" rows="2" placeholder="Коротко о игре…" data-input="feed-review"></textarea>
-    <button type="button" class="sg-btn sg-btn--primary sg-btn--screen-cta feed-reviews-send" data-action="submit-feed-review">Отправить</button>
+    <textarea id="feedReviewInput" class="feed-reviews-input" maxlength="500" rows="3" placeholder="Коротко об игре…" data-input="feed-review"></textarea>
+    <button type="button" class="sg-btn sg-btn--primary feed-reviews-send" data-action="submit-feed-review">Отправить</button>
   </div>
 </div>
 
