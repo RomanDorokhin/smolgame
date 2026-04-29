@@ -168,6 +168,13 @@ async function loadAuthorProfile(authorId) {
 function switchTab(tab) {
   if (!tab) return;
   const t = typeof window.t === 'function' ? window.t : k => k;
+  if (
+    typeof isFeedOnboardingBlocking === 'function' &&
+    isFeedOnboardingBlocking() &&
+    typeof window.forceDismissFeedOnboarding === 'function'
+  ) {
+    window.forceDismissFeedOnboarding();
+  }
   if (typeof isFeedOnboardingBlocking === 'function' && isFeedOnboardingBlocking()) return;
   if (typeof hapticLight === 'function') hapticLight();
 
