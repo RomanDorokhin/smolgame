@@ -33,15 +33,44 @@ function gameStatusBadgeHtml(status) {
   return '';
 }
 
+/** Применить ответ GET /api/me к USER и DOM профиля (отдельно от списка игр). */
+function applyMeToProfileUi(me, { bioRead, handleRead, premBadge, setStatGames, setStatFollowers, setStatLikes }) {
+  if (!me) return;
+  const st = parseProfileStats(me);
+  if (st.games != null) setStatGames(String(st.games));
+  if (st.likes != null) setStatLikes(fmtNum(st.likes));
+  if (st.followers != null) setStatFollowers(fmtNum(st.followers));
+  if (me.user?.isAdmin) document.body.classList.add('is-admin');
+  else document.body.classList.remove('is-admin');
+  if (!me.user) return;
+  USER.siteHandle = me.user.siteHandle || USER.siteHandle;
+  USER.name = me.user.name || USER.name;
+  USER.avatar = me.user.avatar || USER.avatar;
+  USER.isGithubConnected = Boolean(me.user.isGithubConnected);
+  USER.githubUsername = me.user.githubUsername || null;
+  USER.hasGithubPublishToken = Boolean(me.user.hasGithubPublishToken);
+  USER.isPremium = Boolean(me.user.isPremium);
+  USER.displayName = me.user.displayName != null ? me.user.displayName : '';
+  USER.bio = me.user.bio != null ? me.user.bio : '';
+  document.getElementById('profileName').textContent = USER.name;
+  document.getElementById('profileHandle').textContent = '@' + (USER.siteHandle || USER.id || '—');
+  if (handleRead) handleRead.textContent = USER.siteHandle || USER.id || '—';
+  if (bioRead) bioRead.textContent = USER.bio || '';
+  setProfileAvatar(USER.avatar);
+  document.getElementById('profileDisplayName').value = USER.displayName || USER.name || '';
+  document.getElementById('profileBioInput').value = USER.bio || '';
+  if (premBadge) premBadge.style.display = USER.isPremium ? '' : 'none';
+}
+
 async function renderProfile() {
   const bioRead = document.getElementById('profileBio');
   const handleRead = document.getElementById('profileSiteHandleRead');
 
   setProfileAvatar(USER.avatar);
-  document.getElementById('profileName').textContent = USER.name || '—';
+  document.getElementById('profileName').textContent = USER.name || tf('guest');
   document.getElementById('profileHandle').textContent = '@' + (USER.siteHandle || USER.id || '—');
   if (handleRead) handleRead.textContent = USER.siteHandle || USER.id || '—';
-  bioRead.textContent = '';
+  if (bioRead) bioRead.textContent = '';
 
   const setStatGames = v => { document.getElementById('statGames').textContent = v; };
   const setStatFollowers = v => { document.getElementById('statFollowers').textContent = v; };
@@ -56,75 +85,26 @@ async function renderProfile() {
 
   let myGames = [];
 
+  let me = null;
   try {
-    const [me, myGamesRes] = await Promise.all([API.me(), API.myGames()]);
-    const st = parseProfileStats(me);
-    if (st.games != null) setStatGames(String(st.games));
-    if (st.likes != null) setStatLikes(fmtNum(st.likes));
-    if (st.followers != null) setStatFollowers(fmtNum(st.followers));
-    if (me?.user?.isAdmin) {
-      document.body.classList.add('is-admin');
-    } else {
-      document.body.classList.remove('is-admin');
-    }
-    if (me?.user) {
-      USER.siteHandle = me.user.siteHandle || USER.siteHandle;
-      USER.name = me.user.name || USER.name;
-      USER.avatar = me.user.avatar || USER.avatar;
-      USER.isGithubConnected = Boolean(me.user.isGithubConnected);
-      USER.githubUsername = me.user.githubUsername || null;
-      USER.hasGithubPublishToken = Boolean(me.user.hasGithubPublishToken);
-      USER.isPremium = Boolean(me.user.isPremium);
-      USER.displayName = me.user.displayName != null ? me.user.displayName : '';
-      USER.bio = me.user.bio != null ? me.user.bio : '';
-      document.getElementById('profileName').textContent = USER.name;
-      document.getElementById('profileHandle').textContent = '@' + (USER.siteHandle || USER.id || '—');
-      if (handleRead) handleRead.textContent = USER.siteHandle || USER.id || '—';
-      bioRead.textContent = USER.bio || '';
-      setProfileAvatar(USER.avatar);
-      document.getElementById('profileDisplayName').value = USER.displayName || USER.name || '';
-      document.getElementById('profileBioInput').value = USER.bio || '';
-      if (premBadge) premBadge.style.display = USER.isPremium ? '' : 'none';
-    }
+    me = await API.me();
+  } catch (e) {
+    console.warn('profile /me failed', e);
+  }
+  applyMeToProfileUi(me, { bioRead, handleRead, premBadge, setStatGames, setStatFollowers, setStatLikes });
+  document.getElementById('devBadge').style.display = USER.isGithubConnected ? '' : 'none';
+
+  try {
+    const myGamesRes = await API.myGames();
     const games = myGamesRes?.games;
     myGames = Array.isArray(games) ? games : [];
   } catch (e) {
-    console.warn('profile /me or myGames failed', e);
-    try {
-      const me = await API.me();
-      const st = parseProfileStats(me);
-      if (st.games != null) setStatGames(String(st.games));
-      if (st.likes != null) setStatLikes(fmtNum(st.likes));
-      if (st.followers != null) setStatFollowers(fmtNum(st.followers));
-      if (me?.user?.isAdmin) document.body.classList.add('is-admin');
-      else document.body.classList.remove('is-admin');
-      if (me?.user) {
-        USER.siteHandle = me.user.siteHandle || USER.siteHandle;
-        USER.name = me.user.name || USER.name;
-        USER.avatar = me.user.avatar || USER.avatar;
-        USER.isGithubConnected = Boolean(me.user.isGithubConnected);
-        USER.githubUsername = me.user.githubUsername || null;
-        USER.hasGithubPublishToken = Boolean(me.user.hasGithubPublishToken);
-        USER.isPremium = Boolean(me.user.isPremium);
-        USER.displayName = me.user.displayName != null ? me.user.displayName : '';
-        USER.bio = me.user.bio != null ? me.user.bio : '';
-        document.getElementById('profileName').textContent = USER.name;
-        document.getElementById('profileHandle').textContent = '@' + (USER.siteHandle || USER.id || '—');
-        if (handleRead) handleRead.textContent = USER.siteHandle || USER.id || '—';
-        bioRead.textContent = USER.bio || '';
-        setProfileAvatar(USER.avatar);
-        document.getElementById('profileDisplayName').value = USER.displayName || USER.name || '';
-        document.getElementById('profileBioInput').value = USER.bio || '';
-        if (premBadge) premBadge.style.display = USER.isPremium ? '' : 'none';
-      }
-    } catch (e2) {
-      console.warn('profile /me retry failed', e2);
-    }
+    console.warn('profile myGames failed', e);
     try {
       const { games } = await API.myGames();
       myGames = Array.isArray(games) ? games : [];
-    } catch (e3) {
-      myGames = GAMES.filter(g => g.authorId === USER.id);
+    } catch (e2) {
+      myGames = Array.isArray(GAMES) ? GAMES.filter(g => g.authorId === USER.id) : [];
     }
   }
 
@@ -141,6 +121,10 @@ async function renderProfile() {
   }
 
   const grid = document.getElementById('myGamesGrid');
+  if (!grid) {
+    console.warn('renderProfile: #myGamesGrid missing');
+    return;
+  }
   if (myGames.length === 0) {
     grid.innerHTML =
       typeof sgEmptyGridHtml === 'function'

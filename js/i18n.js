@@ -148,7 +148,7 @@
       profile_title: 'Профиль',
       stat_games: 'Игр',
       stat_followers: 'Подписчиков',
-      stat_likes: 'Лайки',
+      stat_likes: 'Лайков',
       profile_stats_hint: 'Игры — опубликованные карточки. Лайки — сумма по всем твоим играм в ленте.',
       guest: 'Гость',
       profile_edit: 'Редактировать профиль',
