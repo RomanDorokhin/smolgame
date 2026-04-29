@@ -47,16 +47,6 @@ const CLICK_ACTIONS = {
   'auth-github':    () => authGithub(),
   'github-unlink':  () => githubUnlink(),
   'github-upload-set-mode': (el) => githubUploadSetMode(el.dataset.mode),
-  'github-upload-submit': () => githubUploadSubmit(),
-  'github-wizard-open': () => {
-    if (typeof githubWizardOpen === 'function') githubWizardOpen();
-  },
-  'github-wizard-dismiss': () => {
-    if (typeof githubWizardDismiss === 'function') githubWizardDismiss();
-  },
-  'github-wizard-step-next': () => {
-    if (typeof githubWizardStepNext === 'function') githubWizardStepNext();
-  },
   'github-wizard-step-back': () => {
     if (typeof githubWizardStepBack === 'function') githubWizardStepBack();
   },
@@ -69,10 +59,6 @@ const CLICK_ACTIONS = {
   'url-flow-next': () => urlFlowNext(),
   'url-flow-back': () => urlFlowBack(),
   'submit-game':    (el) => submitGame(el.dataset.method),
-  'gh-code-wizard-next': () => ghCodeWizardNext(),
-  'gh-code-wizard-back': () => ghCodeWizardBack(),
-  'gh-code-wizard-cancel': () => ghCodeWizardCancel(),
-  'gh-code-wizard-publish': () => ghCodeWizardPublish(),
 
   'open-game':      (el) => openGameFromSearch(el.dataset.gameId),
   'open-game-profile': (el) => openGameFromProfile(el.dataset.gameId),

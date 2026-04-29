@@ -225,6 +225,7 @@ html,body,#root,#feed,.slide{margin:0;padding:0;border:0;width:100%;height:100%;
   background:linear-gradient(90deg,rgba(93,212,240,0.55),rgba(93,212,240,0.22));
   box-shadow:0 0 10px rgba(93,212,240,0.12);
 }
+.upload-steps-track--gh .upload-steps-dot{min-width:28px;}
 .upload-steps-dot--3.done{
   background:linear-gradient(90deg,rgba(240,200,106,0.5),rgba(240,200,106,0.2));
   box-shadow:0 0 10px rgba(240,200,106,0.1);
@@ -234,66 +235,81 @@ html,body,#root,#feed,.slide{margin:0;padding:0;border:0;width:100%;height:100%;
   box-shadow:0 0 12px rgba(126,224,168,0.2);
 }
 
-/* Мастер GitHub (4 шага) внутри вкладки — карточка, без полноэкранного оверлея */
+/* Загрузка по ссылке — одна карточка */
+.upload-url-card{
+  margin-top:8px;
+  padding:18px 16px 20px;
+  border-radius:18px;
+  border:1px solid var(--border);
+  background:linear-gradient(165deg, rgba(26,28,34,0.96) 0%, rgba(14,15,18,0.99) 100%);
+  box-shadow:0 12px 40px rgba(0,0,0,0.22);
+}
+.upload-url-card .upload-panel-lead{margin-top:0;margin-bottom:16px;}
+.upload-url-divider{
+  height:1px;
+  margin:18px 0 16px;
+  background:linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent);
+}
+.upload-url-submit-wrap{margin-top:22px;padding-top:4px;}
+.submit-btn--wide{width:100%;}
+
+/* GitHub: двухэтапный поток внутри вкладки */
 .github-publish-flow{
   margin-top:12px;
 }
 .github-publish-card{
   position:relative;
   max-width:100%;
-  border-radius:16px;
+  border-radius:18px;
   border:1px solid var(--border);
-  background:var(--surface-elevated);
-  box-shadow:0 8px 32px rgba(0,0,0,0.2);
+  background:linear-gradient(165deg, rgba(26,28,34,0.96) 0%, rgba(14,15,18,0.99) 100%);
+  box-shadow:0 12px 40px rgba(0,0,0,0.22);
   overflow:hidden;
 }
 .github-publish-head{
   position:relative;
-  padding:12px 44px 10px 14px;
+  padding:14px 16px 12px;
   border-bottom:1px solid var(--border);
-  background:rgba(0,0,0,0.12);
+  background:rgba(0,0,0,0.18);
 }
-.github-publish-head .upload-steps{margin-bottom:8px;}
+.github-publish-head .upload-steps{margin-bottom:10px;}
 .github-publish-heading{
-  margin:0;
+  margin:0 0 6px;
   font-family:'Syne',sans-serif;
-  font-size:17px;
+  font-size:18px;
   font-weight:800;
   line-height:1.2;
 }
-.github-publish-close-btn{
-  position:absolute;
-  top:10px;
-  right:10px;
-  z-index:2;
+.github-publish-sub{
+  margin:0;
+  font-size:13px;
+  line-height:1.45;
+  color:rgba(255,255,255,0.48);
 }
 .github-publish-body{
-  padding:16px 16px 20px;
-  max-height:min(70dvh,640px);
+  padding:16px 16px 22px;
+  max-height:min(72dvh,680px);
   overflow-y:auto;
   -webkit-overflow-scrolling:touch;
 }
-.github-publish-hint{margin-bottom:14px;}
-.github-publish-panel .upload-panel-lead{margin-top:0;}
-.github-method-picked{
-  display:flex;
-  align-items:center;
-  gap:14px;
-  padding:14px 16px;
-  border-radius:14px;
-  border:1px solid var(--border);
-  background:rgba(0,0,0,0.22);
+.upload-stack-section{
+  margin-bottom:20px;
+  padding-bottom:4px;
+  border-bottom:1px solid rgba(255,255,255,0.06);
+}
+.upload-stack-section:last-of-type{border-bottom:none;margin-bottom:8px;}
+.upload-stack-label{
+  display:block;
+  font-size:11px;
+  font-weight:700;
+  letter-spacing:0.1em;
+  text-transform:uppercase;
+  color:rgba(255,255,255,0.38);
   margin-bottom:12px;
 }
-.github-method-icon{
-  width:44px;
-  height:44px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  border-radius:12px;
-  background:rgba(255,255,255,0.06);
-}
+.upload-panel-lead--tight{margin-bottom:12px;}
+.upload-review-box--compact{font-size:13px;padding:12px 14px;}
+.github-publish-panel .upload-panel-lead{margin-top:0;}
 .github-publish-actions{
   display:flex;
   gap:10px;
@@ -302,7 +318,12 @@ html,body,#root,#feed,.slide{margin:0;padding:0;border:0;width:100%;height:100%;
 }
 .github-publish-actions .submit-btn,
 .github-publish-actions .profile-text-btn{flex:1;min-width:120px;}
-.github-publish-actions--wrap .submit-btn{flex:2;}
+.github-publish-actions--single{margin-top:20px;}
+.github-publish-actions--single .submit-btn{
+  flex:1 1 100%;
+  width:100%;
+  min-height:48px;
+}
 
 /* ══════════════════════════════
    BUTTONS — единый язык контролов (Telegram-like)
@@ -2553,16 +2574,6 @@ textarea.field-input{
 
 .code-upload-branch{margin-top:4px;}
 
-.github-inline-upload{
-  margin-top:16px;
-  padding:16px;
-  border-radius:16px;
-  border:1px solid var(--border);
-  background:var(--surface);
-}
-.github-inline-upload[hidden]{display:none!important;}
-.github-inline-upload__lead{margin-top:0;}
-.github-inline-submit{margin-top:14px;width:100%;}
 .github-input-mode{
   display:flex;
   gap:10px;
