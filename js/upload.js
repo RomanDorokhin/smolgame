@@ -243,8 +243,8 @@ function readFileAsText(file) {
 let _ghWizardStep = 1;
 let _ghRepoJustCreated = false;
 
-function ghwzOverlay() {
-  return document.getElementById('github-wizard-overlay');
+function ghwzFlowRoot() {
+  return document.getElementById('github-publish-flow');
 }
 
 function ghwzSetStep(n) {
@@ -259,7 +259,7 @@ function ghwzSetStep(n) {
       if (i === _ghWizardStep) d.classList.add('current');
     }
   }
-  const t = document.getElementById('github-wizard-title');
+  const t = document.getElementById('github-publish-heading');
   if (t) {
     const titles = {
       1: 'Шаг 1 — способ',
@@ -271,6 +271,21 @@ function ghwzSetStep(n) {
   }
 }
 
+function githubWizardShowFlow() {
+  const flow = ghwzFlowRoot();
+  const inline = document.getElementById('github-inline-upload');
+  if (flow) flow.hidden = false;
+  if (inline) inline.hidden = true;
+}
+
+function githubWizardDismissUi() {
+  const flow = ghwzFlowRoot();
+  const inline = document.getElementById('github-inline-upload');
+  const done = USER.isGithubConnected && USER.hasGithubPublishToken;
+  if (flow) flow.hidden = true;
+  if (inline) inline.hidden = !done;
+}
+
 function githubWizardOpen() {
   if (typeof hasTelegramInitData === 'function' && !hasTelegramInitData()) {
     showToast('⚠️ Открой мини-апп из Telegram-бота');
@@ -280,12 +295,9 @@ function githubWizardOpen() {
     showToast('⚠️ Сначала привяжи GitHub кнопкой выше');
     return;
   }
-  resetGhCodeWizard();
+  resetGhCodeWizardFormOnly();
   _ghRepoJustCreated = false;
-  const ov = ghwzOverlay();
-  if (!ov) return;
-  ov.hidden = false;
-  ov.removeAttribute('aria-hidden');
+  githubWizardShowFlow();
   ghwzSetStep(1);
   if (typeof renderGenrePills === 'function') {
     if (!window.selectedGenres) window.selectedGenres = {};
@@ -295,11 +307,7 @@ function githubWizardOpen() {
 }
 
 function githubWizardDismiss() {
-  const ov = ghwzOverlay();
-  if (ov) {
-    ov.hidden = true;
-    ov.setAttribute('aria-hidden', 'true');
-  }
+  githubWizardDismissUi();
 }
 
 function githubWizardStepNext() {
@@ -413,7 +421,6 @@ async function githubWizardPublishRepo() {
     const inp = document.getElementById('ghCodeWizardPagesUrl');
     if (inp) inp.value = out.pagesUrl || '';
     _ghRepoJustCreated = true;
-    resetGithubInlineForm();
     showToast(
       out?.pagesReady
         ? '✅ Репозиторий создан, страница открывается'
@@ -470,6 +477,11 @@ async function githubUploadSubmit() {
   githubWizardOpen();
 }
 
+/** Алиас для старых data-action и отладки — то же, что «Создать репозиторий». */
+function ghCodeWizardPublish() {
+  return githubWizardPublishRepo();
+}
+
 /** Общая отправка карточки игры (pending) по сценарию GitHub */
 async function performGithubPathSubmit({ playUrl, title, description, imageUrl }) {
   const u = normalizeToHttpsUrl(String(playUrl || '').trim()) || String(playUrl || '').trim();
@@ -514,7 +526,7 @@ function refreshGhPublishReviewBox() {
   }
 }
 
-function resetGhCodeWizard() {
+function resetGhCodeWizardFormOnly() {
   window._ghPublishedPlayUrl = '';
   _ghRepoJustCreated = false;
   _ghWizardStep = 1;
@@ -533,13 +545,18 @@ function resetGhCodeWizard() {
     prev.innerHTML = 'Обложка не выбрана';
     prev.classList.remove('has-image');
   }
+  if (!window.selectedGenres) window.selectedGenres = {};
   window.selectedGenres.ghCode = '';
   resetGithubInlineForm();
-  githubWizardDismiss();
   ghwzSetStep(1);
   if (typeof renderGenrePills === 'function') {
     renderGenrePills('genrePillsGhCode', 'ghCode');
   }
+}
+
+function resetGhCodeWizard() {
+  resetGhCodeWizardFormOnly();
+  githubWizardDismissUi();
 }
 
 function ghCodeWizardCancel() {
