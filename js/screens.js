@@ -170,12 +170,6 @@ function switchTab(tab) {
   const t = typeof window.t === 'function' ? window.t : k => k;
   if (typeof isFeedOnboardingBlocking === 'function' && isFeedOnboardingBlocking()) return;
   if (typeof hapticLight === 'function') hapticLight();
-  setBottomNavActive(tab);
-  window._activeMainTab = tab;
-  document.body.classList.toggle(
-    'app-main-chrome',
-    tab === 'feed' || tab === 'games' || tab === 'search' || tab === 'profile' || tab === 'upload'
-  );
 
   if (tab === 'feed') {
     closeAllMainTabs();
@@ -185,6 +179,12 @@ function switchTab(tab) {
     if (typeof refreshFeedCoachState === 'function') refreshFeedCoachState();
     if (typeof scheduleFeedSwipeTeaseBoredom === 'function') scheduleFeedSwipeTeaseBoredom();
     if (typeof maybeStartFeedOnboarding === 'function') requestAnimationFrame(() => maybeStartFeedOnboarding());
+    setBottomNavActive(tab);
+    window._activeMainTab = tab;
+    document.body.classList.toggle(
+      'app-main-chrome',
+      tab === 'feed' || tab === 'games' || tab === 'search' || tab === 'profile' || tab === 'upload'
+    );
     return;
   }
 
@@ -235,6 +235,13 @@ function switchTab(tab) {
     }
     if (typeof maybeShowWelcomeOnUploadOpen === 'function') maybeShowWelcomeOnUploadOpen();
   }
+
+  setBottomNavActive(tab);
+  window._activeMainTab = tab;
+  document.body.classList.toggle(
+    'app-main-chrome',
+    tab === 'feed' || tab === 'games' || tab === 'search' || tab === 'profile' || tab === 'upload'
+  );
 }
 
 window.openUpload = openUpload;
