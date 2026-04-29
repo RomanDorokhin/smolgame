@@ -3,7 +3,12 @@
  */
 function hasTelegramInitData() {
   try {
-    return Boolean(Telegram.WebApp?.initData && String(Telegram.WebApp.initData).length > 0);
+    const o = window.__smolgameInitDataOverride;
+    if (o && String(o).includes('hash=')) return true;
+    const d = Telegram.WebApp?.initData;
+    if (d && String(d).length > 0) return true;
+    const u = Telegram.WebApp?.initDataUnsafe?.user;
+    return Boolean(u && u.id != null);
   } catch (e) {
     return false;
   }

@@ -1,5 +1,9 @@
 async function bootstrap() {
   if (typeof initI18n === 'function') initI18n();
+  if (typeof ensureSmolgameInitDataFromUrl === 'function') ensureSmolgameInitDataFromUrl();
+  if (typeof waitForTelegramInitData === 'function') {
+    await waitForTelegramInitData({ timeoutMs: 6000, stepMs: 50 });
+  }
   if (typeof hasTelegramInitData === 'function' && !hasTelegramInitData()) {
     if (typeof hideBootSplash === 'function') hideBootSplash();
     if (typeof showTelegramOnlyWall === 'function') showTelegramOnlyWall();

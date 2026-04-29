@@ -9,7 +9,13 @@ const API_BASE = ['localhost', '127.0.0.1'].includes(location.hostname)
   : PROD_API_BASE;
 
 function _initData() {
-  try { return Telegram.WebApp.initData || ''; } catch (e) { return ''; }
+  try {
+    const o = typeof window !== 'undefined' ? window.__smolgameInitDataOverride : '';
+    if (o && String(o).trim()) return String(o).trim();
+    return Telegram.WebApp.initData || '';
+  } catch (e) {
+    return '';
+  }
 }
 
 async function apiFetch(path, { method = 'GET', body } = {}) {
