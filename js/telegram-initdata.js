@@ -4,6 +4,8 @@
  * идут «гостем» / 401 — ломаются лента, поиск (данные из GAMES), профиль.
  */
 (function () {
+  const INIT_DATA_SS_KEY = 'smolgame:tgInitData:v1';
+
   function decodeMaybe(s) {
     if (s == null) return '';
     try {
@@ -21,11 +23,54 @@
     return true;
   }
 
+  function extractTgWebAppDataFromQueryString(qs) {
+    const raw = String(qs || '');
+    if (!raw.includes('tgWebAppData=')) return '';
+    const needle = 'tgWebAppData=';
+    let i = raw.indexOf(needle);
+    while (i >= 0) {
+      const start = i + needle.length;
+      let j = start;
+      while (j < raw.length && raw[j] !== '&') j++;
+      const part = raw.slice(start, j);
+      if (part) {
+        try {
+          const dec = decodeMaybe(part);
+          if (looksLikeTelegramInitData(dec)) return dec;
+        } catch (e) { /* next */ }
+      }
+      i = raw.indexOf(needle, j + 1);
+    }
+    return '';
+  }
+
+  function readPersistedInitData() {
+    try {
+      const s = sessionStorage.getItem(INIT_DATA_SS_KEY);
+      return s && looksLikeTelegramInitData(s) ? s : '';
+    } catch (e) {
+      return '';
+    }
+  }
+
+  function persistInitDataIfValid(s) {
+    const t = String(s || '').trim();
+    if (!looksLikeTelegramInitData(t)) return;
+    try {
+      sessionStorage.setItem(INIT_DATA_SS_KEY, t);
+    } catch (e) { /* ignore */ }
+  }
+
   function extractFromSearch() {
     try {
+      const qs = window.location.search || '';
+      if (qs.startsWith('?')) {
+        const d = extractTgWebAppDataFromQueryString(qs.slice(1));
+        if (d) return d;
+      }
       const q = new URLSearchParams(window.location.search);
-      const d = q.get('tgWebAppData');
-      return d ? decodeMaybe(d) : '';
+      const d2 = q.get('tgWebAppData');
+      return d2 ? decodeMaybe(d2) : '';
     } catch (e) {
       return '';
     }
@@ -36,9 +81,11 @@
       const hash = window.location.hash || '';
       if (!hash || hash.length < 12) return '';
       const raw = hash.startsWith('#') ? hash.slice(1) : hash;
+      const d = extractTgWebAppDataFromQueryString(raw);
+      if (d) return d;
       const params = new URLSearchParams(raw);
-      const d = params.get('tgWebAppData');
-      return d ? decodeMaybe(d) : '';
+      const d2 = params.get('tgWebAppData');
+      return d2 ? decodeMaybe(d2) : '';
     } catch (e) {
       return '';
     }
@@ -48,6 +95,7 @@
     const s = String(initDataStr || '').trim();
     if (!looksLikeTelegramInitData(s)) return false;
     window.__smolgameInitDataOverride = s;
+    persistInitDataIfValid(s);
     try {
       const tw = window.Telegram?.WebApp;
       if (tw && !tw.initData) {
@@ -68,6 +116,8 @@
     if (applyOverride(fromHash)) return true;
     const fromSearch = extractFromSearch();
     if (applyOverride(fromSearch)) return true;
+    const cached = readPersistedInitData();
+    if (cached && applyOverride(cached)) return true;
     return Boolean(window.__smolgameInitDataOverride && looksLikeTelegramInitData(window.__smolgameInitDataOverride));
   }
 
@@ -166,6 +216,7 @@
           raw = '';
         }
         if (looksLikeTelegramInitData(raw)) {
+          persistInitDataIfValid(raw);
           resolve(true);
           return;
         }

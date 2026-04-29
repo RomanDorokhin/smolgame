@@ -13,14 +13,35 @@ const API_BASE = ['localhost', '127.0.0.1'].includes(location.hostname)
   ? 'http://127.0.0.1:8787'
   : PROD_API_BASE;
 
+const INIT_DATA_CACHE_KEY = 'smolgame:tgInitData:v1';
+
+function _looksLikeInitData(s) {
+  const t = String(s || '').trim();
+  return t.length >= 30 && t.includes('hash=');
+}
+
 function _initData() {
   try {
     const o = typeof window !== 'undefined' ? window.__smolgameInitDataOverride : '';
     if (o && String(o).trim()) return String(o).trim();
-    return Telegram?.WebApp?.initData || '';
+    const tw = Telegram?.WebApp?.initData;
+    if (tw && String(tw).trim()) return String(tw).trim();
+    try {
+      const c = sessionStorage.getItem(INIT_DATA_CACHE_KEY);
+      if (c && _looksLikeInitData(c)) return String(c).trim();
+    } catch (e2) { /* ignore */ }
+    return '';
   } catch (e) {
     return '';
   }
+}
+
+function _persistInitDataCache(raw) {
+  const t = String(raw || '').trim();
+  if (!_looksLikeInitData(t)) return;
+  try {
+    sessionStorage.setItem(INIT_DATA_CACHE_KEY, t);
+  } catch (e) { /* ignore */ }
 }
 
 /** Строка для HTTP-заголовка: без управляющих символов (часть WebView падает TypeError на fetch). */
@@ -58,11 +79,12 @@ function _needsTelegramAuth(path, method) {
   return true;
 }
 
-async function apiFetch(path, { method = 'GET', body, _did401Retry = false } = {}) {
+async function apiFetch(path, { method = 'GET', body, _did401Retry = false, _forceQueryAuth = false } = {}) {
   if (typeof ensureSmolgameInitDataFromUrl === 'function') ensureSmolgameInitDataFromUrl();
   if (typeof window.syncUSERFromTelegramInit === 'function') window.syncUSERFromTelegramInit();
 
   const initRaw = _initData();
+  _persistInitDataCache(initRaw);
   const initHdr = _initDataHeaderValue();
   const isFormData = typeof FormData !== 'undefined' && body instanceof FormData;
   const jsonBody = body !== undefined && !isFormData ? JSON.stringify(body) : undefined;
@@ -90,7 +112,10 @@ async function apiFetch(path, { method = 'GET', body, _did401Retry = false } = {
 
   let resp;
   try {
-    resp = await doFetch(path, true, ac?.signal);
+    const urlForRequest =
+      _forceQueryAuth && initRaw ? pathWithTgWebAppData(path, initRaw) : path;
+    const wantHeader = !_forceQueryAuth && Boolean(initHdr);
+    resp = await doFetch(urlForRequest, wantHeader, ac?.signal);
   } catch (e1) {
     const msg1 = String(e1?.message || e1 || '');
     if (ac?.signal?.aborted) {
@@ -169,6 +194,19 @@ async function apiFetch(path, { method = 'GET', body, _did401Retry = false } = {
       resp.status === 401 &&
       !_did401Retry &&
       _needsTelegramAuth(path, method) &&
+      initRaw &&
+      _looksLikeInitData(initRaw)
+    ) {
+      if (typeof ensureSmolgameInitDataFromUrl === 'function') ensureSmolgameInitDataFromUrl();
+      if (typeof window.syncUSERFromTelegramInit === 'function') window.syncUSERFromTelegramInit();
+      await new Promise(r => setTimeout(r, 80));
+      return apiFetch(path, { method, body, _did401Retry: true, _forceQueryAuth: true });
+    }
+
+    if (
+      resp.status === 401 &&
+      !_did401Retry &&
+      _needsTelegramAuth(path, method) &&
       typeof ensureSmolgameInitDataFromUrl === 'function'
     ) {
       ensureSmolgameInitDataFromUrl();
@@ -205,6 +243,7 @@ async function apiFetch(path, { method = 'GET', body, _did401Retry = false } = {
     }
     throw new Error(msg);
   }
+  _persistInitDataCache(_initData());
   return data;
 }
 
