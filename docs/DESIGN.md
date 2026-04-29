@@ -15,6 +15,7 @@
 | Библиотека игрока (лайки + играл), API | `js/liked-games.js`, `js/api.js` |
 | Жанры (иконки, цвета групп) | `js/genre-icons.js`, `js/genres.js`, блок `.sg-genre--*` в `styles.css` |
 | Загрузка игры (способ, URL-шаги, GitHub) | `js/upload.js`, блок `#upload-screen` в `index.html` |
+| Welcome на «Загрузить» (первый заход) | `js/help-screens.js` |
 | Тосты, haptic, `userFacingError`, пустые блоки сеток | `js/utils.js` |
 | Делегирование кликов (`data-action`) | `js/events.js` |
 | Экраны табов, подпись в шапке | `js/screens.js` |
@@ -50,7 +51,7 @@
 
 **Жанры:** классы `.sg-genre--arcade`, `.sg-genre--puzzle`, … и дочерние `.sg-gi-a` … для многоцветных SVG-групп в `genre-icons.js`.
 
-**Загрузка игры:** карточки способов `.method-card--url|github|premium` под заголовком (премиум-карточка скрыта, пока `/api/me` не вернёт `isPremium`). Активная форма в `#upload-active-panel`; гайд из четырёх шагов и FAQ — **ниже** форм. Шаги `.help-acc--step1…4` — цветовые акценты в том же духе, что жанры.
+**Загрузка игры:** две основные карточки `.method-card--url` и `.method-card--github` (сетка `.upload-methods--dual`); премиум — вторичная ссылка `.upload-more-btn` + `upload-show-premium` → форма `#form-premium`. Кнопки экрана загрузки — `.sg-btn` (в т.ч. GitHub OAuth, режим paste/files, сабмиты). Гайд из трёх шагов + FAQ — **ниже** форм; шаги `.help-acc--step1…3` с цветовыми акцентами.
 
 ---
 

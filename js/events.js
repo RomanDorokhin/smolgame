@@ -41,6 +41,9 @@ const CLICK_ACTIONS = {
     if (typeof onFeedOnboardingWelcomeCta === 'function') onFeedOnboardingWelcomeCta();
   },
   'upload-scroll-to-form': () => uploadScrollToForm(),
+  'upload-show-premium': () => {
+    if (typeof uploadShowPremium === 'function') uploadShowPremium();
+  },
 
   'open-author':    () => openAuthorProfile(),
   'close-author':   () => closeAuthorScreen(),

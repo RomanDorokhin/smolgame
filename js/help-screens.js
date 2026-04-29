@@ -1,20 +1,20 @@
 /**
- * Приветственные 3 слайда и гайд — только внутри экрана «Загрузить», не на ленте.
+ * Приветственные слайды и гайд — только внутри экрана «Загрузить», не на ленте.
  */
 const WELCOME_SLIDES = [
   {
-    title: 'Добро пожаловать 👾',
-    html: `<p class="onboarding-text">Здесь тысячи игр, сделанных обычными людьми с помощью ИИ. Без опыта в разработке. Бесплатно. За 10 минут.</p>`,
-    btn: 'Далее →',
+    title: 'SmolGame',
+    html: `<p class="onboarding-text">Лента игр в Telegram. Своё — за пару шагов: ссылка или GitHub.</p>`,
+    btn: 'Далее',
   },
   {
-    title: 'Как это работает?',
-    html: `<p class="onboarding-text">Ты просишь ИИ написать игру → получаешь готовый HTML-файл → выкладываешь на GitHub → вставляешь ссылку → игра появляется здесь.</p>`,
-    btn: 'Далее →',
+    title: 'Как добавить игру',
+    html: `<p class="onboarding-text">Попроси ИИ сделать простую HTML-игру, выложи на хостинг с HTTPS — вставь ссылку выше. Или подключи GitHub и создай репозиторий из приложения.</p>`,
+    btn: 'Далее',
   },
   {
-    title: 'Готов попробовать?',
-    html: `<p class="onboarding-text">Это занимает 10–15 минут. Никаких установок, никакого кода руками. Ниже — шаги и форма.</p>`,
+    title: 'Готово',
+    html: `<p class="onboarding-text">Ниже — памятка и форма. Можно сразу заполнять поля.</p>`,
     final: true,
   },
 ];
@@ -48,22 +48,22 @@ function renderWelcomeSlide() {
   if (!slide) return;
 
   body.innerHTML = `
-    <div class="onboarding-step">Слайд ${welcomeStep + 1} из 3</div>
+    <div class="onboarding-step">Шаг ${welcomeStep + 1} из ${WELCOME_SLIDES.length}</div>
     <div class="onboarding-title">${esc(slide.title)}</div>
     ${slide.html}
   `;
 
   if (slide.final) {
     footer.innerHTML = `
-      <button type="button" class="submit-btn welcome-btn-secondary" data-action="welcome-browse">Сначала посмотрю</button>
-      <button type="button" class="submit-btn" data-action="welcome-upload">К шагам и форме</button>
+      <button type="button" class="sg-btn sg-btn--secondary welcome-btn-secondary" data-action="welcome-browse">В ленту</button>
+      <button type="button" class="sg-btn sg-btn--primary sg-btn--screen-cta" data-action="welcome-upload">К форме</button>
     `;
   } else {
-    footer.innerHTML = `<button type="button" class="submit-btn" data-action="welcome-next">${esc(slide.btn)}</button>`;
+    footer.innerHTML = `<button type="button" class="sg-btn sg-btn--primary sg-btn--screen-cta" data-action="welcome-next">${esc(slide.btn)}</button>`;
   }
 }
 
-/** Первый заход на «Загрузить» — показать 3 слайда поверх гайда */
+/** Первый заход на «Загрузить» — короткий welcome */
 function maybeShowWelcomeOnUploadOpen() {
   if (welcomeStorageDone()) return;
   const b = document.getElementById('upload-welcome-block');
@@ -89,7 +89,7 @@ function scrollUploadToForm() {
 function welcomeAfterSlides() {
   setWelcomeStorageDone();
   hideUploadWelcomeBlock();
-  if (typeof selectMethod === 'function') selectMethod('url');
+  void selectMethod('url');
   scrollUploadToForm();
 }
 

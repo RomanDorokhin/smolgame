@@ -14,14 +14,13 @@ async function refreshUploadCapabilities() {
 }
 
 function syncPremiumMethodCard() {
-  const premCard = document.getElementById('method-premium');
+  const premBtn = document.getElementById('upload-premium-more');
   const premDesc = document.getElementById('method-premium-desc');
-  if (!premCard) return;
+  if (!premBtn) return;
   const locked = !USER.isPremium;
-  premCard.classList.toggle('method-card--premium-locked', locked);
-  premCard.setAttribute('aria-disabled', 'false');
+  premBtn.classList.toggle('upload-more-btn--locked', locked);
   if (premDesc) {
-    premDesc.textContent = locked ? 'Смотри раздел' : 'Подписка';
+    premDesc.textContent = locked ? 'скоро' : 'доступ';
   }
 }
 
@@ -38,14 +37,13 @@ function updateGithubUploadUi() {
   const hint = document.getElementById('github-connect-hint');
   if (hint) {
     if (!USER.isGithubConnected) {
-      hint.textContent =
-        'Привяжи GitHub — ниже появится поле для кода или файлов. Каждый вход с этого Telegram — отдельное подтверждение в GitHub (даже если тот же аккаунт GitHub).';
+      hint.textContent = 'Подключи GitHub — ниже появится форма. Каждый вход из Telegram подтверждается в GitHub отдельно.';
     } else if (!USER.hasGithubPublishToken) {
       hint.textContent =
-        'Токен не сохранён: проверь миграцию D1 (github_access_token_enc) и снова нажми «Войти через GitHub».';
+        'Доступ к GitHub не сохранился. Нажми «Войти через GitHub» ещё раз и разреши публикацию.';
     } else {
       hint.textContent =
-        'Готово — код или файлы, название, описание, затем «Создать репозиторий на GitHub». Здесь код уходит в твой публичный GitHub. Вкладка «Премиум» — про другой сценарий: хранение на стороне SmolGame без открытого репо (когда подключим).';
+        'Вставь код или файлы, заполни карточку и создай репозиторий. Код уходит в твой публичный GitHub.';
     }
   }
   const btnLabel = document.getElementById('btn-github-primary-label');
@@ -81,7 +79,6 @@ async function selectMethod(m) {
     window.selectedUploadMethod = 'premium';
     document.getElementById('method-url')?.classList.remove('selected');
     document.getElementById('method-github')?.classList.remove('selected');
-    document.getElementById('method-premium')?.classList.add('selected');
     document.getElementById('form-url')?.classList.remove('visible');
     document.getElementById('form-github')?.classList.remove('visible');
     document.getElementById('form-premium')?.classList.add('visible');
@@ -90,7 +87,6 @@ async function selectMethod(m) {
   window.selectedUploadMethod = m;
   document.getElementById('method-url')?.classList.toggle('selected', m === 'url');
   document.getElementById('method-github')?.classList.toggle('selected', m === 'github');
-  document.getElementById('method-premium')?.classList.remove('selected');
   document.getElementById('form-url')?.classList.toggle('visible', m === 'url');
   document.getElementById('form-github')?.classList.toggle('visible', m === 'github');
   document.getElementById('form-premium')?.classList.remove('visible');
@@ -472,7 +468,7 @@ function resetGhCodeWizardFormOnly() {
   if (cf) cf.value = '';
   const prev = document.getElementById('ghCodeWizardCoverPreview');
   if (prev) {
-    prev.innerHTML = 'Обложка не выбрана';
+    prev.innerHTML = 'Нет обложки';
     prev.classList.remove('has-image');
   }
   if (!window.selectedGenres) window.selectedGenres = {};
@@ -524,7 +520,7 @@ function previewGhCodeWizardCover(input) {
   const preview = document.getElementById('ghCodeWizardCoverPreview');
   if (!preview || !input?.files?.[0]) {
     if (preview && !input?.files?.[0]) {
-      preview.innerHTML = '<span>Обложка не выбрана</span>';
+      preview.innerHTML = '<span>Нет обложки</span>';
       preview.classList.remove('has-image');
     }
     return;
@@ -640,7 +636,7 @@ function previewCover(input) {
   const file = input?.files?.[0];
   if (!preview) return;
   if (!file) {
-    preview.innerHTML = '<span>Обложка не выбрана</span>';
+    preview.innerHTML = '<span>Нет обложки</span>';
     preview.classList.remove('has-image');
     return;
   }
@@ -650,6 +646,11 @@ function previewCover(input) {
     preview.classList.add('has-image');
   };
   reader.readAsDataURL(file);
+}
+
+async function uploadShowPremium() {
+  if (typeof selectMethod === 'function') await selectMethod('premium');
+  document.getElementById('form-premium')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 window.githubWizardStepBack = githubWizardStepBack;
@@ -669,6 +670,7 @@ window.setUrlUploadStep = setUrlUploadStep;
 window.urlFlowNext = urlFlowNext;
 window.urlFlowBack = urlFlowBack;
 window.refreshGhPublishReviewBox = refreshGhPublishReviewBox;
+window.uploadShowPremium = uploadShowPremium;
 
 document.addEventListener('change', (ev) => {
   if (ev.target?.id === 'gameImageInput') previewCover(ev.target);

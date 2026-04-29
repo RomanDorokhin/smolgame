@@ -14,7 +14,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <!-- ?v= сбрасывает кэш WebView Telegram после правок JS/CSS (меняй при каждом релизе фронта). -->
-<link rel="stylesheet" href="styles.css?v=20260453">
+<link rel="stylesheet" href="styles.css?v=20260454">
 </head>
 <body>
 
@@ -269,23 +269,20 @@
     <div class="screen-title">Загрузить игру</div>
   </div>
 
-  <!-- Три карточки в один ряд у всех; доступ к разделу премиум — по PREMIUM_TG_IDS на Worker -->
-  <div class="upload-methods upload-methods--triple" id="upload-methods-anchor">
+  <div class="upload-methods upload-methods--dual" id="upload-methods-anchor">
     <div class="method-card method-card--url selected" id="method-url" data-action="select-method" data-method="url">
       <div class="m-icon m-icon--svg" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M10 13a5 5 0 010-7l1.5-1.5a5 5 0 017.07 7.07l-.88.88M14 11a5 5 0 010 7l-1.5 1.5a5 5 0 01-7.07-7.07l.88-.88" stroke="currentColor" stroke-width="1.65" stroke-linecap="round"/></svg></div>
-      <div class="m-title">Ссылка</div>
-      <div class="m-desc">Игра уже по URL</div>
+      <div class="m-title">По ссылке</div>
+      <div class="m-desc">Уже есть HTTPS URL</div>
     </div>
     <div class="method-card method-card--github" id="method-github" data-action="select-method" data-method="github">
       <div class="m-icon m-icon--svg" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0-2-1.5-3-1.5-3-1.5-.3 1.15-.3 2.35 0 3.5a5.4 5.4 0 0 0-1 3.5c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M9 18c-4.51 2-5-2-7-2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-      <div class="m-title">GitHub</div>
-      <div class="m-desc">Код в твой репозиторий</div>
+      <div class="m-title">Через GitHub</div>
+      <div class="m-desc">Код → репозиторий → Pages</div>
     </div>
-    <div class="method-card method-card--premium" id="method-premium" data-action="select-method" data-method="premium">
-      <div class="m-icon m-icon--svg" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 3l2.39 5.42L20 9.27l-4.5 4.08L16.78 21 12 17.77 7.22 21 8.5 13.35 4 9.27l5.61-.85L12 3z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg></div>
-      <div class="m-title">Премиум</div>
-      <div class="m-desc" id="method-premium-desc">Подписка</div>
-    </div>
+  </div>
+  <div class="upload-methods-more">
+    <button type="button" class="upload-more-btn" id="upload-premium-more" data-action="upload-show-premium" aria-label="О премиуме">Премиум <span class="upload-more-btn-sub" id="method-premium-desc">скоро</span></button>
   </div>
 
   <div class="upload-active-panel" id="upload-active-panel">
@@ -301,12 +298,10 @@
   <div class="form-section" id="form-github">
     <div class="field-group" id="github-connect-row">
       <div class="field-label">Аккаунт GitHub</div>
-      <button type="button" class="github-btn" id="btn-github-primary" data-action="auth-github">
-        <span class="github-btn-icon" aria-hidden="true"><svg class="sg-icon sg-icon--sm" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0-2-1.5-3-1.5-3-1.5-.3 1.15-.3 2.35 0 3.5a5.4 5.4 0 0 0-1 3.5c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M9 18c-4.51 2-5-2-7-2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span> <span id="btn-github-primary-label">Войти через GitHub</span>
+      <button type="button" class="sg-btn sg-btn--primary sg-btn--screen-cta github-connect-btn" id="btn-github-primary" data-action="auth-github">
+        <span class="github-btn-icon" aria-hidden="true"><svg class="sg-icon sg-icon--sm" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0-2-1.5-3-1.5-3-1.5-.3 1.15-.3 2.35 0 3.5a5.4 5.4 0 0 0-1 3.5c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M9 18c-4.51 2-5-2-7-2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span id="btn-github-primary-label">Войти через GitHub</span>
       </button>
-      <button type="button" class="profile-text-btn github-reauth-btn" id="btn-github-unlink" data-action="github-unlink" hidden>
-        Отвязать GitHub
-      </button>
+      <button type="button" class="sg-btn sg-btn--ghost github-unlink-btn" id="btn-github-unlink" data-action="github-unlink" hidden>Отвязать GitHub</button>
       <div class="field-hint-center" id="github-connect-hint">Привяжи GitHub — появится форма ниже.</div>
     </div>
 
@@ -321,16 +316,16 @@
               <span class="upload-steps-dot upload-steps-dot--2" id="ghwz-dot-2"></span>
             </div>
           </div>
-          <h2 class="github-publish-heading" id="github-publish-heading">Код и репозиторий</h2>
-          <p class="github-publish-sub">Публичный репозиторий на GitHub Pages — вкладка «GitHub» уже выбрана сверху.</p>
+          <h2 class="github-publish-heading" id="github-publish-heading">Код и карточка</h2>
+          <p class="github-publish-sub">Публичный репозиторий и GitHub Pages.</p>
         </div>
         <div class="github-publish-body">
           <div class="github-publish-panel" id="ghwz-panel-1" data-ghwz-step="1">
             <div class="upload-stack-section">
               <span class="upload-stack-label">Код</span>
-              <div class="github-input-mode">
-                <button type="button" class="profile-text-btn github-mode-btn selected" data-action="github-upload-set-mode" data-mode="paste">Вставить HTML</button>
-                <button type="button" class="profile-text-btn github-mode-btn" data-action="github-upload-set-mode" data-mode="files">Файлы</button>
+              <div class="github-input-mode" role="group" aria-label="Способ загрузки кода">
+                <button type="button" class="sg-btn sg-btn--secondary github-mode-btn selected" data-action="github-upload-set-mode" data-mode="paste">HTML</button>
+                <button type="button" class="sg-btn sg-btn--secondary github-mode-btn" data-action="github-upload-set-mode" data-mode="files">Файлы</button>
               </div>
               <div id="github-upload-paste-panel">
                 <div class="field-group">
@@ -353,7 +348,7 @@
               <span class="upload-stack-label">Карточка в ленте</span>
               <div class="field-group">
                 <div class="field-label">Название</div>
-                <input class="field-input" type="text" placeholder="Моя игра" id="ghCodeWizardTitle" maxlength="40">
+                <input class="field-input" type="text" placeholder="Название в ленте" id="ghCodeWizardTitle" maxlength="40">
               </div>
               <div class="field-group">
                 <div class="field-label">Описание</div>
@@ -365,7 +360,7 @@
               </div>
             </div>
             <div class="github-publish-actions github-publish-actions--single">
-              <button type="button" class="submit-btn" data-action="github-wizard-publish-repo">Создать репозиторий на GitHub</button>
+              <button type="button" class="sg-btn sg-btn--primary sg-btn--screen-cta" data-action="github-wizard-publish-repo">Создать репозиторий</button>
             </div>
           </div>
           <div class="github-publish-panel" id="ghwz-panel-2" data-ghwz-step="2" hidden>
@@ -378,12 +373,12 @@
                 <input type="file" accept="image/*" id="ghCodeWizardCoverFile">
                 <span>Файл</span>
               </label>
-              <div class="image-preview" id="ghCodeWizardCoverPreview">Обложка не выбрана</div>
+              <div class="image-preview" id="ghCodeWizardCoverPreview">Нет обложки</div>
             </div>
             <div class="upload-review-box upload-review-box--compact" id="ghCodeWizardReview"></div>
             <div class="github-publish-actions">
-              <button type="button" class="profile-text-btn" data-action="github-wizard-step-back">← Изменить код</button>
-              <button type="button" class="submit-btn" data-action="github-wizard-submit-moderation">Отправить на модерацию</button>
+              <button type="button" class="sg-btn sg-btn--secondary" data-action="github-wizard-step-back">Назад</button>
+              <button type="button" class="sg-btn sg-btn--primary sg-btn--screen-cta" data-action="github-wizard-submit-moderation">На модерацию</button>
             </div>
           </div>
         </div>
@@ -391,9 +386,7 @@
     </div>
 
     <div id="code-branch-connect" class="code-upload-branch">
-      <p class="upload-wizard-hint">
-        Нажми <strong>«Войти через GitHub»</strong> — после привязки здесь же появятся поле для HTML или выбор файлов.
-      </p>
+      <p class="upload-wizard-hint">Войди через GitHub — откроется форма для кода и карточки в ленте.</p>
     </div>
 
     <div id="code-branch-github" class="code-upload-branch" hidden></div>
@@ -403,36 +396,21 @@
   <div class="form-section" id="form-premium">
     <div class="upload-premium-page">
       <div class="upload-premium-hero">
-        <div class="upload-premium-stub-icon" aria-hidden="true">✦</div>
-        <h2 class="upload-premium-stub-title">SmolGame Премиум</h2>
-        <p class="upload-premium-lead">Для команд с <strong>коммерческой тайной</strong>: исходный код игры хранится на <strong>защищённой стороне SmolGame</strong>, а не в открытом репозитории GitHub. Плюс ранние функции платформы и приоритет. Раздел в <strong>активной разработке</strong>.</p>
+        <h2 class="upload-premium-stub-title">Премиум</h2>
+        <p class="upload-premium-lead">Закрытое хранение кода на стороне SmolGame вместо публичного репозитория — для команд, где важна тайна. Сейчас в разработке; игры в ленту по-прежнему через <strong>ссылку</strong> или <strong>GitHub</strong>.</p>
       </div>
 
       <div class="upload-premium-block">
-        <h3 class="upload-premium-h3">Чем отличается от GitHub и «Ссылка»</h3>
-        <p class="upload-premium-p">Во вкладках <strong>Ссылка</strong> и <strong>GitHub</strong> игра живёт по публичному URL: код обычно лежит в открытом репозитории или на стороннем хостинге — любой может его скачать и изучить. В <strong>Премиуме</strong> планируется сценарий, когда билд или исходники лежат на <strong>закрытой инфраструктуре SmolGame</strong>: доступ только у сервиса и у тебя как автора, без публичного репозитория.</p>
-      </div>
-
-      <div class="upload-premium-block">
-        <h3 class="upload-premium-h3">Кому это нужно</h3>
-        <ul class="upload-premium-list">
-          <li>Коммерческие проекты и ноу-хау, которые нельзя выкладывать в открытый Git.</li>
-          <li>Кто хочет хостинг игры без обязательной публикации кода в <code>github.io</code>.</li>
-          <li>Ранний доступ к экспериментальным возможностям мини-аппа и поддержка продукта.</li>
-        </ul>
-      </div>
-
-      <div class="upload-premium-block upload-premium-block--muted">
-        <h3 class="upload-premium-h3">Статус</h3>
-        <p class="upload-premium-p">Приватное хранение и полный премиум-пайплайн ещё подключаются. Сейчас игры в ленту можно добавить через <strong>Ссылка</strong> или <strong>GitHub</strong> — так работает у всех; премиум откроет отдельный путь, когда будет готов.</p>
+        <h3 class="upload-premium-h3">Зачем</h3>
+        <p class="upload-premium-p">По ссылке и через GitHub игра обычно доступна всем с интернета. Премиум — отдельный путь, когда код не должен светиться в открытом Git.</p>
       </div>
 
       <div id="premium-access-active" class="upload-premium-callout upload-premium-callout--ok" hidden>
-        <p class="upload-premium-p"><strong>У тебя включён ранний доступ</strong> (аккаунт в списке на сервере). Здесь появятся шаги загрузки в закрытое хранилище, как только подключим сценарий на бэкенде.</p>
+        <p class="upload-premium-p">Ранний доступ включён. Шаги загрузки в закрытое хранилище появятся здесь, когда подключим сценарий.</p>
       </div>
 
       <div id="premium-access-waitlist" class="upload-premium-callout">
-        <p class="upload-premium-p"><strong>Ранний список.</strong> Чтобы попасть в allowlist премиум-тестеров, напиши владельцу бота / проекта — в Worker добавляется твой Telegram numeric id в <code>PREMIUM_TG_IDS</code>. Пока список закрыт, всё равно можно пользоваться <strong>Ссылка</strong> и <strong>GitHub</strong> без ограничений.</p>
+        <p class="upload-premium-p">Список тестеров закрытый — напиши владельцу бота. Пока можно пользоваться <strong>ссылкой</strong> и <strong>GitHub</strong> без ограничений.</p>
       </div>
     </div>
   </div>
@@ -440,7 +418,7 @@
   <!-- Форма: ссылка — одна прокручиваемая карточка -->
   <div class="form-section visible" id="form-url">
     <div class="upload-url-card" id="upload-url-card">
-      <p class="upload-panel-lead">Публичный HTTPS URL игры — затем данные для карточки в ленте.</p>
+      <p class="upload-panel-lead">Ссылка на игру и как она выглядит в ленте.</p>
       <div class="field-group">
         <div class="field-label">Ссылка на игру</div>
         <input class="field-input" type="url" placeholder="https://username.github.io/game" id="urlInput">
@@ -449,7 +427,7 @@
       <div class="upload-url-divider" aria-hidden="true"></div>
       <div class="field-group">
         <div class="field-label">Название</div>
-        <input class="field-input" type="text" placeholder="Моя крутая игра" id="gameNameInput2" maxlength="40">
+        <input class="field-input" type="text" placeholder="Название в ленте" id="gameNameInput2" maxlength="40">
       </div>
       <div class="field-group">
         <div class="field-label">Описание</div>
@@ -461,21 +439,22 @@
       </div>
       <div class="field-group">
         <div class="field-label">Обложка (необязательно)</div>
-        <input class="field-input" type="url" id="coverUrlInput" placeholder="https://… jpg/png">
+        <p class="field-hint field-hint--tight">Ссылка или файл — что удобнее.</p>
+        <input class="field-input" type="url" id="coverUrlInput" placeholder="https://… картинка">
         <label class="image-upload">
           <input type="file" accept="image/*" id="gameImageInput">
-          <span>Выбрать изображение</span>
+          <span>Файл с устройства</span>
         </label>
-        <div class="image-preview" id="imagePreview">Обложка не выбрана</div>
+        <div class="image-preview" id="imagePreview">Нет обложки</div>
       </div>
       <div class="upload-url-submit-wrap">
-        <button type="button" class="submit-btn submit-btn--wide" data-action="submit-game" data-method="url">Отправить на модерацию</button>
+        <button type="button" class="sg-btn sg-btn--primary sg-btn--screen-cta submit-btn--wide" data-action="submit-game" data-method="url">На модерацию</button>
       </div>
     </div>
   </div>
 
   <div id="upload-guide-block" class="upload-guide-block">
-    <p class="help-intro">Инструкции ниже — форма заполнения всегда над этим блоком (вкладки Ссылка / GitHub / Премиум).</p>
+    <p class="help-intro">Пошаговая памятка — форма выше.</p>
 
     <details class="help-acc help-acc--step1">
       <summary><span class="help-acc-num">1</span> Создай игру с ИИ</summary>
@@ -510,23 +489,15 @@
       </div>
     </details>
 
-    <details class="help-acc help-acc--step4">
-      <summary><span class="help-acc-num">4</span> Заполни форму над этим блоком</summary>
-      <div class="help-acc-body">
-        <p><strong>Ссылка</strong> — URL игры уже на хостинге (например GitHub Pages). <strong>GitHub</strong> — привязка аккаунта, код или файлы уходят в твой репозиторий и Pages; каждый Telegram-аккаунт подтверждает доступ в GitHub отдельно. <strong>Премиум</strong> — для аккаунтов из списка на сервере: цель — хранить код на закрытой стороне SmolGame, а не в открытом репозитории (когда сценарий будет включён в приложении).</p>
-      </div>
-    </details>
-
     <p class="upload-faq-title">FAQ</p>
     <details class="help-faq-item"><summary>Это правда бесплатно?</summary><div class="help-acc-body"><p>Да. У Claude и ChatGPT есть бесплатные режимы. GitHub Pages бесплатен.</p></div></details>
     <details class="help-faq-item"><summary>Нужно уметь программировать?</summary><div class="help-acc-body"><p>Нет. Ты описываешь желаемое ИИ — он пишет код.</p></div></details>
     <details class="help-faq-item"><summary>Игра не работает — что делать?</summary><div class="help-acc-body"><p>Скопируй текст ошибки из браузера и отправь ИИ: «Вот ошибка, исправь код».</p></div></details>
     <details class="help-faq-item"><summary>Какие игры подходят?</summary><div class="help-acc-body"><p>Браузерные на HTML, один файл <code>index.html</code>, без серверной части.</p></div></details>
     <details class="help-faq-item"><summary>Можно обновить игру после публикации?</summary><div class="help-acc-body"><p>Да. Измени <code>index.html</code> в репозитории — через пару минут обновится по той же ссылке.</p></div></details>
-    <details class="help-faq-item"><summary>На телефоне перетаскивание в игре «залипает»</summary><div class="help-acc-body"><p>Частая причина: <code>touchstart</code> на маленьком canvas, а <code>touchmove</code>/<code>touchend</code> только на <code>document</code>. В iOS и в iframe жест рвётся. Делай через <strong>Pointer Events</strong> и <code>setPointerCapture</code> на элементе, с которого начали драг, или вешай move/end на <code>window</code> с <code>capture: true</code> и обрабатывай <code>touchcancel</code>.</p></div></details>
     <details class="help-faq-item"><summary>Почему GitHub?</summary><div class="help-acc-body"><p>Простой и надёжный бесплатный вариант: без карты и сложной настройки.</p></div></details>
 
-    <button type="button" class="submit-btn upload-scroll-to-form" data-action="upload-scroll-to-form">К полю ввода</button>
+    <button type="button" class="sg-btn sg-btn--secondary upload-scroll-to-form" data-action="upload-scroll-to-form">К форме</button>
   </div>
 
   </div><!-- /.upload-active-panel -->
@@ -709,12 +680,12 @@
 <script src="js/state.js?v=20260444"></script>
 <script src="js/api.js?v=20260446"></script>
 <script src="js/onboarding.js?v=20260439"></script>
-<script src="js/help-screens.js?v=20260452"></script>
+<script src="js/help-screens.js?v=20260454"></script>
 <script src="js/feed.js?v=20260453"></script>
 <script src="js/feed-nav-tip.js?v=20260453"></script>
 <script src="js/feed-onboarding.js?v=20260453"></script>
 <script src="js/actions.js?v=20260444"></script>
-<script src="js/upload.js?v=20260452"></script>
+<script src="js/upload.js?v=20260454"></script>
 <script src="js/genres.js?v=20260439"></script>
 <script src="js/search.js?v=20260441"></script>
 <script src="js/liked-games.js?v=20260441"></script>
@@ -723,7 +694,7 @@
 <script src="js/game-editor.js?v=20260439"></script>
 <script src="js/game-detail.js?v=20260453"></script>
 <script src="js/screens.js?v=20260444"></script>
-<script src="js/events.js?v=20260453"></script>
+<script src="js/events.js?v=20260454"></script>
 <script src="js/overlay-pull-close.js?v=20260439"></script>
 <script src="js/main.js?v=20260439"></script>
 </body>

@@ -318,10 +318,9 @@ html,body,#root,#feed,.slide{margin:0;padding:0;border:0;width:100%;height:100%;
   margin-top:18px;
   flex-wrap:wrap;
 }
-.github-publish-actions .submit-btn,
-.github-publish-actions .profile-text-btn{flex:1;min-width:120px;}
+.github-publish-actions .sg-btn{flex:1;min-width:120px;}
 .github-publish-actions--single{margin-top:20px;}
-.github-publish-actions--single .submit-btn{
+.github-publish-actions--single .sg-btn{
   flex:1 1 100%;
   width:100%;
   min-height:48px;
@@ -2510,6 +2509,69 @@ body.game-detail-open .app-tab-chrome{opacity:0;pointer-events:none;}
   grid-template-columns:repeat(auto-fill,minmax(108px,1fr));
   gap:10px;
 }
+.upload-methods--dual{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:12px;
+}
+.upload-methods-more{
+  display:flex;
+  justify-content:center;
+  margin:6px 0 4px;
+}
+.upload-more-btn{
+  appearance:none;
+  -webkit-appearance:none;
+  margin:0;
+  padding:8px 14px;
+  border:none;
+  background:transparent;
+  font-family:'Space Grotesk',sans-serif;
+  font-size:13px;
+  font-weight:600;
+  color:var(--muted);
+  cursor:pointer;
+  border-radius:999px;
+  transition:color 0.18s ease, background 0.18s ease;
+}
+.upload-more-btn:active{
+  color:rgba(255,255,255,0.88);
+  background:rgba(255,255,255,0.06);
+}
+.upload-more-btn-sub{
+  font-weight:500;
+  opacity:0.75;
+  margin-left:4px;
+}
+.upload-more-btn--locked .upload-more-btn-sub{color:rgba(240,200,106,0.85);}
+
+.github-connect-btn{
+  width:100%;
+  justify-content:center;
+  display:inline-flex;
+  align-items:center;
+  gap:10px;
+}
+.github-unlink-btn{
+  width:100%;
+  margin-top:10px;
+}
+.github-input-mode .github-mode-btn{
+  flex:1;
+  min-width:0;
+}
+.github-input-mode .github-mode-btn.selected{
+  border-color:rgba(var(--accent-rgb),0.5);
+  background:rgba(255,255,255,0.08);
+  color:#fff;
+}
+
+.field-hint--tight{
+  margin-top:0;
+  margin-bottom:8px;
+}
+
+.sg-btn.submit-btn--wide{width:100%;}
 
 .method-card{
   background:var(--surface);
