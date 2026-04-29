@@ -1451,7 +1451,8 @@ body.feed-onboarding-demo #slide-1{z-index:4;}
 body.feed-onboarding-ui #bottom-nav{
   pointer-events:auto !important;
   opacity:1;
-  z-index:650;
+  /* Выше #feed-nav-tip-overlay (480) и welcome-root (510), иначе оверлей перехватывает тапы по таббару */
+  z-index:900;
 }
 body.feed-onboarding-ui #side-actions,
 body.feed-onboarding-ui #game-info,
@@ -2084,7 +2085,8 @@ body.game-detail-open .app-tab-chrome{opacity:0;pointer-events:none;}
 #bottom-nav{
   position:fixed;
   bottom:0;left:0;right:0;
-  z-index:620;
+  /* Выше модалок ленты (feed-nav-tip 480, feed-onboarding 510), DOM ниже — без этого клики «теряются» */
+  z-index:900;
   height:calc(var(--safe-bottom) + var(--nav-h));
   background:rgba(0,0,0,0.78);
   border-top:1px solid var(--border);
