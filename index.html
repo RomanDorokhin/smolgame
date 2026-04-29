@@ -14,7 +14,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <!-- ?v= сбрасывает кэш WebView Telegram после правок JS/CSS (меняй при каждом релизе фронта). -->
-<link rel="stylesheet" href="styles.css?v=20260455">
+<link rel="stylesheet" href="styles.css?v=20260456">
 </head>
 <body>
 
@@ -38,7 +38,7 @@
 </div>
 
 <div id="tg-only-wall" class="tg-only-wall" hidden>
-  <div class="tg-only-card">
+  <div class="tg-only-card tg-glass">
     <div class="sg-brand sg-brand--card" style="margin-bottom:8px">
       <div class="sg-brand-mark sg-brand-mark--sm" aria-hidden="true">
         <svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect x="13" y="13" width="22" height="22" rx="8" fill="none" stroke="url(#sgLogoGradShared)" stroke-width="2.25"/><circle cx="24" cy="24" r="4.5" fill="url(#sgLogoGradShared)" opacity=".95"/></svg>
@@ -126,7 +126,7 @@
   </div>
 </div>
 
-<div id="feed-reviews-drawer" class="feed-reviews-drawer" hidden aria-hidden="true">
+<div id="feed-reviews-drawer" class="feed-reviews-drawer tg-glass tg-glass--sheet" hidden aria-hidden="true">
   <div class="feed-reviews-drawer-handle" aria-hidden="true"></div>
   <div class="feed-reviews-drawer-head">
     <span class="feed-reviews-drawer-title">Отзывы</span>
@@ -174,7 +174,7 @@
 
 <!-- Подсказка по ленте (первый вход) -->
 <div id="feed-nav-tip-overlay" class="feed-nav-tip-overlay">
-  <div class="feed-nav-tip-card">
+  <div class="feed-nav-tip-card tg-glass">
     <button type="button" class="feed-nav-tip-close sg-btn sg-btn--ghost sg-btn--icon" data-action="close-feed-nav-tip" aria-label="Закрыть">
       <svg class="sg-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="1.85" stroke-linecap="round"/></svg>
     </button>
@@ -201,7 +201,7 @@
       <button type="button" class="sg-btn sg-btn--primary sg-btn--screen-cta" data-action="ack-feed-nav-tip">Понятно</button>
     </div>
   </div>
-  <div class="feed-nav-tip-card feed-nav-tip-card--detail">
+  <div class="feed-nav-tip-card feed-nav-tip-card--detail tg-glass">
     <button type="button" class="feed-nav-tip-close sg-btn sg-btn--ghost sg-btn--icon" data-action="close-feed-nav-tip" aria-label="Закрыть">
       <svg class="sg-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="1.85" stroke-linecap="round"/></svg>
     </button>
@@ -223,7 +223,7 @@
 <!-- Первый запуск: welcome + демо свайпа по ленте (см. js/feed-onboarding.js) -->
 <div id="feed-onboarding-root" class="feed-onboarding-root" hidden aria-hidden="true">
   <div id="feed-onboarding-welcome" class="feed-onboarding-welcome">
-    <div class="feed-onboarding-welcome-inner">
+    <div class="feed-onboarding-welcome-inner tg-glass">
       <div class="feed-onboarding-brand sg-brand sg-brand--splash">
         <div class="sg-brand-mark" aria-hidden="true">
           <svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect x="13" y="13" width="22" height="22" rx="8" fill="none" stroke="url(#sgLogoGradShared)" stroke-width="2.25"/><circle cx="24" cy="24" r="4.5" fill="url(#sgLogoGradShared)" opacity=".95"/></svg>
@@ -289,7 +289,7 @@
 
   <div class="upload-active-panel" id="upload-active-panel">
 
-  <div id="upload-welcome-block" class="upload-welcome-block" hidden>
+  <div id="upload-welcome-block" class="upload-welcome-block tg-glass" hidden>
     <div class="upload-welcome-card">
       <div class="onboarding-body" id="welcomeBody"></div>
       <div class="onboarding-footer welcome-footer" id="welcomeFooter"></div>
@@ -662,7 +662,7 @@
 
 <!-- ══ ЭКРАН: РЕГИСТРАЦИЯ ══ -->
 <div id="onboarding-screen">
-  <div class="onboarding-card">
+  <div class="onboarding-card tg-glass">
     <div class="onboarding-body" id="onboardingBody"></div>
     <div class="onboarding-footer" id="onboardingFooter"></div>
   </div>

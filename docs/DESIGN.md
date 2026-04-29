@@ -71,6 +71,10 @@
 Единые радиусы `--btn-radius-md/lg`, отступы `--btn-pad-x/y`.  
 Активное состояние: лёгкий `scale` + смена фона (см. `.sg-btn:active`).
 
+### Панели в стиле Telegram (стекло)
+
+Токены `--tg-glass-*` в `:root` и классы **`.tg-glass`**, **`.tg-glass--sheet`** (нижний лист чуть плотнее), **`.tg-glass--muted`** (без внешней тени). Используются для: `#feed-reviews-drawer`, карточек `#feed-nav-tip-overlay`, welcome ленты (`.feed-onboarding-welcome-inner`), welcome загрузки, `tg-only-card`, `onboarding-card` — один blur/граница, чтобы модалки не «бились» друг с другом.
+
 ### 5.2 Бренд `.sg-brand`, `.sg-brand-mark`
 
 Марка — геометрия в SVG (без текста внутри SVG), чтобы не зависеть от шрифта внутри вектора.  
