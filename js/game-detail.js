@@ -41,12 +41,13 @@ async function openFeedReviewsDrawer() {
   drawer.hidden = false;
   drawer.setAttribute('aria-hidden', 'false');
   listEl.innerHTML = '<p class="feed-reviews-loading">Загрузка…</p>';
-  const reviews = await fetchGameReviews(g.id);
-  document.getElementById('feedReviewCount')?.replaceChildren(document.createTextNode(String(reviews.length)));
-  if (reviews.length === 0) {
+  const list = await fetchGameReviews(g.id);
+  const chipNum = document.getElementById('feedReviewCount');
+  if (chipNum) chipNum.textContent = String(list.length);
+  if (list.length === 0) {
     listEl.innerHTML = '<p class="feed-reviews-empty">Пока без отзывов — будь первым.</p>';
   } else {
-    listEl.innerHTML = reviews
+    listEl.innerHTML = list
       .map(
         r => `
       <div class="feed-review-item">

@@ -14,17 +14,25 @@
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <!-- ?v= сбрасывает кэш WebView Telegram после правок JS/CSS (меняй при каждом релизе фронта). -->
-<link rel="stylesheet" href="styles.css?v=20260452">
+<link rel="stylesheet" href="styles.css?v=20260453">
 </head>
 <body>
+
+<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" width="0" height="0" style="position:absolute;overflow:hidden">
+  <defs>
+    <linearGradient id="sgLogoGradShared" x1="10" y1="14" x2="38" y2="38" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#b4c7e0"/><stop offset="100%" stop-color="#7d90a8"/>
+    </linearGradient>
+  </defs>
+</svg>
 
 <div id="app-boot-splash" class="app-boot-splash" hidden aria-live="polite" aria-busy="true">
   <div class="app-boot-genre-drift" id="app-boot-genre-drift" aria-hidden="true"></div>
   <div class="sg-brand sg-brand--splash">
     <div class="sg-brand-mark" aria-hidden="true">
-      <svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs><linearGradient id="sgLogoGradSplash" x1="10" y1="14" x2="38" y2="38" gradientUnits="userSpaceOnUse"><stop offset="0%" stop-color="#b4c7e0"/><stop offset="100%" stop-color="#7d90a8"/></linearGradient></defs><rect x="13" y="13" width="22" height="22" rx="8" fill="none" stroke="url(#sgLogoGradSplash)" stroke-width="2.25"/><circle cx="24" cy="24" r="4.5" fill="url(#sgLogoGradSplash)" opacity=".95"/></svg>
+      <svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect x="13" y="13" width="22" height="22" rx="8" fill="none" stroke="url(#sgLogoGradShared)" stroke-width="2.25"/><circle cx="24" cy="24" r="4.5" fill="url(#sgLogoGradShared)" opacity=".95"/></svg>
     </div>
-    <div class="sg-brand-wordmark"><span class="sg-brand-word-muted">smol</span><span class="sg-brand-word-accent">game</span></div>
+    <div class="sg-brand-wordmark"><span class="sg-brand-word-muted">Smol</span><span class="sg-brand-word-accent">Game</span></div>
   </div>
   <div class="app-boot-sub">Загрузка…</div>
 </div>
@@ -33,9 +41,9 @@
   <div class="tg-only-card">
     <div class="sg-brand sg-brand--card" style="margin-bottom:8px">
       <div class="sg-brand-mark sg-brand-mark--sm" aria-hidden="true">
-        <svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs><linearGradient id="sgLogoGradCard" x1="10" y1="14" x2="38" y2="38" gradientUnits="userSpaceOnUse"><stop offset="0%" stop-color="#b4c7e0"/><stop offset="100%" stop-color="#7d90a8"/></linearGradient></defs><rect x="13" y="13" width="22" height="22" rx="8" fill="none" stroke="url(#sgLogoGradCard)" stroke-width="2.25"/><circle cx="24" cy="24" r="4.5" fill="url(#sgLogoGradCard)" opacity=".95"/></svg>
+        <svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect x="13" y="13" width="22" height="22" rx="8" fill="none" stroke="url(#sgLogoGradShared)" stroke-width="2.25"/><circle cx="24" cy="24" r="4.5" fill="url(#sgLogoGradShared)" opacity=".95"/></svg>
       </div>
-      <div class="sg-brand-wordmark sg-brand-wordmark--compact"><span class="sg-brand-word-muted">smol</span><span class="sg-brand-word-accent">game</span></div>
+      <div class="sg-brand-wordmark sg-brand-wordmark--compact"><span class="sg-brand-word-muted">Smol</span><span class="sg-brand-word-accent">Game</span></div>
     </div>
     <p class="tg-only-title">Открой в Telegram</p>
     <p class="tg-only-text">Открой из Telegram: меню бота → мини-приложение.</p>
@@ -45,11 +53,9 @@
 <!-- Шапка-якорь: где я (лентa / игры) -->
 <div id="app-tab-chrome" class="app-tab-chrome" aria-hidden="true">
   <div class="app-tab-chrome-mark" aria-hidden="true">
-    <svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="sgChromeGrad" x1="10" y1="14" x2="38" y2="38" gradientUnits="userSpaceOnUse"><stop offset="0%" stop-color="#b4c7e0"/><stop offset="100%" stop-color="#7d90a8"/></linearGradient></defs><rect x="13" y="13" width="22" height="22" rx="8" fill="none" stroke="url(#sgChromeGrad)" stroke-width="2.25"/><circle cx="24" cy="24" r="4.5" fill="url(#sgChromeGrad)" opacity=".95"/></svg>
+    <svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><rect x="13" y="13" width="22" height="22" rx="8" fill="none" stroke="url(#sgLogoGradShared)" stroke-width="2.25"/><circle cx="24" cy="24" r="4.5" fill="url(#sgLogoGradShared)" opacity=".95"/></svg>
   </div>
   <div class="app-tab-chrome-text">
-    <span class="app-tab-chrome-brand">smolgame</span>
-    <span class="app-tab-chrome-sep" aria-hidden="true">·</span>
     <span class="app-tab-chrome-label" id="app-tab-chrome-label">Лента</span>
   </div>
 </div>
@@ -60,15 +66,16 @@
 <div id="side-actions">
   <div class="action-btn" data-action="toggle-like" title="Лайк и в избранное">
     <div class="action-icon" id="likeIcon"><svg class="sg-icon sg-icon--heart" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-    <div class="action-label" id="likeCount">0</div>
+    <div class="action-label action-label--stack"><span class="action-label-num" id="likeCount">0</span><span class="action-label-caption">лайков</span></div>
   </div>
   <div class="action-btn" data-action="toggle-feed-reviews" title="Отзывы">
     <div class="action-icon" aria-hidden="true"><svg class="sg-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M7.5 9.75h9M7.5 13.5h5.25M5.25 4.5h13.5a2.25 2.25 0 012.25 2.25v9a2.25 2.25 0 01-2.25 2.25H12l-4.5 3v-3H5.25A2.25 2.25 0 013 15.75v-9A2.25 2.25 0 015.25 4.5z" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-    <div class="action-label" id="feedReviewCount">0</div>
+    <div class="action-label action-label--stack"><span class="action-label-num" id="feedReviewCount">0</span><span class="action-label-caption">отзывов</span></div>
   </div>
-  <div class="action-btn" data-action="share-game">
-    <div class="action-icon"><svg class="sg-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M10.5 13.5L21 3M21 3h-6.75M21 3v6.75" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"/><path d="M18.75 14.25v6.75a1.5 1.5 0 01-1.5 1.5H6.75a1.5 1.5 0 01-1.5-1.5V9.75a1.5 1.5 0 011.5-1.5h6.75" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-    <div class="action-label" id="playsCount">0</div>
+  <div class="action-btn action-btn--plays" title="Запуски в ленте">
+    <div class="action-icon" aria-hidden="true"><svg class="sg-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2.25 12s3.75-6 9.75-6 9.75 6 9.75 6-3.75 6-9.75 6S2.25 12 2.25 12z" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="12" r="2.25" stroke="currentColor" stroke-width="1.65"/></svg></div>
+    <div class="action-label action-label--stack"><span class="action-label-num" id="playsCount">0</span><span class="action-label-caption">запусков</span></div>
+    <button type="button" class="action-share-link" data-action="share-game">Поделиться</button>
   </div>
   <div class="action-btn" data-action="report-game">
     <div class="action-icon"><svg class="sg-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M6.75 3.75v16.5a1.5 1.5 0 001.5 1.5h7.5a1.5 1.5 0 001.5-1.5v-12l-6-6h-4.5a1.5 1.5 0 00-1.5 1.5z" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"/><path d="M13.5 3v6h6M12 18v-6M9 18v-3" stroke="currentColor" stroke-width="1.65" stroke-linecap="round"/></svg></div>
@@ -84,9 +91,9 @@
   <div class="feed-transition-inner">
     <div class="sg-brand sg-brand--transition feed-transition-logo">
       <div class="sg-brand-mark sg-brand-mark--xs sg-brand-mark--spin" aria-hidden="true">
-        <svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs><linearGradient id="sgLogoGradTrans" x1="10" y1="14" x2="38" y2="38" gradientUnits="userSpaceOnUse"><stop offset="0%" stop-color="#b4c7e0"/><stop offset="100%" stop-color="#7d90a8"/></linearGradient></defs><rect x="13" y="13" width="22" height="22" rx="8" fill="none" stroke="url(#sgLogoGradTrans)" stroke-width="2.25"/><circle cx="24" cy="24" r="4.5" fill="url(#sgLogoGradTrans)" opacity=".95"/></svg>
+        <svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect x="13" y="13" width="22" height="22" rx="8" fill="none" stroke="url(#sgLogoGradShared)" stroke-width="2.25"/><circle cx="24" cy="24" r="4.5" fill="url(#sgLogoGradShared)" opacity=".95"/></svg>
       </div>
-      <div class="sg-brand-wordmark sg-brand-wordmark--transition"><span class="sg-brand-word-muted">smol</span><span class="sg-brand-word-accent">game</span></div>
+      <div class="sg-brand-wordmark sg-brand-wordmark--transition"><span class="sg-brand-word-muted">Smol</span><span class="sg-brand-word-accent">Game</span></div>
     </div>
   </div>
 </div>
@@ -97,13 +104,13 @@
     <div class="sg-empty-state-icon" aria-hidden="true"><svg class="sg-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M7.5 8.25h9a3 3 0 013 3v7.5a1.5 1.5 0 01-1.5 1.5h-12A1.5 1.5 0 015 18.75v-7.5a3 3 0 013-3zM9 8.25V6a3 3 0 013-3h0a3 3 0 013 3v2.25" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="9.75" cy="13.5" r="0.9" fill="currentColor"/><circle cx="14.25" cy="13.5" r="0.9" fill="currentColor"/><path d="M9.75 17.25h4.5a2.25 2.25 0 002.045-1.31l.022-.047" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg></div>
     <div class="sg-empty-state-title">Пока без игр</div>
     <div class="sg-empty-state-sub">Загрузи свою — после модерации она появится здесь.</div>
-    <button type="button" class="empty-btn" data-action="switch-tab" data-tab="upload">Загрузить игру</button>
+    <button type="button" class="sg-btn sg-btn--primary sg-btn--screen-cta sg-empty-state-cta" data-action="switch-tab" data-tab="upload">Загрузить игру</button>
   </div>
   <div id="empty-state-error" class="sg-empty-state" hidden>
     <div class="sg-empty-state-icon sg-empty-state-icon--warn" aria-hidden="true"><svg class="sg-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 9v4M12 17h.01M10.3 3.6h3.4l8.1 14.2a1 1 0 01-.87 1.5H3.07a1 1 0 01-.87-1.5L10.3 3.6z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
     <div class="sg-empty-state-title">Лента не загрузилась</div>
     <div class="sg-empty-state-sub" id="empty-state-error-msg">Проверь интернет и попробуй снова.</div>
-    <button type="button" class="empty-btn" data-action="feed-retry">Повторить</button>
+    <button type="button" class="sg-btn sg-btn--primary sg-btn--screen-cta sg-empty-state-cta" data-action="feed-retry">Повторить</button>
   </div>
 </div>
 
@@ -128,7 +135,7 @@
   <div id="feedReviewsDrawerList" class="feed-reviews-drawer-list"></div>
   <div class="feed-reviews-drawer-compose">
     <textarea id="feedReviewInput" class="feed-reviews-input" maxlength="500" rows="2" placeholder="Коротко о игре…" data-input="feed-review"></textarea>
-    <button type="button" class="sg-btn sg-btn--primary feed-reviews-send" data-action="submit-feed-review">Отправить</button>
+    <button type="button" class="sg-btn sg-btn--primary sg-btn--screen-cta feed-reviews-send" data-action="submit-feed-review">Отправить</button>
   </div>
 </div>
 
@@ -145,7 +152,7 @@
       <h1 class="game-detail-title" id="gameDetailTitle">—</h1>
       <p class="game-detail-desc" id="gameDetailDesc"></p>
       <div class="game-detail-meta-grid" id="gameDetailMeta"></div>
-      <button type="button" class="game-detail-play sg-btn sg-btn--primary" id="gameDetailPlayBtn" data-action="game-detail-play">Играть</button>
+      <button type="button" class="game-detail-play sg-btn sg-btn--primary sg-btn--screen-cta" id="gameDetailPlayBtn" data-action="game-detail-play">Играть</button>
       <div class="game-detail-author-card" id="gameDetailAuthorCard"></div>
       <section class="game-detail-section">
         <h2 class="game-detail-section-title">Отзывы</h2>
@@ -169,10 +176,14 @@
     <button type="button" class="feed-nav-tip-close sg-btn sg-btn--ghost sg-btn--icon" data-action="close-feed-nav-tip" aria-label="Закрыть">
       <svg class="sg-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="1.85" stroke-linecap="round"/></svg>
     </button>
-    <p class="feed-nav-tip-title">Как листать ленту</p>
-    <p class="feed-nav-tip-lead">Свайп <strong>по экрану</strong> (не по кнопкам) — следующая или предыдущая игра. Кнопка <strong>«Играть»</strong> — полный экран.</p>
+    <p class="feed-nav-tip-title">Лента</p>
+    <p class="feed-nav-tip-lead">Свайп <strong>вверх / вниз</strong> по экрану — другая игра. <strong>«Играть»</strong> — полный экран; выход — <strong>«← Лента»</strong>.</p>
     <div class="feed-nav-tip-demo" aria-hidden="true">
-      <div class="feed-nav-tip-demo-hand">👆</div>
+      <div class="feed-nav-tip-demo-hand">
+        <svg class="feed-nav-tip-finger-svg" viewBox="0 0 48 56" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <path d="M18 8c-2.5 0-4.5 2-4.5 4.5v11L9 30c-1.2 1.2-1.2 3.2 0 4.4l1.1 1.1c.6.6 1.4.9 2.2.9h1.2v8c0 2.2 1.8 4 4 4h12c2.2 0 4-1.8 4-4V22.5c0-2.5-2-4.5-4.5-4.5-1.3 0-2.5.6-3.3 1.5-.8-.9-2-1.5-3.2-1.5-.9 0-1.7.3-2.4.8C22.3 17.3 20.3 16 18 16c-2.5 0-4.5 2-4.5 4.5V26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" opacity="0.92"/>
+        </svg>
+      </div>
       <div class="feed-nav-tip-demo-track feed-nav-tip-demo-track--vertical">
         <span class="feed-nav-tip-demo-label">свайп</span>
         <div class="feed-nav-tip-demo-line feed-nav-tip-demo-line--vertical">
@@ -182,15 +193,27 @@
         </div>
       </div>
     </div>
+    <p class="feed-nav-tip-help"><button type="button" class="feed-nav-tip-help-btn" data-action="open-feed-help-full">Подробная справка</button></p>
+    <div class="feed-nav-tip-actions">
+      <button type="button" class="sg-btn sg-btn--secondary feed-nav-tip-secondary" data-action="close-feed-nav-tip">Закрыть</button>
+      <button type="button" class="sg-btn sg-btn--primary sg-btn--screen-cta" data-action="ack-feed-nav-tip">Понятно</button>
+    </div>
+  </div>
+  <div class="feed-nav-tip-card feed-nav-tip-card--detail">
+    <button type="button" class="feed-nav-tip-close sg-btn sg-btn--ghost sg-btn--icon" data-action="close-feed-nav-tip" aria-label="Закрыть">
+      <svg class="sg-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="1.85" stroke-linecap="round"/></svg>
+    </button>
+    <p class="feed-nav-tip-title">Как листать ленту</p>
+    <p class="feed-nav-tip-lead">Свайп <strong>по экрану</strong> (не по кнопкам сбоку и снизу) — следующая или предыдущая игра.</p>
     <ul class="feed-nav-tip-list">
       <li><strong>Вверх</strong> — следующая игра</li>
       <li><strong>Вниз</strong> — предыдущая</li>
       <li><strong>«Играть»</strong> — только игра, без лайков и табов; <strong>«← Лента»</strong> — выход</li>
       <li>В режиме игры <strong>свайп ленты отключён</strong></li>
     </ul>
-    <div class="feed-nav-tip-actions">
-      <button type="button" class="sg-btn sg-btn--secondary feed-nav-tip-secondary" data-action="close-feed-nav-tip">Закрыть</button>
-      <button type="button" class="sg-btn sg-btn--primary" data-action="ack-feed-nav-tip">Понятно</button>
+    <div class="feed-nav-tip-actions feed-nav-tip-actions--stack">
+      <button type="button" class="sg-btn sg-btn--secondary feed-nav-tip-secondary" data-action="leave-feed-help-detail">Назад к кратко</button>
+      <button type="button" class="sg-btn sg-btn--primary sg-btn--screen-cta" data-action="ack-feed-nav-tip">Понятно</button>
     </div>
   </div>
 </div>
@@ -201,17 +224,15 @@
     <div class="feed-onboarding-welcome-inner">
       <div class="feed-onboarding-brand sg-brand sg-brand--splash">
         <div class="sg-brand-mark" aria-hidden="true">
-          <svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs><linearGradient id="sgLogoGradFeedOnb" x1="10" y1="14" x2="38" y2="38" gradientUnits="userSpaceOnUse"><stop offset="0%" stop-color="#b4c7e0"/><stop offset="100%" stop-color="#7d90a8"/></linearGradient></defs><rect x="13" y="13" width="22" height="22" rx="8" fill="none" stroke="url(#sgLogoGradFeedOnb)" stroke-width="2.25"/><circle cx="24" cy="24" r="4.5" fill="url(#sgLogoGradFeedOnb)" opacity=".95"/></svg>
+          <svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect x="13" y="13" width="22" height="22" rx="8" fill="none" stroke="url(#sgLogoGradShared)" stroke-width="2.25"/><circle cx="24" cy="24" r="4.5" fill="url(#sgLogoGradShared)" opacity=".95"/></svg>
         </div>
-        <div class="sg-brand-wordmark"><span class="sg-brand-word-muted">smol</span><span class="sg-brand-word-accent">game</span></div>
+        <div class="sg-brand-wordmark"><span class="sg-brand-word-muted">Smol</span><span class="sg-brand-word-accent">Game</span></div>
       </div>
-      <h1 class="feed-onboarding-welcome-title">Добро пожаловать в smolgame</h1>
+      <h1 class="feed-onboarding-welcome-title">Добро пожаловать в SmolGame</h1>
       <p class="feed-onboarding-welcome-sub">Бесконечная лента игр</p>
-      <button type="button" class="sg-btn sg-btn--primary feed-onboarding-welcome-cta" data-action="feed-onboarding-welcome-cta">Показать как это работает</button>
+      <button type="button" class="sg-btn sg-btn--primary sg-btn--screen-cta feed-onboarding-welcome-cta" data-action="feed-onboarding-welcome-cta">Начать</button>
     </div>
   </div>
-  <div id="feed-onboarding-dismiss" class="feed-onboarding-dismiss" hidden aria-hidden="true"></div>
-  <div id="feed-onboarding-hand" class="feed-onboarding-hand" hidden aria-hidden="true">👆</div>
 </div>
 
 <!-- ══ НИЖНИЙ НАВ ══ -->
@@ -226,7 +247,7 @@
   </div>
   <div class="nav-item nav-item--upload" id="nav-upload" data-action="switch-tab" data-tab="upload">
     <div class="nav-upload-fab" aria-hidden="true">
-      <svg class="nav-upload-fab-icon" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs><linearGradient id="sgNavFabGradUpload" x1="10" y1="14" x2="38" y2="38" gradientUnits="userSpaceOnUse"><stop offset="0%" stop-color="#b4c7e0"/><stop offset="100%" stop-color="#7d90a8"/></linearGradient></defs><rect x="13" y="13" width="22" height="22" rx="8" fill="none" stroke="url(#sgNavFabGradUpload)" stroke-width="2.25"/><circle cx="24" cy="24" r="4.5" fill="url(#sgNavFabGradUpload)" opacity=".95"/></svg>
+      <svg class="nav-upload-fab-icon" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect x="13" y="13" width="22" height="22" rx="8" fill="none" stroke="url(#sgLogoGradShared)" stroke-width="2.25"/><circle cx="24" cy="24" r="4.5" fill="url(#sgLogoGradShared)" opacity=".95"/></svg>
       <span class="nav-upload-fab-plus" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 5.25v13.5M5.25 12h13.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></span>
     </div>
     <div class="nav-label">Загрузить</div>
@@ -244,6 +265,7 @@
 <!-- ══ ЭКРАН: ЗАГРУЗИТЬ ИГРУ (гайд и FAQ только здесь — лента без отвлечений) ══ -->
 <div id="upload-screen">
   <div class="screen-header">
+    <button type="button" class="screen-back sg-btn sg-btn--ghost" data-action="close-upload" aria-label="Назад к ленте">← Лента</button>
     <div class="screen-title">Загрузить игру</div>
   </div>
 
@@ -513,7 +535,8 @@
 <!-- ══ ЭКРАН: ПРОФИЛЬ ══ -->
 <div id="profile-screen">
   <div class="profile-header">
-    <div style="display:flex;justify-content:flex-start;align-items:center;margin-bottom:16px;">
+    <div class="screen-header screen-header--in-screen">
+      <button type="button" class="screen-back sg-btn sg-btn--ghost" data-action="close-profile" aria-label="Назад к ленте">← Лента</button>
       <div class="screen-title">Профиль</div>
     </div>
     <div class="profile-top">
@@ -592,6 +615,7 @@
 <div id="games-library-screen">
   <div class="search-header">
     <div class="search-header-top">
+      <button type="button" class="screen-back sg-btn sg-btn--ghost" data-action="close-games-library" aria-label="Назад к ленте">← Лента</button>
       <div class="screen-title">Игры</div>
     </div>
     <p class="games-library-lead">Лайкнул и недавно открывал — в двух списках ниже.</p>
@@ -614,6 +638,7 @@
 <div id="search-screen">
   <div class="search-header">
     <div class="search-header-top">
+      <button type="button" class="screen-back sg-btn sg-btn--ghost" data-action="close-search" aria-label="Назад к ленте">← Лента</button>
       <div class="screen-title">Поиск</div>
     </div>
     <div class="search-bar">
@@ -632,7 +657,8 @@
 <!-- ══ ЭКРАН: АВТОР ══ -->
 <div id="author-screen">
   <div class="profile-header">
-    <div style="display:flex;justify-content:flex-start;align-items:center;margin-bottom:16px;">
+    <div class="screen-header screen-header--in-screen">
+      <button type="button" class="screen-back sg-btn sg-btn--ghost" data-action="close-author" aria-label="Назад">← Назад</button>
       <div class="screen-title">Разработчик</div>
     </div>
     <div class="profile-top">
@@ -676,7 +702,7 @@
 <!-- Порядок важен: config/utils/telegram → state → api → модули логики → события → main. -->
 <script src="js/config.js?v=20260439"></script>
 <script src="js/genre-icons.js?v=20260439"></script>
-<script src="js/utils.js?v=20260441"></script>
+<script src="js/utils.js?v=20260453"></script>
 <script src="js/telegram.js?v=20260439"></script>
 <script src="js/tg-gate.js?v=20260439"></script>
 <script src="js/boot-splash.js?v=20260439"></script>
@@ -684,9 +710,9 @@
 <script src="js/api.js?v=20260446"></script>
 <script src="js/onboarding.js?v=20260439"></script>
 <script src="js/help-screens.js?v=20260452"></script>
-<script src="js/feed.js?v=20260448"></script>
-<script src="js/feed-nav-tip.js?v=20260444"></script>
-<script src="js/feed-onboarding.js?v=20260444"></script>
+<script src="js/feed.js?v=20260453"></script>
+<script src="js/feed-nav-tip.js?v=20260453"></script>
+<script src="js/feed-onboarding.js?v=20260453"></script>
 <script src="js/actions.js?v=20260444"></script>
 <script src="js/upload.js?v=20260452"></script>
 <script src="js/genres.js?v=20260439"></script>
@@ -695,9 +721,9 @@
 <script src="js/profile.js?v=20260446"></script>
 <script src="js/admin.js?v=20260450"></script>
 <script src="js/game-editor.js?v=20260439"></script>
-<script src="js/game-detail.js?v=20260446"></script>
+<script src="js/game-detail.js?v=20260453"></script>
 <script src="js/screens.js?v=20260444"></script>
-<script src="js/events.js?v=20260452"></script>
+<script src="js/events.js?v=20260453"></script>
 <script src="js/overlay-pull-close.js?v=20260439"></script>
 <script src="js/main.js?v=20260439"></script>
 </body>

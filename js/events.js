@@ -22,6 +22,12 @@ const CLICK_ACTIONS = {
   'dismiss-feed-nav-tip': () => ackFeedNavTip(),
   'ack-feed-nav-tip':      () => ackFeedNavTip(),
   'close-feed-nav-tip':    () => closeFeedNavTip(),
+  'open-feed-help-full':   () => {
+    if (typeof openFeedHelpFull === 'function') openFeedHelpFull();
+  },
+  'leave-feed-help-detail': () => {
+    if (typeof leaveFeedHelpDetail === 'function') leaveFeedHelpDetail();
+  },
   'search-clear-genre':    () => {
     window.selectedGenre = '';
     if (typeof renderGenreFilter === 'function') renderGenreFilter();

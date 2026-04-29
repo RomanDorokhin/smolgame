@@ -509,8 +509,7 @@ function isOverlayOpen() {
   )) ||
     document.body.classList.contains('game-detail-open') ||
     Boolean(document.getElementById('feed-reviews-drawer') && !document.getElementById('feed-reviews-drawer').hidden) ||
-    document.body.classList.contains('feed-onboarding-active') ||
-    document.body.classList.contains('feed-onboarding-demo');
+    document.body.classList.contains('feed-onboarding-active');
 }
 
 let swipeDragHost = null;

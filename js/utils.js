@@ -18,7 +18,7 @@ function sgStatEyeSvg() {
   return '<svg class="sg-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M2.25 12s3.75-6 9.75-6 9.75 6 9.75 6-3.75 6-9.75 6S2.25 12 2.25 12z" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="12" r="2.25" stroke="currentColor" stroke-width="1.65"/></svg>';
 }
 
-/** Мини-марка smolgame для загрузки (вращается вместо кольца) */
+/** Мини-марка SmolGame для загрузки (вращается вместо кольца) */
 function sgLogoMarkLoaderHtml() {
   return '<div class="sg-brand-mark sg-brand-mark--loader" aria-hidden="true"><svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><rect x="13" y="13" width="22" height="22" rx="8" fill="none" stroke="currentColor" stroke-width="2.25"/><circle cx="24" cy="24" r="4.5" fill="currentColor" opacity=".88"/></svg></div>';
 }
