@@ -137,7 +137,7 @@ async function renderProfile() {
       const { games } = await API.myGames();
       myGames = Array.isArray(games) ? games : [];
     } catch (e2) {
-      myGames = Array.isArray(GAMES) ? GAMES.filter(g => g.authorId === USER.id) : [];
+      myGames = Array.isArray(GAMES) ? GAMES.filter(g => sameTelegramUserId(g.authorId, USER.id)) : [];
     }
   }
 

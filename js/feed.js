@@ -469,7 +469,7 @@ function updateOverlay() {
 
   const roleEl = document.getElementById('authorRole');
   if (roleEl) {
-    const isSelf = Boolean(g.authorId && USER?.id && g.authorId === USER.id);
+    const isSelf = Boolean(g.authorId && USER?.id && sameTelegramUserId(g.authorId, USER.id));
     const tf = typeof t === 'function' ? t : () => '';
     roleEl.textContent = isSelf ? tf('author_you') : tf('author_role');
   }

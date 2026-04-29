@@ -157,7 +157,7 @@ function mapFeedGameRow(g, likedSet, followedSet, bookmarkedSet, extra = {}) {
     plays: g.plays,
     createdAt: g.createdAt != null ? Number(g.createdAt) : null,
     updatedAt: g.updatedAt != null ? Number(g.updatedAt) : null,
-    authorId: g.authorId,
+    authorId: g.authorId != null && g.authorId !== '' ? String(g.authorId) : g.authorId,
     authorName: (g.authorDisplayName && String(g.authorDisplayName).trim())
       || [g.authorFirst, g.authorLast].filter(Boolean).join(' ')
       || g.authorHandle
@@ -565,7 +565,11 @@ export async function getMyGames(req, env) {
       ORDER BY created_at DESC`
   ).bind(user.id).all();
 
-  return json({ games: results });
+  const games = (results || []).map(r => ({
+    ...r,
+    authorId: r.authorId != null && r.authorId !== '' ? String(r.authorId) : r.authorId,
+  }));
+  return json({ games });
 }
 
 const LIKED_GAMES_SQL_VARIANTS = [

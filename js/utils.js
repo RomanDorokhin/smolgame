@@ -36,6 +36,21 @@ function esc(v) {
   return String(v ?? '').replace(/[&<>"'`]/g, ch => _ESC_MAP[ch]);
 }
 
+/** Telegram numeric user id для сравнения (API/D1 могут отдать number, USER.id — string). */
+function tgUserIdKey(id) {
+  if (id == null || id === '') return '';
+  const s = String(id).trim();
+  const n = Number(s);
+  if (Number.isFinite(n) && n >= 0 && n <= Number.MAX_SAFE_INTEGER) return String(Math.trunc(n));
+  return s;
+}
+
+function sameTelegramUserId(a, b) {
+  const ka = tgUserIdKey(a);
+  const kb = tgUserIdKey(b);
+  return ka !== '' && ka === kb;
+}
+
 // Проверка URL: только http/https, с нормальным хостом.
 // Возвращает нормализованный URL или null.
 function safeHttpUrl(raw) {
@@ -214,3 +229,5 @@ window.normalizeToHttpsUrl = normalizeToHttpsUrl;
 window.avatarImgUrl = avatarImgUrl;
 window.loadSet = loadSet;
 window.saveSet = saveSet;
+window.tgUserIdKey = tgUserIdKey;
+window.sameTelegramUserId = sameTelegramUserId;

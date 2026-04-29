@@ -208,7 +208,7 @@ async function openGameDetail(gameId) {
     ? `<div class="game-detail-author-av"><img src="${esc(avUrl)}" alt="" referrerpolicy="no-referrer"></div>`
     : `<div class="game-detail-author-av game-detail-author-av--txt">${esc(String(av || '?').slice(0, 1))}</div>`;
   const following = typeof followedSet !== 'undefined' && game.authorId && followedSet.has(game.authorId);
-  const isSelf = Boolean(game.authorId && USER?.id && game.authorId === USER.id);
+    const isSelf = Boolean(game.authorId && USER?.id && sameTelegramUserId(game.authorId, USER.id));
   const followLabel = following ? t('follow_done') : t('follow_add_author');
   authorCard.innerHTML = `
     <div class="game-detail-author-row">
@@ -227,7 +227,7 @@ async function openGameDetail(gameId) {
   const reviews = await fetchGameReviews(gameId);
   renderGameDetailReviews(reviewsEl, reviews);
 
-  const isOwner = Boolean(USER?.id && game.authorId === USER.id);
+  const isOwner = Boolean(USER?.id && sameTelegramUserId(game.authorId, USER.id));
   if (reviewForm) reviewForm.hidden = isOwner;
   if (ownerActions) {
     if (isOwner) {
@@ -293,7 +293,7 @@ async function gameDetailSubmitReview() {
 
 async function gameDetailToggleFollow(el) {
   const authorId = el?.dataset?.authorId;
-  if (!authorId || authorId === USER?.id) return;
+  if (!authorId || sameTelegramUserId(authorId, USER?.id)) return;
   const t = tf();
   const was = typeof followedSet !== 'undefined' && followedSet.has(authorId);
   if (was) followedSet.delete(authorId);
