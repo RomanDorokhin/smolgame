@@ -152,6 +152,9 @@ const CLICK_ACTIONS = {
   'profile-discard-edit': () => {
     if (typeof discardProfileEdit === 'function') discardProfileEdit();
   },
+  'profile-retry-me': () => {
+    if (typeof renderProfile === 'function') renderProfile();
+  },
 
   'admin-approve':  (el) => adminApproveGame(el.closest('.admin-card, .feed-moderation-card')),
   'admin-reject':   (el) => adminRejectGame (el.closest('.admin-card, .feed-moderation-card')),

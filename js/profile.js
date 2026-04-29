@@ -33,6 +33,30 @@ function gameStatusBadgeHtml(status) {
   return '';
 }
 
+/** Подставить имя/аватар из Telegram, если USER ещё пустой (например до ответа API). */
+function syncUserFromTelegramWebApp() {
+  try {
+    const u = Telegram?.WebApp?.initDataUnsafe?.user;
+    if (!u || u.id == null) return;
+    const tid = String(u.id);
+    if (!USER.id) USER.id = tid;
+    if (!USER.tgId) USER.tgId = tid;
+    const nm = [u.first_name, u.last_name].filter(Boolean).join(' ').trim();
+    if (nm && (!USER.name || !String(USER.name).trim())) USER.name = nm;
+    const ph = u.photo_url && String(u.photo_url).trim();
+    if (ph && (!USER.avatar || USER.avatar === '?')) USER.avatar = ph;
+  } catch (e) { /* ignore */ }
+}
+
+function setProfileMeBannerVisible(show, message) {
+  const box = document.getElementById('profileMeBanner');
+  const txt = document.getElementById('profileMeBannerText');
+  if (!box) return;
+  if (show && message && txt) txt.textContent = message;
+  if (show) box.removeAttribute('hidden');
+  else box.setAttribute('hidden', '');
+}
+
 /** Применить ответ GET /api/me к USER и DOM профиля (отдельно от списка игр). */
 function applyMeToProfileUi(me, { bioRead, handleRead, premBadge, setStatGames, setStatFollowers, setStatLikes }) {
   if (!me) return;
@@ -66,6 +90,9 @@ async function renderProfile() {
   const bioRead = document.getElementById('profileBio');
   const handleRead = document.getElementById('profileSiteHandleRead');
 
+  syncUserFromTelegramWebApp();
+  setProfileMeBannerVisible(false);
+
   setProfileAvatar(USER.avatar);
   document.getElementById('profileName').textContent = USER.name || tf('guest');
   document.getElementById('profileHandle').textContent = '@' + (USER.siteHandle || USER.id || '—');
@@ -90,6 +117,10 @@ async function renderProfile() {
     me = await API.me();
   } catch (e) {
     console.warn('profile /me failed', e);
+  }
+  if (!me) {
+    syncUserFromTelegramWebApp();
+    setProfileMeBannerVisible(true, tf('profile_me_failed'));
   }
   applyMeToProfileUi(me, { bioRead, handleRead, premBadge, setStatGames, setStatFollowers, setStatLikes });
   document.getElementById('devBadge').style.display = USER.isGithubConnected ? '' : 'none';

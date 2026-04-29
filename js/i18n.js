@@ -376,6 +376,9 @@
       profile_photo_tg: '✅ Фото из Telegram',
       profile_photo_updated: '✅ Фото обновлено',
       profile_delete_fail: 'не удалось удалить',
+      profile_me_failed:
+        'Не удалось загрузить профиль с сервера. Потяни экран вниз для обновления или нажми «Повторить». Имя ниже может быть из Telegram до успешной загрузки.',
+      profile_me_retry: 'Повторить',
       profile_delete_this: 'эту игру',
       profile_delete_confirm_generic: 'Удалить игру из SmolGame? Это действие нельзя отменить.',
       profile_delete_confirm_named: 'Удалить «{title}» из SmolGame? Это действие нельзя отменить.',
@@ -765,6 +768,9 @@
       profile_photo_tg: '✅ Photo from Telegram',
       profile_photo_updated: '✅ Photo updated',
       profile_delete_fail: 'could not delete',
+      profile_me_failed:
+        'Could not load profile from the server. Pull down to refresh or tap Retry. The name below may come from Telegram until load succeeds.',
+      profile_me_retry: 'Retry',
       profile_delete_this: 'this game',
       profile_delete_confirm_generic: 'Remove this game from SmolGame? This cannot be undone.',
       profile_delete_confirm_named: 'Remove “{title}” from SmolGame? This cannot be undone.',

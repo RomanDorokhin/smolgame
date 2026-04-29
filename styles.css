@@ -3036,6 +3036,33 @@ textarea.field-input{
   max-width:340px;
 }
 .profile-stats-hint:empty{display:none;}
+.profile-me-banner{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  margin:0 0 12px;
+  padding:12px 14px;
+  border-radius:var(--btn-radius-md);
+  border:1px solid rgba(255,180,100,0.35);
+  background:rgba(255,180,100,0.08);
+}
+.profile-me-banner[hidden]{display:none !important;}
+.profile-me-banner-text{
+  font-size:13px;
+  line-height:1.45;
+  color:rgba(255,255,255,0.78);
+}
+.profile-me-banner .profile-me-retry{
+  align-self:flex-start;
+  padding:10px 16px;
+  border-radius:10px;
+  border:1px solid var(--btn-border);
+  background:rgba(255,255,255,0.08);
+  color:rgba(255,255,255,0.92);
+  font-size:14px;
+  font-weight:700;
+  cursor:pointer;
+}
 .profile-edit-toggle-btn{
   flex:1;
   min-width:140px;
