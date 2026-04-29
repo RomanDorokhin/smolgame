@@ -18,34 +18,82 @@ function _initData() {
   }
 }
 
+/** Строка для HTTP-заголовка: без управляющих символов (часть WebView падает TypeError на fetch). */
+function _initDataHeaderValue() {
+  const raw = _initData();
+  if (!raw) return '';
+  return raw.replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, '').trim();
+}
+
 async function apiFetch(path, { method = 'GET', body } = {}) {
-  const headers = { 'x-telegram-init-data': _initData() };
+  const initHdr = _initDataHeaderValue();
   const isFormData = typeof FormData !== 'undefined' && body instanceof FormData;
-  if (body !== undefined && !isFormData) headers['content-type'] = 'application/json';
+  const jsonBody = body !== undefined && !isFormData ? JSON.stringify(body) : undefined;
+
+  function buildHeaders(includeInit) {
+    const headers = {};
+    if (includeInit && initHdr) headers['x-telegram-init-data'] = initHdr;
+    if (body !== undefined && !isFormData) headers['content-type'] = 'application/json';
+    return headers;
+  }
 
   let resp;
   try {
     resp = await fetch(API_BASE + path, {
       method,
-      headers,
-      body: isFormData ? body : (body !== undefined ? JSON.stringify(body) : undefined),
+      headers: buildHeaders(true),
+      body: isFormData ? body : jsonBody,
     });
   } catch (e) {
-    const net = String(e?.message || e || '');
-    const low = net.toLowerCase();
-    const webkitBroke =
-      low.includes('load failed') ||
-      low.includes('failed to fetch') ||
-      low.includes('network') ||
-      low.includes('network connection was lost') ||
-      low.includes('internet connection appears to be offline') ||
-      low.includes('cancelled') ||
-      low.includes('canceled');
-    throw new Error(
-      webkitBroke
-        ? 'Сеть/WebView: не удалось связаться с API. Подожди минуту, выключи VPN, обнови мини-апп (закрой полностью). Если с телефона работает — обнови Worker: backend → git pull && npx wrangler deploy.'
-        : 'Запрос не выполнился: ' + (net || 'ошибка сети')
-    );
+    const msg0 = String(e?.message || e || '');
+    const low0 = msg0.toLowerCase();
+    const maybeBadHeader =
+      initHdr &&
+      (low0.includes('type error') ||
+        low0.includes('typeerror') ||
+        (low0.includes('invalid') && low0.includes('header')));
+    if (maybeBadHeader) {
+      try {
+        resp = await fetch(API_BASE + path, {
+          method,
+          headers: buildHeaders(false),
+          body: isFormData ? body : jsonBody,
+        });
+      } catch (e2) {
+        const e = e2;
+        const net = String(e?.message || e || '');
+        const low = net.toLowerCase();
+        const webkitBroke =
+          low.includes('load failed') ||
+          low.includes('failed to fetch') ||
+          low.includes('network') ||
+          low.includes('network connection was lost') ||
+          low.includes('internet connection appears to be offline') ||
+          low.includes('cancelled') ||
+          low.includes('canceled');
+        throw new Error(
+          webkitBroke
+            ? 'Сеть/WebView: не удалось связаться с API. Подожди минуту, выключи VPN, обнови мини-апп (закрой полностью). Если с телефона работает — обнови Worker: backend → git pull && npx wrangler deploy.'
+            : 'Запрос не выполнился: ' + (net || 'ошибка сети')
+        );
+      }
+    } else {
+      const net = String(e?.message || e || '');
+      const low = net.toLowerCase();
+      const webkitBroke =
+        low.includes('load failed') ||
+        low.includes('failed to fetch') ||
+        low.includes('network') ||
+        low.includes('network connection was lost') ||
+        low.includes('internet connection appears to be offline') ||
+        low.includes('cancelled') ||
+        low.includes('canceled');
+      throw new Error(
+        webkitBroke
+          ? 'Сеть/WebView: не удалось связаться с API. Подожди минуту, выключи VPN, обнови мини-апп (закрой полностью). Если с телефона работает — обнови Worker: backend → git pull && npx wrangler deploy.'
+          : 'Запрос не выполнился: ' + (net || 'ошибка сети')
+      );
+    }
   }
 
   let data = null;
