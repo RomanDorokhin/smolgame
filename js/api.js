@@ -12,7 +12,7 @@ function _initData() {
   try {
     const o = typeof window !== 'undefined' ? window.__smolgameInitDataOverride : '';
     if (o && String(o).trim()) return String(o).trim();
-    return Telegram.WebApp.initData || '';
+    return Telegram?.WebApp?.initData || '';
   } catch (e) {
     return '';
   }

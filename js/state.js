@@ -1,5 +1,5 @@
 let tgUser = null;
-try { tgUser = Telegram.WebApp.initDataUnsafe?.user; } catch (e) {}
+try { tgUser = Telegram?.WebApp?.initDataUnsafe?.user; } catch (e) {}
 
 window.USER = {
   id: tgUser?.id ? String(tgUser.id) : '',

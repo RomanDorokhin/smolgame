@@ -237,17 +237,17 @@ export async function getFeed(req, env) {
     const likes = await env.DB
       .prepare(`SELECT game_id FROM likes WHERE user_id = ?`)
       .bind(userId).all();
-    likedSet = new Set(likes.results.map(r => r.game_id));
+    likedSet = new Set((likes.results || []).map(r => r.game_id));
 
     const follows = await env.DB
       .prepare(`SELECT author_id FROM follows WHERE user_id = ?`)
       .bind(userId).all();
-    followedSet = new Set(follows.results.map(r => r.author_id));
+    followedSet = new Set((follows.results || []).map(r => r.author_id));
 
     const bookmarks = await env.DB
       .prepare(`SELECT game_id FROM bookmarks WHERE user_id = ?`)
       .bind(userId).all();
-    bookmarkedSet = new Set(bookmarks.results.map(r => r.game_id));
+    bookmarkedSet = new Set((bookmarks.results || []).map(r => r.game_id));
   }
 
   const games = results.map(g =>

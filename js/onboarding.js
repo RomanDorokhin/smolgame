@@ -11,7 +11,7 @@ function hasTelegramInitData() {
   try {
     const o = window.__smolgameInitDataOverride;
     if (o && String(o).includes('hash=')) return true;
-    const d = Telegram.WebApp.initData;
+    const d = Telegram?.WebApp?.initData;
     return Boolean(d && String(d).includes('hash='));
   } catch (e) {
     return false;
