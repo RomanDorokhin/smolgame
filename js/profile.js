@@ -27,17 +27,61 @@ function gameStatusBadgeHtml(status) {
   return '';
 }
 
-/** Достать объект user из query-string initData (когда initDataUnsafe ещё пустой). */
-function parseTelegramUserFromInitDataStr(raw) {
+/** Достать объект user из строки initData (query form). URLSearchParams иногда ломается на длинных значениях. */
+function extractTelegramUserFromInitDataString(raw) {
   try {
     const s = String(raw || '').trim();
     if (!s) return null;
-    const params = new URLSearchParams(s);
-    const enc = params.get('user');
-    if (!enc) return null;
-    return JSON.parse(enc);
-  } catch (e) {
-    return null;
+    try {
+      const enc = new URLSearchParams(s).get('user');
+      if (enc) {
+        const u = JSON.parse(decodeURIComponent(String(enc).replace(/\+/g, ' ')));
+        if (u && u.id != null) return u;
+      }
+    } catch (e1) { /* ignore */ }
+    const key = 'user=';
+    let i = s.indexOf(key);
+    while (i >= 0) {
+      const start = i + key.length;
+      let j = start;
+      while (j < s.length && s[j] !== '&') j++;
+      const part = s.slice(start, j);
+      if (part) {
+        try {
+          const u = JSON.parse(decodeURIComponent(part.replace(/\+/g, ' ')));
+          if (u && u.id != null) return u;
+        } catch (e2) { /* next */ }
+      }
+      i = s.indexOf(key, j + 1);
+    }
+  } catch (e) { /* ignore */ }
+  return null;
+}
+
+function applyTelegramUserToUser(u) {
+  if (!u || u.id == null) return;
+  USER.id = String(u.id);
+  USER.tgId = String(u.id);
+  const nm = [u.first_name, u.last_name].filter(Boolean).join(' ').trim();
+  if (nm) USER.name = nm;
+  const ph = u.photo_url && String(u.photo_url).trim();
+  if (ph) USER.avatar = ph;
+  else if (u.first_name) {
+    const ch = String(u.first_name).trim()[0];
+    if (ch) USER.avatar = ch;
+  }
+}
+
+/** Короткое ожидание: на Desktop initData / initDataUnsafe иногда появляются с задержкой. */
+async function waitTelegramUserForProfile(maxMs) {
+  const cap = Number(maxMs) > 0 ? Number(maxMs) : 1600;
+  const step = 70;
+  const deadline = Date.now() + cap;
+  while (Date.now() < deadline) {
+    if (typeof ensureSmolgameInitDataFromUrl === 'function') ensureSmolgameInitDataFromUrl();
+    syncUserFromTelegramWebApp();
+    if (USER.id) return;
+    await new Promise(r => setTimeout(r, step));
   }
 }
 
@@ -46,24 +90,16 @@ function syncUserFromTelegramWebApp() {
   try {
     if (typeof ensureSmolgameInitDataFromUrl === 'function') ensureSmolgameInitDataFromUrl();
     let u = Telegram?.WebApp?.initDataUnsafe?.user;
-    if (!u || u.id == null) {
-      const raw =
-        (typeof window !== 'undefined' && window.__smolgameInitDataOverride && String(window.__smolgameInitDataOverride).trim()) ||
-        (Telegram?.WebApp?.initData && String(Telegram.WebApp.initData).trim()) ||
-        '';
-      u = parseTelegramUserFromInitDataStr(raw);
+    if (u && u.id != null) {
+      applyTelegramUserToUser(u);
+      return;
     }
-    if (!u || u.id == null) return;
-    USER.id = String(u.id);
-    USER.tgId = String(u.id);
-    const nm = [u.first_name, u.last_name].filter(Boolean).join(' ').trim();
-    if (nm) USER.name = nm;
-    const ph = u.photo_url && String(u.photo_url).trim();
-    if (ph) USER.avatar = ph;
-    else if (u.first_name) {
-      const ch = String(u.first_name).trim()[0];
-      if (ch) USER.avatar = ch;
-    }
+    const raw =
+      (typeof window !== 'undefined' && window.__smolgameInitDataOverride && String(window.__smolgameInitDataOverride).trim()) ||
+      (Telegram?.WebApp?.initData && String(Telegram.WebApp.initData).trim()) ||
+      '';
+    u = extractTelegramUserFromInitDataString(raw);
+    if (u) applyTelegramUserToUser(u);
   } catch (e) { /* ignore */ }
 }
 
@@ -109,6 +145,7 @@ async function renderProfile() {
   const bioRead = document.getElementById('profileBio');
   const handleRead = document.getElementById('profileSiteHandleRead');
 
+  await waitTelegramUserForProfile(1800);
   syncUserFromTelegramWebApp();
   setProfileMeBannerVisible(false);
 
