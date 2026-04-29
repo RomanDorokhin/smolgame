@@ -1341,9 +1341,13 @@ body.feed-layout-vertical #game-info{
 .feed-onboarding-root:not([hidden]){
   pointer-events:none;
 }
-.feed-onboarding-welcome,
 .feed-onboarding-dismiss{
-  pointer-events:auto;
+  position:absolute;
+  inset:0;
+  z-index:2;
+  background:transparent;
+  cursor:default;
+  pointer-events:none;
 }
 .feed-onboarding-welcome{
   position:absolute;
@@ -1358,6 +1362,7 @@ body.feed-layout-vertical #game-info{
   opacity:0;
   visibility:hidden;
   transition:opacity 0.38s ease, visibility 0.38s ease;
+  pointer-events:none;
 }
 .feed-onboarding-welcome--visible{
   opacity:1;
@@ -1369,6 +1374,9 @@ body.feed-layout-vertical #game-info{
   text-align:center;
   border-radius:20px;
   padding:26px 22px 28px;
+  pointer-events:auto;
+  position:relative;
+  z-index:2;
 }
 .feed-onboarding-brand{
   justify-content:center;
@@ -1412,13 +1420,6 @@ body.feed-layout-vertical #game-info{
   width:100%;
   max-width:320px;
 }
-.feed-onboarding-dismiss{
-  position:absolute;
-  inset:0;
-  z-index:2;
-  background:transparent;
-  cursor:default;
-}
 .feed-onboarding-hand{
   position:absolute;
   left:50%;
@@ -1450,6 +1451,7 @@ body.feed-onboarding-demo #slide-1{z-index:4;}
 body.feed-onboarding-ui #bottom-nav{
   pointer-events:auto !important;
   opacity:1;
+  z-index:650;
 }
 body.feed-onboarding-ui #side-actions,
 body.feed-onboarding-ui #game-info,
