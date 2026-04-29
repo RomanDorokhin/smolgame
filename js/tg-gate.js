@@ -6,7 +6,12 @@ function hasSignedTelegramInitData() {
     const o = window.__smolgameInitDataOverride;
     if (o && String(o).includes('hash=')) return true;
     const d = Telegram.WebApp?.initData;
-    return Boolean(d && String(d).includes('hash='));
+    if (d && String(d).includes('hash=')) return true;
+    try {
+      const c = sessionStorage.getItem('smolgame:tgInitData:v1');
+      if (c && String(c).includes('hash=')) return true;
+    } catch (e2) { /* ignore */ }
+    return false;
   } catch (e) {
     return false;
   }

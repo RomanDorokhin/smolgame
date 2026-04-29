@@ -94,7 +94,9 @@
 
   window.maybeStartFeedOnboarding = maybeStartFeedOnboarding;
   window.isFeedOnboardingBlocking = function isFeedOnboardingBlocking() {
-    return document.body.classList.contains('feed-onboarding-ui');
+    if (!document.body.classList.contains('feed-onboarding-ui')) return false;
+    const welcome = document.getElementById('feed-onboarding-welcome');
+    return Boolean(welcome?.classList.contains('feed-onboarding-welcome--visible'));
   };
   /** Снять welcome при уходе с ленты — иначе switchTab раньше time return и не открывает другие вкладки. */
   window.forceDismissFeedOnboarding = interruptToClose;

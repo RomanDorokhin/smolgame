@@ -1451,8 +1451,8 @@ body.feed-onboarding-demo #slide-1{z-index:4;}
 body.feed-onboarding-ui #bottom-nav{
   pointer-events:auto !important;
   opacity:1;
-  /* Выше #feed-nav-tip-overlay (480) и welcome-root (510), иначе оверлей перехватывает тапы по таббару */
-  z-index:900;
+  /* Выше шитов профиля/поиска (1800), чтобы табы всегда ловили тап */
+  z-index:1950;
 }
 body.feed-onboarding-ui #side-actions,
 body.feed-onboarding-ui #game-info,
@@ -2085,8 +2085,8 @@ body.game-detail-open .app-tab-chrome{opacity:0;pointer-events:none;}
 #bottom-nav{
   position:fixed;
   bottom:0;left:0;right:0;
-  /* Выше модалок ленты (feed-nav-tip 480, feed-onboarding 510), DOM ниже — без этого клики «теряются» */
-  z-index:900;
+  /* Выше шитов (1800), подсказок ленты и сплэша — иначе «табы не жмутся» при наложении */
+  z-index:1950;
   height:calc(var(--safe-bottom) + var(--nav-h));
   background:rgba(0,0,0,0.78);
   border-top:1px solid var(--border);
@@ -2223,7 +2223,7 @@ body.game-detail-open .app-tab-chrome{opacity:0;pointer-events:none;}
 #games-library-screen.open{
   display:flex;
   bottom:calc(var(--safe-bottom) + var(--nav-h));
-  z-index:560;
+  z-index:1800;
   padding-bottom:calc(var(--safe-bottom) + var(--nav-h) + 16px);
 }
 .games-grid--library{
@@ -2288,7 +2288,7 @@ body.game-detail-open .app-tab-chrome{opacity:0;pointer-events:none;}
   display:flex;
   /* Панель над нижним таббаром, не на весь экран */
   bottom:calc(var(--safe-bottom) + var(--nav-h));
-  z-index:560;
+  z-index:1800;
   padding-bottom:calc(var(--safe-bottom) + var(--nav-h) + 20px);
 }
 
@@ -2945,9 +2945,11 @@ textarea.field-input{
 #profile-screen > *,
 #author-screen > *{position:relative;z-index:1;}
 #profile-screen.open,#author-screen.open{display:flex;}
-#profile-screen.open{
+/* Выше #app-boot-splash (1500): иначе сплэш остаётся поверх шитов и «профиль не работает» */
+#profile-screen.open,
+#author-screen.open{
   bottom:calc(var(--safe-bottom) + var(--nav-h));
-  z-index:560;
+  z-index:1800;
   padding-bottom:calc(var(--safe-bottom) + var(--nav-h) + 16px);
 }
 
@@ -3435,7 +3437,7 @@ textarea.field-input{
 #search-screen.open{
   display:flex;
   bottom:calc(var(--safe-bottom) + var(--nav-h));
-  z-index:560;
+  z-index:1800;
   padding-bottom:calc(var(--safe-bottom) + var(--nav-h) + 12px);
 }
 

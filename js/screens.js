@@ -175,7 +175,8 @@ function switchTab(tab) {
   ) {
     window.forceDismissFeedOnboarding();
   }
-  if (typeof isFeedOnboardingBlocking === 'function' && isFeedOnboardingBlocking()) return;
+  // Не блокируем табы вторым return: класс feed-onboarding-ui мог залипнуть без карточки —
+  // тогда профиль/игры «мёртвые». forceDismiss выше уже снял UI.
   if (typeof hapticLight === 'function') hapticLight();
 
   if (tab === 'feed') {
