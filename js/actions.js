@@ -92,7 +92,7 @@ async function shareGame() {
   if (GAMES.length === 0) return;
   const g = GAMES[window.currentIdx];
   const url = buildGameShareUrl(g.id);
-  const text = `🎮 ${g.title} — играй в SmolGame`;
+  const text = `${g.title} — мини-игра в SmolGame (лента в Telegram). Запусти по ссылке:`;
 
   // 1) Лучший путь в Telegram: нативный share-sheet в чат.
   try {

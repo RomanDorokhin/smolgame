@@ -4,12 +4,12 @@
 const WELCOME_SLIDES = [
   {
     title: 'SmolGame',
-    html: `<p class="onboarding-text">Лента игр в Telegram. Своё — за пару шагов: ссылка или GitHub.</p>`,
+    html: `<p class="onboarding-text onboarding-value-prop">Лента маленьких браузерных игр в Telegram: листай — пробуй, понравилось — лайк и в избранное.</p><p class="onboarding-text">Свою игру можно выложить за пару шагов — по ссылке или через GitHub.</p>`,
     btn: 'Далее',
   },
   {
     title: 'Как добавить игру',
-    html: `<p class="onboarding-text">Попроси ИИ сделать простую HTML-игру, выложи на хостинг с HTTPS — вставь ссылку выше. Или подключи GitHub и создай репозиторий из приложения.</p>`,
+    html: `<p class="onboarding-text">Попроси ИИ сделать простую HTML-игру, выложи на хостинг с HTTPS — вставь ссылку в форму выше. Или подключи GitHub и создай репозиторий из приложения.</p>`,
     btn: 'Далее',
   },
   {

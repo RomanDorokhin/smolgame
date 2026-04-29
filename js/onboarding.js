@@ -38,7 +38,7 @@ function renderOnboarding() {
     body.innerHTML = `
       <div class="onboarding-step">Шаг 1 из 4</div>
       <div class="onboarding-title">Дата рождения</div>
-      <div class="onboarding-text">Подтверди возраст.</div>
+      <p class="onboarding-value-prop">SmolGame — лента мини-игр в Telegram; свою игру можно выложить из вкладки «Загрузить». Укажи дату рождения для входа.</p>
       <input class="field-input" type="date" id="birthDateInput" value="${esc(onboardingData.dateOfBirth || '')}">
       <label class="check-row" id="parentConsentRow" style="display:none">
         <input type="checkbox" id="parentConsentInput">
