@@ -75,6 +75,30 @@ https://smolgame.dorokhin731.workers.dev
 
 Зайди в бота в Telegram, нажми Menu кнопку — откроется мини-апп, лента пустая.
 
+### Ответ бота на `/start` в чате
+
+Пока не настроен **webhook**, бот может молчать на `/start` — мини-апп при этом работает через Menu. Чтобы бот отвечал в личке:
+
+1. Сгенерируй секрет (например `openssl rand -hex 24`) и сохрани в Worker:
+   ```bash
+   cd backend
+   npx wrangler secret put TELEGRAM_WEBHOOK_SECRET
+   ```
+2. Укажи URL воркера и вызови `setWebhook` (подставь свои значения):
+
+   ```bash
+   WEBHOOK_URL='https://<твой-worker>.workers.dev/api/telegram/webhook'
+   SECRET='<тот же TELEGRAM_WEBHOOK_SECRET>'
+   BOT_TOKEN='<токен от BotFather>'
+   curl -fsS -X POST "https://api.telegram.org/bot${BOT_TOKEN}/setWebhook" \
+     -d "url=${WEBHOOK_URL}" \
+     -d "secret_token=${SECRET}"
+   ```
+
+3. Проверка: `curl "https://api.telegram.org/bot${BOT_TOKEN}/getWebhookInfo"`
+
+Telegram шлёт `POST` с заголовком `X-Telegram-Bot-Api-Secret-Token` — он должен совпадать с секретом. Обработчик: `POST /api/telegram/webhook` → приветствие и кнопка **«Открыть SmolGame»** (URL из `FRONTEND_ORIGIN` + `GITHUB_APP_PATH` в `wrangler.toml`).
+
 ### Обложки игр (файл)
 
 Загрузка файла обложки идёт в **R2** (`IMAGES` binding) и публичный URL (`PUBLIC_IMAGE_BASE_URL` или `R2_PUBLIC_URL`). Если R2 не подключён, в форме **«Ссылка»** и на GitHub-ветке можно указать **HTTPS-ссылку на обложку** или отправить игру **без обложки**. Сам HTML игры на Worker **не хранится**: код публикуешь через **GitHub** (репозиторий + Pages) или даёшь готовую ссылку. Эндпоинт `POST /api/submit-html-game` отключён (410) — через премиум нельзя залить игровой HTML на сервер.

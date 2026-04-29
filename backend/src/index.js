@@ -9,6 +9,7 @@ import { githubOAuthStart, githubOAuthCallback } from './github-oauth.js';
 import { githubOAuthDonePage } from './github-oauth-done.js';
 import { submitHtmlGame, serveHostedGame } from './hosted-games.js';
 import { publishGameToGithub } from './github-publish.js';
+import { telegramWebhook } from './telegram-webhook.js';
 
 export default {
   async fetch(req, env) {
@@ -86,6 +87,7 @@ async function route(req, env, pathname) {
   if (pathname === '/api/me/played-games' && m === 'GET') return getPlayedGames(req, env);
   if (pathname === '/api/me/games-library' && m === 'GET') return getMyGamesLibraryBatch(req, env);
   if (pathname === '/api/me/registered' && m === 'GET') return checkRegistered(req, env);
+  if (pathname === '/api/telegram/webhook' && m === 'POST') return telegramWebhook(req, env);
   if (pathname === '/api/register' && m === 'POST') return register(req, env);
   if (pathname === '/api/submit' && m === 'POST') return submitGame(req, env);
   if (pathname === '/api/submit-html-game' && m === 'POST') return submitHtmlGame();
