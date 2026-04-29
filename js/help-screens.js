@@ -4,7 +4,7 @@
 const WELCOME_SLIDES = [
   {
     title: 'SmolGame',
-    html: `<p class="onboarding-text onboarding-value-prop">Лента маленьких браузерных игр в Telegram: листай — пробуй, понравилось — лайк и в избранное.</p><p class="onboarding-text">Свою игру можно выложить за пару шагов — по ссылке или через GitHub.</p>`,
+    html: `<p class="onboarding-text onboarding-value-prop">Лента в духе TikTok, только вместо роликов — мини-игры в Telegram: листаешь, заходишь в игру по кнопке, на автора можно подписаться. Сейчас без обязательной рекламы перед игрой.</p><p class="onboarding-text">Свою игру выложи за пару шагов — по ссылке или через GitHub.</p>`,
     btn: 'Далее',
   },
   {

@@ -103,7 +103,7 @@
   <div id="empty-state-default" class="sg-empty-state">
     <div class="sg-empty-state-icon" aria-hidden="true"><svg class="sg-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M7.5 8.25h9a3 3 0 013 3v7.5a1.5 1.5 0 01-1.5 1.5h-12A1.5 1.5 0 015 18.75v-7.5a3 3 0 013-3zM9 8.25V6a3 3 0 013-3h0a3 3 0 013 3v2.25" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="9.75" cy="13.5" r="0.9" fill="currentColor"/><circle cx="14.25" cy="13.5" r="0.9" fill="currentColor"/><path d="M9.75 17.25h4.5a2.25 2.25 0 002.045-1.31l.022-.047" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg></div>
     <div class="sg-empty-state-title">Пока без игр</div>
-    <div class="sg-empty-state-sub">SmolGame — лента маленьких браузерных игр прямо в Telegram: свайп — другая игра, «Играть» — во весь экран. Свою игру добавь снизу — «Загрузить».</div>
+    <div class="sg-empty-state-sub">Как короткие ролики, только это <strong>мини-игры</strong> в Telegram: листаешь — смотришь превью, понравилось — <strong>«Играть»</strong>, зашёл за автором — <strong>«Подписаться»</strong>, не зашла — свайп дальше. Без обязательных «посмотри рекламу, чтобы поиграть» — так задумано сейчас. Свою игру — снизу <strong>«Загрузить»</strong>.</div>
     <button type="button" class="sg-btn sg-btn--primary sg-btn--screen-cta sg-empty-state-cta" data-action="switch-tab" data-tab="upload">Загрузить игру</button>
   </div>
   <div id="empty-state-error" class="sg-empty-state" hidden>
@@ -179,7 +179,7 @@
       <svg class="sg-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="1.85" stroke-linecap="round"/></svg>
     </button>
     <p class="feed-nav-tip-title">Что это?</p>
-    <p class="feed-nav-tip-lead"><strong>SmolGame</strong> — лента мини-игр в Telegram. Свайп <strong>вверх / вниз</strong> — другая игра. <strong>«Играть»</strong> — полный экран; выход — <strong>«← Лента»</strong>.</p>
+    <p class="feed-nav-tip-lead"><strong>SmolGame</strong> — лента мини-игр в Telegram в духе TikTok: листаешь карточки, заходишь в игру по кнопке, на автора можно подписаться. Сейчас <strong>без обязательной рекламы перед игрой</strong> (никаких «смотри 10 сек, потом играй»). Свайп <strong>вверх / вниз</strong> — другая игра; <strong>«Играть»</strong> — полный экран, выход — <strong>«← Лента»</strong>.</p>
     <div class="feed-nav-tip-demo" aria-hidden="true">
       <div class="feed-nav-tip-demo-hand">
         <svg class="feed-nav-tip-finger-svg" viewBox="0 0 48 56" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -231,7 +231,7 @@
         <div class="sg-brand-wordmark"><span class="sg-brand-word-muted">Smol</span><span class="sg-brand-word-accent">Game</span></div>
       </div>
       <h1 class="feed-onboarding-welcome-title">Добро пожаловать в SmolGame</h1>
-      <p class="feed-onboarding-welcome-sub">Играй в чужие мини-игры в ленте или выложи свою — одна кнопка «Загрузить».</p>
+      <p class="feed-onboarding-welcome-sub">Листай как в TikTok: превью → «Играть», понравился автор — подписка, не зашло — свайп дальше. Сейчас без принудительной рекламы перед игрой. Свою игру выложи через «Загрузить».</p>
       <button type="button" class="sg-btn sg-btn--primary sg-btn--screen-cta feed-onboarding-welcome-cta" data-action="feed-onboarding-welcome-cta">Начать</button>
     </div>
   </div>
@@ -413,6 +413,11 @@
 
       <div id="premium-access-waitlist" class="upload-premium-callout">
         <p class="upload-premium-p">Список тестеров закрытый — напиши владельцу бота. Пока можно пользоваться <strong>ссылкой</strong> и <strong>GitHub</strong> без ограничений.</p>
+      </div>
+
+      <div class="upload-premium-block upload-premium-block--muted">
+        <h3 class="upload-premium-h3">В планах</h3>
+        <p class="upload-premium-p">Подписки для игроков и отдельно для разработчиков (как премиум в Telegram). Поддержка авторов донатами и сигналами от аудитории, какие игры делать дальше. Реклама между играми — только если появится, заранее и аккуратно — не «смотри видео, иначе не поиграешь».</p>
       </div>
     </div>
   </div>
@@ -681,12 +686,12 @@
 <script src="js/boot-splash.js?v=20260439"></script>
 <script src="js/state.js?v=20260444"></script>
 <script src="js/api.js?v=20260446"></script>
-<script src="js/onboarding.js?v=20260457"></script>
-<script src="js/help-screens.js?v=20260457"></script>
+<script src="js/onboarding.js?v=20260458"></script>
+<script src="js/help-screens.js?v=20260458"></script>
 <script src="js/feed.js?v=20260453"></script>
 <script src="js/feed-nav-tip.js?v=20260453"></script>
 <script src="js/feed-onboarding.js?v=20260453"></script>
-<script src="js/actions.js?v=20260457"></script>
+<script src="js/actions.js?v=20260458"></script>
 <script src="js/upload.js?v=20260454"></script>
 <script src="js/genres.js?v=20260439"></script>
 <script src="js/search.js?v=20260441"></script>
