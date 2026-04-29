@@ -3,23 +3,14 @@
  * Настройка: setWebhook + секрет в заголовке X-Telegram-Bot-Api-Secret-Token.
  */
 
-function miniAppBaseUrl(env) {
+function miniAppPublicUrl(env) {
   const origin = String(env.FRONTEND_ORIGIN || 'https://romandorokhin.github.io')
     .trim()
     .replace(/\/$/, '');
   let path = String(env.GITHUB_APP_PATH || '/smolgame').trim();
   if (!path.startsWith('/')) path = `/${path}`;
   path = path.replace(/\/$/, '');
-  return `${origin}${path}`;
-}
-
-function miniAppPublicUrl(env) {
-  return `${miniAppBaseUrl(env)}/`;
-}
-
-/** GIF на GitHub Pages: `assets/telegram-start-logo.gif` (пересборка: `scripts/generate-telegram-start-gif.sh`). */
-function startAnimationGifUrl(env) {
-  return `${miniAppBaseUrl(env)}/assets/telegram-start-logo.gif`;
+  return `${origin}${path}/`;
 }
 
 async function telegramApi(token, method, body) {
@@ -37,18 +28,6 @@ async function telegramApi(token, method, body) {
   return data;
 }
 
-async function sendStartAnimation(env, token, chatId) {
-  const gifUrl = startAnimationGifUrl(env);
-  try {
-    await telegramApi(token, 'sendAnimation', {
-      chat_id: chatId,
-      animation: gifUrl,
-    });
-  } catch (e) {
-    console.warn('telegram webhook sendAnimation failed (проверь, что GIF залит на Pages)', e?.message || e);
-  }
-}
-
 async function sendStartMessage(env, token, chatId) {
   const webAppUrl = miniAppPublicUrl(env);
   const text =
@@ -61,8 +40,6 @@ async function sendStartMessage(env, token, chatId) {
     parse_mode: 'HTML',
     disable_web_page_preview: true,
   };
-
-  await sendStartAnimation(env, token, chatId);
 
   // `web_app` требует, чтобы домен URL был привязан к боту в @BotFather; иначе Telegram API отдаёт ошибку и ответа в чате не будет.
   try {

@@ -97,9 +97,7 @@ https://smolgame.dorokhin731.workers.dev
 
 3. Проверка: `curl "https://api.telegram.org/bot${BOT_TOKEN}/getWebhookInfo"`
 
-Telegram шлёт `POST` с заголовком `X-Telegram-Bot-Api-Secret-Token` — он должен совпадать с секретом. Обработчик: `POST /api/telegram/webhook` → анимация логотипа (`sendAnimation` с URL `FRONTEND_ORIGIN` + `GITHUB_APP_PATH` + `/assets/telegram-start-logo.gif`), затем текст и кнопка **«Открыть SmolGame»**.
-
-Анимация лежит в репозитории как **`assets/telegram-start-logo.gif`** (GitHub Pages отдаёт её по HTTPS). Пересборка из SVG-марки: `bash scripts/generate-telegram-start-gif.sh` (нужен `ffmpeg`). Сначала пуш в `main` (чтобы файл появился на Pages), потом **`npm run deploy`** воркера — иначе Telegram не сможет скачать GIF по URL.
+Telegram шлёт `POST` с заголовком `X-Telegram-Bot-Api-Secret-Token` — он должен совпадать с секретом. Обработчик: `POST /api/telegram/webhook` → приветствие и кнопка **«Открыть SmolGame»** (URL из `FRONTEND_ORIGIN` + `GITHUB_APP_PATH` в `wrangler.toml`).
 
 ### Обложки игр (файл)
 
