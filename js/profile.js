@@ -27,10 +27,32 @@ function gameStatusBadgeHtml(status) {
   return '';
 }
 
+/** Достать объект user из query-string initData (когда initDataUnsafe ещё пустой). */
+function parseTelegramUserFromInitDataStr(raw) {
+  try {
+    const s = String(raw || '').trim();
+    if (!s) return null;
+    const params = new URLSearchParams(s);
+    const enc = params.get('user');
+    if (!enc) return null;
+    return JSON.parse(enc);
+  } catch (e) {
+    return null;
+  }
+}
+
 /** Всегда подставить id/имя/аватар из Telegram (initDataUnsafe), чтобы профиль не выглядел «пустым» при сбое API. */
 function syncUserFromTelegramWebApp() {
   try {
-    const u = Telegram?.WebApp?.initDataUnsafe?.user;
+    if (typeof ensureSmolgameInitDataFromUrl === 'function') ensureSmolgameInitDataFromUrl();
+    let u = Telegram?.WebApp?.initDataUnsafe?.user;
+    if (!u || u.id == null) {
+      const raw =
+        (typeof window !== 'undefined' && window.__smolgameInitDataOverride && String(window.__smolgameInitDataOverride).trim()) ||
+        (Telegram?.WebApp?.initData && String(Telegram.WebApp.initData).trim()) ||
+        '';
+      u = parseTelegramUserFromInitDataStr(raw);
+    }
     if (!u || u.id == null) return;
     USER.id = String(u.id);
     USER.tgId = String(u.id);
