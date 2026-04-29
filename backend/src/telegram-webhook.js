@@ -34,17 +34,30 @@ async function sendStartMessage(env, token, chatId) {
     'Привет! Это бот <b>SmolGame</b> — лента мини-игр в Telegram.\n\n' +
     'Нажми кнопку ниже, чтобы открыть приложение. Если кнопки нет — в меню бота выбери «Мини-приложение» / Menu.';
 
-  await telegramApi(token, 'sendMessage', {
+  const base = {
     chat_id: chatId,
     text,
     parse_mode: 'HTML',
     disable_web_page_preview: true,
-    reply_markup: {
-      inline_keyboard: [
-        [{ text: 'Открыть SmolGame', web_app: { url: webAppUrl } }],
-      ],
-    },
-  });
+  };
+
+  // `web_app` требует, чтобы домен URL был привязан к боту в @BotFather; иначе Telegram API отдаёт ошибку и ответа в чате не будет.
+  try {
+    await telegramApi(token, 'sendMessage', {
+      ...base,
+      reply_markup: {
+        inline_keyboard: [[{ text: 'Открыть SmolGame', web_app: { url: webAppUrl } }]],
+      },
+    });
+  } catch (e) {
+    console.warn('telegram webhook: web_app button failed, falling back to url', e?.message || e);
+    await telegramApi(token, 'sendMessage', {
+      ...base,
+      reply_markup: {
+        inline_keyboard: [[{ text: 'Открыть SmolGame', url: webAppUrl }]],
+      },
+    });
+  }
 }
 
 /**
