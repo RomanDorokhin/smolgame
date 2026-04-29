@@ -48,6 +48,24 @@ const CLICK_ACTIONS = {
   'github-unlink':  () => githubUnlink(),
   'github-upload-set-mode': (el) => githubUploadSetMode(el.dataset.mode),
   'github-upload-submit': () => githubUploadSubmit(),
+  'github-wizard-open': () => {
+    if (typeof githubWizardOpen === 'function') githubWizardOpen();
+  },
+  'github-wizard-dismiss': () => {
+    if (typeof githubWizardDismiss === 'function') githubWizardDismiss();
+  },
+  'github-wizard-step-next': () => {
+    if (typeof githubWizardStepNext === 'function') githubWizardStepNext();
+  },
+  'github-wizard-step-back': () => {
+    if (typeof githubWizardStepBack === 'function') githubWizardStepBack();
+  },
+  'github-wizard-publish-repo': () => {
+    if (typeof githubWizardPublishRepo === 'function') githubWizardPublishRepo();
+  },
+  'github-wizard-submit-moderation': () => {
+    if (typeof githubWizardSubmitModeration === 'function') githubWizardSubmitModeration();
+  },
   'url-flow-next': () => urlFlowNext(),
   'url-flow-back': () => urlFlowBack(),
   'submit-game':    (el) => submitGame(el.dataset.method),

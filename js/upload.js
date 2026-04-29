@@ -101,14 +101,8 @@ async function selectMethod(m) {
 
   if (m === 'github') {
     const connect = document.getElementById('code-branch-connect');
-    const gh = document.getElementById('code-branch-github');
-    const inline = document.getElementById('github-inline-upload');
-    const post = document.getElementById('gh-after-publish-panel');
     const done = USER.isGithubConnected && USER.hasGithubPublishToken;
     if (connect) connect.hidden = Boolean(done);
-    if (inline) inline.hidden = !done;
-    const postOpen = Boolean(post && !post.hasAttribute('hidden'));
-    if (gh) gh.hidden = !postOpen;
   }
 }
 
@@ -246,138 +240,237 @@ function readFileAsText(file) {
   });
 }
 
-async function githubUploadSubmit() {
+let _ghWizardStep = 1;
+let _ghRepoJustCreated = false;
+
+function ghwzOverlay() {
+  return document.getElementById('github-wizard-overlay');
+}
+
+function ghwzSetStep(n) {
+  _ghWizardStep = Math.max(1, Math.min(4, n));
+  for (let i = 1; i <= 4; i++) {
+    const p = document.getElementById('ghwz-panel-' + i);
+    if (p) p.hidden = i !== _ghWizardStep;
+    const d = document.getElementById('ghwz-dot-' + i);
+    if (d) {
+      d.classList.remove('done', 'current');
+      if (i < _ghWizardStep) d.classList.add('done');
+      if (i === _ghWizardStep) d.classList.add('current');
+    }
+  }
+  const t = document.getElementById('github-wizard-title');
+  if (t) {
+    const titles = {
+      1: 'Шаг 1 — способ',
+      2: 'Шаг 2 — код',
+      3: 'Шаг 3 — о игре',
+      4: 'Шаг 4 — в ленту',
+    };
+    t.textContent = titles[_ghWizardStep] || 'Загрузка через GitHub';
+  }
+}
+
+function githubWizardOpen() {
   if (typeof hasTelegramInitData === 'function' && !hasTelegramInitData()) {
     showToast('⚠️ Открой мини-апп из Telegram-бота');
     return;
   }
-  const gameTitle = document.getElementById('ghCodeWizardTitle')?.value?.trim() || '';
-  if (!gameTitle) {
-    showToast('⚠️ Сначала укажи название игры');
+  if (!USER.isGithubConnected || !USER.hasGithubPublishToken) {
+    showToast('⚠️ Сначала привяжи GitHub кнопкой выше');
     return;
   }
-  const gameDescription = document.getElementById('ghCodeWizardDesc')?.value?.trim() || '';
-
-  const files = [];
-  if (_githubUploadMode === 'paste') {
-    const html = document.getElementById('githubPasteHtml')?.value?.trim() || '';
-    if (!validateWizardHtml(html)) return;
-    files.push({ path: 'index.html', content: html });
-  } else {
-    const arr = window._githubStagedFiles || [];
-    if (!arr.length) {
-      showToast('⚠️ Выбери файлы');
-      return;
-    }
-    for (const f of arr) {
-      const name = f.name || '';
-      if (!/^[a-zA-Z0-9._-]+$/.test(name)) {
-        showToast('⚠️ Имена файлов только латиница, цифры, . _ - : ' + name);
-        return;
-      }
-    }
-    let hasIndex = false;
-    for (const f of arr) {
-      const lower = f.name.toLowerCase();
-      if (lower === 'index.html') hasIndex = true;
-      const isText =
-        /\.(html?|htm|js|mjs|cjs|css|json|txt|md|svg|xml|webmanifest)$/i.test(f.name) ||
-        f.type.startsWith('text/');
-      if (isText) {
-        const text = await readFileAsText(f);
-        files.push({ path: f.name, content: text });
-      } else {
-        const b64 = await readFileAsBase64(f);
-        files.push({ path: f.name, content: b64, contentEncoding: 'base64' });
-      }
-    }
-    if (!hasIndex) {
-      showToast('⚠️ Нужен файл index.html в корне');
-      return;
-    }
+  resetGhCodeWizard();
+  _ghRepoJustCreated = false;
+  const ov = ghwzOverlay();
+  if (!ov) return;
+  ov.hidden = false;
+  ov.removeAttribute('aria-hidden');
+  ghwzSetStep(1);
+  if (typeof renderGenrePills === 'function') {
+    if (!window.selectedGenres) window.selectedGenres = {};
+    renderGenrePills('genrePillsGhCode', 'ghCode');
   }
-
-  showToast('🔍 Создаём репозиторий на GitHub…');
-  const resBox = document.getElementById('githubUploadResult');
-  try {
-    const out = await API.githubPublishGame({
-      files,
-      gameTitle,
-      gameDescription,
-    });
-    window._ghPublishedPlayUrl = out.pagesUrl || '';
-    resetGithubInlineForm();
-    if (typeof selectMethod === 'function') await selectMethod('github');
-
-    const canSubmit =
-      typeof hasTelegramInitData === 'function' && hasTelegramInitData();
-    let submittedToModeration = false;
-    if (canSubmit) {
-      try {
-        const coverRes = await resolveGhCodeWizardCover();
-        const imageUrl = coverRes?.error ? null : coverRes?.imageUrl ?? null;
-        await performGithubPathSubmit({
-          playUrl: out.pagesUrl,
-          title: gameTitle,
-          description: gameDescription,
-          imageUrl,
-        });
-        submittedToModeration = true;
-      } catch (subErr) {
-        console.warn('githubUploadSubmit moderation', subErr);
-        const msg = subErr?.message || 'не удалось записать в очередь';
-        showToast('⚠️ ' + msg + ' — открой шаг 2 ниже и нажми «Отправить на модерацию».');
-        beginGhCodeWizardAfterPublish(out);
-        return;
-      }
-    }
-
-    if (submittedToModeration) {
-      showToast(
-        out?.pagesReady
-          ? '✅ Репозиторий готов — игра на модерации'
-          : '✅ Репозиторий создан — игра на модерации (Pages до 1–3 мин)'
-      );
-      resetGhCodeWizard();
-      const done = USER.isGithubConnected && USER.hasGithubPublishToken;
-      document.getElementById('github-inline-upload')?.toggleAttribute('hidden', !done);
-      document.getElementById('code-branch-github')?.setAttribute('hidden', '');
-      document.getElementById('gh-after-publish-panel')?.setAttribute('hidden', '');
-      if (typeof loadAdminPending === 'function') loadAdminPending();
-      return;
-    }
-
-    showToast(
-      canSubmit
-        ? out?.pagesReady
-          ? '✅ GitHub Pages отвечает'
-          : '✅ Репозиторий создан — заверши шаг 2'
-        : '✅ Репозиторий создан. Открой мини-апп из бота и нажми «Отправить на модерацию».'
-    );
-    beginGhCodeWizardAfterPublish(out);
-  } catch (e) {
-    const msg = e?.message || 'ошибка';
-    if (resBox) {
-      resBox.hidden = false;
-      resBox.innerHTML = `<p>⚠️ ${esc(msg)}</p>`;
-    }
-    showToast('⚠️ ' + msg);
-  }
-}
-
-function beginGhCodeWizardAfterPublish(apiOut) {
-  const urlRaw = apiOut?.pagesUrl || window._ghPublishedPlayUrl || '';
-  const inp = document.getElementById('ghCodeWizardPagesUrl');
-  if (inp) inp.value = urlRaw || '';
-  window._ghPublishedPlayUrl = normalizeToHttpsUrl(urlRaw) || urlRaw || '';
-  document.getElementById('github-inline-upload')?.setAttribute('hidden', '');
-  document.getElementById('code-branch-github')?.removeAttribute('hidden');
-  document.getElementById('gh-after-publish-panel')?.removeAttribute('hidden');
-  if (typeof renderGenrePills === 'function') renderGenrePills('genrePillsGhCode', 'ghCode');
   refreshGhPublishReviewBox();
 }
 
-/** Общая отправка карточки игры (pending) по сценарию GitHub — шаг 2 и авто после создания репо. */
+function githubWizardDismiss() {
+  const ov = ghwzOverlay();
+  if (ov) {
+    ov.hidden = true;
+    ov.setAttribute('aria-hidden', 'true');
+  }
+}
+
+function githubWizardStepNext() {
+  if (_ghWizardStep === 1) {
+    ghwzSetStep(2);
+    return;
+  }
+  if (_ghWizardStep === 2) {
+    if (_githubUploadMode === 'paste') {
+      const html = document.getElementById('githubPasteHtml')?.value?.trim() || '';
+      if (!validateWizardHtml(html)) return;
+    } else {
+      const arr = window._githubStagedFiles || [];
+      if (!arr.length) {
+        showToast('⚠️ Выбери файлы');
+        return;
+      }
+      for (const f of arr) {
+        const name = f.name || '';
+        if (!/^[a-zA-Z0-9._-]+$/.test(name)) {
+          showToast('⚠️ Имена файлов только латиница, цифры, . _ - : ' + name);
+          return;
+        }
+      }
+      let hasIndex = arr.some(x => x.name.toLowerCase() === 'index.html');
+      if (!hasIndex) {
+        showToast('⚠️ Нужен файл index.html в корне');
+        return;
+      }
+    }
+    ghwzSetStep(3);
+    return;
+  }
+}
+
+function githubWizardStepBack() {
+  if (_ghWizardStep <= 1) {
+    githubWizardDismiss();
+    return;
+  }
+  if (_ghWizardStep === 4 && !_ghRepoJustCreated) {
+    ghwzSetStep(3);
+    return;
+  }
+  ghwzSetStep(_ghWizardStep - 1);
+}
+
+async function buildGithubPublishFileList() {
+  const files = [];
+  if (_githubUploadMode === 'paste') {
+    const html = document.getElementById('githubPasteHtml')?.value?.trim() || '';
+    if (!validateWizardHtml(html)) return null;
+    files.push({ path: 'index.html', content: html });
+    return files;
+  }
+  const arr = window._githubStagedFiles || [];
+  if (!arr.length) {
+    showToast('⚠️ Выбери файлы');
+    return null;
+  }
+  for (const f of arr) {
+    const name = f.name || '';
+    if (!/^[a-zA-Z0-9._-]+$/.test(name)) {
+      showToast('⚠️ Имена файлов только латиница, цифры, . _ - : ' + name);
+      return null;
+    }
+  }
+  let hasIndex = false;
+  for (const f of arr) {
+    if (f.name.toLowerCase() === 'index.html') hasIndex = true;
+    const isText =
+      /\.(html?|htm|js|mjs|cjs|css|json|txt|md|svg|xml|webmanifest)$/i.test(f.name) ||
+      f.type.startsWith('text/');
+    if (isText) {
+      const text = await readFileAsText(f);
+      files.push({ path: f.name, content: text });
+    } else {
+      const b64 = await readFileAsBase64(f);
+      files.push({ path: f.name, content: b64, contentEncoding: 'base64' });
+    }
+  }
+  if (!hasIndex) {
+    showToast('⚠️ Нужен файл index.html в корне');
+    return null;
+  }
+  return files;
+}
+
+async function githubWizardPublishRepo() {
+  if (typeof hasTelegramInitData === 'function' && !hasTelegramInitData()) {
+    showToast('⚠️ Открой мини-апп из Telegram-бота');
+    return;
+  }
+  const title = document.getElementById('ghCodeWizardTitle')?.value?.trim() || '';
+  if (!title) {
+    showToast('⚠️ Укажи название игры');
+    return;
+  }
+  const files = await buildGithubPublishFileList();
+  if (!files || files.length === 0) return;
+
+  const gameDescription = document.getElementById('ghCodeWizardDesc')?.value?.trim() || '';
+  showToast('🔍 Создаём репозиторий на GitHub…');
+  try {
+    const out = await API.githubPublishGame({
+      files,
+      gameTitle: title,
+      gameDescription,
+    });
+    window._ghPublishedPlayUrl = out.pagesUrl || '';
+    const inp = document.getElementById('ghCodeWizardPagesUrl');
+    if (inp) inp.value = out.pagesUrl || '';
+    _ghRepoJustCreated = true;
+    resetGithubInlineForm();
+    showToast(
+      out?.pagesReady
+        ? '✅ Репозиторий создан, страница открывается'
+        : '✅ Репозиторий создан — Pages до 1–3 мин'
+    );
+    ghwzSetStep(4);
+    refreshGhPublishReviewBox();
+  } catch (e) {
+    showToast('⚠️ ' + (e?.message || 'ошибка'));
+  }
+}
+
+async function githubWizardSubmitModeration() {
+  if (typeof hasTelegramInitData === 'function' && !hasTelegramInitData()) {
+    showToast('⚠️ Открой мини-апп из Telegram-бота');
+    return;
+  }
+  const playUrl = normalizeToHttpsUrl(
+    window._ghPublishedPlayUrl || document.getElementById('ghCodeWizardPagesUrl')?.value?.trim() || ''
+  );
+  if (!playUrl || !/github\.io/i.test(playUrl)) {
+    showToast('⚠️ Сначала создай репозиторий на шаге 3');
+    ghwzSetStep(3);
+    return;
+  }
+  const title = document.getElementById('ghCodeWizardTitle')?.value?.trim() || '';
+  if (!title) {
+    showToast('⚠️ Укажи название');
+    ghwzSetStep(3);
+    return;
+  }
+  const desc = document.getElementById('ghCodeWizardDesc')?.value?.trim() || '';
+  showToast('🔍 Отправляем на модерацию…');
+  try {
+    const { imageUrl, error } = await resolveGhCodeWizardCover();
+    if (error) return;
+    await performGithubPathSubmit({
+      playUrl,
+      title,
+      description: desc,
+      imageUrl: imageUrl || null,
+    });
+    showToast('✅ Игра отправлена на модерацию');
+    githubWizardDismiss();
+    resetGhCodeWizard();
+    if (typeof loadAdminPending === 'function') loadAdminPending();
+    if (typeof closeUpload === 'function') closeUpload();
+  } catch (e) {
+    showToast('⚠️ ' + (e?.message || 'не получилось'));
+  }
+}
+
+async function githubUploadSubmit() {
+  githubWizardOpen();
+}
+
+/** Общая отправка карточки игры (pending) по сценарию GitHub */
 async function performGithubPathSubmit({ playUrl, title, description, imageUrl }) {
   const u = normalizeToHttpsUrl(String(playUrl || '').trim()) || String(playUrl || '').trim();
   if (!u || !/github\.io/i.test(u)) {
@@ -423,6 +516,8 @@ function refreshGhPublishReviewBox() {
 
 function resetGhCodeWizard() {
   window._ghPublishedPlayUrl = '';
+  _ghRepoJustCreated = false;
+  _ghWizardStep = 1;
   const u = document.getElementById('ghCodeWizardPagesUrl');
   if (u) u.value = '';
   const t = document.getElementById('ghCodeWizardTitle');
@@ -439,11 +534,17 @@ function resetGhCodeWizard() {
     prev.classList.remove('has-image');
   }
   window.selectedGenres.ghCode = '';
-  document.getElementById('gh-after-publish-panel')?.setAttribute('hidden', '');
-  document.getElementById('code-branch-github')?.setAttribute('hidden', '');
+  resetGithubInlineForm();
+  githubWizardDismiss();
+  ghwzSetStep(1);
   if (typeof renderGenrePills === 'function') {
     renderGenrePills('genrePillsGhCode', 'ghCode');
   }
+}
+
+function ghCodeWizardCancel() {
+  resetGhCodeWizard();
+  showToast('Загрузку можно начать снова');
 }
 
 async function resolveGhCodeWizardCover() {
@@ -478,57 +579,6 @@ function ghCodeWizardNext() {
 
 function ghCodeWizardBack() {
   refreshGhPublishReviewBox();
-}
-
-function ghCodeWizardCancel() {
-  resetGhCodeWizard();
-  if (typeof selectMethod === 'function') selectMethod('github');
-  const done = USER.isGithubConnected && USER.hasGithubPublishToken;
-  document.getElementById('github-inline-upload')?.toggleAttribute('hidden', !done);
-  showToast('Можно изменить код и отправить снова');
-}
-
-async function ghCodeWizardPublish() {
-  if (typeof hasTelegramInitData === 'function' && !hasTelegramInitData()) {
-    showToast('⚠️ Открой мини-апп из Telegram-бота');
-    return;
-  }
-  const playUrl = normalizeToHttpsUrl(
-    window._ghPublishedPlayUrl || document.getElementById('ghCodeWizardPagesUrl')?.value?.trim() || ''
-  );
-  if (!playUrl || !/github\.io/i.test(playUrl)) {
-    showToast('⚠️ Нет ссылки игры — сначала отправь код на GitHub выше.');
-    if (typeof selectMethod === 'function') selectMethod('github');
-    return;
-  }
-  const title = document.getElementById('ghCodeWizardTitle')?.value?.trim() || '';
-  if (!title) {
-    showToast('⚠️ Укажи название в форме выше');
-    document.getElementById('ghCodeWizardTitle')?.focus?.();
-    return;
-  }
-  const desc = document.getElementById('ghCodeWizardDesc')?.value?.trim() || '';
-
-  showToast('🔍 Отправляем…');
-  try {
-    const { imageUrl, error } = await resolveGhCodeWizardCover();
-    if (error) return;
-
-    await performGithubPathSubmit({
-      playUrl,
-      title,
-      description: desc,
-      imageUrl: imageUrl || null,
-    });
-    showToast('✅ Отправлено на модерацию!');
-    resetGhCodeWizard();
-    if (typeof loadAdminPending === 'function') loadAdminPending();
-    if (typeof closeUpload === 'function') closeUpload();
-  } catch (e) {
-    const m = e?.message || 'не получилось';
-    console.error('ghCodeWizardPublish failed', e);
-    showToast('⚠️ ' + m);
-  }
 }
 
 function previewGhCodeWizardCover(input) {
@@ -665,6 +715,12 @@ function previewCover(input) {
   reader.readAsDataURL(file);
 }
 
+window.githubWizardOpen = githubWizardOpen;
+window.githubWizardDismiss = githubWizardDismiss;
+window.githubWizardStepNext = githubWizardStepNext;
+window.githubWizardStepBack = githubWizardStepBack;
+window.githubWizardPublishRepo = githubWizardPublishRepo;
+window.githubWizardSubmitModeration = githubWizardSubmitModeration;
 window.selectMethod = selectMethod;
 window.refreshUploadCapabilities = refreshUploadCapabilities;
 window.authGithub = authGithub;

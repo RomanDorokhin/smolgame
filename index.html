@@ -14,7 +14,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <!-- ?v= сбрасывает кэш WebView Telegram после правок JS/CSS (меняй при каждом релизе фронта). -->
-<link rel="stylesheet" href="styles.css?v=20260444">
+<link rel="stylesheet" href="styles.css?v=20260450">
 </head>
 <body>
 
@@ -289,37 +289,104 @@
     </div>
 
     <div id="github-inline-upload" class="github-inline-upload" hidden>
-      <p class="upload-panel-lead">Шаг 1 — вставь код или выбери файлы, укажи название и краткое описание, затем создай репозиторий на GitHub. Каждый раз при «Войти через GitHub» нужно заново подтвердить доступ в GitHub (в т.ч. если тот же аккаунт с другого Telegram).</p>
-      <div class="github-input-mode">
-        <button type="button" class="profile-text-btn github-mode-btn selected" data-action="github-upload-set-mode" data-mode="paste">Вставить код</button>
-        <button type="button" class="profile-text-btn github-mode-btn" data-action="github-upload-set-mode" data-mode="files">Файлы</button>
-      </div>
-      <div id="github-upload-paste-panel">
-        <div class="field-group">
-          <div class="field-label">HTML (одна страница)</div>
-          <textarea class="code-area" placeholder="<!DOCTYPE html>..." id="githubPasteHtml"></textarea>
+      <p class="upload-panel-lead">Четыре шага: способ → код → название и описание → жанр и отправка на модерацию.</p>
+      <button type="button" class="submit-btn" data-action="github-wizard-open">Начать загрузку</button>
+    </div>
+
+    <!-- Полноэкранный мастер GitHub (4 шага поверх экрана загрузки) -->
+    <div id="github-wizard-overlay" class="github-wizard-overlay" hidden aria-hidden="true">
+      <div class="github-wizard-backdrop" data-action="github-wizard-dismiss"></div>
+      <div class="github-wizard-sheet" role="dialog" aria-modal="true" aria-labelledby="github-wizard-title">
+        <div class="github-wizard-head">
+          <button type="button" class="profile-text-btn github-wizard-close-btn" data-action="github-wizard-dismiss" aria-label="Закрыть">✕</button>
+          <div class="upload-steps github-wizard-steps" aria-hidden="true">
+            <span class="upload-steps-label">Шаг</span>
+            <div class="upload-steps-track">
+              <span class="upload-steps-dot upload-steps-dot--1" id="ghwz-dot-1"></span>
+              <span class="upload-steps-dot upload-steps-dot--2" id="ghwz-dot-2"></span>
+              <span class="upload-steps-dot upload-steps-dot--3" id="ghwz-dot-3"></span>
+              <span class="upload-steps-dot upload-steps-dot--4" id="ghwz-dot-4"></span>
+            </div>
+          </div>
+          <h2 class="github-wizard-title" id="github-wizard-title">Загрузка через GitHub</h2>
+        </div>
+        <div class="github-wizard-body">
+          <div class="github-wizard-panel" id="ghwz-panel-1" data-ghwz-step="1">
+            <p class="upload-panel-lead">Способ публикации</p>
+            <p class="field-hint" style="margin-bottom:14px">Игра будет в твоём публичном репозитории на GitHub Pages.</p>
+            <div class="github-wizard-method-picked">
+              <span class="github-wizard-method-icon" aria-hidden="true"><svg class="sg-icon" viewBox="0 0 24 24" fill="none"><path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0-2-1.5-3-1.5-3-1.5-.3 1.15-.3 2.35 0 3.5a5.4 5.4 0 0 0-1 3.5c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M9 18c-4.51 2-5-2-7-2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+              <div><strong>GitHub</strong><br><span class="field-hint">Код в репозиторий → Pages</span></div>
+            </div>
+            <p class="field-hint">Другие способы — вкладки «Ссылка» или «Премиум» на экране загрузки.</p>
+            <button type="button" class="submit-btn" data-action="github-wizard-step-next">Далее</button>
+          </div>
+          <div class="github-wizard-panel" id="ghwz-panel-2" data-ghwz-step="2" hidden>
+            <p class="upload-panel-lead">Код игры</p>
+            <div class="github-input-mode">
+              <button type="button" class="profile-text-btn github-mode-btn selected" data-action="github-upload-set-mode" data-mode="paste">Вставить код</button>
+              <button type="button" class="profile-text-btn github-mode-btn" data-action="github-upload-set-mode" data-mode="files">Файлы</button>
+            </div>
+            <div id="github-upload-paste-panel">
+              <div class="field-group">
+                <div class="field-label">HTML (одна страница)</div>
+                <textarea class="code-area" placeholder="<!DOCTYPE html>..." id="githubPasteHtml"></textarea>
+              </div>
+            </div>
+            <div id="github-upload-files-panel" hidden>
+              <div class="field-group">
+                <div class="field-label">Файлы (до 20, пути латиницей, нужен index.html)</div>
+                <label class="image-upload">
+                  <input type="file" id="githubMultiFiles" multiple>
+                  <span>Выбрать файлы</span>
+                </label>
+                <div class="github-files-list" id="githubFilesList"></div>
+              </div>
+            </div>
+            <div class="github-wizard-actions">
+              <button type="button" class="profile-text-btn" data-action="github-wizard-step-back">Назад</button>
+              <button type="button" class="submit-btn" data-action="github-wizard-step-next">Далее</button>
+            </div>
+          </div>
+          <div class="github-wizard-panel" id="ghwz-panel-3" data-ghwz-step="3" hidden>
+            <p class="upload-panel-lead">Название и описание</p>
+            <div class="field-group">
+              <div class="field-label">Название игры</div>
+              <input class="field-input" type="text" placeholder="Моя крутая игра" id="ghCodeWizardTitle" maxlength="40">
+            </div>
+            <div class="field-group">
+              <div class="field-label">Описание</div>
+              <textarea class="field-input" placeholder="Пара слов о чём игра…" id="ghCodeWizardDesc" maxlength="120"></textarea>
+            </div>
+            <div class="github-wizard-actions">
+              <button type="button" class="profile-text-btn" data-action="github-wizard-step-back">Назад</button>
+              <button type="button" class="submit-btn" data-action="github-wizard-publish-repo">Создать репозиторий</button>
+            </div>
+          </div>
+          <div class="github-wizard-panel" id="ghwz-panel-4" data-ghwz-step="4" hidden>
+            <p class="upload-panel-lead">Жанр и отправка в SmolGame</p>
+            <input type="hidden" id="ghCodeWizardPagesUrl" value="">
+            <div class="field-group">
+              <div class="field-label">Обложка (необязательно)</div>
+              <input class="field-input" type="url" id="ghCodeWizardCoverUrl" placeholder="https://… jpg/png">
+              <label class="image-upload">
+                <input type="file" accept="image/*" id="ghCodeWizardCoverFile">
+                <span>Или файл</span>
+              </label>
+              <div class="image-preview" id="ghCodeWizardCoverPreview">Обложка не выбрана</div>
+            </div>
+            <div class="field-group">
+              <div class="field-label">Жанр</div>
+              <div class="genre-pills" id="genrePillsGhCode"></div>
+            </div>
+            <div class="upload-review-box" id="ghCodeWizardReview"></div>
+            <div class="github-wizard-actions github-wizard-actions--wrap">
+              <button type="button" class="profile-text-btn" data-action="github-wizard-step-back">Назад</button>
+              <button type="button" class="submit-btn" data-action="github-wizard-submit-moderation">Отправить на модерацию</button>
+            </div>
+          </div>
         </div>
       </div>
-      <div id="github-upload-files-panel" hidden>
-        <div class="field-group">
-          <div class="field-label">Файлы (до 20, пути латиницей, нужен index.html)</div>
-          <label class="image-upload">
-            <input type="file" id="githubMultiFiles" multiple>
-            <span>Выбрать файлы</span>
-          </label>
-          <div class="github-files-list" id="githubFilesList"></div>
-        </div>
-      </div>
-      <div class="field-group">
-        <div class="field-label">Название игры</div>
-        <input class="field-input" type="text" placeholder="Моя крутая игра" id="ghCodeWizardTitle" maxlength="40">
-      </div>
-      <div class="field-group">
-        <div class="field-label">Описание</div>
-        <textarea class="field-input" placeholder="Пара слов о чём игра…" id="ghCodeWizardDesc" maxlength="120"></textarea>
-      </div>
-      <button type="button" class="submit-btn github-inline-submit" data-action="github-upload-submit">Создать репозиторий на GitHub</button>
-      <div class="github-upload-result" id="githubUploadResult" hidden></div>
     </div>
 
     <div id="code-branch-connect" class="code-upload-branch">
@@ -328,30 +395,7 @@
       </p>
     </div>
 
-    <div id="code-branch-github" class="code-upload-branch" hidden>
-    <input type="hidden" id="ghCodeWizardPagesUrl" value="">
-    <div id="gh-after-publish-panel" class="upload-meta-panel" hidden>
-      <p class="upload-panel-lead">После шага 1 карточка обычно уже на модерации. Здесь можно добавить обложку и жанр и отправить повторно.</p>
-      <div class="field-group">
-        <div class="field-label">Обложка (необязательно)</div>
-        <input class="field-input" type="url" id="ghCodeWizardCoverUrl" placeholder="https://… jpg/png">
-        <label class="image-upload">
-          <input type="file" accept="image/*" id="ghCodeWizardCoverFile">
-          <span>Или файл</span>
-        </label>
-        <div class="image-preview" id="ghCodeWizardCoverPreview">Обложка не выбрана</div>
-      </div>
-      <div class="field-group">
-        <div class="field-label">Жанр</div>
-        <div class="genre-pills" id="genrePillsGhCode"></div>
-      </div>
-      <div class="upload-review-box" id="ghCodeWizardReview"></div>
-      <div class="code-wizard-actions code-wizard-actions--wrap">
-        <button type="button" class="profile-text-btn" data-action="gh-code-wizard-cancel">← К коду</button>
-        <button type="button" class="submit-btn" data-action="gh-code-wizard-publish">Отправить на модерацию</button>
-      </div>
-    </div>
-    </div>
+    <div id="code-branch-github" class="code-upload-branch" hidden></div>
   </div>
 
   <!-- Вкладка: премиум — один экран для всех; доступ к ранним функциям по списку на Worker -->
@@ -670,16 +714,16 @@
 <script src="js/feed-nav-tip.js?v=20260444"></script>
 <script src="js/feed-onboarding.js?v=20260444"></script>
 <script src="js/actions.js?v=20260444"></script>
-<script src="js/upload.js?v=20260445"></script>
+<script src="js/upload.js?v=20260450"></script>
 <script src="js/genres.js?v=20260439"></script>
 <script src="js/search.js?v=20260441"></script>
 <script src="js/liked-games.js?v=20260441"></script>
 <script src="js/profile.js?v=20260446"></script>
-<script src="js/admin.js?v=20260439"></script>
+<script src="js/admin.js?v=20260450"></script>
 <script src="js/game-editor.js?v=20260439"></script>
 <script src="js/game-detail.js?v=20260446"></script>
 <script src="js/screens.js?v=20260444"></script>
-<script src="js/events.js?v=20260446"></script>
+<script src="js/events.js?v=20260450"></script>
 <script src="js/overlay-pull-close.js?v=20260439"></script>
 <script src="js/main.js?v=20260439"></script>
 </body>

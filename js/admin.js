@@ -70,9 +70,12 @@ async function adminDeleteGame(card) {
   if (!id) return;
   if (!confirm('Удалить игру из базы?')) return;
   try {
-    await API.delete(id);
+    const res = await API.delete(id, { deleteGithubRepo: true });
     card.remove();
-    showToast('🗑 Удалено');
+    let msg = '🗑 Удалено из SmolGame';
+    if (res?.githubDeleted) msg += '; репозиторий на GitHub удалён';
+    else if (res?.githubDeleteNote) msg += '. ' + res.githubDeleteNote;
+    showToast(msg);
     const host = document.getElementById('adminPendingList');
     if (host && host.children.length === 0) loadAdminPending();
     loadGames();
