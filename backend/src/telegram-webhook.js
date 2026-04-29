@@ -32,7 +32,7 @@ async function sendStartMessage(env, token, chatId) {
   const webAppUrl = miniAppPublicUrl(env);
   const text =
     'Привет! Это бот <b>SmolGame</b> — лента мини-игр в Telegram.\n\n' +
-    'Нажми кнопку ниже, чтобы открыть приложение. Если кнопки нет — в меню бота выбери «Мини-приложение» / Menu.';
+    'Нажми зелёную кнопку ниже. Если её не видно — слева внизу нажми <b>«Игры»</b> в панели чата: это то же приложение (в настройках Telegram оно может называться «мини-приложение»).';
 
   const base = {
     chat_id: chatId,
