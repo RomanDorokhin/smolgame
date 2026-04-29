@@ -122,6 +122,7 @@ async function renderProfile() {
     console.warn('profile /me failed', e);
     const hint = typeof userFacingError === 'function' ? userFacingError(e) : String(e?.message || '');
     setProfileMeBannerVisible(true, hint || tf('profile_me_failed'));
+    if (typeof showToast === 'function') showToast(hint || tf('profile_me_failed'), 9000);
   }
   applyMeToProfileUi(me, { bioRead, handleRead, premBadge, setStatGames, setStatFollowers, setStatLikes });
   document.getElementById('devBadge').style.display = USER.isGithubConnected ? '' : 'none';

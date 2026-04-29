@@ -205,9 +205,11 @@ function switchTab(tab) {
     if (chrome) chrome.textContent = t('nav_profile');
     const screen = document.getElementById('profile-screen');
     screen?.classList.remove('profile-edit-active');
-    if (typeof renderProfile === 'function') renderProfile();
-    if (typeof loadAdminPending === 'function') loadAdminPending();
     screen?.classList.add('open');
+    void (async () => {
+      if (typeof renderProfile === 'function') await renderProfile();
+      if (typeof loadAdminPending === 'function') loadAdminPending();
+    })();
   } else if (tab === 'games') {
     document.getElementById('games-library-screen')?.classList.add('open');
     const chrome = document.getElementById('app-tab-chrome-label');

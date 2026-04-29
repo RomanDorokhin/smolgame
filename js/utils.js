@@ -72,12 +72,13 @@ function avatarImgUrl(avatar) {
 }
 
 let toastTimer;
-function showToast(msg) {
+function showToast(msg, durationMs) {
   const t = document.getElementById('toast');
   t.textContent = msg;
   t.classList.add('show');
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => t.classList.remove('show'), 2200);
+  const ms = Number(durationMs) > 0 ? Number(durationMs) : 2200;
+  toastTimer = setTimeout(() => t.classList.remove('show'), ms);
 }
 
 /** Короткое сообщение для пользователя из Error / строки (без длинных тех. текстов в тосте). */
