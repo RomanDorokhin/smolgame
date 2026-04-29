@@ -1,17 +1,19 @@
 /**
  * Приложение только для Telegram Mini App: нужен подписанный initData.
  */
-function hasTelegramInitData() {
+function hasSignedTelegramInitData() {
   try {
     const o = window.__smolgameInitDataOverride;
     if (o && String(o).includes('hash=')) return true;
     const d = Telegram.WebApp?.initData;
-    if (d && String(d).length > 0) return true;
-    const u = Telegram.WebApp?.initDataUnsafe?.user;
-    return Boolean(u && u.id != null);
+    return Boolean(d && String(d).includes('hash='));
   } catch (e) {
     return false;
   }
+}
+
+function hasTelegramInitData() {
+  return hasSignedTelegramInitData();
 }
 
 function showTelegramOnlyWall() {
