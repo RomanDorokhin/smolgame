@@ -379,6 +379,7 @@
       profile_me_failed:
         'Не удалось загрузить профиль с сервера. Потяни экран вниз для обновления или нажми «Повторить». Имя ниже может быть из Telegram до успешной загрузки.',
       profile_me_retry: 'Повторить',
+      profile_me_reload: 'Перезапустить мини-апп',
       profile_delete_this: 'эту игру',
       profile_delete_confirm_generic: 'Удалить игру из SmolGame? Это действие нельзя отменить.',
       profile_delete_confirm_named: 'Удалить «{title}» из SmolGame? Это действие нельзя отменить.',
@@ -771,6 +772,7 @@
       profile_me_failed:
         'Could not load profile from the server. Pull down to refresh or tap Retry. The name below may come from Telegram until load succeeds.',
       profile_me_retry: 'Retry',
+      profile_me_reload: 'Restart mini app',
       profile_delete_this: 'this game',
       profile_delete_confirm_generic: 'Remove this game from SmolGame? This cannot be undone.',
       profile_delete_confirm_named: 'Remove “{title}” from SmolGame? This cannot be undone.',

@@ -155,6 +155,18 @@ const CLICK_ACTIONS = {
   'profile-retry-me': () => {
     if (typeof renderProfile === 'function') renderProfile();
   },
+  'profile-reload-miniapp': () => {
+    try {
+      const tg = Telegram?.WebApp;
+      if (tg && typeof tg.ready === 'function') tg.ready();
+      if (tg && typeof tg.expand === 'function') tg.expand();
+      const url = new URL(window.location.href);
+      url.searchParams.set('_tg', String(Date.now()));
+      window.location.replace(url.toString());
+      return;
+    } catch (e) { /* ignore */ }
+    window.location.reload();
+  },
 
   'admin-approve':  (el) => adminApproveGame(el.closest('.admin-card, .feed-moderation-card')),
   'admin-reject':   (el) => adminRejectGame (el.closest('.admin-card, .feed-moderation-card')),

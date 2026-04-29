@@ -3052,6 +3052,11 @@ textarea.field-input{
   line-height:1.45;
   color:rgba(255,255,255,0.78);
 }
+.profile-me-banner-actions{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+}
 .profile-me-banner .profile-me-retry{
   align-self:flex-start;
   padding:10px 16px;

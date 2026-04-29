@@ -33,18 +33,21 @@ function gameStatusBadgeHtml(status) {
   return '';
 }
 
-/** Подставить имя/аватар из Telegram, если USER ещё пустой (например до ответа API). */
+/** Всегда подставить id/имя/аватар из Telegram (initDataUnsafe), чтобы профиль не выглядел «пустым» при сбое API. */
 function syncUserFromTelegramWebApp() {
   try {
     const u = Telegram?.WebApp?.initDataUnsafe?.user;
     if (!u || u.id == null) return;
-    const tid = String(u.id);
-    if (!USER.id) USER.id = tid;
-    if (!USER.tgId) USER.tgId = tid;
+    USER.id = String(u.id);
+    USER.tgId = String(u.id);
     const nm = [u.first_name, u.last_name].filter(Boolean).join(' ').trim();
-    if (nm && (!USER.name || !String(USER.name).trim())) USER.name = nm;
+    if (nm) USER.name = nm;
     const ph = u.photo_url && String(u.photo_url).trim();
-    if (ph && (!USER.avatar || USER.avatar === '?')) USER.avatar = ph;
+    if (ph) USER.avatar = ph;
+    else if (u.first_name) {
+      const ch = String(u.first_name).trim()[0];
+      if (ch) USER.avatar = ch;
+    }
   } catch (e) { /* ignore */ }
 }
 
@@ -117,10 +120,8 @@ async function renderProfile() {
     me = await API.me();
   } catch (e) {
     console.warn('profile /me failed', e);
-  }
-  if (!me) {
-    syncUserFromTelegramWebApp();
-    setProfileMeBannerVisible(true, tf('profile_me_failed'));
+    const hint = typeof userFacingError === 'function' ? userFacingError(e) : String(e?.message || '');
+    setProfileMeBannerVisible(true, hint || tf('profile_me_failed'));
   }
   applyMeToProfileUi(me, { bioRead, handleRead, premBadge, setStatGames, setStatFollowers, setStatLikes });
   document.getElementById('devBadge').style.display = USER.isGithubConnected ? '' : 'none';

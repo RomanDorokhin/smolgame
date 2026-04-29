@@ -402,8 +402,27 @@ async function fetchGithubLinkRow(db, userId) {
 }
 
 export async function getMe(req, env) {
+  const initHeader = String(req.headers.get('x-telegram-init-data') || '').trim();
+  if (!initHeader) {
+    return error(
+      'Нет данных входа из Telegram. Открой мини-апп только из бота (не из обычного браузера по ссылке).',
+      401
+    );
+  }
+  const token = env.TELEGRAM_BOT_TOKEN;
+  if (!token || !String(token).trim()) {
+    return error(
+      'На сервере не задан TELEGRAM_BOT_TOKEN. Владельцу Worker: npx wrangler secret put TELEGRAM_BOT_TOKEN (токен этого бота из @BotFather).',
+      503
+    );
+  }
   const user = await authenticate(req, env);
-  if (!user) return error('unauthorized', 401);
+  if (!user) {
+    return error(
+      'Телеграм не подтвердил сессию (initData). Часто помогает: полностью закрыть мини-апп и открыть снова из бота. Если не помогает — на Cloudflare в Worker проверь, что TELEGRAM_BOT_TOKEN от того же бота, что и мини-апп.',
+      401
+    );
+  }
   await upsertUser(env.DB, user);
   let dbUser;
   try {

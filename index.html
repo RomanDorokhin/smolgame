@@ -14,7 +14,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <!-- ?v= сбрасывает кэш WebView Telegram после правок JS/CSS (меняй при каждом релизе фронта; при крупных фиксах — у всех script/link сразу). -->
-<link rel="stylesheet" href="styles.css?v=20260462">
+<link rel="stylesheet" href="styles.css?v=20260463">
 </head>
 <body>
 
@@ -589,7 +589,10 @@ Must work on a mobile phone.</pre>
     <p class="profile-stats-hint" id="profileStatsHint" data-i18n="profile_stats_hint">Игры — опубликованные карточки. Лайки — сумма по всем твоим играм в ленте.</p>
     <div id="profileMeBanner" class="profile-me-banner" hidden>
       <p class="profile-me-banner-text" id="profileMeBannerText"></p>
-      <button type="button" class="profile-me-retry" data-action="profile-retry-me" id="profileMeRetryBtn" data-i18n="profile_me_retry">Повторить</button>
+      <div class="profile-me-banner-actions">
+        <button type="button" class="profile-me-retry" data-action="profile-retry-me" id="profileMeRetryBtn" data-i18n="profile_me_retry">Повторить</button>
+        <button type="button" class="profile-me-retry profile-me-reload" data-action="profile-reload-miniapp" id="profileMeReloadBtn" data-i18n="profile_me_reload">Перезапустить мини-апп</button>
+      </div>
     </div>
     <div class="profile-name" id="profileName">Гость</div>
     <div class="profile-handle" id="profileHandle">@—</div>
@@ -735,32 +738,32 @@ Must work on a mobile phone.</pre>
 
 <!-- ══ SCRIPTS ══ -->
 <!-- Порядок важен: config/utils/telegram → state → api → модули логики → события → main. -->
-<script src="js/config.js?v=20260462"></script>
-<script src="js/genre-icons.js?v=20260462"></script>
-<script src="js/utils.js?v=20260462"></script>
-<script src="js/i18n.js?v=20260462"></script>
-<script src="js/telegram.js?v=20260462"></script>
-<script src="js/tg-gate.js?v=20260462"></script>
-<script src="js/boot-splash.js?v=20260462"></script>
-<script src="js/state.js?v=20260462"></script>
-<script src="js/api.js?v=20260462"></script>
-<script src="js/onboarding.js?v=20260462"></script>
-<script src="js/help-screens.js?v=20260462"></script>
-<script src="js/feed.js?v=20260462"></script>
-<script src="js/feed-nav-tip.js?v=20260462"></script>
-<script src="js/feed-onboarding.js?v=20260462"></script>
-<script src="js/actions.js?v=20260462"></script>
-<script src="js/upload.js?v=20260462"></script>
-<script src="js/genres.js?v=20260462"></script>
-<script src="js/search.js?v=20260462"></script>
-<script src="js/liked-games.js?v=20260462"></script>
-<script src="js/profile.js?v=20260462"></script>
-<script src="js/admin.js?v=20260462"></script>
-<script src="js/game-editor.js?v=20260462"></script>
-<script src="js/game-detail.js?v=20260462"></script>
-<script src="js/screens.js?v=20260462"></script>
-<script src="js/events.js?v=20260462"></script>
-<script src="js/overlay-pull-close.js?v=20260462"></script>
-<script src="js/main.js?v=20260462"></script>
+<script src="js/config.js?v=20260463"></script>
+<script src="js/genre-icons.js?v=20260463"></script>
+<script src="js/utils.js?v=20260463"></script>
+<script src="js/i18n.js?v=20260463"></script>
+<script src="js/telegram.js?v=20260463"></script>
+<script src="js/tg-gate.js?v=20260463"></script>
+<script src="js/boot-splash.js?v=20260463"></script>
+<script src="js/state.js?v=20260463"></script>
+<script src="js/api.js?v=20260463"></script>
+<script src="js/onboarding.js?v=20260463"></script>
+<script src="js/help-screens.js?v=20260463"></script>
+<script src="js/feed.js?v=20260463"></script>
+<script src="js/feed-nav-tip.js?v=20260463"></script>
+<script src="js/feed-onboarding.js?v=20260463"></script>
+<script src="js/actions.js?v=20260463"></script>
+<script src="js/upload.js?v=20260463"></script>
+<script src="js/genres.js?v=20260463"></script>
+<script src="js/search.js?v=20260463"></script>
+<script src="js/liked-games.js?v=20260463"></script>
+<script src="js/profile.js?v=20260463"></script>
+<script src="js/admin.js?v=20260463"></script>
+<script src="js/game-editor.js?v=20260463"></script>
+<script src="js/game-detail.js?v=20260463"></script>
+<script src="js/screens.js?v=20260463"></script>
+<script src="js/events.js?v=20260463"></script>
+<script src="js/overlay-pull-close.js?v=20260463"></script>
+<script src="js/main.js?v=20260463"></script>
 </body>
 </html>

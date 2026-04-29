@@ -23,7 +23,8 @@ function toHex(u8) {
  * Проверяет initData. Возвращает объект юзера Telegram или null.
  * Дополнительно проверяет, что data не старше maxAgeSec секунд.
  */
-export async function verifyInitData(initData, botToken, maxAgeSec = 86400) {
+/** По умолчанию 7 суток: клиенты Telegram иногда отдают «залипший» initData; 24 ч давали ложные 401 и пустой профиль. */
+export async function verifyInitData(initData, botToken, maxAgeSec = 604800) {
   if (!initData || !botToken) return null;
 
   const params = new URLSearchParams(initData);

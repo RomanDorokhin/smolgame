@@ -66,7 +66,9 @@ async function apiFetch(path, { method = 'GET', body } = {}) {
     let msg = (typeof raw === 'string' && raw.trim()) || resp.statusText || 'request failed';
 
     if (resp.status === 401) {
+      const serverMsg = typeof raw === 'string' && raw.trim();
       msg =
+        serverMsg ||
         'Вход из Telegram не подтверждён. Открой только из бота. Если из бота — токен на Worker должен быть от ЭТОГО бота: npx wrangler secret put TELEGRAM_BOT_TOKEN';
     } else if (resp.status === 404) {
       const low = String(msg || '').toLowerCase();
@@ -77,7 +79,8 @@ async function apiFetch(path, { method = 'GET', body } = {}) {
     } else if (resp.status === 409) {
       // оставляем текст от API (например профиль в БД)
     } else if (resp.status === 503) {
-      // оставляем текст от API (например нет TELEGRAM_BOT_TOKEN)
+      const serverMsg = typeof raw === 'string' && raw.trim();
+      if (serverMsg) msg = serverMsg;
     } else {
       const vague =
         !raw ||
