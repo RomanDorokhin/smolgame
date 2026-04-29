@@ -1,7 +1,12 @@
+/** «Все жанры» в фильтре поиска — значение для API/логики (русское, как в БД). */
+const GENRE_FILTER_ALL_VALUE = 'Все';
+
 function genrePillHtml(g) {
   const key = g.key || (typeof genreIconKeyFromLabel === 'function' ? genreIconKeyFromLabel(g.label) : 'other');
   const icon = typeof genreIconSvg === 'function' ? genreIconSvg(key, 'sg-genre-ic--sm') : '';
-  return `${icon}<span class="genre-pill-txt">${esc(g.label)}</span>`;
+  const display =
+    typeof genreDisplayFromApi === 'function' ? genreDisplayFromApi(g.label) : g.label;
+  return `${icon}<span class="genre-pill-txt">${esc(display)}</span>`;
 }
 
 function renderGenrePills(containerId, stateKey) {
@@ -22,16 +27,34 @@ function renderGenrePills(containerId, stateKey) {
 
 function renderGenreFilter() {
   const el = document.getElementById('genreFilter');
+  if (!el) return;
   el.innerHTML = '';
-  [{ label: 'Все', key: 'all' }, ...GENRES].forEach(g => {
+  const allDisplay = typeof t === 'function' ? t('genre_all') : GENRE_FILTER_ALL_VALUE;
+  const chips = [
+    { value: GENRE_FILTER_ALL_VALUE, key: 'all', labelDisplay: allDisplay },
+    ...GENRES.map(g => ({
+      value: g.label,
+      key: g.key,
+      labelDisplay: typeof genreDisplayFromApi === 'function' ? genreDisplayFromApi(g.label) : g.label,
+    })),
+  ];
+  chips.forEach(g => {
     const tag = document.createElement('div');
-    tag.className = 'genre-tag' + (window.selectedGenre === g.label ? ' active' : '');
-    const iconKey = g.key || (typeof genreIconKeyFromLabel === 'function' ? genreIconKeyFromLabel(g.label) : 'all');
+    const active =
+      g.value === GENRE_FILTER_ALL_VALUE
+        ? !window.selectedGenre || window.selectedGenre === '' || window.selectedGenre === GENRE_FILTER_ALL_VALUE
+        : window.selectedGenre === g.value;
+    tag.className = 'genre-tag' + (active ? ' active' : '');
+    const iconKey = g.key || (typeof genreIconKeyFromLabel === 'function' ? genreIconKeyFromLabel(g.value) : 'all');
     tag.innerHTML =
       (typeof genreIconSvg === 'function' ? genreIconSvg(iconKey, 'sg-genre-ic--sm') : '') +
-      `<span class="genre-tag-txt">${esc(g.label)}</span>`;
+      `<span class="genre-tag-txt">${esc(g.labelDisplay)}</span>`;
     tag.onclick = () => {
-      window.selectedGenre = window.selectedGenre === g.label ? '' : g.label;
+      if (g.value === GENRE_FILTER_ALL_VALUE) {
+        window.selectedGenre = '';
+      } else {
+        window.selectedGenre = window.selectedGenre === g.value ? '' : g.value;
+      }
       renderGenreFilter();
       onSearch(document.getElementById('searchInput').value);
     };
@@ -49,3 +72,4 @@ function genreKeyForApiLabel(label) {
 window.genreKeyForApiLabel = genreKeyForApiLabel;
 window.renderGenrePills = renderGenrePills;
 window.renderGenreFilter = renderGenreFilter;
+window.GENRE_FILTER_ALL_VALUE = GENRE_FILTER_ALL_VALUE;

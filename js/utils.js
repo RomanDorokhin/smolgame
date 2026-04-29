@@ -83,10 +83,11 @@ function showToast(msg) {
 /** Короткое сообщение для пользователя из Error / строки (без длинных тех. текстов в тосте). */
 function userFacingError(e) {
   const raw = String(e?.message || e || '').trim();
-  if (!raw) return 'Что-то пошло не так. Попробуй ещё раз.';
+  const tFn = typeof t === 'function' ? t : null;
+  if (!raw) return tFn ? tFn('err_generic') : 'Что-то пошло не так. Попробуй ещё раз.';
   const low = raw.toLowerCase();
   if (low.includes('нет сети') || low.includes('network') || low.includes('failed to fetch')) {
-    return 'Нет сети. Проверь интернет и попробуй снова.';
+    return tFn ? tFn('err_network') : 'Нет сети. Проверь интернет и попробуй снова.';
   }
   if (raw.length > 120) return raw.slice(0, 117) + '…';
   return raw;
@@ -128,8 +129,17 @@ function sgStorefrontCardInfoHtml(g, opts) {
   const o = opts || {};
   const showAuthor = Boolean(o.author);
   const showDesc = o.desc !== false;
-  const genreLine = esc((g && g.genre && String(g.genre).trim()) ? g.genre : 'Игра');
-  const title = esc((g && g.title && String(g.title).trim()) ? g.title : 'Игра');
+  const genreLine = esc(
+    g && g.genre && String(g.genre).trim()
+      ? typeof genreDisplayFromApi === 'function'
+        ? genreDisplayFromApi(g.genre)
+        : g.genre
+      : typeof t === 'function'
+        ? t('game_fallback')
+        : 'Игра'
+  );
+  const titleFallback = typeof t === 'function' ? t('game_fallback') : 'Игра';
+  const title = esc((g && g.title && String(g.title).trim()) ? g.title : titleFallback);
   const snippet = showDesc ? sgCardDescSnippet(g && g.description, 72) : '';
   const snippetHtml = snippet ? `<p class="sg-store-card-desc">${esc(snippet)}</p>` : '';
   let authorHtml = '';
@@ -151,7 +161,7 @@ function sgStorefrontCardInfoHtml(g, opts) {
           <span class="sg-mini-sep">·</span>
           <span class="sg-mini-stat">${sgStatEyeSvg()}${fmtNum(g && g.plays)}</span>
         </div>
-        <span class="sg-store-card-badge">Бесплатно</span>
+        <span class="sg-store-card-badge">${esc(typeof t === 'function' ? t('free') : 'Бесплатно')}</span>
       </div>
     </div>`;
 }

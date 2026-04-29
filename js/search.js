@@ -1,10 +1,18 @@
+function allGenreValue() {
+  return typeof GENRE_FILTER_ALL_VALUE === 'string' ? GENRE_FILTER_ALL_VALUE : 'Все';
+}
+
 function selectedGenreChipHtml() {
   const sel = window.selectedGenre;
-  if (!sel || sel === 'Все') return '';
+  const allV = allGenreValue();
+  if (!sel || sel === allV) return '';
   const key = typeof genreIconKeyFromLabel === 'function' ? genreIconKeyFromLabel(sel) : '';
   const icon =
     typeof genreIconSvg === 'function' ? genreIconSvg(key, 'sg-genre-ic--sm') : '';
-  return `<button type="button" class="search-active-filter" data-action="search-clear-genre" aria-label="Сбросить фильтр жанра">${icon}<span>${esc(sel)}</span><span class="search-active-filter-x" aria-hidden="true">×</span></button>`;
+  const label =
+    typeof genreDisplayFromApi === 'function' ? genreDisplayFromApi(sel) : sel;
+  const aria = typeof t === 'function' ? t('search_clear_genre_aria') : '';
+  return `<button type="button" class="search-active-filter" data-action="search-clear-genre" aria-label="${esc(aria)}">${icon}<span>${esc(label)}</span><span class="search-active-filter-x" aria-hidden="true">×</span></button>`;
 }
 
 function hasSearchQuery() {
@@ -14,26 +22,29 @@ function hasSearchQuery() {
 
 function isDefaultSearchView() {
   const g = window.selectedGenre;
-  return !hasSearchQuery() && (!g || g === '' || g === 'Все');
+  const allV = allGenreValue();
+  return !hasSearchQuery() && (!g || g === '' || g === allV);
 }
 
 function renderSearchEmptyState() {
   const results = document.getElementById('searchResults');
   if (!results) return;
+  const tFn = typeof t === 'function' ? t : k => k;
   if (isDefaultSearchView()) {
     results.innerHTML = `
       <div class="search-empty-state">
         <div class="search-empty-icon-wrap">${typeof genreIconSvg === 'function' ? genreIconSvg('all', 'sg-genre-ic--hero') : ''}</div>
-        <p class="search-empty-title">Поиск по играм</p>
-        <p class="search-empty-sub">Введи название или ник. Жанр — полоска выше.</p>
+        <p class="search-empty-title">${esc(tFn('search_empty_title'))}</p>
+        <p class="search-empty-sub">${esc(tFn('search_empty_sub'))}</p>
       </div>`;
     return;
   }
-  results.innerHTML = `<div class="search-no-results"><p>Ничего не нашли</p><p class="search-no-results-hint">Смени запрос или жанр.</p></div>`;
+  results.innerHTML = `<div class="search-no-results"><p>${esc(tFn('search_no_results'))}</p><p class="search-no-results-hint">${esc(tFn('search_no_hint'))}</p></div>`;
 }
 
 function onSearch(query) {
   const results = document.getElementById('searchResults');
+  const allV = allGenreValue();
   const filtered = GAMES.filter(g => {
     const q = (query || '').toLowerCase();
     const matchQuery = !q
@@ -41,7 +52,7 @@ function onSearch(query) {
       || (g.authorName || '').toLowerCase().includes(q)
       || (g.authorHandle || '').toLowerCase().includes(q);
     const matchGenre = !window.selectedGenre
-      || window.selectedGenre === 'Все'
+      || window.selectedGenre === allV
       || g.genre === window.selectedGenre;
     return matchQuery && matchGenre;
   });
@@ -91,3 +102,4 @@ document.addEventListener('DOMContentLoaded', initSearchInput);
 window.onSearch = onSearch;
 window.openGameFromSearch = openGameFromSearch;
 window.initSearchInput = initSearchInput;
+window.renderSearchEmptyState = renderSearchEmptyState;

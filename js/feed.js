@@ -88,7 +88,7 @@ async function loadGames() {
     window.feedHasMore = false;
     window.feedLoadFailed = true;
     window.lastFeedLoadError =
-      typeof userFacingError === 'function' ? userFacingError(e) : String(e?.message || e || 'Ошибка');
+      typeof userFacingError === 'function' ? userFacingError(e) : String(e?.message || e || (typeof t === 'function' ? t('err_load') : 'Ошибка'));
   }
   renderFeed();
 }
@@ -172,7 +172,7 @@ async function injectGameIntoFeed(gameId) {
     }
     return idx;
   } catch (e) {
-    showToast('⚠️ ' + (e.message || 'не удалось открыть игру'));
+    showToast('⚠️ ' + (e.message || (typeof t === 'function' ? t('err_load') : 'не удалось открыть игру')));
     return window.currentIdx;
   }
 }
@@ -202,16 +202,17 @@ function appendSlides(startIndex, gamesSlice) {
     const thumbHtml = g.imageUrl
       ? `<img src="${esc(g.imageUrl)}" class="slide-cover" alt="">`
       : `<div class="placeholder-icon sg-placeholder-genre">${typeof genreIconForGame === 'function' ? genreIconForGame(g) : ''}</div>`;
+    const tf = typeof t === 'function' ? t : () => '';
     const statusBanner = g.status === 'pending'
-      ? '<div class="slide-status-banner">На модерации</div>'
+      ? `<div class="slide-status-banner">${tf('pending_banner')}</div>`
       : g.status === 'rejected'
-        ? '<div class="slide-status-banner slide-status-rejected">Не прошла модерацию</div>'
+        ? `<div class="slide-status-banner slide-status-rejected">${tf('rejected_banner')}</div>`
         : '';
     placeholder.innerHTML = `
       ${statusBanner}
       ${thumbHtml}
       <div class="placeholder-title">${esc(g.title)}</div>
-      <div class="placeholder-sub">Загрузка…</div>
+      <div class="placeholder-sub">${tf('placeholder_loading')}</div>
       ${typeof sgLogoMarkLoaderHtml === 'function' ? sgLogoMarkLoaderHtml() : '<div class="loader-ring"></div>'}
     `;
 
@@ -232,19 +233,21 @@ function appendSlides(startIndex, gamesSlice) {
     };
 
     iframe.onerror = () => {
+      const tf = typeof t === 'function' ? t : () => '';
       placeholder.innerHTML = `
         <div class="placeholder-icon">💔</div>
-        <div class="placeholder-title">Не загрузилась</div>
+        <div class="placeholder-title">${tf('placeholder_fail_title')}</div>
         <div class="placeholder-sub">${esc(g.url)}</div>
       `;
     };
 
     const safeUrl = safeHttpUrl(g.url);
     if (!safeUrl) {
+      const tf = typeof t === 'function' ? t : () => '';
       placeholder.innerHTML = `
         <div class="placeholder-icon">⚠️</div>
         <div class="placeholder-title">${esc(g.title)}</div>
-        <div class="placeholder-sub">Некорректная ссылка</div>
+        <div class="placeholder-sub">${tf('placeholder_bad_url')}</div>
       `;
       slideInner.appendChild(placeholder);
       slide.appendChild(slideInner);
@@ -270,18 +273,22 @@ function appendSlides(startIndex, gamesSlice) {
 
     if (FEED_VERTICAL) {
       const descText = truncateDesc(g.description, FEED_DISCOVERY_DESC_MAX);
-      const genreLine = g.genre
-        ? `<span class="slide-discovery-genre">${typeof genreIconForGame === 'function' ? genreIconForGame(g) : ''}<span>${esc(g.genre)}</span></span>`
+      const genreLabel =
+        g.genre && typeof genreDisplayFromApi === 'function' ? genreDisplayFromApi(g.genre) : g.genre || '';
+      const genreLine = genreLabel
+        ? `<span class="slide-discovery-genre">${typeof genreIconForGame === 'function' ? genreIconForGame(g) : ''}<span>${esc(genreLabel)}</span></span>`
         : '';
+      const tf = typeof t === 'function' ? t : () => '';
+      const gameTitle = esc(g.title || tf('game_fallback'));
       const discovery = document.createElement('div');
       discovery.className = 'slide-discovery';
       discovery.innerHTML = `
         <div class="slide-discovery-bg" aria-hidden="true"></div>
         <div class="slide-discovery-content">
-          <div class="slide-discovery-title">${esc(g.title || 'Игра')}</div>
+          <div class="slide-discovery-title">${gameTitle}</div>
           ${descText ? `<p class="slide-discovery-desc">${esc(descText)}</p>` : ''}
           ${genreLine ? `<div class="slide-discovery-meta">${genreLine}</div>` : ''}
-          <button type="button" class="slide-play-btn sg-btn sg-btn--primary" data-action="feed-enter-focus">Играть</button>
+          <button type="button" class="slide-play-btn sg-btn sg-btn--primary" data-action="feed-enter-focus">${tf('play')}</button>
         </div>
       `;
       slideInner.appendChild(discovery);
@@ -292,11 +299,12 @@ function appendSlides(startIndex, gamesSlice) {
       const mod = document.createElement('div');
       mod.className = 'feed-moderation-card';
       mod.dataset.gameId = g.id;
+      const tf = typeof t === 'function' ? t : () => '';
       mod.innerHTML = `
         <div class="feed-moderation-actions">
-          <button type="button" class="admin-btn approve" data-action="admin-approve">✓ Одобрить</button>
-          <button type="button" class="admin-btn reject" data-action="admin-reject">✗ Отклонить</button>
-          <button type="button" class="admin-btn delete" data-action="admin-delete">🗑</button>
+          <button type="button" class="admin-btn approve" data-action="admin-approve">${tf('admin_approve')}</button>
+          <button type="button" class="admin-btn reject" data-action="admin-reject">${tf('admin_reject')}</button>
+          <button type="button" class="admin-btn delete" data-action="admin-delete">${tf('admin_delete')}</button>
         </div>`;
       slide.appendChild(mod);
     }
@@ -326,7 +334,11 @@ function renderFeed() {
     if (window.feedLoadFailed && def && err) {
       def.hidden = true;
       err.hidden = false;
-      if (errMsg) errMsg.textContent = window.lastFeedLoadError || 'Проверь интернет и попробуй снова.';
+      if (errMsg) {
+        errMsg.textContent =
+          window.lastFeedLoadError ||
+          (typeof t === 'function' ? t('empty_err_sub') : 'Проверь интернет и попробуй снова.');
+      }
     } else if (def && err) {
       def.hidden = false;
       err.hidden = true;
@@ -458,7 +470,8 @@ function updateOverlay() {
   const roleEl = document.getElementById('authorRole');
   if (roleEl) {
     const isSelf = Boolean(g.authorId && USER?.id && g.authorId === USER.id);
-    roleEl.textContent = isSelf ? 'Это вы' : 'Разработчик';
+    const tf = typeof t === 'function' ? t : () => '';
+    roleEl.textContent = isSelf ? tf('author_you') : tf('author_role');
   }
 
   document.getElementById('authorName').textContent = g.authorName;
@@ -481,7 +494,8 @@ function updateOverlay() {
 
   const following = followedSet.has(g.authorId);
   const followBtn = document.getElementById('followBtn');
-  followBtn.textContent = following ? 'Вы подписаны' : '+ Подписаться';
+  const tf = typeof t === 'function' ? t : () => '';
+  followBtn.textContent = following ? tf('follow_done') : tf('follow_add');
   followBtn.classList.toggle('following', following);
 
   if (typeof loadFeedReviewCount === 'function') loadFeedReviewCount();

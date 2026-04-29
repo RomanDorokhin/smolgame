@@ -1,5 +1,8 @@
 /** Редактирование карточки своей игры в профиле: PATCH → pending; синхронизация ленты и поиска. */
 
+const tf = typeof window.t === 'function' ? window.t : k => k;
+const genreOtherApi = () => tf('genre_api_other');
+
 window.gameEditorState = {
   coverFile: null,
   clearCover: false,
@@ -34,7 +37,7 @@ function previewProfileGameCover(input, gameId) {
       preview.innerHTML = `<img src="${esc(cur)}" alt="">`;
       preview.classList.add('has-image');
     } else {
-      preview.innerHTML = '<span>Без обложки</span>';
+      preview.innerHTML = `<span>${esc(tf('no_cover'))}</span>`;
       preview.classList.remove('has-image');
     }
     return;
@@ -55,7 +58,7 @@ function gameEditorClearCover(gameId) {
   if (input) input.value = '';
   const preview = root?.querySelector('.profile-game-editor-preview');
   if (preview) {
-    preview.innerHTML = '<span>Без обложки</span>';
+    preview.innerHTML = `<span>${esc(tf('no_cover'))}</span>`;
     preview.classList.remove('has-image');
   }
 }
@@ -80,7 +83,7 @@ function toggleProfileGameEditor(gameId) {
   }
 
   if (row.dataset.status === 'rejected') {
-    showToast('⚠️ Отклонённые игры не редактируются');
+    showToast(tf('profile_editor_no_edit'));
     return;
   }
 
@@ -100,7 +103,7 @@ function toggleProfileGameEditor(gameId) {
 
   panel.dataset.originalImageUrl = row.dataset.imageUrl || '';
 
-  const genre = row.dataset.genre && String(row.dataset.genre).trim() ? row.dataset.genre : 'Прочее';
+  const genre = row.dataset.genre && String(row.dataset.genre).trim() ? row.dataset.genre : genreOtherApi();
   const sk = 'edit_' + gameId;
   window.selectedGenres[sk] = genre;
   if (typeof renderGenrePills === 'function') {
@@ -113,7 +116,7 @@ function toggleProfileGameEditor(gameId) {
       preview.innerHTML = `<img src="${esc(row.dataset.imageUrl)}" alt="">`;
       preview.classList.add('has-image');
     } else {
-      preview.innerHTML = '<span>Без обложки</span>';
+      preview.innerHTML = `<span>${esc(tf('no_cover'))}</span>`;
       preview.classList.remove('has-image');
     }
   }
@@ -151,12 +154,12 @@ async function saveProfileGameEditor(gameId) {
   const title = root.querySelector('.profile-game-editor-title')?.value?.trim() || '';
   const description = root.querySelector('.profile-game-editor-desc')?.value?.trim() || '';
   const sk = 'edit_' + gameId;
-  const genre = window.selectedGenres?.[sk] || 'Прочее';
+  const genre = window.selectedGenres?.[sk] || genreOtherApi();
   const genreEmoji =
     typeof genreKeyForApiLabel === 'function' ? genreKeyForApiLabel(genre) : 'other';
 
   if (!title) {
-    showToast('⚠️ Укажи название');
+    showToast(tf('profile_editor_need_title'));
     return;
   }
 
@@ -165,16 +168,16 @@ async function saveProfileGameEditor(gameId) {
   const file = window.gameEditorState.coverFile;
 
   if (file) {
-    showToast('⏳ Загружаем обложку…');
+    showToast(tf('profile_editor_upload_cover'));
     try {
       const formData = new FormData();
       formData.append('image', file);
       formData.append('kind', 'cover');
       const uploaded = await API.uploadImage(formData);
       imageUrl = uploaded?.imageUrl;
-      if (!imageUrl) throw new Error('нет URL');
+      if (!imageUrl) throw new Error(tf('err_no_url'));
     } catch (e) {
-      showToast('⚠️ ' + (e?.message || 'обложка не загрузилась'));
+      showToast('⚠️ ' + (e?.message || tf('profile_cover_upload_fail')));
       return;
     }
   } else if (coverUrlField) {
@@ -186,11 +189,11 @@ async function saveProfileGameEditor(gameId) {
   const body = { title, description, genre, genreEmoji };
   if (imageUrl !== undefined) body.imageUrl = imageUrl;
 
-  showToast('⏳ Сохраняем…');
+  showToast(tf('profile_editor_saving'));
   try {
     const data = await API.updateGame(gameId, body);
     const game = data?.game;
-    if (!game?.id) throw new Error('пустой ответ');
+    if (!game?.id) throw new Error(tf('err_empty_response'));
 
     if (typeof applyGamePatchToClientState === 'function') {
       const inFeed = (window.GAMES || []).some(x => x.id === game.id);
@@ -198,12 +201,12 @@ async function saveProfileGameEditor(gameId) {
       else if (typeof injectGameIntoFeed === 'function') await injectGameIntoFeed(game.id);
     }
 
-    showToast('✅ Отправлено на модерацию');
+    showToast(tf('profile_editor_sent'));
     if (typeof hapticSuccess === 'function') hapticSuccess();
     cancelProfileGameEditor(gameId);
     if (typeof renderProfile === 'function') await renderProfile();
   } catch (e) {
-    showToast(typeof userFacingError === 'function' ? userFacingError(e) : (e?.message || 'ошибка'));
+    showToast(typeof userFacingError === 'function' ? userFacingError(e) : (e?.message || tf('err_error')));
     if (typeof hapticWarning === 'function') hapticWarning();
   }
 }
@@ -214,6 +217,7 @@ async function saveProfileGameEditor(gameId) {
  */
 function applyGamePatchToClientState(game) {
   if (!game?.id || !Array.isArray(window.GAMES)) return;
+  const tr = typeof window.t === 'function' ? window.t : k => k;
 
   const idx = window.GAMES.findIndex(g => g.id === game.id);
   if (idx < 0) return;
@@ -248,9 +252,9 @@ function applyGamePatchToClientState(game) {
         : `<div class="placeholder-icon sg-placeholder-genre">${typeof genreIconForGame === 'function' ? genreIconForGame(next) : ''}</div>`;
       const statusBanner =
         next.status === 'pending'
-          ? '<div class="slide-status-banner">На модерации</div>'
+          ? `<div class="slide-status-banner">${esc(tr('pending_banner'))}</div>`
           : next.status === 'rejected'
-            ? '<div class="slide-status-banner slide-status-rejected">Не прошла модерацию</div>'
+            ? `<div class="slide-status-banner slide-status-rejected">${esc(tr('rejected_banner'))}</div>`
             : '';
       const titleEl = ph.querySelector('.placeholder-title');
       if (titleEl) titleEl.textContent = next.title || '';
@@ -261,20 +265,22 @@ function applyGamePatchToClientState(game) {
       if (statusBanner) ph.insertAdjacentHTML('afterbegin', statusBanner);
     }
     const discTitle = slide.querySelector('.slide-discovery-title');
-    if (discTitle) discTitle.textContent = next.title || 'Игра';
+    if (discTitle) discTitle.textContent = next.title || tr('game_fallback');
     const discDesc = slide.querySelector('.slide-discovery-desc');
     if (discDesc) {
       const maxD = 96;
       const raw = (next.description && String(next.description).trim()) || '';
-      const t =
+      const descText =
         raw.length <= maxD ? raw : raw.slice(0, Math.max(0, maxD - 1)).trimEnd() + '…';
-      discDesc.textContent = t;
-      discDesc.style.display = t ? '' : 'none';
+      discDesc.textContent = descText;
+      discDesc.style.display = descText ? '' : 'none';
     }
     const genreLine = slide.querySelector('.slide-discovery-meta');
     if (genreLine) {
       if (next.genre) {
-        genreLine.innerHTML = `<span class="slide-discovery-genre">${typeof genreIconForGame === 'function' ? genreIconForGame(next) : ''}<span>${esc(next.genre)}</span></span>`;
+        const gDisp =
+          typeof genreDisplayFromApi === 'function' ? genreDisplayFromApi(next.genre) : next.genre;
+        genreLine.innerHTML = `<span class="slide-discovery-genre">${typeof genreIconForGame === 'function' ? genreIconForGame(next) : ''}<span>${esc(gDisp)}</span></span>`;
         genreLine.style.display = '';
       } else {
         genreLine.innerHTML = '';

@@ -961,6 +961,34 @@ body.app-main-chrome .app-tab-chrome{display:flex;}
   font-weight:600;
 }
 
+.app-tab-chrome-lang{
+  pointer-events:auto;
+  display:flex;
+  align-items:center;
+  gap:4px;
+  margin-left:auto;
+}
+.lang-switch{
+  font-size:11px;
+  font-weight:700;
+  letter-spacing:0.04em;
+  padding:4px 8px;
+  border-radius:8px;
+  border:1px solid rgba(255,255,255,0.28);
+  background:rgba(0,0,0,0.25);
+  color:rgba(255,255,255,0.75);
+  cursor:pointer;
+  line-height:1;
+}
+.lang-switch--active{
+  color:#fff;
+  border-color:rgba(255,255,255,0.55);
+  background:rgba(255,255,255,0.12);
+}
+
+html[lang="en"] .i18n-ru{display:none !important;}
+html[lang="ru"] .i18n-en{display:none !important;}
+
 .feed-exit-focus{
   position:fixed;
   top:calc(var(--safe-top) + 8px);

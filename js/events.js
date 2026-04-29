@@ -52,6 +52,8 @@ const CLICK_ACTIONS = {
   'toggle-author-follow': (el, ev) => { ev.stopPropagation(); toggleAuthorFollow(el); },
 
   'switch-tab':     (el) => switchTab(el.dataset.tab),
+  'set-lang-ru':    () => { if (typeof setLang === 'function') setLang('ru'); },
+  'set-lang-en':    () => { if (typeof setLang === 'function') setLang('en'); },
   'select-method':  (el) => selectMethod(el.dataset.method),
   'auth-github':    () => authGithub(),
   'github-unlink':  () => githubUnlink(),

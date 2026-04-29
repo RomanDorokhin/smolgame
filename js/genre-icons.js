@@ -5,14 +5,23 @@
  */
 const GENRE_ICON_KEYS = {
   'Все': 'all',
+  All: 'all',
   Аркада: 'arcade',
+  Arcade: 'arcade',
   Головоломка: 'puzzle',
+  Puzzle: 'puzzle',
   Экшен: 'action',
+  Action: 'action',
   Казуалка: 'casual',
+  Casual: 'casual',
   Стратегия: 'strategy',
+  Strategy: 'strategy',
   Гонки: 'racing',
+  Racing: 'racing',
   Платформер: 'platform',
+  Platformer: 'platform',
   Прочее: 'other',
+  Other: 'other',
 };
 
 /** Старые значения genre_emoji в БД (эмодзи) → ключ иконки */
@@ -37,7 +46,7 @@ const DEFAULT_KEY = 'all';
 
 function genreIconKeyFromLabel(label) {
   if (!label) return DEFAULT_KEY;
-  if (label === 'Все') return 'all';
+  if (label === 'Все' || label === 'All') return 'all';
   return GENRE_ICON_KEYS[label] || DEFAULT_KEY;
 }
 

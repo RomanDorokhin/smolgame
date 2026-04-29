@@ -1,6 +1,8 @@
 /**
  * Экран «Игры»: лайкнутые и недавно открытые (сервер).
  */
+const tf = typeof window.t === 'function' ? window.t : k => k;
+
 function renderGamesGridSection(gridId, games, emptyTitle, emptySub, emptyCtaTab) {
   const grid = document.getElementById(gridId);
   if (!grid) return;
@@ -14,7 +16,7 @@ function renderGamesGridSection(gridId, games, emptyTitle, emptySub, emptyCtaTab
         ${heart ? `<div class="sg-empty-state-icon" aria-hidden="true">${heart}</div>` : ''}
         <div class="sg-empty-state-title">${esc(emptyTitle)}</div>
         <div class="sg-empty-state-sub">${esc(emptySub)}</div>
-        ${emptyCtaTab ? `<button type="button" class="empty-btn" data-action="switch-tab" data-tab="${esc(emptyCtaTab)}">В ленту</button>` : ''}
+        ${emptyCtaTab ? `<button type="button" class="empty-btn" data-action="switch-tab" data-tab="${esc(emptyCtaTab)}">${esc(tf('to_feed'))}</button>` : ''}
       </div>`;
     return;
   }
@@ -34,11 +36,11 @@ async function loadGamesLibrary() {
   const playedGrid = document.getElementById('playedGamesGrid');
   if (likedGrid) {
     likedGrid.innerHTML =
-      '<div style="grid-column:1/-1;text-align:center;padding:24px 0;color:var(--muted);font-size:14px;">Загрузка…</div>';
+      '<div style="grid-column:1/-1;text-align:center;padding:24px 0;color:var(--muted);font-size:14px;">' + esc(tf('loading')) + '</div>';
   }
   if (playedGrid) {
     playedGrid.innerHTML =
-      '<div style="grid-column:1/-1;text-align:center;padding:24px 0;color:var(--muted);font-size:14px;">Загрузка…</div>';
+      '<div style="grid-column:1/-1;text-align:center;padding:24px 0;color:var(--muted);font-size:14px;">' + esc(tf('loading')) + '</div>';
   }
   try {
     let liked = [];
@@ -67,21 +69,21 @@ async function loadGamesLibrary() {
     renderGamesGridSection(
       'likedGamesGrid',
       liked,
-      'Пока пусто',
-      'Лайкни игры в ленте — они появятся здесь.',
+      tf('liked_empty_title'),
+      tf('liked_empty_sub'),
       'feed'
     );
     renderGamesGridSection(
       'playedGamesGrid',
       played,
-      'Пока пусто',
-      'Открой игры в ленте (кнопка «Играть») — список заполнится.',
+      tf('played_empty_title'),
+      tf('played_empty_sub'),
       'feed'
     );
   } catch (e) {
     const msg = typeof userFacingError === 'function' ? userFacingError(e) : (e?.message || 'Ошибка');
     const errHtml = `<div class="sg-empty-state sg-empty-state--grid" style="grid-column:1/-1">
-      <div class="sg-empty-state-title">Не загрузилось</div>
+      <div class="sg-empty-state-title">${esc(tf('load_failed_title'))}</div>
       <div class="sg-empty-state-sub">${esc(msg)}</div>
     </div>`;
     if (likedGrid) likedGrid.innerHTML = errHtml;

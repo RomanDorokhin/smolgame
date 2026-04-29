@@ -1,5 +1,10 @@
+function uilang() {
+  return typeof window.t === 'function' ? window.t : k => k;
+}
+
 function toggleLike() {
   if (GAMES.length === 0) return;
+  const t = uilang();
   const g = GAMES[window.currentIdx];
   const icon = document.getElementById('likeIcon');
   const likeWrap = icon?.closest('.action-btn');
@@ -43,7 +48,7 @@ function toggleLike() {
       saveSet(STORAGE_KEYS.liked, likedSet);
       saveSet(STORAGE_KEYS.bookmarked, bookmarkedSet);
       updateOverlay();
-      showToast(typeof userFacingError === 'function' ? userFacingError(err) : 'Не вышло. Попробуй ещё раз');
+      showToast(typeof userFacingError === 'function' ? userFacingError(err) : t('try_again'));
       if (typeof hapticWarning === 'function') hapticWarning();
       console.warn('like/bookmark failed', err);
     });
@@ -51,20 +56,21 @@ function toggleLike() {
 
 function toggleFollow() {
   if (GAMES.length === 0) return;
+  const t = uilang();
   const g = GAMES[window.currentIdx];
   const btn = document.getElementById('followBtn');
 
   const wasFollowing = followedSet.has(g.authorId);
   if (wasFollowing) {
     followedSet.delete(g.authorId);
-    btn.textContent = '+ Подписаться';
+    btn.textContent = t('follow_add');
     btn.classList.remove('following');
-    showToast('Отписались');
+    showToast(t('unsubscribed'));
   } else {
     followedSet.add(g.authorId);
-    btn.textContent = 'Вы подписаны';
+    btn.textContent = t('follow_done');
     btn.classList.add('following');
-    showToast('Подписка оформлена');
+    showToast(t('subscribed'));
   }
   saveSet(STORAGE_KEYS.followed, followedSet);
 
@@ -72,7 +78,7 @@ function toggleFollow() {
     if (wasFollowing) followedSet.add(g.authorId); else followedSet.delete(g.authorId);
     saveSet(STORAGE_KEYS.followed, followedSet);
     updateOverlay();
-    showToast(typeof userFacingError === 'function' ? userFacingError(err) : 'Не вышло. Попробуй ещё раз');
+    showToast(typeof userFacingError === 'function' ? userFacingError(err) : t('try_again'));
     if (typeof hapticWarning === 'function') hapticWarning();
     console.warn('follow failed', err);
   });
@@ -90,9 +96,10 @@ function buildGameShareUrl(gameId) {
 
 async function shareGame() {
   if (GAMES.length === 0) return;
+  const t = uilang();
   const g = GAMES[window.currentIdx];
   const url = buildGameShareUrl(g.id);
-  const text = `${g.title} — мини-игра в SmolGame (лента в Telegram, без обязательной рекламы перед игрой). Запусти по ссылке:`;
+  const text = t('share_text', { title: g.title || t('game_fallback') });
 
   // 1) Лучший путь в Telegram: нативный share-sheet в чат.
   try {
@@ -115,7 +122,7 @@ async function shareGame() {
   // 3) Последний fallback — копирование в буфер.
   try {
     await navigator.clipboard.writeText(url);
-    showToast('🔗 Ссылка скопирована');
+    showToast(t('copied'));
   } catch (e) {
     showToast('🔗 ' + url);
   }
@@ -124,7 +131,7 @@ async function shareGame() {
 window.buildGameShareUrl = buildGameShareUrl;
 
 function reportGame() {
-  showToast('⚑ Жалоба: напиши админу бота');
+  showToast(uilang()('report_to_admin'));
 }
 
 function trackPlay(gameId) {

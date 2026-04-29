@@ -84,18 +84,19 @@ function renderSmallGameCard(g) {
 
 function toggleAuthorFollow(btn) {
   if (!btn?.dataset.authorId || btn.dataset.isSelf) return;
+  const t = typeof window.t === 'function' ? window.t : k => k;
   const authorId = btn.dataset.authorId;
   const wasFollowing = followedSet.has(authorId);
   if (wasFollowing) {
     followedSet.delete(authorId);
-    btn.textContent = '+ Подписаться';
+    btn.textContent = t('follow_add');
     btn.classList.remove('following');
-    showToast('Отписались');
+    showToast(t('unsubscribed'));
   } else {
     followedSet.add(authorId);
-    btn.textContent = 'Вы подписаны';
+    btn.textContent = t('follow_done');
     btn.classList.add('following');
-    showToast('Подписка оформлена');
+    showToast(t('subscribed'));
   }
   saveSet(STORAGE_KEYS.followed, followedSet);
   updateOverlay();
@@ -104,17 +105,18 @@ function toggleAuthorFollow(btn) {
     saveSet(STORAGE_KEYS.followed, followedSet);
     updateOverlay();
     loadAuthorProfile(authorId);
-    showToast(typeof userFacingError === 'function' ? userFacingError(err) : 'Не вышло');
+    showToast(typeof userFacingError === 'function' ? userFacingError(err) : t('try_again'));
     if (typeof hapticWarning === 'function') hapticWarning();
     console.warn('author follow failed', err);
   });
 }
 
 async function loadAuthorProfile(authorId) {
-  document.getElementById('authorProfileName').textContent = 'Загрузка...';
+  const t = typeof window.t === 'function' ? window.t : k => k;
+  document.getElementById('authorProfileName').textContent = t('author_loading');
   document.getElementById('authorProfileHandle').textContent = '@—';
   document.getElementById('authorGamesGrid').innerHTML =
-    `<div style="grid-column:1/-1;text-align:center;padding:40px 0;color:var(--muted);font-size:14px;">Загружаем игры</div>`;
+    `<div style="grid-column:1/-1;text-align:center;padding:40px 0;color:var(--muted);font-size:14px;">${esc(t('author_loading_games'))}</div>`;
 
   try {
     const [profile, gamesData] = await Promise.all([
@@ -124,7 +126,7 @@ async function loadAuthorProfile(authorId) {
     const user = profile.user || {};
     const stats = profile.stats || {};
     setAvatar(document.getElementById('authorProfileAvatar'), user.avatar || '?');
-    document.getElementById('authorProfileName').textContent = user.name || 'Аноним';
+    document.getElementById('authorProfileName').textContent = user.name || t('author_anon');
     document.getElementById('authorProfileHandle').textContent = '@' + (user.siteHandle || user.id || '—');
     const authorBio = document.getElementById('authorProfileBio');
     const bioText = (user.bio && String(user.bio).trim()) || '';
@@ -137,7 +139,7 @@ async function loadAuthorProfile(authorId) {
     document.getElementById('authorStatLikes').textContent = fmtNum(stats.likes);
 
     const btn = document.getElementById('authorFollowBtn');
-    btn.textContent = profile.isSelf ? 'Это вы' : (profile.isFollowing ? 'Вы подписаны' : '+ Подписаться');
+    btn.textContent = profile.isSelf ? t('author_you') : (profile.isFollowing ? t('follow_done') : t('author_follow'));
     btn.classList.toggle('following', Boolean(profile.isFollowing || profile.isSelf));
     btn.dataset.authorId = authorId;
     btn.dataset.isSelf = profile.isSelf ? '1' : '';
@@ -147,8 +149,8 @@ async function loadAuthorProfile(authorId) {
     if (games.length === 0) {
       grid.innerHTML =
         typeof sgEmptyGridHtml === 'function'
-          ? sgEmptyGridHtml('Нет игр', 'У этого автора пока ничего не опубликовано.')
-          : `<div class="sg-empty-state sg-empty-state--grid"><div class="sg-empty-state-title">Нет игр</div><div class="sg-empty-state-sub">У этого автора пока ничего не опубликовано.</div></div>`;
+          ? sgEmptyGridHtml(t('author_no_games'), t('author_no_games_sub'))
+          : `<div class="sg-empty-state sg-empty-state--grid"><div class="sg-empty-state-title">${esc(t('author_no_games'))}</div><div class="sg-empty-state-sub">${esc(t('author_no_games_sub'))}</div></div>`;
     } else {
       grid.innerHTML = games.map(g => `
         <div class="game-card sg-store-card" data-action="open-game-detail" data-game-id="${esc(g.id)}">
@@ -158,16 +160,18 @@ async function loadAuthorProfile(authorId) {
       `).join('');
     }
   } catch (e) {
-    document.getElementById('authorProfileName').textContent = 'Не удалось загрузить';
-    showToast('⚠️ ' + (e.message || 'ошибка профиля'));
+    document.getElementById('authorProfileName').textContent = t('author_load_fail');
+    showToast('⚠️ ' + (e.message || t('profile_err')));
   }
 }
 
 function switchTab(tab) {
   if (!tab) return;
+  const t = typeof window.t === 'function' ? window.t : k => k;
   if (typeof isFeedOnboardingBlocking === 'function' && isFeedOnboardingBlocking()) return;
   if (typeof hapticLight === 'function') hapticLight();
   setBottomNavActive(tab);
+  window._activeMainTab = tab;
   document.body.classList.toggle(
     'app-main-chrome',
     tab === 'feed' || tab === 'games' || tab === 'search' || tab === 'profile' || tab === 'upload'
@@ -177,7 +181,7 @@ function switchTab(tab) {
     closeAllMainTabs();
     document.body.classList.add('is-tab-feed');
     const chrome = document.getElementById('app-tab-chrome-label');
-    if (chrome) chrome.textContent = 'Лента';
+    if (chrome) chrome.textContent = t('nav_feed');
     if (typeof refreshFeedCoachState === 'function') refreshFeedCoachState();
     if (typeof scheduleFeedSwipeTeaseBoredom === 'function') scheduleFeedSwipeTeaseBoredom();
     if (typeof maybeStartFeedOnboarding === 'function') requestAnimationFrame(() => maybeStartFeedOnboarding());
@@ -190,7 +194,7 @@ function switchTab(tab) {
 
   if (tab === 'search') {
     const chrome = document.getElementById('app-tab-chrome-label');
-    if (chrome) chrome.textContent = 'Поиск';
+    if (chrome) chrome.textContent = t('nav_search');
     document.getElementById('search-screen')?.classList.add('open');
     if (typeof renderGenreFilter === 'function') renderGenreFilter();
     if (typeof initSearchInput === 'function') initSearchInput();
@@ -198,7 +202,7 @@ function switchTab(tab) {
     if (typeof onSearch === 'function') onSearch(q);
   } else if (tab === 'profile') {
     const chrome = document.getElementById('app-tab-chrome-label');
-    if (chrome) chrome.textContent = 'Профиль';
+    if (chrome) chrome.textContent = t('nav_profile');
     const screen = document.getElementById('profile-screen');
     screen?.classList.remove('profile-edit-active');
     if (typeof renderProfile === 'function') renderProfile();
@@ -207,11 +211,11 @@ function switchTab(tab) {
   } else if (tab === 'games') {
     document.getElementById('games-library-screen')?.classList.add('open');
     const chrome = document.getElementById('app-tab-chrome-label');
-    if (chrome) chrome.textContent = 'Игры';
+    if (chrome) chrome.textContent = t('nav_games');
     if (typeof loadGamesLibrary === 'function') loadGamesLibrary();
   } else if (tab === 'upload') {
     const chrome = document.getElementById('app-tab-chrome-label');
-    if (chrome) chrome.textContent = 'Загрузить';
+    if (chrome) chrome.textContent = t('nav_upload');
     const upload = document.getElementById('upload-screen');
     upload?.classList.add('open');
     upload.scrollTop = 0;

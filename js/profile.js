@@ -1,3 +1,6 @@
+const tf = typeof window.t === 'function' ? window.t : k => k;
+const genreOtherApi = () => tf('genre_api_other');
+
 function gameThumbHtml(g) {
   return g.imageUrl
     ? `<img src="${esc(g.imageUrl)}" class="game-card-cover" alt="">`
@@ -22,10 +25,10 @@ function parseProfileStats(me) {
 
 function gameStatusBadgeHtml(status) {
   if (status === 'pending') {
-    return '<span class="game-card-status-badge pending">Модерация</span>';
+    return `<span class="game-card-status-badge pending">${esc(tf('moderation'))}</span>`;
   }
   if (status === 'rejected') {
-    return '<span class="game-card-status-badge rejected">Отклонено</span>';
+    return `<span class="game-card-status-badge rejected">${esc(tf('rejected'))}</span>`;
   }
   return '';
 }
@@ -141,14 +144,15 @@ async function renderProfile() {
   if (myGames.length === 0) {
     grid.innerHTML =
       typeof sgEmptyGridHtml === 'function'
-        ? sgEmptyGridHtml('Пока без своих игр', 'Добавь через вкладку «Загрузить» (＋).')
-        : `<div class="sg-empty-state sg-empty-state--grid"><div class="sg-empty-state-title">Пока без своих игр</div><div class="sg-empty-state-sub">Добавь через вкладку «Загрузить» (＋).</div></div>`;
+        ? sgEmptyGridHtml(tf('profile_empty_games_title'), tf('profile_empty_games_sub'))
+        : `<div class="sg-empty-state sg-empty-state--grid"><div class="sg-empty-state-title">${esc(tf('profile_empty_games_title'))}</div><div class="sg-empty-state-sub">${esc(tf('profile_empty_games_sub'))}</div></div>`;
   } else {
     grid.innerHTML = myGames.map(g => {
       const idRaw = String(g.id || '');
       const gid = esc(idRaw);
       const canEdit = g.status !== 'rejected';
-      const genreEsc = esc(g.genre || 'Прочее');
+      const genreRaw = (g.genre && String(g.genre).trim()) ? g.genre : genreOtherApi();
+      const genreEsc = esc(genreRaw);
       const titleEsc = esc(g.title || '');
       const descEsc = esc(g.description || '');
       const urlEsc = esc(g.url || '');
@@ -157,33 +161,33 @@ async function renderProfile() {
       const pillsId = 'genrePillsEdit-' + idRaw;
       const editorHtml = canEdit ? `
       <div id="profileGameEditor-${idRaw}" class="profile-game-editor" hidden>
-        <p class="profile-game-editor-lead">Карточка в ленте: название, описание, жанр, обложка. Ссылка на игру не меняется. После сохранения снова на модерацию.</p>
+        <p class="profile-game-editor-lead">${esc(tf('profile_editor_lead'))}</p>
         <div class="field-group">
-          <div class="field-label">Название</div>
-          <input class="field-input profile-game-editor-title" type="text" maxlength="40" placeholder="Название игры" value="${titleEsc}">
+          <div class="field-label">${esc(tf('field_title'))}</div>
+          <input class="field-input profile-game-editor-title" type="text" maxlength="40" placeholder="${esc(tf('field_title_placeholder'))}" value="${titleEsc}">
         </div>
         <div class="field-group">
-          <div class="field-label">Описание</div>
-          <textarea class="field-input profile-game-editor-desc" maxlength="120" rows="3" placeholder="Кратко о игре">${descEsc}</textarea>
+          <div class="field-label">${esc(tf('field_desc'))}</div>
+          <textarea class="field-input profile-game-editor-desc" maxlength="120" rows="3" placeholder="${esc(tf('field_desc_short'))}">${descEsc}</textarea>
         </div>
         <div class="field-group">
-          <div class="field-label">Жанр</div>
+          <div class="field-label">${esc(tf('field_genre'))}</div>
           <div class="genre-pills" id="${pillsId}"></div>
         </div>
         <div class="field-group">
-          <div class="field-label">Обложка (необязательно)</div>
-          <input class="field-input profile-game-editor-cover-url" type="url" placeholder="https://… jpg/png" value="${imgEsc}">
+          <div class="field-label">${esc(tf('cover_optional'))}</div>
+          <input class="field-input profile-game-editor-cover-url" type="url" placeholder="${esc(tf('profile_cover_url_hint'))}" value="${imgEsc}">
           <label class="image-upload">
             <input type="file" accept="image/*" class="profile-game-editor-cover-file" data-input="cover-profile" data-game-id="${idRaw}">
-            <span>Выбрать файл</span>
+            <span>${esc(tf('profile_choose_file'))}</span>
           </label>
-          <div class="image-preview profile-game-editor-preview">${g.imageUrl ? `<img src="${imgEsc}" alt="">` : '<span>Без обложки</span>'}</div>
-          <button type="button" class="profile-text-btn" data-action="game-editor-clear-cover" data-game-id="${idRaw}">Убрать обложку</button>
+          <div class="image-preview profile-game-editor-preview">${g.imageUrl ? `<img src="${imgEsc}" alt="">` : `<span>${esc(tf('no_cover'))}</span>`}</div>
+          <button type="button" class="profile-text-btn" data-action="game-editor-clear-cover" data-game-id="${idRaw}">${esc(tf('profile_clear_cover'))}</button>
         </div>
-        <p class="field-hint profile-game-editor-url-hint">URL игры: <code class="profile-game-editor-url">${urlEsc || '—'}</code></p>
+        <p class="field-hint profile-game-editor-url-hint">${esc(tf('profile_game_url_label'))} <code class="profile-game-editor-url">${urlEsc || '—'}</code></p>
         <div class="profile-game-editor-actions">
-          <button type="button" class="profile-text-btn" data-action="profile-game-editor-cancel" data-game-id="${idRaw}">Отмена</button>
-          <button type="button" class="submit-btn" data-action="profile-game-editor-save" data-game-id="${idRaw}">Сохранить и на модерацию</button>
+          <button type="button" class="profile-text-btn" data-action="profile-game-editor-cancel" data-game-id="${idRaw}">${esc(tf('profile_discard'))}</button>
+          <button type="button" class="submit-btn" data-action="profile-game-editor-save" data-game-id="${idRaw}">${esc(tf('profile_save_review'))}</button>
         </div>
       </div>` : '';
       return `
@@ -195,10 +199,10 @@ async function renderProfile() {
           </div>
           ${typeof sgStorefrontCardInfoHtml === 'function' ? sgStorefrontCardInfoHtml(g, { author: false, desc: true }) : `<div class="game-card-info"><div class="game-card-name">${esc(g.title)}</div><div class="game-card-stats"><span class="sg-mini-stat">${sgStatHeartSvg()}${fmtNum(g.likes)}</span><span class="sg-mini-sep">·</span><span class="sg-mini-stat">${sgStatEyeSvg()}${fmtNum(g.plays)}</span></div></div>`}
         </div>
-        <div class="profile-game-actions profile-game-actions--icons" role="toolbar" aria-label="Действия с игрой">
-          ${canEdit ? `<button type="button" class="profile-game-icon-btn" data-action="toggle-profile-game-editor" data-game-id="${idRaw}" title="Редактировать" aria-label="Редактировать"><svg class="sg-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M15 6l3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></button>` : ''}
-          <button type="button" class="profile-game-icon-btn" data-action="open-game-in-feed" data-game-id="${gid}" title="В ленту" aria-label="Открыть в ленте"><svg class="sg-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 6h16M4 12h10M4 18h14" stroke="currentColor" stroke-width="1.65" stroke-linecap="round"/></svg></button>
-          <button type="button" class="profile-game-icon-btn profile-game-icon-btn--danger" data-action="delete-game" data-game-id="${gid}" data-game-title="${titleEsc}" title="Удалить" aria-label="Удалить игру"><svg class="sg-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M9 3h6M4 7h16M6 7l1 14h10l1-14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M10 11v6M14 11v6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></button>
+        <div class="profile-game-actions profile-game-actions--icons" role="toolbar" aria-label="${esc(tf('profile_game_actions_aria'))}">
+          ${canEdit ? `<button type="button" class="profile-game-icon-btn" data-action="toggle-profile-game-editor" data-game-id="${idRaw}" title="${esc(tf('gd_edit'))}" aria-label="${esc(tf('gd_edit'))}"><svg class="sg-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M15 6l3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></button>` : ''}
+          <button type="button" class="profile-game-icon-btn" data-action="open-game-in-feed" data-game-id="${gid}" title="${esc(tf('to_feed'))}" aria-label="${esc(tf('profile_open_in_feed_aria'))}"><svg class="sg-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 6h16M4 12h10M4 18h14" stroke="currentColor" stroke-width="1.65" stroke-linecap="round"/></svg></button>
+          <button type="button" class="profile-game-icon-btn profile-game-icon-btn--danger" data-action="delete-game" data-game-id="${gid}" data-game-title="${titleEsc}" title="${esc(tf('gd_delete'))}" aria-label="${esc(tf('profile_delete_game_aria'))}"><svg class="sg-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M9 3h6M4 7h16M6 7l1 14h10l1-14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M10 11v6M14 11v6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></button>
         </div>
         ${editorHtml}
       </div>`;
@@ -207,7 +211,7 @@ async function renderProfile() {
       if (g.status === 'rejected') return;
       const sk = 'edit_' + g.id;
       if (typeof renderGenrePills === 'function') {
-        window.selectedGenres[sk] = (g.genre && String(g.genre).trim()) ? g.genre : 'Прочее';
+        window.selectedGenres[sk] = (g.genre && String(g.genre).trim()) ? g.genre : genreOtherApi();
         renderGenrePills('genrePillsEdit-' + g.id, sk);
       }
     });
@@ -229,7 +233,7 @@ async function saveProfile() {
   const bio = document.getElementById('profileBioInput').value.trim();
 
   if (!displayName) {
-    showToast('⚠️ Укажи имя');
+    showToast(tf('profile_toast_name'));
     return false;
   }
 
@@ -250,14 +254,14 @@ async function saveProfile() {
       document.getElementById('profileDisplayName').value = USER.displayName || USER.name || '';
       document.getElementById('profileBioInput').value = USER.bio || '';
     }
-    showToast('Сохранено');
+    showToast(tf('profile_saved'));
     if (typeof hapticSuccess === 'function') hapticSuccess();
     if (typeof updateOverlay === 'function') updateOverlay();
     window.profileEditSnapshot = null;
     document.getElementById('profile-screen')?.classList.remove('profile-edit-active');
     return true;
   } catch (e) {
-    showToast(typeof userFacingError === 'function' ? userFacingError(e) : 'Не сохранилось');
+    showToast(typeof userFacingError === 'function' ? userFacingError(e) : tf('err_load'));
     if (typeof hapticWarning === 'function') hapticWarning();
     return false;
   }
@@ -313,10 +317,10 @@ async function resetProfilePhoto() {
       USER.avatar = me.user.avatar || USER.avatar;
       setProfileAvatar(USER.avatar);
     }
-    showToast('✅ Фото из Telegram');
+    showToast(tf('profile_photo_tg'));
     if (typeof updateOverlay === 'function') updateOverlay();
   } catch (e) {
-    showToast('⚠️ ' + (e.message || 'ошибка'));
+    showToast('⚠️ ' + (e.message || tf('err_error')));
   }
 }
 
@@ -330,16 +334,16 @@ async function onProfileAvatarFileChange(ev) {
     formData.append('kind', 'avatar');
     const uploaded = await API.uploadImage(formData);
     const imageUrl = uploaded?.imageUrl;
-    if (!imageUrl) throw new Error('нет URL');
+    if (!imageUrl) throw new Error(tf('err_no_url'));
     const me = await API.updateMe({ photoUrl: imageUrl });
     if (me?.user) {
       USER.avatar = me.user.avatar || imageUrl;
       setProfileAvatar(USER.avatar);
     }
-    showToast('✅ Фото обновлено');
+    showToast(tf('profile_photo_updated'));
     if (typeof updateOverlay === 'function') updateOverlay();
   } catch (e) {
-    showToast('⚠️ ' + (e.message || 'не загрузилось'));
+    showToast('⚠️ ' + (e.message || tf('err_load')));
   } finally {
     input.value = '';
   }
@@ -373,36 +377,40 @@ async function deleteGame(gameId, titleHint, playUrlHint) {
   const idEsc = String(gameId).replace(/\\/g, '\\\\').replace(/"/g, '\\"');
   const row = document.querySelector('.profile-game-row[data-profile-game-id="' + idEsc + '"]');
   const fromRow = row?.dataset?.title?.trim();
-  const label = (titleHint && String(titleHint).trim()) || fromRow || 'эту игру';
+  const label = (titleHint && String(titleHint).trim()) || fromRow || tf('profile_delete_this');
+  const genericLabel = tf('profile_delete_this');
+  const question =
+    label === genericLabel
+      ? tf('profile_delete_confirm_generic')
+      : tf('profile_delete_confirm_named', { title: label });
+  if (!confirm(question)) return;
+
   const playUrl =
     (playUrlHint && String(playUrlHint).trim()) ||
     row?.dataset?.url?.trim() ||
     '';
-  const question =
-    label === 'эту игру'
-      ? 'Удалить игру из SmolGame? Это действие нельзя отменить.'
-      : `Удалить «${label}» из SmolGame? Это действие нельзя отменить.`;
-  if (!confirm(question)) return;
 
   let deleteGithubRepo = false;
   if (playUrl && isGithubPagesGameUrl(playUrl)) {
-    deleteGithubRepo = confirm(
-      'Удалить также репозиторий на GitHub (страница ' +
-        playUrl.split('/')[2] +
-        ')?\n\nOK — да, убрать и репозиторий (если ты автор и вход через GitHub сохранён).\nОтмена — удалить только карточку в SmolGame.'
-    );
+    let host = '';
+    try {
+      host = new URL(playUrl).hostname;
+    } catch {
+      host = playUrl.split('/')[2] || '';
+    }
+    deleteGithubRepo = confirm(tf('profile_delete_gh_confirm', { host }));
   }
 
   try {
     const res = await API.delete(gameId, { deleteGithubRepo });
-    let msg = '🗑 Игра удалена из SmolGame';
-    if (res?.githubDeleted) msg += '; репозиторий на GitHub удалён';
+    let msg = tf('profile_delete_done');
+    if (res?.githubDeleted) msg += tf('profile_delete_repo_done');
     else if (res?.githubDeleteNote) msg += '. ' + res.githubDeleteNote;
     showToast(msg);
     await loadGames();
     renderProfile();
   } catch (e) {
-    showToast('⚠️ ' + (e.message || 'не удалось удалить'));
+    showToast('⚠️ ' + (e.message || tf('profile_delete_fail')));
   }
 }
 

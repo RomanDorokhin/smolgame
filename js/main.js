@@ -1,4 +1,5 @@
 async function bootstrap() {
+  if (typeof initI18n === 'function') initI18n();
   if (typeof hasTelegramInitData === 'function' && !hasTelegramInitData()) {
     if (typeof hideBootSplash === 'function') hideBootSplash();
     if (typeof showTelegramOnlyWall === 'function') showTelegramOnlyWall();
@@ -43,7 +44,7 @@ async function bootstrap() {
       const m =
         typeof userFacingError === 'function'
           ? userFacingError(e)
-          : String(e?.message || 'Не загрузилось');
+          : String(e?.message || (typeof t === 'function' ? t('err_load') : 'Не загрузилось'));
       showToast(m);
       if (typeof hapticWarning === 'function') hapticWarning();
     }
@@ -59,9 +60,9 @@ async function handleGithubOAuthReturn() {
     if (!g) return;
     const msg = u.searchParams.get('message');
     if (g === 'connected') {
-      showToast('✅ GitHub подключён');
+      showToast(typeof t === 'function' ? t('github_connected') : '✅ GitHub подключён');
     } else if (g === 'error') {
-      showToast('⚠️ GitHub: ' + (msg || 'ошибка'));
+      showToast((typeof t === 'function' ? t('github_error') : '⚠️ GitHub: ') + (msg || (typeof t === 'function' ? t('github_error_generic') : 'ошибка')));
     }
     u.searchParams.delete('github');
     u.searchParams.delete('message');
