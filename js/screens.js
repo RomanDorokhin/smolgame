@@ -3,6 +3,18 @@ function setBottomNavActive(tab) {
   document.getElementById('nav-' + tab)?.classList.add('active');
 }
 
+/** Скрыть ленту/iframe под шитами: в части WebView (Telegram) iframe композится поверх div. */
+function syncBodyFeedHiddenUnderSheet() {
+  const feedHidden = Boolean(
+    document.getElementById('profile-screen')?.classList.contains('open') ||
+      document.getElementById('search-screen')?.classList.contains('open') ||
+      document.getElementById('games-library-screen')?.classList.contains('open') ||
+      document.getElementById('upload-screen')?.classList.contains('open') ||
+      document.getElementById('author-screen')?.classList.contains('open')
+  );
+  document.body.classList.toggle('app-feed-hidden-under-sheet', feedHidden);
+}
+
 /** Закрыть основные вкладки и оверлей автора (нижний таб не должен «застревать» под #author-screen). */
 function closeAllMainTabs() {
   if (typeof clearFeedSwipeTeaseTimers === 'function') clearFeedSwipeTeaseTimers();
@@ -17,6 +29,7 @@ function closeAllMainTabs() {
   document.getElementById('search-screen')?.classList.remove('open');
   document.getElementById('games-library-screen')?.classList.remove('open');
   document.getElementById('author-screen')?.classList.remove('open');
+  syncBodyFeedHiddenUnderSheet();
 }
 
 function openUpload() {
@@ -55,10 +68,12 @@ function openAuthorScreen(authorId) {
   document.body.classList.remove('is-tab-feed');
   if (typeof stopFeedSwipeTeaseForLeavingFeed === 'function') stopFeedSwipeTeaseForLeavingFeed();
   document.getElementById('author-screen').classList.add('open');
+  syncBodyFeedHiddenUnderSheet();
   loadAuthorProfile(authorId);
 }
 function closeAuthorScreen() {
   document.getElementById('author-screen').classList.remove('open');
+  syncBodyFeedHiddenUnderSheet();
   if (document.getElementById('nav-feed')?.classList.contains('active')) {
     document.body.classList.add('is-tab-feed');
     if (typeof scheduleFeedSwipeTeaseBoredom === 'function') scheduleFeedSwipeTeaseBoredom();
@@ -182,6 +197,7 @@ function switchTab(tab) {
   if (tab === 'feed') {
     closeAllMainTabs();
     document.body.classList.add('is-tab-feed');
+    syncBodyFeedHiddenUnderSheet();
     const chrome = document.getElementById('app-tab-chrome-label');
     if (chrome) chrome.textContent = t('nav_feed');
     if (typeof refreshFeedCoachState === 'function') refreshFeedCoachState();
@@ -244,6 +260,8 @@ function switchTab(tab) {
     if (typeof maybeShowWelcomeOnUploadOpen === 'function') maybeShowWelcomeOnUploadOpen();
   }
 
+  syncBodyFeedHiddenUnderSheet();
+
   setBottomNavActive(tab);
   window._activeMainTab = tab;
   document.body.classList.toggle(
@@ -266,3 +284,4 @@ window.toggleAuthorFollow = toggleAuthorFollow;
 window.switchTab = switchTab;
 window.closeAllMainTabs = closeAllMainTabs;
 window.setBottomNavActive = setBottomNavActive;
+window.syncBodyFeedHiddenUnderSheet = syncBodyFeedHiddenUnderSheet;

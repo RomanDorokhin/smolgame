@@ -787,6 +787,16 @@ body.tg-only-wall #toast{
   z-index:1;
   isolation:isolate;
 }
+/* Под шитом профиля/поиска и т.д.: в Telegram WebView iframe иногда рисуется поверх — прячем ленту целиком */
+body.app-feed-hidden-under-sheet #feed,
+body.app-feed-hidden-under-sheet #empty-state,
+body.app-feed-hidden-under-sheet #side-actions,
+body.app-feed-hidden-under-sheet #game-info,
+body.app-feed-hidden-under-sheet #dots{
+  visibility:hidden !important;
+  pointer-events:none !important;
+  opacity:0 !important;
+}
 body.feed-layout-vertical #feed{
   touch-action:none;
 }
