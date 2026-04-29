@@ -9,8 +9,28 @@ export function initDataFromRequest(req) {
   const h = String(req.headers.get('x-telegram-init-data') || '').trim();
   if (h) return h;
   try {
-    const q = new URL(req.url).searchParams.get('tgWebAppData');
+    const u = new URL(req.url);
+    let q = u.searchParams.get('tgWebAppData');
     if (q) return String(q).trim();
+    // Очень длинный tgWebAppData: часть клиентов режет query; парсим вручную из raw search.
+    const raw = u.search || '';
+    if (raw.includes('tgWebAppData=')) {
+      const needle = 'tgWebAppData=';
+      let i = raw.indexOf(needle);
+      while (i >= 0) {
+        const start = i + needle.length;
+        let j = start;
+        while (j < raw.length && raw[j] !== '&') j++;
+        const part = raw.slice(start, j);
+        if (part) {
+          try {
+            const dec = decodeURIComponent(part.replace(/\+/g, ' '));
+            if (dec.includes('hash=')) return dec.trim();
+          } catch (e) { /* next */ }
+        }
+        i = raw.indexOf(needle, j + 1);
+      }
+    }
   } catch (e) {
     /* ignore */
   }

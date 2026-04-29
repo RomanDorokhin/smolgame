@@ -47,13 +47,27 @@ function _fetchTypeErrorRetryable(msg) {
   );
 }
 
-async function apiFetch(path, { method = 'GET', body } = {}) {
+const API_FETCH_TIMEOUT_MS = 22000;
+
+function _needsTelegramAuth(path, method) {
+  if (method !== 'GET' && method !== 'POST' && method !== 'DELETE' && method !== 'PATCH') return false;
+  if (path.startsWith('/api/feed')) return false;
+  if (path.startsWith('/api/games/') && method === 'GET') return false;
+  if (path.startsWith('/api/users/') && method === 'GET') return false;
+  if (path === '/' || path.startsWith('/api/health')) return false;
+  return true;
+}
+
+async function apiFetch(path, { method = 'GET', body, _did401Retry = false } = {}) {
+  if (typeof ensureSmolgameInitDataFromUrl === 'function') ensureSmolgameInitDataFromUrl();
+  if (typeof window.syncUSERFromTelegramInit === 'function') window.syncUSERFromTelegramInit();
+
   const initRaw = _initData();
   const initHdr = _initDataHeaderValue();
   const isFormData = typeof FormData !== 'undefined' && body instanceof FormData;
   const jsonBody = body !== undefined && !isFormData ? JSON.stringify(body) : undefined;
 
-  function doFetch(urlPath, includeInitHeader) {
+  function doFetch(urlPath, includeInitHeader, signal) {
     const headers = {};
     if (includeInitHeader && initHdr) headers['x-telegram-init-data'] = initHdr;
     if (body !== undefined && !isFormData) headers['content-type'] = 'application/json';
@@ -61,18 +75,35 @@ async function apiFetch(path, { method = 'GET', body } = {}) {
       method,
       headers,
       body: isFormData ? body : jsonBody,
+      signal,
     });
   }
 
+  const ac = typeof AbortController !== 'undefined' ? new AbortController() : null;
+  const timer =
+    ac &&
+    setTimeout(() => {
+      try {
+        ac.abort();
+      } catch (e) { /* ignore */ }
+    }, API_FETCH_TIMEOUT_MS);
+
   let resp;
   try {
-    resp = await doFetch(path, true);
+    resp = await doFetch(path, true, ac?.signal);
   } catch (e1) {
     const msg1 = String(e1?.message || e1 || '');
+    if (ac?.signal?.aborted) {
+      throw new Error(
+        typeof t === 'function'
+          ? t('err_network')
+          : 'Нет ответа от сервера (таймаут). Закрой мини-апп и открой снова из бота.'
+      );
+    }
     if (initRaw && _fetchTypeErrorRetryable(msg1)) {
       try {
         const urlPath = pathWithTgWebAppData(path, initRaw);
-        resp = await doFetch(urlPath, false);
+        resp = await doFetch(urlPath, false, ac?.signal);
       } catch (e2) {
         const net = String(e2?.message || e2 || '');
         const low = net.toLowerCase();
@@ -107,6 +138,8 @@ async function apiFetch(path, { method = 'GET', body } = {}) {
           : 'Запрос не выполнился: ' + (net || 'ошибка сети')
       );
     }
+  } finally {
+    if (timer) clearTimeout(timer);
   }
 
   let data = null;
@@ -131,6 +164,18 @@ async function apiFetch(path, { method = 'GET', body } = {}) {
   if (!resp.ok) {
     const raw = data?.error;
     let msg = (typeof raw === 'string' && raw.trim()) || resp.statusText || 'request failed';
+
+    if (
+      resp.status === 401 &&
+      !_did401Retry &&
+      _needsTelegramAuth(path, method) &&
+      typeof ensureSmolgameInitDataFromUrl === 'function'
+    ) {
+      ensureSmolgameInitDataFromUrl();
+      if (typeof window.syncUSERFromTelegramInit === 'function') window.syncUSERFromTelegramInit();
+      await new Promise(r => setTimeout(r, 120));
+      return apiFetch(path, { method, body, _did401Retry: true });
+    }
 
     if (resp.status === 401) {
       const serverMsg = typeof raw === 'string' ? raw.trim() : '';
