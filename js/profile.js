@@ -74,7 +74,7 @@ function applyTelegramUserToUser(u) {
 
 /** Короткое ожидание: на Desktop initData / initDataUnsafe иногда появляются с задержкой. */
 async function waitTelegramUserForProfile(maxMs) {
-  const cap = Number(maxMs) > 0 ? Number(maxMs) : 1600;
+  const cap = Number(maxMs) > 0 ? Number(maxMs) : 3500;
   const step = 70;
   const deadline = Date.now() + cap;
   while (Date.now() < deadline) {
@@ -85,8 +85,12 @@ async function waitTelegramUserForProfile(maxMs) {
   }
 }
 
-/** Всегда подставить id/имя/аватар из Telegram (initDataUnsafe), чтобы профиль не выглядел «пустым» при сбое API. */
+/** Всегда подставить id/имя/аватар из Telegram (см. telegram-initdata.js syncUSERFromTelegramInit). */
 function syncUserFromTelegramWebApp() {
+  if (typeof window.syncUSERFromTelegramInit === 'function') {
+    window.syncUSERFromTelegramInit();
+    return;
+  }
   try {
     if (typeof ensureSmolgameInitDataFromUrl === 'function') ensureSmolgameInitDataFromUrl();
     let u = Telegram?.WebApp?.initDataUnsafe?.user;
@@ -145,7 +149,7 @@ async function renderProfile() {
   const bioRead = document.getElementById('profileBio');
   const handleRead = document.getElementById('profileSiteHandleRead');
 
-  await waitTelegramUserForProfile(1800);
+  await waitTelegramUserForProfile(4000);
   syncUserFromTelegramWebApp();
   setProfileMeBannerVisible(false);
 

@@ -71,6 +71,84 @@
     return Boolean(window.__smolgameInitDataOverride && looksLikeTelegramInitData(window.__smolgameInitDataOverride));
   }
 
+  /** user= из строки initData (без полной зависимости от URLSearchParams на длинных строках). */
+  function extractTelegramUserFromInitDataString(raw) {
+    try {
+      const s = String(raw || '').trim();
+      if (!s) return null;
+      try {
+        const enc = new URLSearchParams(s).get('user');
+        if (enc) {
+          const u = JSON.parse(decodeURIComponent(String(enc).replace(/\+/g, ' ')));
+          if (u && u.id != null) return u;
+        }
+      } catch (e1) { /* ignore */ }
+      const key = 'user=';
+      let i = s.indexOf(key);
+      while (i >= 0) {
+        const start = i + key.length;
+        let j = start;
+        while (j < s.length && s[j] !== '&') j++;
+        const part = s.slice(start, j);
+        if (part) {
+          try {
+            const u = JSON.parse(decodeURIComponent(part.replace(/\+/g, ' ')));
+            if (u && u.id != null) return u;
+          } catch (e2) { /* next */ }
+        }
+        i = s.indexOf(key, j + 1);
+      }
+    } catch (e) { /* ignore */ }
+    return null;
+  }
+
+  /** Сразу после появления window.USER (state.js) и при смене URL — подставить id из initData. */
+  function syncUSERFromTelegramInit() {
+    try {
+      if (!window.USER) return;
+      ensureSmolgameInitDataFromUrl();
+      let u = null;
+      try {
+        u = window.Telegram?.WebApp?.initDataUnsafe?.user;
+      } catch (e) { /* ignore */ }
+      if (u && u.id != null) {
+        window.USER.id = String(u.id);
+        window.USER.tgId = String(u.id);
+        const nm = [u.first_name, u.last_name].filter(Boolean).join(' ').trim();
+        if (nm) window.USER.name = nm;
+        const ph = u.photo_url && String(u.photo_url).trim();
+        if (ph) window.USER.avatar = ph;
+        else if (u.first_name) {
+          const ch = String(u.first_name).trim()[0];
+          if (ch) window.USER.avatar = ch;
+        }
+        return;
+      }
+      const raw =
+        (window.__smolgameInitDataOverride && String(window.__smolgameInitDataOverride).trim()) ||
+        (function () {
+          try {
+            return String(window.Telegram?.WebApp?.initData || '').trim();
+          } catch (e2) {
+            return '';
+          }
+        })();
+      u = extractTelegramUserFromInitDataString(raw);
+      if (!u || u.id == null) return;
+      window.USER.id = String(u.id);
+      window.USER.tgId = String(u.id);
+      const nm = [u.first_name, u.last_name].filter(Boolean).join(' ').trim();
+      if (nm) window.USER.name = nm;
+      const ph = u.photo_url && String(u.photo_url).trim();
+      if (ph) window.USER.avatar = ph;
+      else if (u.first_name) {
+        const ch = String(u.first_name).trim()[0];
+        if (ch) window.USER.avatar = ch;
+      }
+    } catch (e) { /* ignore */ }
+  }
+
+  window.syncUSERFromTelegramInit = syncUSERFromTelegramInit;
   /**
    * Подождать, пока Telegram заполнит initData или пока не выйдет timeout.
    */
@@ -104,4 +182,13 @@
   window.ensureSmolgameInitDataFromUrl = ensureSmolgameInitDataFromUrl;
   window.waitForTelegramInitData = waitForTelegramInitData;
   ensureSmolgameInitDataFromUrl();
+
+  window.addEventListener('hashchange', function () {
+    ensureSmolgameInitDataFromUrl();
+    syncUSERFromTelegramInit();
+  });
+  window.addEventListener('popstate', function () {
+    ensureSmolgameInitDataFromUrl();
+    syncUSERFromTelegramInit();
+  });
 })();

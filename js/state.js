@@ -42,3 +42,7 @@ window.slides = [];
 window.selectedGenre = '';
 window.selectedUploadMethod = 'url';
 window.selectedGenres = { code: '', url: '', ghCode: '' };
+
+if (typeof window.syncUSERFromTelegramInit === 'function') {
+  window.syncUSERFromTelegramInit();
+}

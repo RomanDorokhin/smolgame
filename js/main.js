@@ -9,6 +9,7 @@ async function bootstrap() {
     if (typeof showTelegramOnlyWall === 'function') showTelegramOnlyWall();
     return;
   }
+  if (typeof window.syncUSERFromTelegramInit === 'function') window.syncUSERFromTelegramInit();
   if (typeof hideTelegramOnlyWall === 'function') hideTelegramOnlyWall();
   if (typeof showBootSplash === 'function') showBootSplash();
 
@@ -42,6 +43,12 @@ async function bootstrap() {
       maybeShowFeedNavTipAfterGames();
     }
     if (typeof refreshFeedCoachState === 'function') refreshFeedCoachState();
+
+    if (typeof window.syncUSERFromTelegramInit === 'function') {
+      window.syncUSERFromTelegramInit();
+      setTimeout(() => window.syncUSERFromTelegramInit && window.syncUSERFromTelegramInit(), 400);
+      setTimeout(() => window.syncUSERFromTelegramInit && window.syncUSERFromTelegramInit(), 1200);
+    }
   } catch (e) {
     console.error('bootstrap failed', e);
     if (typeof showToast === 'function') {
