@@ -1446,7 +1446,11 @@ body.feed-layout-vertical #game-info{
 }
 body.feed-onboarding-demo #slide-0{z-index:5;}
 body.feed-onboarding-demo #slide-1{z-index:4;}
-body.feed-onboarding-ui #bottom-nav,
+/* Нижнее меню оставляем кликабельным — иначе «Игры/Профиль» не работают, пока висит welcome */
+body.feed-onboarding-ui #bottom-nav{
+  pointer-events:auto !important;
+  opacity:1;
+}
 body.feed-onboarding-ui #side-actions,
 body.feed-onboarding-ui #game-info,
 body.feed-onboarding-ui #dots{
