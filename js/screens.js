@@ -76,7 +76,7 @@ function setAvatar(el, avatar) {
 function renderSmallGameCard(g) {
   return `
     <div class="game-card sg-store-card" data-action="open-game-detail" data-game-id="${esc(g.id)}">
-      <div class="game-card-thumb sg-store-card-thumb">${gameThumbHtml(g)}</div>
+      <div class="game-card-thumb sg-store-card-thumb">${typeof gameThumbHtml === 'function' ? gameThumbHtml(g) : ''}</div>
       ${typeof sgStorefrontCardInfoHtml === 'function' ? sgStorefrontCardInfoHtml(g, { author: false, desc: true }) : `<div class="game-card-info"><div class="game-card-name">${esc(g.title)}</div><div class="game-card-stats"><span class="sg-mini-stat">${sgStatHeartSvg()}${fmtNum(g.likes)}</span><span class="sg-mini-sep">·</span><span class="sg-mini-stat">${sgStatEyeSvg()}${fmtNum(g.plays)}</span></div></div>`}
     </div>
   `;
@@ -154,7 +154,7 @@ async function loadAuthorProfile(authorId) {
     } else {
       grid.innerHTML = games.map(g => `
         <div class="game-card sg-store-card" data-action="open-game-detail" data-game-id="${esc(g.id)}">
-          <div class="game-card-thumb sg-store-card-thumb">${gameThumbHtml(g)}</div>
+          <div class="game-card-thumb sg-store-card-thumb">${typeof gameThumbHtml === 'function' ? gameThumbHtml(g) : ''}</div>
           ${typeof sgStorefrontCardInfoHtml === 'function' ? sgStorefrontCardInfoHtml(g, { author: false, desc: true }) : `<div class="game-card-info"><div class="game-card-name">${esc(g.title)}</div><div class="game-card-stats"><span class="sg-mini-stat">${sgStatHeartSvg()}${fmtNum(g.likes)}</span><span class="sg-mini-sep">·</span><span class="sg-mini-stat">${sgStatEyeSvg()}${fmtNum(g.plays)}</span></div></div>`}
         </div>
       `).join('');

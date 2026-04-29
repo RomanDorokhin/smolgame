@@ -36,6 +36,14 @@ function esc(v) {
   return String(v ?? '').replace(/[&<>"'`]/g, ch => _ESC_MAP[ch]);
 }
 
+/** Превью карточки игры (лента / поиск / профиль / экран автора). */
+function gameThumbHtml(g) {
+  if (g && g.imageUrl) {
+    return `<img src="${esc(g.imageUrl)}" class="game-card-cover" alt="">`;
+  }
+  return `<span class="game-card-thumb-placeholder">${typeof genreIconForGame === 'function' ? genreIconForGame(g) : ''}</span>`;
+}
+
 /** Telegram numeric user id для сравнения (API/D1 могут отдать number, USER.id — string). */
 function tgUserIdKey(id) {
   if (id == null || id === '') return '';
@@ -224,6 +232,7 @@ window.sgEmptyGridHtml = sgEmptyGridHtml;
 window.sgCardDescSnippet = sgCardDescSnippet;
 window.sgStorefrontCardInfoHtml = sgStorefrontCardInfoHtml;
 window.esc = esc;
+window.gameThumbHtml = gameThumbHtml;
 window.safeHttpUrl = safeHttpUrl;
 window.normalizeToHttpsUrl = normalizeToHttpsUrl;
 window.avatarImgUrl = avatarImgUrl;

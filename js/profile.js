@@ -1,12 +1,6 @@
 const tf = typeof window.t === 'function' ? window.t : k => k;
 const genreOtherApi = () => tf('genre_api_other');
 
-function gameThumbHtml(g) {
-  return g.imageUrl
-    ? `<img src="${esc(g.imageUrl)}" class="game-card-cover" alt="">`
-    : `<span class="game-card-thumb-placeholder">${typeof genreIconForGame === 'function' ? genreIconForGame(g) : ''}</span>`;
-}
-
 /** Нормализация ответа GET /api/me (статы могут прийти строками из D1). */
 function parseProfileStats(me) {
   const raw = me?.stats;
@@ -212,7 +206,7 @@ async function renderProfile() {
         <div class="game-card sg-store-card" data-action="open-game-detail" data-game-id="${gid}">
           <div class="game-card-thumb sg-store-card-thumb">
             ${gameStatusBadgeHtml(g.status)}
-            ${gameThumbHtml(g)}
+            ${typeof gameThumbHtml === 'function' ? gameThumbHtml(g) : ''}
           </div>
           ${typeof sgStorefrontCardInfoHtml === 'function' ? sgStorefrontCardInfoHtml(g, { author: false, desc: true }) : `<div class="game-card-info"><div class="game-card-name">${esc(g.title)}</div><div class="game-card-stats"><span class="sg-mini-stat">${sgStatHeartSvg()}${fmtNum(g.likes)}</span><span class="sg-mini-sep">·</span><span class="sg-mini-stat">${sgStatEyeSvg()}${fmtNum(g.plays)}</span></div></div>`}
         </div>
