@@ -1,5 +1,7 @@
 // Клиент API. Шлёт Telegram initData в заголовке x-telegram-init-data,
 // сервер сам проверяет подпись и определяет юзера.
+// Дублируем в query tgWebAppData (как в URL Telegram): часть WebView падает TypeError
+// на длинном/нестандартном заголовке, но query принимает тот же Worker.
 //
 // Меняй API_BASE на свой Worker URL (после первого деплоя).
 
@@ -25,75 +27,46 @@ function _initDataHeaderValue() {
   return raw.replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, '').trim();
 }
 
-async function apiFetch(path, { method = 'GET', body } = {}) {
-  const initHdr = _initDataHeaderValue();
-  const isFormData = typeof FormData !== 'undefined' && body instanceof FormData;
-  const jsonBody = body !== undefined && !isFormData ? JSON.stringify(body) : undefined;
+/** Добавить initData в URL (сервер читает как fallback к заголовку). */
+function pathWithTgWebAppData(path, rawInit) {
+  const raw = String(rawInit || '').trim();
+  if (!raw) return path;
+  const sep = path.includes('?') ? '&' : '?';
+  return path + sep + 'tgWebAppData=' + encodeURIComponent(raw);
+}
 
-  function buildHeaders(includeInit) {
-    const headers = {};
-    if (includeInit && initHdr) headers['x-telegram-init-data'] = initHdr;
-    if (body !== undefined && !isFormData) headers['content-type'] = 'application/json';
-    return headers;
-  }
+async function apiFetch(path, { method = 'GET', body } = {}) {
+  const initRaw = _initData();
+  const initHdr = _initDataHeaderValue();
+  const urlPath = pathWithTgWebAppData(path, initRaw);
+  const isFormData = typeof FormData !== 'undefined' && body instanceof FormData;
+  const headers = {};
+  if (initHdr) headers['x-telegram-init-data'] = initHdr;
+  if (body !== undefined && !isFormData) headers['content-type'] = 'application/json';
 
   let resp;
   try {
-    resp = await fetch(API_BASE + path, {
+    resp = await fetch(API_BASE + urlPath, {
       method,
-      headers: buildHeaders(true),
-      body: isFormData ? body : jsonBody,
+      headers,
+      body: isFormData ? body : (body !== undefined ? JSON.stringify(body) : undefined),
     });
   } catch (e) {
-    const msg0 = String(e?.message || e || '');
-    const low0 = msg0.toLowerCase();
-    const maybeBadHeader =
-      initHdr &&
-      (low0.includes('type error') ||
-        low0.includes('typeerror') ||
-        (low0.includes('invalid') && low0.includes('header')));
-    if (maybeBadHeader) {
-      try {
-        resp = await fetch(API_BASE + path, {
-          method,
-          headers: buildHeaders(false),
-          body: isFormData ? body : jsonBody,
-        });
-      } catch (e2) {
-        const e = e2;
-        const net = String(e?.message || e || '');
-        const low = net.toLowerCase();
-        const webkitBroke =
-          low.includes('load failed') ||
-          low.includes('failed to fetch') ||
-          low.includes('network') ||
-          low.includes('network connection was lost') ||
-          low.includes('internet connection appears to be offline') ||
-          low.includes('cancelled') ||
-          low.includes('canceled');
-        throw new Error(
-          webkitBroke
-            ? 'Сеть/WebView: не удалось связаться с API. Подожди минуту, выключи VPN, обнови мини-апп (закрой полностью). Если с телефона работает — обнови Worker: backend → git pull && npx wrangler deploy.'
-            : 'Запрос не выполнился: ' + (net || 'ошибка сети')
-        );
-      }
-    } else {
-      const net = String(e?.message || e || '');
-      const low = net.toLowerCase();
-      const webkitBroke =
-        low.includes('load failed') ||
-        low.includes('failed to fetch') ||
-        low.includes('network') ||
-        low.includes('network connection was lost') ||
-        low.includes('internet connection appears to be offline') ||
-        low.includes('cancelled') ||
-        low.includes('canceled');
-      throw new Error(
-        webkitBroke
-          ? 'Сеть/WebView: не удалось связаться с API. Подожди минуту, выключи VPN, обнови мини-апп (закрой полностью). Если с телефона работает — обнови Worker: backend → git pull && npx wrangler deploy.'
-          : 'Запрос не выполнился: ' + (net || 'ошибка сети')
-      );
-    }
+    const net = String(e?.message || e || '');
+    const low = net.toLowerCase();
+    const webkitBroke =
+      low.includes('load failed') ||
+      low.includes('failed to fetch') ||
+      low.includes('network') ||
+      low.includes('network connection was lost') ||
+      low.includes('internet connection appears to be offline') ||
+      low.includes('cancelled') ||
+      low.includes('canceled');
+    throw new Error(
+      webkitBroke
+        ? 'Сеть/WebView: не удалось связаться с API. Подожди минуту, выключи VPN, обнови мини-апп (закрой полностью). Если с телефона работает — обнови Worker: backend → git pull && npx wrangler deploy.'
+        : 'Запрос не выполнился: ' + (net || 'ошибка сети')
+    );
   }
 
   let data = null;

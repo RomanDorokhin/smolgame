@@ -1,6 +1,6 @@
 import { json, error, newId } from './http.js';
 import { isMissingColumnError, isMissingTableError } from './db-errors.js';
-import { authenticate, upsertUser } from './auth.js';
+import { authenticate, upsertUser, initDataFromRequest } from './auth.js';
 import { tryDeleteGithubRepoForAuthor } from './github-repo-delete.js';
 import {
   safeHttpsUrl,
@@ -402,7 +402,7 @@ async function fetchGithubLinkRow(db, userId) {
 }
 
 export async function getMe(req, env) {
-  const initHeader = String(req.headers.get('x-telegram-init-data') || '').trim();
+  const initHeader = initDataFromRequest(req);
   if (!initHeader) {
     return error(
       'Нет данных входа из Telegram. Открой мини-апп только из бота (не из обычного браузера по ссылке).',
@@ -796,7 +796,7 @@ export async function register(req, env) {
 
 export async function submitGame(req, env) {
   try {
-    const initHeader = String(req.headers.get('x-telegram-init-data') || '').trim();
+    const initHeader = initDataFromRequest(req);
     const user = await authenticate(req, env);
     if (!user) {
       if (!initHeader) {

@@ -2,13 +2,29 @@ import { verifyInitData } from './telegram.js';
 import { isMissingColumnError } from './db-errors.js';
 
 /**
- * Извлекает и валидирует текущего пользователя из заголовка `x-telegram-init-data`.
+ * Строка initData: заголовок (основной путь) или query `tgWebAppData` (fallback для WebView,
+ * где длинный/нестандартный заголовок ломает fetch с TypeError).
+ */
+export function initDataFromRequest(req) {
+  const h = String(req.headers.get('x-telegram-init-data') || '').trim();
+  if (h) return h;
+  try {
+    const q = new URL(req.url).searchParams.get('tgWebAppData');
+    if (q) return String(q).trim();
+  } catch (e) {
+    /* ignore */
+  }
+  return '';
+}
+
+/**
+ * Извлекает и валидирует текущего пользователя из initData (заголовок или query).
  * Если токен не задан (локальный dev) — пропускает гостя без id.
  *
  * Возвращает { id, username, first_name, last_name, photo_url, isAdmin } или null.
  */
 export async function authenticate(req, env) {
-  const initData = req.headers.get('x-telegram-init-data');
+  const initData = initDataFromRequest(req);
   if (!initData) return null;
   const user = await verifyInitData(initData, env.TELEGRAM_BOT_TOKEN);
   if (!user) return null;
