@@ -1,4 +1,5 @@
-const ONBOARDING_STEPS = ['birth', 'privacy', 'tos', 'handle'];
+const ONBOARDING_STEPS = ['birth', 'legal', 'handle'];
+const ONBOARDING_TOTAL = ONBOARDING_STEPS.length;
 let onboardingStep = 0;
 let onboardingData = {};
 
@@ -36,7 +37,7 @@ function renderOnboarding() {
 
   if (step === 'birth') {
     body.innerHTML = `
-      <div class="onboarding-step">Шаг 1 из 4</div>
+      <div class="onboarding-step">Шаг 1 из ${ONBOARDING_TOTAL}</div>
       <div class="onboarding-title">Дата рождения</div>
       <p class="onboarding-value-prop">SmolGame — лента мини-игр в Telegram (как TikTok: листаешь, играешь, подписываешься на авторов). Сейчас без принудительной рекламы перед игрой. Свою игру — вкладка «Загрузить». Укажи дату рождения для входа.</p>
       <input class="field-input" type="date" id="birthDateInput" value="${esc(onboardingData.dateOfBirth || '')}">
@@ -52,28 +53,14 @@ function renderOnboarding() {
     return;
   }
 
-  if (step === 'privacy') {
+  if (step === 'legal') {
     body.innerHTML = `
-      <div class="onboarding-step">Шаг 2 из 4</div>
-      <div class="onboarding-title">Политика приватности</div>
-      <div class="onboarding-text">Вход через Telegram; публично виден только твой ID SmolGame.</div>
+      <div class="onboarding-step">Шаг 2 из ${ONBOARDING_TOTAL}</div>
+      <div class="onboarding-title">Условия</div>
+      <div class="onboarding-text">Вход через Telegram; публично виден только твой ID SmolGame. На площадке — только свои игры и общие правила.</div>
       <label class="check-row">
-        <input type="checkbox" id="privacyInput">
-        <span>Я принимаю политику конфиденциальности</span>
-      </label>
-    `;
-    footer.innerHTML = `<button class="submit-btn" data-action="onboarding-next">Дальше</button>`;
-    return;
-  }
-
-  if (step === 'tos') {
-    body.innerHTML = `
-      <div class="onboarding-step">Шаг 3 из 4</div>
-      <div class="onboarding-title">Пользовательское соглашение</div>
-      <div class="onboarding-text">Только свои игры и правила площадки.</div>
-      <label class="check-row">
-        <input type="checkbox" id="tosInput">
-        <span>Я принимаю пользовательское соглашение</span>
+        <input type="checkbox" id="legalAgreeInput">
+        <span>Я принимаю <strong>политику конфиденциальности</strong> и <strong>пользовательское соглашение</strong></span>
       </label>
     `;
     footer.innerHTML = `<button class="submit-btn" data-action="onboarding-next">Дальше</button>`;
@@ -81,7 +68,7 @@ function renderOnboarding() {
   }
 
   body.innerHTML = `
-    <div class="onboarding-step">Шаг 4 из 4</div>
+    <div class="onboarding-step">Шаг 3 из ${ONBOARDING_TOTAL}</div>
     <div class="onboarding-title">Публичный ID</div>
     <div class="onboarding-text">Виден другим вместо @username в Telegram.</div>
     <input class="field-input" type="text" id="siteHandleInput" placeholder="smol_player" maxlength="24" value="${esc(onboardingData.siteHandle || '')}">
@@ -126,12 +113,12 @@ function onboardingNext() {
     onboardingData.dateOfBirth = dateOfBirth;
     onboardingData.parentConsent = parentConsent;
   }
-  if (step === 'privacy') {
-    if (!document.getElementById('privacyInput').checked) { showToast('⚠️ Подтверди согласие'); return; }
+  if (step === 'legal') {
+    if (!document.getElementById('legalAgreeInput')?.checked) {
+      showToast('⚠️ Подтверди политику и пользовательское соглашение');
+      return;
+    }
     onboardingData.privacyAccepted = true;
-  }
-  if (step === 'tos') {
-    if (!document.getElementById('tosInput').checked) { showToast('⚠️ Подтверди соглашение'); return; }
     onboardingData.tosAccepted = true;
   }
   onboardingStep += 1;
