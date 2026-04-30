@@ -21,6 +21,6 @@
     "db:migrate:remote:reviews": "wrangler d1 execute smolgame --remote --file=./migrations/0010_game_reviews.sql"
   },
   "devDependencies": {
-    "wrangler": "^3.90.0"
+    "wrangler": "^4.86.0"
   }
 }
