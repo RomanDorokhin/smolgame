@@ -2,8 +2,13 @@ function uilang() {
   return typeof window.t === 'function' ? window.t : k => k;
 }
 
+// Флаги блокировки на время запроса — предотвращают race condition при быстром тапе.
+let _pendingLike = false;
+let _pendingFollow = false;
+
 function toggleLike() {
   if (GAMES.length === 0) return;
+  if (_pendingLike) return; // защита от двойного клика
   const t = uilang();
   const g = GAMES[window.currentIdx];
   const icon = document.getElementById('likeIcon');
@@ -30,6 +35,7 @@ function toggleLike() {
   document.getElementById('likeCount').textContent =
     fmtNum(g.likes + (likedSet.has(g.id) ? 1 : 0));
 
+  _pendingLike = true;
   const req = wasLiked
     ? Promise.all([API.unlike(g.id), API.unbookmark(g.id)])
     : Promise.all([API.like(g.id), API.bookmark(g.id)]);
@@ -51,11 +57,13 @@ function toggleLike() {
       showToast(typeof userFacingError === 'function' ? userFacingError(err) : t('try_again'));
       if (typeof hapticWarning === 'function') hapticWarning();
       console.warn('like/bookmark failed', err);
-    });
+    })
+    .finally(() => { _pendingLike = false; });
 }
 
 function toggleFollow() {
   if (GAMES.length === 0) return;
+  if (_pendingFollow) return; // защита от двойного клика
   const t = uilang();
   const g = GAMES[window.currentIdx];
   const btn = document.getElementById('followBtn');
@@ -74,15 +82,19 @@ function toggleFollow() {
   }
   saveSet(STORAGE_KEYS.followed, followedSet);
 
-  (wasFollowing ? API.unfollow(g.authorId) : API.follow(g.authorId)).catch(err => {
-    if (wasFollowing) followedSet.add(g.authorId); else followedSet.delete(g.authorId);
-    saveSet(STORAGE_KEYS.followed, followedSet);
-    updateOverlay();
-    showToast(typeof userFacingError === 'function' ? userFacingError(err) : t('try_again'));
-    if (typeof hapticWarning === 'function') hapticWarning();
-    console.warn('follow failed', err);
-  });
+  _pendingFollow = true;
+  (wasFollowing ? API.unfollow(g.authorId) : API.follow(g.authorId))
+    .catch(err => {
+      if (wasFollowing) followedSet.add(g.authorId); else followedSet.delete(g.authorId);
+      saveSet(STORAGE_KEYS.followed, followedSet);
+      updateOverlay();
+      showToast(typeof userFacingError === 'function' ? userFacingError(err) : t('try_again'));
+      if (typeof hapticWarning === 'function') hapticWarning();
+      console.warn('follow failed', err);
+    })
+    .finally(() => { _pendingFollow = false; });
 }
+
 
 function buildGameShareUrl(gameId) {
   // Формат Telegram deep-link для mini-app: https://t.me/<bot>?startapp=<param>
