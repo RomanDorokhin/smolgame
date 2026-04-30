@@ -89,6 +89,10 @@ function applyMeToProfileUi(me, { bioRead, handleRead, premBadge, setStatGames, 
     if (mu.isAdmin) document.body.classList.add('is-admin');
     else document.body.classList.remove('is-admin');
 
+    if (mu.id) {
+      try { localStorage.setItem('smolgame:persisted_id:v1', String(mu.id)); } catch(e) {}
+    }
+
     if (premBadge) {
       premBadge.style.display = mu.isPremium ? 'inline-flex' : 'none';
     }
@@ -147,6 +151,16 @@ async function renderProfile() {
 
   let myGames = [];
 
+  const debugPanel = document.getElementById('profileDebugPanel');
+  const isAdmin = document.body.classList.contains('is-admin');
+  if (debugPanel) {
+    debugPanel.style.display = isAdmin ? 'block' : 'none';
+    const dTime = document.getElementById('debugTime');
+    if (dTime) dTime.textContent = new Date().toLocaleTimeString();
+    const dUser = document.getElementById('debugUser');
+    if (dUser) dUser.textContent = JSON.stringify({ id: USER.id, name: USER.name, siteHandle: USER.siteHandle });
+  }
+
   let me = null;
   try {
     me = await API.me();
@@ -172,9 +186,15 @@ async function renderProfile() {
     }
 
     applyMeToProfileUi(me, { bioRead, handleRead, premBadge, setStatGames, setStatFollowers, setStatLikes });
+    if (debugPanel && isAdmin) {
+      document.getElementById('debugMe').textContent = JSON.stringify(me);
+    }
   } catch (err) {
     console.error('renderProfile failed', err);
     const hint = err.message || '';
+    if (debugPanel && isAdmin) {
+      document.getElementById('debugLastErr').textContent = hint;
+    }
     setProfileMeBannerVisible(true, hint || tf('profile_me_failed'));
   } finally {
     if (USER.id) {

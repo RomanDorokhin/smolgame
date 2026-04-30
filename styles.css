@@ -4062,3 +4062,16 @@ body.is-admin .admin-only{display:block;}
   .author-name{max-width:32vw;font-size:14px;}
   .follow-btn{padding:6px 9px;}
 }
+
+/* Debug Panel */
+.profile-debug-panel {
+  margin-top: 15px;
+  border: 1px solid rgba(255,255,255,0.1);
+  background: rgba(0,0,0,0.2);
+  padding: 12px;
+  border-radius: 12px;
+  font-family: monospace;
+  font-size: 11px;
+  color: #0f0;
+  word-break: break-all;
+}
