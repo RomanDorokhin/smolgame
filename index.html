@@ -14,7 +14,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <!-- ?v= сбрасывает кэш WebView Telegram после правок JS/CSS (меняй при каждом релизе фронта; при крупных фиксах — у всех script/link сразу). -->
-<link rel="stylesheet" href="styles.css?v=20260495">
+<link rel="stylesheet" href="styles.css?v=20260496">
 <script>
   /** WATCHDOG: Форсируем имя и аватар, если система его "забыла" */
   (function() {
@@ -780,7 +780,6 @@ Must work on a mobile phone.</pre>
 <script src="js/upload.js?v=20260490"></script>
 <script src="js/genres.js?v=20260490"></script>
 <script src="js/search.js?v=20260490"></script>
-<script src="js/liked-games.js?v=20260490"></script>
 <script src="js/admin.js?v=20260490"></script>
 <script src="js/game-editor.js?v=20260490"></script>
 <script src="js/game-detail.js?v=20260490"></script>
@@ -979,6 +978,37 @@ Must work on a mobile phone.</pre>
   };
   window.startProfileEdit = () => document.getElementById('profile-screen')?.classList.add('profile-edit-active');
   window.cancelProfileEdit = () => document.getElementById('profile-screen')?.classList.remove('profile-edit-active');
+
+  /** ══════════════════════════════════════════════════════════
+   *  LIKED/PLAYED GAMES LOGIC
+   *  ══════════════════════════════════════════════════════════ */
+  function renderGamesGridSection(gridId, games, emptyTitle, emptySub, emptyCtaTab) {
+    const grid = document.getElementById(gridId);
+    if (!grid) return;
+    if (games.length === 0) {
+      grid.innerHTML = `<div class="sg-empty-state sg-empty-state--grid" style="grid-column:1/-1"><div class="sg-empty-state-title">${esc(emptyTitle)}</div><div class="sg-empty-state-sub">${esc(emptySub)}</div></div>`;
+      return;
+    }
+    grid.innerHTML = games.map(g => `<div class="game-card sg-store-card" data-action="open-game-detail" data-game-id="${esc(g.id)}"><div class="game-card-thumb sg-store-card-thumb">${typeof gameThumbHtml === 'function' ? gameThumbHtml(g) : ''}</div><div class="game-card-info"><div class="game-card-name">${esc(g.title)}</div></div></div>`).join('');
+  }
+
+  window.loadGamesLibrary = async function() {
+    const lGrid = document.getElementById('likedGamesGrid');
+    const pGrid = document.getElementById('playedGamesGrid');
+    if (lGrid) lGrid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:24px;">' + esc(tf('loading')) + '</div>';
+    if (pGrid) pGrid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:24px;">' + esc(tf('loading')) + '</div>';
+    try {
+      const batch = await API.gamesLibrary();
+      renderGamesGridSection('likedGamesGrid', batch?.likedGames || [], tf('liked_empty_title'), tf('liked_empty_sub'), 'feed');
+      renderGamesGridSection('playedGamesGrid', batch?.playedGames || [], tf('played_empty_title'), tf('played_empty_sub'), 'feed');
+    } catch (e) {
+      const errHtml = `<div style="grid-column:1/-1;text-align:center;padding:24px;">${esc(tf('load_failed_title'))}</div>`;
+      if (lGrid) lGrid.innerHTML = errHtml; if (pGrid) pGrid.innerHTML = errHtml;
+    }
+  };
+  window.refreshGamesLibraryScreen = () => {
+    if (document.getElementById('games-library-screen')?.classList.contains('open')) window.loadGamesLibrary();
+  };
 })();
 </script>
 <script src="js/events.js?v=20260490"></script>
