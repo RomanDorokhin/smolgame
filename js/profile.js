@@ -27,7 +27,6 @@ function gameStatusBadgeHtml(status) {
   return '';
 }
 
-
 /** Короткое ожидание: на Desktop initData / initDataUnsafe иногда появляются с задержкой. */
 async function waitTelegramUserForProfile(maxMs) {
   const cap = Number(maxMs) > 0 ? Number(maxMs) : 3500;
@@ -99,10 +98,7 @@ function applyMeToProfileUi(me, { bioRead, handleRead, premBadge, setStatGames, 
 
   // Обновляем текст в любом случае (даже если me.user пустой, покажем что есть в USER)
   const nameEl = document.getElementById('profileName');
-  if (nameEl) {
-    // Если имени нет вообще, покажем ID как временный вариант
-    nameEl.textContent = USER.name || USER.id || tf('guest');
-  }
+  if (nameEl) nameEl.textContent = USER.name || USER.id || tf('guest');
 
   const handleEl = document.getElementById('profileHandle');
   if (handleEl) {
@@ -154,17 +150,38 @@ async function renderProfile() {
   let me = null;
   try {
     me = await API.me();
+    
+    // FALLBACK: Если API.me вернул Гостя (user: null), но у нас есть хоть какой-то USER.id
+    // (например, вытянутый из Telegram initData или URL), попробуем дернуть публичный профиль.
+    if ((!me || !me.user) && USER.id) {
+      console.log('[Profile] API.me returned Guest, trying fallback to API.userProfile for ID:', USER.id);
+      try {
+        const pub = await API.userProfile(USER.id);
+        if (pub && pub.user) {
+          // Собираем "псевдо-me" объект из публичного профиля
+          me = {
+            ...me,
+            user: { ...pub.user, isAdmin: document.body.classList.contains('is-admin') }, // isAdmin сохраняем если он уже был
+            stats: pub.stats
+          };
+          console.log('[Profile] Fallback success', me);
+        }
+      } catch (e2) {
+        console.warn('[Profile] Fallback failed', e2);
+      }
+    }
+
     applyMeToProfileUi(me, { bioRead, handleRead, premBadge, setStatGames, setStatFollowers, setStatLikes });
   } catch (err) {
     console.error('renderProfile failed', err);
     const hint = err.message || '';
-    // Если мы админ, то даже при ошибке (например 401 но body.is-admin залип) покажем кнопку
     setProfileMeBannerVisible(true, hint || tf('profile_me_failed'));
   } finally {
-    // В ЛЮБОМ случае показываем кнопку редактирования, если есть хоть какой-то USER.id
-    // (даже если он пришел только что из API).
     if (USER.id) {
       document.getElementById('profileEditOpenBtn').style.display = '';
+    } else {
+      // Если даже после всех попыток ID нет — кнопка не нужна
+      document.getElementById('profileEditOpenBtn').style.display = 'none';
     }
   }
   document.getElementById('devBadge').style.display = USER.isGithubConnected ? '' : 'none';

@@ -140,6 +140,25 @@ async function loadAuthorProfile(authorId) {
     ]);
     const user = profile.user || {};
     const stats = profile.stats || {};
+    
+    // ТРЮК: Если мы зашли в свой профиль через ленту (как автор), 
+    // и наш USER еще пустой ("Гость"), наполним его данными отсюда.
+    if (user.id && (USER.id === String(user.id) || !USER.id)) {
+        if (!USER.id) {
+            USER.id = String(user.id);
+            USER.tgId = String(user.id);
+        }
+        if (!USER.name || USER.name === t('author_anon') || USER.name === 'Гость') {
+            USER.name = user.name || user.displayName || user.telegramName;
+        }
+        if (!USER.avatar || USER.avatar === '?') {
+            USER.avatar = user.avatar;
+        }
+        USER.siteHandle = user.siteHandle || USER.siteHandle;
+        USER.bio = user.bio || USER.bio;
+        console.log('[Author-Sync] Synced author data to USER', { ...USER });
+    }
+
     setAvatar(document.getElementById('authorProfileAvatar'), user.avatar || '?');
     document.getElementById('authorProfileName').textContent = user.name || t('author_anon');
     document.getElementById('authorProfileHandle').textContent = '@' + (user.siteHandle || user.id || '—');
