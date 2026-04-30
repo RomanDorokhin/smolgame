@@ -641,9 +641,8 @@ body.tg-only-wall #app-boot-splash{
 .sg-brand-mark--loader{
   animation:sgLogoSpin 1.1s linear infinite;
 }
-/* Экран входа: марка без вращения — спокойнее первый кадр */
+/* Экран входа: разрешаем вращение логотипа */
 #app-boot-splash .sg-brand-mark{
-  animation:none;
 }
 .sg-brand-mark--loader{
   width:40px;
@@ -1180,10 +1179,9 @@ body.feed-layout-vertical #game-info{
   inset:0;
   z-index:480;
   display:flex;
-  align-items:flex-end;
+  align-items:center;
   justify-content:center;
   padding:20px;
-  padding-bottom:calc(20px + env(safe-area-inset-bottom, 0px));
   background:rgba(0,0,0,0.38);
   backdrop-filter:blur(6px);
   -webkit-backdrop-filter:blur(6px);
@@ -1882,8 +1880,8 @@ body.feed-onboarding-ui .app-tab-chrome{
 .game-detail-screen{
   position:fixed;
   inset:0;
-  z-index:720;
-  background:var(--bg);
+  z-index:5000 !important;
+  background:#0a0b0e !important;
   display:flex;
   flex-direction:column;
   overflow:hidden;
@@ -1893,7 +1891,7 @@ body.game-detail-open #bottom-nav,
 body.game-detail-open #game-info,
 body.game-detail-open #side-actions,
 body.game-detail-open #dots{display:none !important;}
-body.game-detail-open .app-tab-chrome{opacity:0;pointer-events:none;}
+body.game-detail-open .app-tab-chrome{display:none !important;}
 
 .game-detail-topbar{
   flex-shrink:0;
@@ -2059,34 +2057,34 @@ body.game-detail-open .app-tab-chrome{opacity:0;pointer-events:none;}
 .game-detail-owner-btns{display:flex;flex-direction:column;gap:10px;}
 .game-detail-owner-del{color:rgba(255,170,170,0.95) !important;border-color:rgba(229,115,115,0.35) !important;}
 
-/* Профиль: иконки вместо широких кнопок */
+/* Профиль: иконки поверх карточки */
 .profile-game-actions--icons{
-  flex-wrap:nowrap;
-  justify-content:flex-end;
+  position:absolute;
+  top:8px;
+  right:8px;
+  z-index:100;
+  display:flex;
+  flex-direction:column;
   gap:8px;
-  padding:4px 0 2px;
+  padding:0;
 }
 .profile-game-actions--icons .profile-game-icon-btn{
-  flex:0 0 auto;
-  width:44px;
-  height:44px;
-  min-width:44px;
-  padding:0;
-  border-radius:14px;
-  border:1px solid rgba(255,255,255,0.1);
-  background:rgba(22,24,30,0.95);
-  display:inline-flex;
+  width:38px;
+  height:38px;
+  border-radius:12px;
+  background:rgba(20,20,25,0.85);
+  backdrop-filter:blur(4px);
+  -webkit-backdrop-filter:blur(4px);
+  border:1px solid rgba(255,255,255,0.15);
+  color:#fff;
+  display:flex;
   align-items:center;
   justify-content:center;
-  color:rgba(255,255,255,0.88);
-  cursor:pointer;
-  transition:background 0.18s ease, transform 0.14s ease, border-color 0.18s ease;
+  box-shadow:0 4px 12px rgba(0,0,0,0.3);
 }
-.profile-game-actions--icons .profile-game-icon-btn:active{transform:scale(0.94);}
 .profile-game-actions--icons .profile-game-icon-btn--danger{
-  color:rgba(255,170,170,0.95);
-  border-color:rgba(229,115,115,0.28);
-  background:rgba(40,22,24,0.55);
+  color:#ff4d4d;
+  background:rgba(40,15,15,0.85);
 }
 
 /* ══════════════════════════════
@@ -2107,6 +2105,13 @@ body.game-detail-open .app-tab-chrome{opacity:0;pointer-events:none;}
   justify-content:space-around;
   align-items:flex-end;
   overflow:visible;
+  transition: transform 0.22s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease;
+}
+
+body.keyboard-open #bottom-nav {
+  transform: translateY(100%);
+  opacity: 0;
+  pointer-events: none;
 }
 
 .nav-item{
@@ -2233,7 +2238,7 @@ body.game-detail-open .app-tab-chrome{opacity:0;pointer-events:none;}
 #games-library-screen.open{
   display:flex;
   bottom:calc(var(--safe-bottom) + var(--nav-h));
-  z-index:1800;
+  z-index:2000;
   padding-bottom:calc(var(--safe-bottom) + var(--nav-h) + 16px);
 }
 .games-grid--library{
@@ -2298,7 +2303,7 @@ body.game-detail-open .app-tab-chrome{opacity:0;pointer-events:none;}
   display:flex;
   /* Панель над нижним таббаром, не на весь экран */
   bottom:calc(var(--safe-bottom) + var(--nav-h));
-  z-index:1800;
+  z-index:2000;
   padding-bottom:calc(var(--safe-bottom) + var(--nav-h) + 20px);
 }
 
@@ -2317,6 +2322,7 @@ body.game-detail-open .app-tab-chrome{opacity:0;pointer-events:none;}
   display:flex;
   flex-direction:column;
   gap:10px;
+  position:relative;
 }
 /* Одна колонка на всю ширину сетки: карточка и кнопки выровнены по левому краю, не «остров» по центру */
 #myGamesGrid .profile-game-row .game-card{
@@ -2959,7 +2965,7 @@ textarea.field-input{
 #profile-screen.open,
 #author-screen.open{
   bottom:calc(var(--safe-bottom) + var(--nav-h));
-  z-index:1800;
+  z-index:2000;
   padding-bottom:calc(var(--safe-bottom) + var(--nav-h) + 16px);
 }
 
@@ -3447,7 +3453,7 @@ textarea.field-input{
 #search-screen.open{
   display:flex;
   bottom:calc(var(--safe-bottom) + var(--nav-h));
-  z-index:1800;
+  z-index:2000;
   padding-bottom:calc(var(--safe-bottom) + var(--nav-h) + 12px);
 }
 
@@ -3791,26 +3797,26 @@ textarea.field-input{
 ══════════════════════════════ */
 #toast{
   position:fixed;
-  bottom:calc(var(--safe-bottom) + var(--nav-h) + 14px);
+  top:calc(var(--safe-top) + 16px);
   left:50%;
-  transform:translateX(-50%) translateY(12px);
+  transform:translateX(-50%) translateY(-20px);
   max-width:calc(100vw - 48px);
-  background:rgba(28,28,30,0.94);
-  border:1px solid var(--border);
-  backdrop-filter:blur(20px);
-  -webkit-backdrop-filter:blur(20px);
+  background:rgba(28,28,30,0.96);
+  border:1px solid rgba(255,255,255,0.1);
+  backdrop-filter:blur(24px);
+  -webkit-backdrop-filter:blur(24px);
   color:#fff;
-  padding:11px 18px;
-  border-radius:14px;
+  padding:12px 20px;
+  border-radius:16px;
   font-size:14px;
   font-weight:600;
-  z-index:600;
+  z-index:9999;
   opacity:0;
-  transition:opacity 0.28s ease, transform 0.28s cubic-bezier(0.25,0.1,0.25,1);
+  transition:opacity 0.3s ease, transform 0.3s cubic-bezier(0.18, 0.89, 0.32, 1.28);
   white-space:normal;
   text-align:center;
   pointer-events:none;
-  box-shadow:0 10px 40px rgba(0,0,0,0.45);
+  box-shadow:0 8px 32px rgba(0,0,0,0.5);
 }
 #toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
 
@@ -4003,7 +4009,26 @@ body.is-admin .admin-only{display:block;}
   .nav-upload-fab{width:48px;height:48px;margin-top:-16px;}
   .nav-upload-fab-icon{width:30px;height:30px;}
 
-  #profile-screen,#author-screen,#search-screen,#games-library-screen,#upload-screen{
+  #profile-screen,#author-screen,#search-screen,#games-library-screen,#upload-screen,
+  .screen-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 2000;
+    background: var(--bg);
+    display: none;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .screen-overlay.open {
+    display: flex;
+  }
+  .screen-scroll {
+    flex: 1;
+    overflow-x: hidden;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 120px;
+  }
     width:100vw;
     max-width:none;
   }

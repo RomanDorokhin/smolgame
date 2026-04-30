@@ -154,13 +154,18 @@ async function openGameDetail(gameId) {
   let game;
   try {
     const data = await API.game(gameId);
+    if (_gameDetailId !== gameId) return; // Проверка на актуальность
     game = data?.game;
     if (!game?.id) throw new Error(t('gd_no_data'));
   } catch (e) {
-    showToast(typeof userFacingError === 'function' ? userFacingError(e) : t('err_load'));
-    closeGameDetail();
+    if (_gameDetailId === gameId) {
+      showToast(typeof userFacingError === 'function' ? userFacingError(e) : t('err_load'));
+      closeGameDetail();
+    }
     return;
   }
+
+  if (_gameDetailId !== gameId) return;
 
   const gword = t('game_word');
   titleEl.textContent = game.title || gword;
