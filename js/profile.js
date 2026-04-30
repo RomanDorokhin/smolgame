@@ -1,3 +1,15 @@
+/** Сброс кэша БЕЗ подтверждения (confirm может блокироваться в WebView) */
+function debugClearCache() {
+  try {
+    sessionStorage.clear();
+    localStorage.clear();
+    location.reload();
+  } catch (e) {
+    alert('Err: ' + e.message);
+  }
+}
+window.debugClearCache = debugClearCache;
+
 const tf = typeof window.t === 'function' ? window.t : k => k;
 const genreOtherApi = () => tf('genre_api_other');
 
@@ -528,17 +540,7 @@ window.cancelProfileEdit = cancelProfileEdit;
 window.discardProfileEdit = discardProfileEdit;
 window.finishProfileEdit = finishProfileEdit;
 
-async function debugClearCache() {
-  if (!confirm('Очистить sessionStorage, localStorage и перезагрузить?')) return;
-  try {
-    sessionStorage.clear();
-    localStorage.clear();
-    location.reload();
-  } catch (e) {
-    alert('Err: ' + e.message);
-  }
-}
-window.debugClearCache = debugClearCache;
+window.finishProfileEdit = finishProfileEdit;
 
 document.addEventListener('change', ev => {
   if (ev.target?.id === 'profileAvatarInput') onProfileAvatarFileChange(ev);
