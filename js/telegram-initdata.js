@@ -129,7 +129,7 @@
       try {
         const enc = new URLSearchParams(s).get('user');
         if (enc) {
-          const u = JSON.parse(decodeURIComponent(String(enc).replace(/\+/g, ' ')));
+          const u = JSON.parse(String(enc));
           if (u && u.id != null) return u;
         }
       } catch (e1) { /* ignore */ }

@@ -27,50 +27,6 @@ function gameStatusBadgeHtml(status) {
   return '';
 }
 
-/** Достать объект user из строки initData (query form). URLSearchParams иногда ломается на длинных значениях. */
-function extractTelegramUserFromInitDataString(raw) {
-  try {
-    const s = String(raw || '').trim();
-    if (!s) return null;
-    try {
-      const enc = new URLSearchParams(s).get('user');
-      if (enc) {
-        const u = JSON.parse(decodeURIComponent(String(enc).replace(/\+/g, ' ')));
-        if (u && u.id != null) return u;
-      }
-    } catch (e1) { /* ignore */ }
-    const key = 'user=';
-    let i = s.indexOf(key);
-    while (i >= 0) {
-      const start = i + key.length;
-      let j = start;
-      while (j < s.length && s[j] !== '&') j++;
-      const part = s.slice(start, j);
-      if (part) {
-        try {
-          const u = JSON.parse(decodeURIComponent(part.replace(/\+/g, ' ')));
-          if (u && u.id != null) return u;
-        } catch (e2) { /* next */ }
-      }
-      i = s.indexOf(key, j + 1);
-    }
-  } catch (e) { /* ignore */ }
-  return null;
-}
-
-function applyTelegramUserToUser(u) {
-  if (!u || u.id == null) return;
-  USER.id = String(u.id);
-  USER.tgId = String(u.id);
-  const nm = [u.first_name, u.last_name].filter(Boolean).join(' ').trim();
-  if (nm) USER.name = nm;
-  const ph = u.photo_url && String(u.photo_url).trim();
-  if (ph) USER.avatar = ph;
-  else if (u.first_name) {
-    const ch = String(u.first_name).trim()[0];
-    if (ch) USER.avatar = ch;
-  }
-}
 
 /** Короткое ожидание: на Desktop initData / initDataUnsafe иногда появляются с задержкой. */
 async function waitTelegramUserForProfile(maxMs) {
@@ -89,22 +45,7 @@ async function waitTelegramUserForProfile(maxMs) {
 function syncUserFromTelegramWebApp() {
   if (typeof window.syncUSERFromTelegramInit === 'function') {
     window.syncUSERFromTelegramInit();
-    return;
   }
-  try {
-    if (typeof ensureSmolgameInitDataFromUrl === 'function') ensureSmolgameInitDataFromUrl();
-    let u = Telegram?.WebApp?.initDataUnsafe?.user;
-    if (u && u.id != null) {
-      applyTelegramUserToUser(u);
-      return;
-    }
-    const raw =
-      (typeof window !== 'undefined' && window.__smolgameInitDataOverride && String(window.__smolgameInitDataOverride).trim()) ||
-      (Telegram?.WebApp?.initData && String(Telegram.WebApp.initData).trim()) ||
-      '';
-    u = extractTelegramUserFromInitDataString(raw);
-    if (u) applyTelegramUserToUser(u);
-  } catch (e) { /* ignore */ }
 }
 
 function setProfileMeBannerVisible(show, message) {
@@ -118,31 +59,50 @@ function setProfileMeBannerVisible(show, message) {
 
 /** Применить ответ GET /api/me к USER и DOM профиля (отдельно от списка игр). */
 function applyMeToProfileUi(me, { bioRead, handleRead, premBadge, setStatGames, setStatFollowers, setStatLikes }) {
-  if (!me) return;
   const st = parseProfileStats(me);
   if (st.games != null) setStatGames(String(st.games));
   if (st.likes != null) setStatLikes(fmtNum(st.likes));
   if (st.followers != null) setStatFollowers(fmtNum(st.followers));
-  if (me.user?.isAdmin) document.body.classList.add('is-admin');
-  else document.body.classList.remove('is-admin');
-  if (!me.user) return;
-  USER.siteHandle = me.user.siteHandle || USER.siteHandle;
-  USER.name = me.user.name || USER.name;
-  USER.avatar = me.user.avatar || USER.avatar;
-  USER.isGithubConnected = Boolean(me.user.isGithubConnected);
-  USER.githubUsername = me.user.githubUsername || null;
-  USER.hasGithubPublishToken = Boolean(me.user.hasGithubPublishToken);
-  USER.isPremium = Boolean(me.user.isPremium);
-  USER.displayName = me.user.displayName != null ? me.user.displayName : '';
-  USER.bio = me.user.bio != null ? me.user.bio : '';
-  document.getElementById('profileName').textContent = USER.name;
+  if (me.user) {
+    const mu = me.user;
+    // Синхронизируем ID если он был потерян на фронте (сбой Telegram init)
+    if (!USER.id && mu.id) {
+      USER.id = String(mu.id);
+      USER.tgId = String(mu.id);
+    }
+    USER.siteHandle = mu.siteHandle || USER.siteHandle;
+    // Имя: приоритет за тем что в БД, иначе за тем что в Telegram, иначе за хендлом
+    USER.name = mu.name || mu.displayName || mu.telegramName || USER.name || tf('guest');
+    USER.avatar = mu.avatar || USER.avatar;
+
+    USER.isGithubConnected = Boolean(mu.isGithubConnected);
+    USER.githubUsername = mu.githubUsername || null;
+    USER.hasGithubPublishToken = Boolean(mu.hasGithubPublishToken);
+    USER.isPremium = Boolean(mu.isPremium);
+    USER.displayName = mu.displayName != null ? mu.displayName : (USER.displayName || '');
+    USER.bio = mu.bio != null ? mu.bio : (USER.bio || '');
+
+    if (mu.isAdmin) document.body.classList.add('is-admin');
+    else document.body.classList.remove('is-admin');
+
+    if (premBadge) {
+      premBadge.style.display = mu.isPremium ? 'inline-flex' : 'none';
+    }
+  }
+
+  // Обновляем текст в любом случае (даже если me.user пустой, покажем что есть в USER)
+  document.getElementById('profileName').textContent = USER.name || tf('guest');
+  if (handleRead) {
+    handleRead.textContent = USER.siteHandle || USER.id || '—';
+  }
   document.getElementById('profileHandle').textContent = '@' + (USER.siteHandle || USER.id || '—');
-  if (handleRead) handleRead.textContent = USER.siteHandle || USER.id || '—';
-  if (bioRead) bioRead.textContent = USER.bio || '';
+  if (bioRead) {
+    bioRead.textContent = USER.bio || '';
+    bioRead.style.display = USER.bio ? '' : 'none';
+  }
   setProfileAvatar(USER.avatar);
   document.getElementById('profileDisplayName').value = USER.displayName || USER.name || '';
   document.getElementById('profileBioInput').value = USER.bio || '';
-  if (premBadge) premBadge.style.display = USER.isPremium ? '' : 'none';
 }
 
 async function renderProfile() {
@@ -175,13 +135,19 @@ async function renderProfile() {
   let me = null;
   try {
     me = await API.me();
-  } catch (e) {
-    console.warn('profile /me failed', e);
-    const hint = typeof userFacingError === 'function' ? userFacingError(e) : String(e?.message || '');
+    applyMeToProfileUi(me, { bioRead, handleRead, premBadge, setStatGames, setStatFollowers, setStatLikes });
+  } catch (err) {
+    console.error('renderProfile failed', err);
+    const hint = err.message || '';
+    // Если мы админ, то даже при ошибке (например 401 но body.is-admin залип) покажем кнопку
     setProfileMeBannerVisible(true, hint || tf('profile_me_failed'));
-    if (typeof showToast === 'function') showToast(hint || tf('profile_me_failed'), 9000);
+  } finally {
+    // В ЛЮБОМ случае показываем кнопку редактирования, если есть хоть какой-то USER.id
+    // (даже если он пришел только что из API).
+    if (USER.id) {
+      document.getElementById('profileEditOpenBtn').style.display = '';
+    }
   }
-  applyMeToProfileUi(me, { bioRead, handleRead, premBadge, setStatGames, setStatFollowers, setStatLikes });
   document.getElementById('devBadge').style.display = USER.isGithubConnected ? '' : 'none';
 
   try {
@@ -477,7 +443,7 @@ async function deleteGame(gameId, titleHint, playUrlHint) {
 
   try {
     const res = await API.delete(gameId, { deleteGithubRepo });
-    let msg = tf('profile_delete_done');
+    const msg = tf('profile_delete_done');
     if (res?.githubDeleted) msg += tf('profile_delete_repo_done');
     else if (res?.githubDeleteNote) msg += '. ' + res.githubDeleteNote;
     showToast(msg);
