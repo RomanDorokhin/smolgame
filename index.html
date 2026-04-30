@@ -14,7 +14,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <!-- ?v= сбрасывает кэш WebView Telegram после правок JS/CSS (меняй при каждом релизе фронта; при крупных фиксах — у всех script/link сразу). -->
-<link rel="stylesheet" href="styles.css?v=20260491">
+<link rel="stylesheet" href="styles.css?v=20260492">
 <script>
   /** Аварийный сброс, если JS-файлы не загрузились или упали */
   window.debugClearCache = window.debugClearCache || function() {
@@ -49,7 +49,20 @@
       // Проверка загрузки скриптов
       const scripts = ['profile', 'state', 'api', 'main'];
       const loaded = scripts.filter(s => window[s] || (s==='profile' && window.renderProfile)).join(', ');
-      if (dMe) dMe.textContent = 'Loaded: ' + (loaded || 'NONE');
+      
+      const adminStatus = document.body.classList.contains('is-admin') ? 'YES' : 'NO';
+      if (dMe) dMe.textContent = `Loaded: [${loaded || 'NONE'}] | Admin: ${adminStatus}`;
+
+      // СТОРОЖЕВОЙ ТАЙМЕР: Если мы видим "Гость", но ID есть - форсим ID
+      setInterval(() => {
+        const nameEl = document.getElementById('profileName');
+        const userId = window.USER?.id;
+        const currentName = nameEl?.textContent;
+        if (userId && nameEl && (currentName === 'Гость' || currentName === 'Guest' || !currentName || currentName === '...')) {
+          nameEl.textContent = window.USER.name || userId;
+          console.log('[WATCHDOG] Forced profile name from Guest to', userId);
+        }
+      }, 500);
     }, 1000);
   });
 </script>
