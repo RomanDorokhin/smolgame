@@ -163,21 +163,17 @@ async function renderProfile() {
 
   let myGames = [];
 
-  const debugPanel = document.getElementById('profileDebugPanel');
-  try {
-    if (debugPanel) {
-      const dTime = document.getElementById('debugTime');
-      if (dTime) dTime.textContent = new Date().toLocaleTimeString();
-      const dUser = document.getElementById('debugUser');
-      if (dUser) dUser.textContent = `ID:${USER.id} | Name:${USER.name}`;
-      
-      // Добавим сырые данные TG
-      const rawTg = window.Telegram?.WebApp?.initDataUnsafe?.user;
-      const dMe = document.getElementById('debugMe');
-      if (dMe) dMe.textContent = rawTg ? `TG_ID:${rawTg.id}` : 'No TG User';
-    }
-  } catch (e) {
-    if (debugPanel) document.getElementById('debugLastErr').textContent = 'InitErr: ' + e.message;
+  // watchdog для защиты от сброса имени в "Гость" (бывает при лагах i18n или WebView)
+  if (!window._profileWatchdog) {
+    window._profileWatchdog = setInterval(() => {
+      const el = document.getElementById('profileName');
+      const cur = el?.textContent;
+      const tf = typeof window.t === 'function' ? window.t : k => k;
+      const guestText = tf('guest') || 'Гость';
+      if (el && USER.id && (cur === guestText || cur === 'Guest' || !cur || cur === '...')) {
+        el.textContent = USER.name || USER.id;
+      }
+    }, 1000);
   }
 
   let me = null;

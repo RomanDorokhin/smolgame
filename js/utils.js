@@ -218,6 +218,18 @@ function saveSet(key, set) {
   }
 }
 
+window.debugClearCache = function() {
+  try {
+    sessionStorage.clear();
+    localStorage.clear();
+    const url = new URL(window.location.href);
+    url.searchParams.set('_tg', String(Date.now()));
+    window.location.replace(url.toString());
+  } catch (e) {
+    alert('Reset failed: ' + e.message);
+  }
+};
+
 window.fmtNum = fmtNum;
 window.likeIconMarkup = likeIconMarkup;
 window.sgStatHeartSvg = sgStatHeartSvg;
