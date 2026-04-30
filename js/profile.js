@@ -152,11 +152,20 @@ async function renderProfile() {
   let myGames = [];
 
   const debugPanel = document.getElementById('profileDebugPanel');
-  if (debugPanel) {
-    const dTime = document.getElementById('debugTime');
-    if (dTime) dTime.textContent = new Date().toLocaleTimeString();
-    const dUser = document.getElementById('debugUser');
-    if (dUser) dUser.textContent = JSON.stringify({ id: USER.id, tgId: USER.tgId, name: USER.name });
+  try {
+    if (debugPanel) {
+      const dTime = document.getElementById('debugTime');
+      if (dTime) dTime.textContent = new Date().toLocaleTimeString();
+      const dUser = document.getElementById('debugUser');
+      if (dUser) dUser.textContent = `ID:${USER.id} | Name:${USER.name}`;
+      
+      // Добавим сырые данные TG
+      const rawTg = window.Telegram?.WebApp?.initDataUnsafe?.user;
+      const dMe = document.getElementById('debugMe');
+      if (dMe) dMe.textContent = rawTg ? `TG_ID:${rawTg.id}` : 'No TG User';
+    }
+  } catch (e) {
+    if (debugPanel) document.getElementById('debugLastErr').textContent = 'InitErr: ' + e.message;
   }
 
   let me = null;
