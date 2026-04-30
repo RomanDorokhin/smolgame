@@ -771,7 +771,7 @@ Must work on a mobile phone.</pre>
 <script src="js/boot-splash.js?v=20260490"></script>
 <script src="js/state.js?v=20260490"></script>
 <script src="js/api.js?v=20260490"></script>
-<script src="js/onboarding.js?v=20260490"></script>
+<script src="js/onboarding.js?v=20260490" hidden></script>
 <script src="js/help-screens.js?v=20260490"></script>
 <script src="js/feed.js?v=20260490"></script>
 <script src="js/feed-nav-tip.js?v=20260490"></script>
@@ -780,10 +780,108 @@ Must work on a mobile phone.</pre>
 <script src="js/upload.js?v=20260490"></script>
 <script src="js/genres.js?v=20260490"></script>
 <script src="js/search.js?v=20260490"></script>
-<script src="js/admin.js?v=20260490"></script>
-<script src="js/game-editor.js?v=20260490"></script>
-<script src="js/game-detail.js?v=20260490"></script>
 <script src="js/screens.js?v=20260490"></script>
+<script>
+/** ══════════════════════════════════════════════════════════
+ *  EXTENDED LOGIC (Inlined to bypass WebView blocks)
+ *  ══════════════════════════════════════════════════════════ */
+(function() {
+  const t = typeof window.t === 'function' ? window.t : k => k;
+  const esc = window.esc || (s => String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'));
+
+  /** ══ ADMIN ══ */
+  window.loadAdminPending = async function() {
+    if (!document.body.classList.contains('is-admin')) return;
+    const host = document.getElementById('adminPendingList');
+    if (!host) return;
+    host.innerHTML = '<div class="admin-empty">' + t('loading') + '</div>';
+    try {
+      const { games } = await API.admin.pending();
+      if (!games || games.length === 0) { host.innerHTML = '<div class="admin-empty">Очередь пуста 🎉</div>'; return; }
+      host.innerHTML = games.map(g => `
+        <div class="admin-card" data-game-id="${esc(g.id)}">
+          <div class="admin-card-title"><span>${esc(g.title)}</span></div>
+          <div class="admin-card-meta">от ${esc(g.authorName || g.author_id)}<br><a href="${esc(g.url)}" target="_blank">${esc(g.url)}</a></div>
+          <div class="admin-actions">
+            <button class="admin-btn approve" data-action="admin-approve">✓ Одобрить</button>
+            <button class="admin-btn reject" data-action="admin-reject">✗ Отклонить</button>
+          </div>
+        </div>`).join('');
+    } catch (e) { host.innerHTML = `<div class="admin-empty">⚠️ ${esc(e.message)}</div>`; }
+  };
+
+  /** ══ GAME DETAIL ══ */
+  window.openGameDetail = async function(gameId) {
+    if (!gameId) return;
+    const screen = document.getElementById('game-detail-screen');
+    if (!screen) return;
+    screen.hidden = false;
+    document.body.classList.add('game-detail-open');
+    try {
+      const data = await API.game(gameId);
+      const game = data?.game;
+      const t = typeof window.t === 'function' ? window.t : k => k;
+      document.getElementById('gameDetailTitle').textContent = game.title;
+      document.getElementById('gameDetailDesc').textContent = game.description || '';
+      document.getElementById('gameDetailHero').innerHTML = game.imageUrl ? `<img src="${esc(game.imageUrl)}" class="game-detail-hero-img">` : '';
+      const playBtn = document.getElementById('gameDetailPlayBtn');
+      if (playBtn) playBtn.onclick = () => {
+         window.closeGameDetail();
+         window.switchTab('feed');
+         window.injectGameIntoFeed(gameId).then(idx => { if(idx >= 0) window.goTo(idx, false); });
+      };
+    } catch (e) { showToast(t('err_load')); window.closeGameDetail(); }
+  };
+  window.closeGameDetail = () => {
+    const s = document.getElementById('game-detail-screen');
+    if (s) s.hidden = true;
+    document.body.classList.remove('game-detail-open');
+  };
+
+  /** ══ ONBOARDING (AUTOMATED) ══ */
+  window.checkOnboarding = async function() {
+    try {
+      const data = await API.checkRegistered();
+      if (data?.registered) {
+        if (data.user?.siteHandle) USER.siteHandle = data.user.siteHandle;
+        return false; // Already registered
+      }
+      // AUTO-REGISTER if not registered
+      const tgUser = window.Telegram?.WebApp?.initDataUnsafe?.user;
+      if (tgUser) {
+        const handle = tgUser.username || `user_${tgUser.id}`;
+        try {
+          const res = await API.register({ 
+             siteHandle: handle,
+             dateOfBirth: '2000-01-01', // Default for auto-skip
+             privacyAccepted: true,
+             tosAccepted: true
+          });
+          USER.siteHandle = res?.user?.siteHandle || handle;
+          return false; // Skip UI, we just registered
+        } catch (regErr) {
+          console.warn('Auto-register failed, showing UI', regErr);
+          return true;
+        }
+      }
+      return true; // Show UI only if no TG data
+    } catch (e) { return false; }
+  };
+
+  /** ══ GAME EDITOR ══ */
+  window.toggleProfileGameEditor = function(gameId) {
+    const row = document.querySelector(`.profile-game-row[data-profile-game-id="${gameId}"]`);
+    const panel = document.getElementById('profileGameEditor-' + gameId);
+    if (panel && panel.hidden) {
+      panel.hidden = false;
+      if(row) row.classList.add('profile-game-row--editing');
+    } else if (panel) {
+      panel.hidden = true;
+      if(row) row.classList.remove('profile-game-row--editing');
+    }
+  };
+})();
+</script>
 <script>
 /** ══════════════════════════════════════════════════════════
  *  PROFILE LOGIC (Inlined to bypass WebView blocks)
