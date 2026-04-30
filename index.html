@@ -785,7 +785,201 @@ Must work on a mobile phone.</pre>
 <script src="js/game-editor.js?v=20260490"></script>
 <script src="js/game-detail.js?v=20260490"></script>
 <script src="js/screens.js?v=20260490"></script>
-<script src="js/profile_new.js?v=20260495"></script>
+<script>
+/** ══════════════════════════════════════════════════════════
+ *  PROFILE LOGIC (Inlined to bypass WebView blocks)
+ *  ══════════════════════════════════════════════════════════ */
+(function() {
+  const tf = typeof window.t === 'function' ? window.t : k => k;
+  const genreOtherApi = () => tf('genre_api_other');
+
+  function parseProfileStats(me) {
+    const raw = me?.stats;
+    if (!raw || typeof raw !== 'object') return { games: null, likes: null, followers: null };
+    const games = Number(raw.games ?? raw.gamesCount);
+    const likes = Number(raw.likes ?? raw.likesTotal);
+    const followers = Number(raw.followers ?? raw.followersCount);
+    return {
+      games: Number.isFinite(games) ? games : null,
+      likes: Number.isFinite(likes) ? likes : null,
+      followers: Number.isFinite(followers) ? followers : null,
+    };
+  }
+
+  function gameStatusBadgeHtml(status) {
+    if (status === 'pending') return `<span class="game-card-status-badge pending">${esc(tf('moderation'))}</span>`;
+    if (status === 'rejected') return `<span class="game-card-status-badge rejected">${esc(tf('rejected'))}</span>`;
+    return '';
+  }
+
+  async function waitTelegramUserForProfile(maxMs) {
+    const cap = Number(maxMs) > 0 ? Number(maxMs) : 3500;
+    const deadline = Date.now() + cap;
+    while (Date.now() < deadline) {
+      if (typeof ensureSmolgameInitDataFromUrl === 'function') ensureSmolgameInitDataFromUrl();
+      if (typeof window.syncUSERFromTelegramInit === 'function') window.syncUSERFromTelegramInit();
+      if (USER.id) return;
+      await new Promise(r => setTimeout(r, 70));
+    }
+  }
+
+  function setProfileMeBannerVisible(show, message) {
+    const box = document.getElementById('profileMeBanner');
+    const txt = document.getElementById('profileMeBannerText');
+    if (!box) return;
+    if (show && message && txt) txt.textContent = message;
+    if (show) box.removeAttribute('hidden'); else box.setAttribute('hidden', '');
+  }
+
+  function applyMeToProfileUi(me, { bioRead, handleRead, premBadge, setStatGames, setStatFollowers, setStatLikes }) {
+    const st = parseProfileStats(me);
+    if (st.games != null) setStatGames(String(st.games));
+    if (st.likes != null) setStatLikes(fmtNum(st.likes));
+    if (st.followers != null) setStatFollowers(fmtNum(st.followers));
+
+    if (me && me.user) {
+      const mu = me.user;
+      if (mu.id) { USER.id = String(mu.id); USER.tgId = String(mu.id); }
+      if (mu.siteHandle) USER.siteHandle = mu.siteHandle;
+      const bestName = mu.name || mu.displayName || mu.telegramName;
+      if (bestName) USER.name = bestName;
+      if (mu.avatar) USER.avatar = mu.avatar;
+      USER.isGithubConnected = Boolean(mu.isGithubConnected);
+      USER.isPremium = Boolean(mu.isPremium);
+      USER.displayName = mu.displayName || mu.name || USER.displayName || '';
+      USER.bio = mu.bio || USER.bio || '';
+      if (mu.isAdmin) document.body.classList.add('is-admin'); else document.body.classList.remove('is-admin');
+      if (mu.id) { try { localStorage.setItem('smolgame:persisted_id:v1', String(mu.id)); } catch(e) {} }
+      if (premBadge) premBadge.style.display = mu.isPremium ? 'inline-flex' : 'none';
+    }
+
+    const nameEl = document.getElementById('profileName');
+    if (nameEl) nameEl.textContent = USER.name || USER.id || tf('guest');
+    const handleEl = document.getElementById('profileHandle');
+    if (handleEl) handleEl.textContent = '@' + (USER.siteHandle || USER.id || '—');
+    if (handleRead) handleRead.textContent = USER.siteHandle || USER.id || '—';
+    if (bioRead) { bioRead.textContent = USER.bio || ''; bioRead.style.display = USER.bio ? '' : 'none'; }
+    setProfileAvatar(USER.avatar);
+    const dnInput = document.getElementById('profileDisplayName');
+    if (dnInput) dnInput.value = USER.displayName || USER.name || '';
+    const bioInput = document.getElementById('profileBioInput');
+    if (bioInput) bioInput.value = USER.bio || '';
+  }
+
+  async function renderProfile() {
+    const bioRead = document.getElementById('profileBio');
+    const handleRead = document.getElementById('profileSiteHandleRead');
+    await waitTelegramUserForProfile(4000);
+    setProfileMeBannerVisible(false);
+    setProfileAvatar(USER.avatar);
+    document.getElementById('profileName').textContent = USER.name || USER.id || tf('guest');
+    document.getElementById('profileHandle').textContent = '@' + (USER.siteHandle || USER.id || '—');
+    if (handleRead) handleRead.textContent = USER.siteHandle || USER.id || '—';
+    const setStatGames = v => { document.getElementById('statGames').textContent = v; };
+    const setStatFollowers = v => { document.getElementById('statFollowers').textContent = v; };
+    const setStatLikes = v => { document.getElementById('statLikes').textContent = v; };
+    setStatGames('…'); setStatFollowers('…'); setStatLikes('…');
+    document.getElementById('devBadge').style.display = USER.isGithubConnected ? '' : 'none';
+    const premBadge = document.getElementById('premiumBadge');
+    if (premBadge) premBadge.style.display = USER.isPremium ? '' : 'none';
+
+    let me = null;
+    try {
+      me = await API.me();
+      if ((!me || !me.user) && USER.id) {
+        try {
+          const pub = await API.userProfile(USER.id);
+          if (pub && pub.user) {
+            me = { ...me, user: { ...pub.user, isAdmin: document.body.classList.contains('is-admin') }, stats: pub.stats };
+          }
+        } catch (e2) {}
+      }
+      applyMeToProfileUi(me, { bioRead, handleRead, premBadge, setStatGames, setStatFollowers, setStatLikes });
+    } catch (err) {
+      setProfileMeBannerVisible(true, err.message || tf('profile_me_failed'));
+    } finally {
+      document.getElementById('profileEditOpenBtn').style.display = USER.id ? '' : 'none';
+    }
+
+    let myGames = [];
+    try {
+      const res = await API.myGames();
+      myGames = Array.isArray(res?.games) ? res.games : [];
+    } catch (e) {
+      myGames = Array.isArray(GAMES) ? GAMES.filter(g => sameTelegramUserId(g.authorId, USER.id)) : [];
+    }
+
+    const publishedCount = myGames.filter(g => g?.status === 'published').length;
+    if (document.getElementById('statGames').textContent === '…') setStatGames(String(publishedCount));
+    if (document.getElementById('statFollowers').textContent === '…') setStatFollowers('0');
+    if (document.getElementById('statLikes').textContent === '…') {
+      const sumLikes = myGames.reduce((acc, g) => acc + (Number(g?.likes) || 0), 0);
+      setStatLikes(fmtNum(sumLikes));
+    }
+
+    const grid = document.getElementById('myGamesGrid');
+    if (!grid) return;
+    if (myGames.length === 0) {
+      grid.innerHTML = `<div class="sg-empty-state sg-empty-state--grid"><div class="sg-empty-state-title">${esc(tf('profile_empty_games_title'))}</div><div class="sg-empty-state-sub">${esc(tf('profile_empty_games_sub'))}</div></div>`;
+    } else {
+      grid.innerHTML = myGames.map(g => {
+        const idRaw = String(g.id || '');
+        const gid = esc(idRaw);
+        const canEdit = g.status !== 'rejected';
+        const titleEsc = esc(g.title || '');
+        const editorHtml = canEdit ? `
+        <div id="profileGameEditor-${idRaw}" class="profile-game-editor" hidden>
+          <div class="field-group"><div class="field-label">${esc(tf('field_title'))}</div><input class="field-input profile-game-editor-title" type="text" value="${titleEsc}"></div>
+          <div class="profile-game-editor-actions">
+            <button type="button" class="profile-text-btn" data-action="profile-game-editor-cancel" data-game-id="${idRaw}">${esc(tf('profile_discard'))}</button>
+            <button type="button" class="submit-btn" data-action="profile-game-editor-save" data-game-id="${idRaw}">${esc(tf('profile_save_review'))}</button>
+          </div>
+        </div>` : '';
+        return `<div class="profile-game-row" id="profileGameRow-${idRaw}" data-profile-game-id="${idRaw}">
+          <div class="game-card sg-store-card" data-action="open-game-detail" data-game-id="${gid}">
+            <div class="game-card-thumb sg-store-card-thumb">${gameStatusBadgeHtml(g.status)}${typeof gameThumbHtml === 'function' ? gameThumbHtml(g) : ''}</div>
+            <div class="game-card-info"><div class="game-card-name">${esc(g.title)}</div></div>
+          </div>
+          <div class="profile-game-actions profile-game-actions--icons">
+             <button type="button" class="profile-game-icon-btn profile-game-icon-btn--danger" data-action="delete-game" data-game-id="${gid}"><svg class="sg-icon" width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M9 3h6M4 7h16M6 7l1 14h10l1-14" stroke="currentColor" stroke-width="1.5"/><path d="M10 11v6M14 11v6" stroke="currentColor" stroke-width="1.5"/></svg></button>
+          </div>
+          ${editorHtml}
+        </div>`;
+      }).join('');
+    }
+  }
+
+  function setProfileAvatar(avatar) {
+    const el = document.getElementById('profileAvatar');
+    if (!el) return;
+    const url = avatarImgUrl(avatar);
+    if (url) el.innerHTML = `<img src="${esc(url)}" alt="" referrerpolicy="no-referrer">`;
+    else el.textContent = avatar || '?';
+  }
+
+  window.renderProfile = renderProfile;
+  window.saveProfile = async function() {
+    const displayName = document.getElementById('profileDisplayName').value.trim();
+    const bio = document.getElementById('profileBioInput').value.trim();
+    if (!displayName) { showToast(tf('profile_toast_name')); return false; }
+    try {
+      const me = await API.updateMe({ displayName, bio });
+      if (me?.user) {
+        USER.name = me.user.name || USER.name;
+        USER.displayName = me.user.displayName || '';
+        USER.bio = me.user.bio || '';
+        document.getElementById('profileName').textContent = USER.name;
+        document.getElementById('profileBio').textContent = USER.bio;
+      }
+      showToast(tf('profile_saved'));
+      document.getElementById('profile-screen')?.classList.remove('profile-edit-active');
+      return true;
+    } catch (e) { showToast(tf('err_load')); return false; }
+  };
+  window.startProfileEdit = () => document.getElementById('profile-screen')?.classList.add('profile-edit-active');
+  window.cancelProfileEdit = () => document.getElementById('profile-screen')?.classList.remove('profile-edit-active');
+})();
+</script>
 <script src="js/events.js?v=20260490"></script>
 <script src="js/overlay-pull-close.js?v=20260490"></script>
 <script src="js/main.js?v=20260490"></script>
