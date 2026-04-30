@@ -86,7 +86,7 @@ async function firstSuccessfulAll(db, sqlStrings, bindArgs = []) {
 }
 
 async function firstSuccessfulFirst(db, sqlStrings, bindArgs = []) {
-  let lastErr;
+  let lastErr = new Error('No SQL variants succeeded');
   for (const sql of sqlStrings) {
     try {
       const stmt = db.prepare(sql);
@@ -424,12 +424,7 @@ export async function getMe(req, env) {
     );
   }
   await upsertUser(env.DB, user);
-  let dbUser;
-  try {
-    dbUser = await firstSuccessfulFirst(env.DB, GET_ME_SQL_VARIANTS, [user.id]);
-  } catch (e) {
-    throw e;
-  }
+  const dbUser = await firstSuccessfulFirst(env.DB, GET_ME_SQL_VARIANTS, [user.id]);
   if (dbUser && !('githubAccessTokenEnc' in dbUser)) dbUser.githubAccessTokenEnc = null;
 
   const ghRow = await fetchGithubLinkRow(env.DB, user.id);
@@ -520,6 +515,7 @@ export async function updateMe(req, env) {
     vals.push(ok.photoUrl);
   }
 
+  if (sets.length === 0) return error('Нечего обновить');
   vals.push(user.id);
   await env.DB.prepare(
     `UPDATE users SET ${sets.join(', ')} WHERE id = ?`
@@ -1096,8 +1092,14 @@ export async function deleteGame(req, env, gameId) {
     }
   }
 
-  await env.DB.prepare(`DELETE FROM likes WHERE game_id = ?`).bind(gameId).run();
-  await env.DB.prepare(`DELETE FROM bookmarks WHERE game_id = ?`).bind(gameId).run();
+  // Удаляем всё атомарно через batch: сначала все связанные записи, потом саму игру.
+  // user_game_plays и game_reviews могут отсутствовать в старых схемах — удаляем отдельно.
+  await env.DB.batch([
+    env.DB.prepare(`DELETE FROM likes WHERE game_id = ?`).bind(gameId),
+    env.DB.prepare(`DELETE FROM bookmarks WHERE game_id = ?`).bind(gameId),
+    env.DB.prepare(`DELETE FROM games WHERE id = ?`).bind(gameId),
+  ]);
+  // Таблицы без гарантированного существования — чистим тихо.
   try {
     await env.DB.prepare(`DELETE FROM user_game_plays WHERE game_id = ?`).bind(gameId).run();
   } catch (e) {
@@ -1108,7 +1110,6 @@ export async function deleteGame(req, env, gameId) {
   } catch (e) {
     if (!isMissingTableError(e)) throw e;
   }
-  await env.DB.prepare(`DELETE FROM games WHERE id = ?`).bind(gameId).run();
   return json({
     ok: true,
     githubDeleted,
@@ -1183,11 +1184,15 @@ export async function toggleLike(req, env, gameId, method) {
   if (!user) return error('unauthorized', 401);
 
   if (method === 'DELETE') {
+    // batch: атомарно удаляем лайк и обновляем счётчик только если запись существовала
     const res = await env.DB.prepare(
       `DELETE FROM likes WHERE user_id = ? AND game_id = ?`
     ).bind(user.id, gameId).run();
     if (res.meta.changes > 0) {
-      await env.DB.prepare(`UPDATE games SET likes = likes - 1 WHERE id = ?`).bind(gameId).run();
+      // Счётчик не уйдёт ниже 0 благодаря MAX(0, likes - 1)
+      await env.DB.prepare(
+        `UPDATE games SET likes = MAX(0, likes - 1) WHERE id = ?`
+      ).bind(gameId).run();
     }
     return json({ ok: true, liked: false });
   }

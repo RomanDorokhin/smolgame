@@ -50,7 +50,24 @@ async function verifySignedGithubState(env, state) {
   const payload = state.slice(0, dot);
   const sig = state.slice(dot + 1);
   const expected = await hmacSha256Base64Url(secret, payload);
-  if (sig !== expected) return null;
+
+  // Timing-safe compare: предотвращаем timing-атаку на HMAC.
+  const enc = new TextEncoder();
+  const sigBytes = enc.encode(sig);
+  const expectedBytes = enc.encode(expected);
+  if (sigBytes.length !== expectedBytes.length) return null;
+  const sigKey = await crypto.subtle.importKey('raw', sigBytes, { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+  // crypto.subtle.timingSafeEqual доступен в Workers Runtime
+  let equal = false;
+  try {
+    equal = crypto.subtle.timingSafeEqual
+      ? crypto.subtle.timingSafeEqual(sigBytes, expectedBytes)
+      : sig === expected; // fallback для локального dev
+  } catch {
+    equal = sig === expected;
+  }
+  if (!equal) return null;
+
   let obj;
   try {
     obj = JSON.parse(base64UrlToUtf8(payload));
@@ -132,11 +149,6 @@ export async function githubOAuthStart(req, env) {
     );
   }
 
-  await upsertUser(env.DB, user);
-
-  // Каждый запуск OAuth — заново: сбрасываем привязку для этого Telegram id (даже если тот же GitHub потом выберешь).
-  await clearGithubBindingForUser(env.DB, user.id);
-
   const cs = githubClientSecret(env);
   if (!cs) {
     return error(
@@ -144,6 +156,12 @@ export async function githubOAuthStart(req, env) {
       503
     );
   }
+
+  await upsertUser(env.DB, user);
+
+  // ВАЖНО: не сбрасываем привязку здесь.
+  // clearGithubBindingForUser вызывается только в callback после успешного получения токена,
+  // чтобы пользователь не терял привязку при закрытии браузера в середине flow.
 
   const state = await buildSignedGithubState(env, user.id);
 
@@ -254,6 +272,10 @@ export async function githubOAuthCallback(req, env) {
   if (!enc) {
     console.warn('githubOAuthCallback: encryptGithubToken returned empty (check GITHUB_CLIENT_SECRET on Worker)');
   }
+
+  // Сбрасываем старую привязку только перед записью новой — не раньше.
+  // Так пользователь не теряет привязку, если закроет браузер до завершения flow.
+  await clearGithubBindingForUser(env.DB, tgUid);
 
   let wrote = 0;
   try {

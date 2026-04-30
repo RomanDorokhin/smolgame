@@ -6,9 +6,12 @@
 // Стратегия: 1) только заголовок, короткий URL; 2) при TypeError — повтор с initData
 // только в ?tgWebAppData= (без заголовка), сервер читает query (см. backend auth.js).
 //
-// Меняй API_BASE на свой Worker URL (после первого деплоя).
+// ВАЖНО: смени PROD_API_BASE на свой Worker URL после первого деплоя.
+// Или задай window.SMOLGAME_API_BASE до загрузки этого скрипта.
 
-const PROD_API_BASE = 'https://smolgame.dorokhin731.workers.dev';
+const PROD_API_BASE =
+  (typeof window !== 'undefined' && window.SMOLGAME_API_BASE) ||
+  'https://smolgame.dorokhin731.workers.dev';
 const API_BASE = ['localhost', '127.0.0.1'].includes(location.hostname)
   ? 'http://127.0.0.1:8787'
   : PROD_API_BASE;
@@ -68,7 +71,23 @@ function _fetchTypeErrorRetryable(msg) {
   );
 }
 
+/** Проверяет, является ли сетевая ошибка webkit/WebView-специфичной. */
+function _isWebkitNetworkError(msg) {
+  const low = String(msg || '').toLowerCase();
+  return (
+    low.includes('load failed') ||
+    low.includes('failed to fetch') ||
+    low.includes('network') ||
+    low.includes('network connection was lost') ||
+    low.includes('internet connection appears to be offline') ||
+    low.includes('cancelled') ||
+    low.includes('canceled')
+  );
+}
+
 const API_FETCH_TIMEOUT_MS = 22000;
+const WEBKIT_NETWORK_ERR_MSG =
+  'Сеть/WebView: не удалось связаться с API. Подожди минуту, выключи VPN, обнови мини-апп (закрой полностью). Если с телефона работает — обнови Worker: backend → git pull && npx wrangler deploy.';
 
 function _needsTelegramAuth(path, method) {
   if (method !== 'GET' && method !== 'POST' && method !== 'DELETE' && method !== 'PATCH') return false;
@@ -131,35 +150,17 @@ async function apiFetch(path, { method = 'GET', body, _did401Retry = false, _for
         resp = await doFetch(urlPath, false, ac?.signal);
       } catch (e2) {
         const net = String(e2?.message || e2 || '');
-        const low = net.toLowerCase();
-        const webkitBroke =
-          low.includes('load failed') ||
-          low.includes('failed to fetch') ||
-          low.includes('network') ||
-          low.includes('network connection was lost') ||
-          low.includes('internet connection appears to be offline') ||
-          low.includes('cancelled') ||
-          low.includes('canceled');
         throw new Error(
-          webkitBroke
-            ? 'Сеть/WebView: не удалось связаться с API. Подожди минуту, выключи VPN, обнови мини-апп (закрой полностью). Если с телефона работает — обнови Worker: backend → git pull && npx wrangler deploy.'
+          _isWebkitNetworkError(net)
+            ? WEBKIT_NETWORK_ERR_MSG
             : 'Запрос не выполнился: ' + (net || 'ошибка сети')
         );
       }
     } else {
       const net = String(e1?.message || e1 || '');
-      const low = net.toLowerCase();
-      const webkitBroke =
-        low.includes('load failed') ||
-        low.includes('failed to fetch') ||
-        low.includes('network') ||
-        low.includes('network connection was lost') ||
-        low.includes('internet connection appears to be offline') ||
-        low.includes('cancelled') ||
-        low.includes('canceled');
       throw new Error(
-        webkitBroke
-          ? 'Сеть/WebView: не удалось связаться с API. Подожди минуту, выключи VPN, обнови мини-апп (закрой полностью). Если с телефона работает — обнови Worker: backend → git pull && npx wrangler deploy.'
+        _isWebkitNetworkError(net)
+          ? WEBKIT_NETWORK_ERR_MSG
           : 'Запрос не выполнился: ' + (net || 'ошибка сети')
       );
     }
