@@ -143,8 +143,7 @@ async function shareGame() {
 window.buildGameShareUrl = buildGameShareUrl;
 
 function reportGame() {
-  const t = uilang();
-  showToast(typeof t === 'function' ? t('report_to_admin') : 'Жалоба отправлена модератору');
+  showToast(uilang()('report_to_admin'));
 }
 
 function trackPlay(gameId) {

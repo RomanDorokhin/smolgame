@@ -1,355 +1,1116 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>SmolGame — Мини-игры в Telegram</title>
-  <link rel="stylesheet" href="styles.css?v=20260490">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Syne:wght@800&display=swap" rel="stylesheet">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0a0b0e">
+<title>SmolGame</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://smolgame.dorokhin731.workers.dev" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<!-- ?v= сбрасывает кэш WebView Telegram после правок JS/CSS (меняй при каждом релизе фронта; при крупных фиксах — у всех script/link сразу). -->
+<link rel="stylesheet" href="styles.css?v=20260496">
+<script>
+  /** WATCHDOG: Форсируем имя и аватар, если система его "забыла" */
+  (function() {
+    setInterval(() => {
+      const nameEl = document.getElementById('profileName');
+      const avatarEl = document.getElementById('profileAvatar');
+      const userId = window.USER?.id;
+      if (userId && nameEl) {
+        const curName = nameEl.textContent;
+        if (curName === 'Гость' || curName === 'Guest' || !curName || curName === '...') {
+          nameEl.textContent = window.USER.name || userId;
+        }
+      }
+      if (userId && avatarEl && (avatarEl.textContent === '?' || !avatarEl.innerHTML)) {
+        if (window.USER.avatar && window.USER.avatar.startsWith('http')) {
+          avatarEl.innerHTML = `<img src="${window.USER.avatar}" alt="" referrerpolicy="no-referrer">`;
+        } else {
+          avatarEl.textContent = window.USER.avatar || '?';
+        }
+      }
+    }, 1000);
+  })();
+</script>
 </head>
-<body class="is-tab-feed">
-  <!-- Shared Logo Gradients -->
-  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
-    <defs>
-      <linearGradient id="sgLogoGradShared" x1="0%" y1="0%" x2="100%" y2="100%">
-        <stop offset="0%" stop-color="#FF3B30"/>
-        <stop offset="100%" stop-color="#FF9500"/>
-      </linearGradient>
-    </defs>
-  </svg>
+<body>
 
-  <!-- ══ BOOT SPLASH ══ -->
-  <div id="app-boot-splash" class="app-boot-splash">
-    <div class="sg-brand sg-brand--splash">
-      <div class="sg-brand-mark sg-brand-mark--spin">
+<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" width="0" height="0" style="position:absolute;overflow:hidden">
+  <defs>
+    <linearGradient id="sgLogoGradShared" x1="10" y1="14" x2="38" y2="38" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#b4c7e0"/><stop offset="100%" stop-color="#7d90a8"/>
+    </linearGradient>
+  </defs>
+</svg>
+
+<div id="app-boot-splash" class="app-boot-splash" hidden aria-live="polite" aria-busy="true">
+  <div class="app-boot-genre-drift" id="app-boot-genre-drift" aria-hidden="true"></div>
+  <div class="sg-brand sg-brand--splash">
+    <div class="sg-brand-mark" aria-hidden="true">
+      <svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect x="13" y="13" width="22" height="22" rx="8" fill="none" stroke="url(#sgLogoGradShared)" stroke-width="2.25"/><circle cx="24" cy="24" r="4.5" fill="url(#sgLogoGradShared)" opacity=".95"/></svg>
+    </div>
+    <div class="sg-brand-wordmark"><span class="sg-brand-word-muted">Smol</span><span class="sg-brand-word-accent">Game</span></div>
+  </div>
+  <div class="app-boot-sub" data-i18n="boot_loading">Загрузка…</div>
+</div>
+
+<div id="tg-only-wall" class="tg-only-wall" hidden>
+  <div class="tg-only-card tg-glass">
+    <div class="sg-brand sg-brand--card" style="margin-bottom:8px">
+      <div class="sg-brand-mark sg-brand-mark--sm" aria-hidden="true">
         <svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect x="13" y="13" width="22" height="22" rx="8" fill="none" stroke="url(#sgLogoGradShared)" stroke-width="2.25"/><circle cx="24" cy="24" r="4.5" fill="url(#sgLogoGradShared)" opacity=".95"/></svg>
       </div>
-      <div class="sg-brand-wordmark">
-        <span class="sg-brand-word-muted">Smol</span><span class="sg-brand-word-accent">Game</span>
+      <div class="sg-brand-wordmark sg-brand-wordmark--compact"><span class="sg-brand-word-muted">Smol</span><span class="sg-brand-word-accent">Game</span></div>
+    </div>
+    <p class="tg-only-title" data-i18n="tg_only_title">Открой в Telegram</p>
+    <p class="tg-only-text" data-i18n="tg_only_text">Открой из Telegram: меню бота → мини-приложение.</p>
+  </div>
+</div>
+
+<!-- Шапка-якорь: где я (лентa / игры) -->
+<div id="app-tab-chrome" class="app-tab-chrome" aria-hidden="true">
+  <div class="app-tab-chrome-mark" aria-hidden="true">
+    <svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><rect x="13" y="13" width="22" height="22" rx="8" fill="none" stroke="url(#sgLogoGradShared)" stroke-width="2.25"/><circle cx="24" cy="24" r="4.5" fill="url(#sgLogoGradShared)" opacity=".95"/></svg>
+  </div>
+  <div class="app-tab-chrome-text">
+    <span class="app-tab-chrome-label" id="app-tab-chrome-label" data-i18n="nav_feed">Лента</span>
+    <div class="app-tab-chrome-lang" role="group" aria-label="" data-i18n-aria="lang_hint">
+      <button type="button" class="lang-switch lang-switch--active" id="langSwitchRu" data-action="set-lang-ru" aria-pressed="true">RU</button>
+      <button type="button" class="lang-switch" id="langSwitchEn" data-action="set-lang-en" aria-pressed="false">EN</button>
+    </div>
+  </div>
+</div>
+
+<button type="button" id="feed-exit-focus" class="feed-exit-focus sg-btn sg-btn--secondary" data-action="feed-exit-focus" hidden data-i18n-aria="feed_exit_aria" data-i18n="feed_back">← Лента</button>
+
+<!-- ══ БОКОВЫЕ ДЕЙСТВИЯ: в DOM ДО #feed — иначе слой кнопок перекрывает iframe и ломает drag по игре ══ -->
+<div id="side-actions">
+  <div class="action-btn" data-action="toggle-like" data-i18n-title="action_like_title" title="Лайк и в избранное">
+    <div class="action-icon" id="likeIcon"><svg class="sg-icon sg-icon--heart" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+    <div class="action-label action-label--stack"><span class="action-label-num" id="likeCount">0</span><span class="action-label-caption" data-i18n="caption_likes">лайков</span></div>
+  </div>
+  <div class="action-btn" data-action="toggle-feed-reviews" data-i18n-title="action_reviews_title" title="Отзывы">
+    <div class="action-icon" aria-hidden="true"><svg class="sg-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M7.5 9.75h9M7.5 13.5h5.25M5.25 4.5h13.5a2.25 2.25 0 012.25 2.25v9a2.25 2.25 0 01-2.25 2.25H12l-4.5 3v-3H5.25A2.25 2.25 0 013 15.75v-9A2.25 2.25 0 015.25 4.5z" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+    <div class="action-label action-label--stack"><span class="action-label-num" id="feedReviewCount">0</span><span class="action-label-caption" data-i18n="caption_reviews">отзывов</span></div>
+  </div>
+  <div class="action-btn action-btn--plays" data-i18n-title="action_plays_title" title="Запуски в ленте">
+    <div class="action-icon" aria-hidden="true"><svg class="sg-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2.25 12s3.75-6 9.75-6 9.75 6 9.75 6-3.75 6-9.75 6S2.25 12 2.25 12z" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="12" r="2.25" stroke="currentColor" stroke-width="1.65"/></svg></div>
+    <div class="action-label action-label--stack"><span class="action-label-num" id="playsCount">0</span><span class="action-label-caption" data-i18n="caption_plays">запусков</span></div>
+    <button type="button" class="action-share-link" data-action="share-game" data-i18n="share">Поделиться</button>
+  </div>
+  <div class="action-btn" data-action="report-game">
+    <div class="action-icon"><svg class="sg-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M6.75 3.75v16.5a1.5 1.5 0 001.5 1.5h7.5a1.5 1.5 0 001.5-1.5v-12l-6-6h-4.5a1.5 1.5 0 00-1.5 1.5z" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"/><path d="M13.5 3v6h6M12 18v-6M9 18v-3" stroke="currentColor" stroke-width="1.65" stroke-linecap="round"/></svg></div>
+    <div class="action-label" data-i18n="report">Жалоба</div>
+  </div>
+</div>
+
+<!-- ══ FEED ══ -->
+<div id="feed"></div>
+
+<!-- Короткий оверлей с логотипом между играми -->
+<div id="feed-transition" class="feed-transition" hidden aria-hidden="true">
+  <div class="feed-transition-inner">
+    <div class="sg-brand sg-brand--transition feed-transition-logo">
+      <div class="sg-brand-mark sg-brand-mark--xs sg-brand-mark--spin" aria-hidden="true">
+        <svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect x="13" y="13" width="22" height="22" rx="8" fill="none" stroke="url(#sgLogoGradShared)" stroke-width="2.25"/><circle cx="24" cy="24" r="4.5" fill="url(#sgLogoGradShared)" opacity=".95"/></svg>
+      </div>
+      <div class="sg-brand-wordmark sg-brand-wordmark--transition"><span class="sg-brand-word-muted">Smol</span><span class="sg-brand-word-accent">Game</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ ПУСТАЯ ЛЕНТА / ОШИБКА ЗАГРУЗКИ ══ -->
+<div id="empty-state">
+  <div id="empty-state-default" class="sg-empty-state">
+    <div class="sg-empty-state-icon" aria-hidden="true"><svg class="sg-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M7.5 8.25h9a3 3 0 013 3v7.5a1.5 1.5 0 01-1.5 1.5h-12A1.5 1.5 0 015 18.75v-7.5a3 3 0 013-3zM9 8.25V6a3 3 0 013-3h0a3 3 0 013 3v2.25" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="9.75" cy="13.5" r="0.9" fill="currentColor"/><circle cx="14.25" cy="13.5" r="0.9" fill="currentColor"/><path d="M9.75 17.25h4.5a2.25 2.25 0 002.045-1.31l.022-.047" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg></div>
+    <div class="sg-empty-state-title" data-i18n="empty_feed_title">Пока без игр</div>
+    <div class="sg-empty-state-sub i18n-ru">Как короткие ролики, только это <strong>мини-игры</strong> в Telegram: листаешь — смотришь превью, понравилось — <strong>«Играть»</strong>, зашёл за автором — <strong>«Подписаться»</strong>, не зашла — свайп дальше. Без обязательных «посмотри рекламу, чтобы поиграть» — так задумано сейчас. Свою игру — снизу <strong>«Загрузить»</strong>.</div>
+    <div class="sg-empty-state-sub i18n-en">Like short videos, but <strong>mini-games</strong> in Telegram: swipe previews, tap <strong>Play</strong>, follow authors you like, swipe on if not. No forced “watch an ad to play” for now. Add yours via <strong>Upload</strong> below.</div>
+    <button type="button" class="sg-btn sg-btn--primary sg-btn--screen-cta sg-empty-state-cta" data-action="switch-tab" data-tab="upload" data-i18n="empty_feed_cta">Загрузить игру</button>
+  </div>
+  <div id="empty-state-error" class="sg-empty-state" hidden>
+    <div class="sg-empty-state-icon sg-empty-state-icon--warn" aria-hidden="true"><svg class="sg-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 9v4M12 17h.01M10.3 3.6h3.4l8.1 14.2a1 1 0 01-.87 1.5H3.07a1 1 0 01-.87-1.5L10.3 3.6z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+    <div class="sg-empty-state-title" data-i18n="empty_err_title">Лента не загрузилась</div>
+    <div class="sg-empty-state-sub" id="empty-state-error-msg" data-i18n="empty_err_sub">Проверь интернет и попробуй снова.</div>
+    <button type="button" class="sg-btn sg-btn--primary sg-btn--screen-cta sg-empty-state-cta" data-action="feed-retry" data-i18n="empty_retry">Повторить</button>
+  </div>
+</div>
+
+<!-- ══ ИНФО ОБ ИГРЕ (автор + мета игры в одну линию) ══ -->
+<div id="game-info">
+  <div class="author-row" data-action="open-author">
+    <div class="author-avatar" id="authorAvatar">?</div>
+    <div class="author-block">
+      <div class="author-name" id="authorName">—</div>
+      <div class="author-role" id="authorRole" data-i18n="author_role">Разработчик</div>
+    </div>
+    <div class="follow-btn" id="followBtn" data-action="toggle-follow" data-i18n="follow_add">+ Подписаться</div>
+  </div>
+</div>
+
+<div id="feed-reviews-drawer" class="feed-reviews-drawer tg-glass tg-glass--sheet" hidden aria-hidden="true">
+  <div class="feed-reviews-drawer-handle" aria-hidden="true"></div>
+  <div class="feed-reviews-drawer-head">
+    <span class="feed-reviews-drawer-title" data-i18n="reviews_drawer_title">Отзывы</span>
+    <button type="button" class="feed-reviews-drawer-close sg-btn sg-btn--ghost sg-btn--icon" data-action="close-feed-reviews" data-i18n-aria="close_aria" aria-label="Закрыть">
+      <svg class="sg-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="1.85" stroke-linecap="round"/></svg>
+    </button>
+  </div>
+  <div id="feedReviewsDrawerList" class="feed-reviews-drawer-list"></div>
+  <div class="feed-reviews-drawer-compose">
+    <textarea id="feedReviewInput" class="feed-reviews-input" maxlength="500" rows="3" data-i18n-placeholder="review_short_placeholder" placeholder="Коротко об игре…" data-input="feed-review"></textarea>
+    <button type="button" class="sg-btn sg-btn--primary feed-reviews-send" data-action="submit-feed-review" data-i18n="send">Отправить</button>
+  </div>
+</div>
+
+<!-- Полноэкранная карточка игры (профиль / поиск / библиотека) -->
+<div id="game-detail-screen" class="game-detail-screen" hidden aria-hidden="true">
+  <div class="game-detail-topbar">
+    <button type="button" class="game-detail-back sg-btn sg-btn--ghost" data-action="close-game-detail" data-i18n-aria="game_detail_back_aria" aria-label="Назад">←</button>
+    <span class="game-detail-topbar-title" id="gameDetailTopTitle" data-i18n="game_word">Игра</span>
+  </div>
+  <div class="game-detail-scroll" id="gameDetailScroll">
+    <div class="game-detail-hero" id="gameDetailHero"></div>
+    <div class="game-detail-body">
+      <div class="game-detail-badges" id="gameDetailBadges"></div>
+      <h1 class="game-detail-title" id="gameDetailTitle">—</h1>
+      <p class="game-detail-desc" id="gameDetailDesc"></p>
+      <div class="game-detail-meta-grid" id="gameDetailMeta"></div>
+      <button type="button" class="game-detail-play sg-btn sg-btn--primary sg-btn--screen-cta" id="gameDetailPlayBtn" data-action="game-detail-play" data-i18n="play">Играть</button>
+      <div class="game-detail-author-card" id="gameDetailAuthorCard"></div>
+      <section class="game-detail-section">
+        <h2 class="game-detail-section-title" data-i18n="reviews_section">Отзывы</h2>
+        <div id="gameDetailReviews"></div>
+        <div class="game-detail-review-form" id="gameDetailReviewForm">
+          <textarea id="gameDetailReviewInput" class="field-input" maxlength="500" rows="3" data-i18n-placeholder="review_write_placeholder" placeholder="Написать отзыв…"></textarea>
+          <button type="button" class="sg-btn sg-btn--secondary" data-action="game-detail-submit-review" data-i18n="review_submit_btn">Отправить отзыв</button>
+        </div>
+      </section>
+      <div class="game-detail-owner-actions" id="gameDetailOwnerActions" hidden></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ ПРОГРЕСС ══ -->
+<div id="dots"></div>
+
+<!-- Подсказка по ленте (первый вход) -->
+<div id="feed-nav-tip-overlay" class="feed-nav-tip-overlay">
+  <div class="feed-nav-tip-card tg-glass">
+    <button type="button" class="feed-nav-tip-close sg-btn sg-btn--ghost sg-btn--icon" data-action="close-feed-nav-tip" data-i18n-aria="close_aria" aria-label="Закрыть">
+      <svg class="sg-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="1.85" stroke-linecap="round"/></svg>
+    </button>
+    <p class="feed-nav-tip-title" data-i18n="feed_nav_what_title">Что это?</p>
+    <p class="feed-nav-tip-lead i18n-ru"><strong>SmolGame</strong> — лента мини-игр в Telegram в духе TikTok: листаешь карточки, заходишь в игру по кнопке, на автора можно подписаться. Сейчас <strong>без обязательной рекламы перед игрой</strong> (никаких «смотри 10 сек, потом играй»). Свайп <strong>вверх / вниз</strong> — другая игра; <strong>«Играть»</strong> — полный экран, выход — <strong>«← Лента»</strong>.</p>
+    <p class="feed-nav-tip-lead i18n-en"><strong>SmolGame</strong> is a mini-game feed in Telegram, TikTok-style: swipe cards, tap Play, follow creators. <strong>No mandatory ad before play</strong> right now. Swipe <strong>up / down</strong> for another game; <strong>Play</strong> is fullscreen, exit with <strong>← Feed</strong>.</p>
+    <div class="feed-nav-tip-demo" aria-hidden="true">
+      <div class="feed-nav-tip-demo-hand">
+        <svg class="feed-nav-tip-finger-svg" viewBox="0 0 48 56" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <path d="M18 8c-2.5 0-4.5 2-4.5 4.5v11L9 30c-1.2 1.2-1.2 3.2 0 4.4l1.1 1.1c.6.6 1.4.9 2.2.9h1.2v8c0 2.2 1.8 4 4 4h12c2.2 0 4-1.8 4-4V22.5c0-2.5-2-4.5-4.5-4.5-1.3 0-2.5.6-3.3 1.5-.8-.9-2-1.5-3.2-1.5-.9 0-1.7.3-2.4.8C22.3 17.3 20.3 16 18 16c-2.5 0-4.5 2-4.5 4.5V26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" opacity="0.92"/>
+        </svg>
+      </div>
+      <div class="feed-nav-tip-demo-track feed-nav-tip-demo-track--vertical">
+        <span class="feed-nav-tip-demo-label" data-i18n="feed_nav_swipe_label">свайп</span>
+        <div class="feed-nav-tip-demo-line feed-nav-tip-demo-line--vertical">
+          <span class="feed-nav-tip-demo-arrow">↑</span>
+          <span class="feed-nav-tip-demo-handle feed-nav-tip-demo-handle--v"></span>
+          <span class="feed-nav-tip-demo-arrow">↓</span>
+        </div>
       </div>
     </div>
-    <div class="app-boot-sub" id="boot-status" data-i18n="boot_loading">Загрузка…</div>
+    <p class="feed-nav-tip-help"><button type="button" class="feed-nav-tip-help-btn" data-action="open-feed-help-full" data-i18n="feed_nav_help_link">Подробная справка</button></p>
+    <div class="feed-nav-tip-actions">
+      <button type="button" class="sg-btn sg-btn--secondary feed-nav-tip-secondary" data-action="close-feed-nav-tip" data-i18n="close">Закрыть</button>
+      <button type="button" class="sg-btn sg-btn--primary sg-btn--screen-cta" data-action="ack-feed-nav-tip" data-i18n="got_it">Понятно</button>
+    </div>
+  </div>
+  <div class="feed-nav-tip-card feed-nav-tip-card--detail tg-glass">
+    <button type="button" class="feed-nav-tip-close sg-btn sg-btn--ghost sg-btn--icon" data-action="close-feed-nav-tip" data-i18n-aria="close_aria" aria-label="Закрыть">
+      <svg class="sg-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="1.85" stroke-linecap="round"/></svg>
+    </button>
+    <p class="feed-nav-tip-title" data-i18n="feed_nav_how_title">Как листать ленту</p>
+    <p class="feed-nav-tip-lead" data-i18n="feed_nav_how_lead">Свайп <strong>по экрану</strong> (не по кнопкам сбоку и снизу) — следующая или предыдущая игра.</p>
+    <ul class="feed-nav-tip-list">
+      <li class="i18n-ru"><strong>Вверх</strong> — следующая игра</li>
+      <li class="i18n-en"><strong>Up</strong> — next game</li>
+      <li class="i18n-ru"><strong>Вниз</strong> — предыдущая</li>
+      <li class="i18n-en"><strong>Down</strong> — previous</li>
+      <li class="i18n-ru"><strong>«Играть»</strong> — только игра, без лайков и табов; <strong>«← Лента»</strong> — выход</li>
+      <li class="i18n-en"><strong>Play</strong> — game only, no likes/tabs; <strong>← Feed</strong> — exit</li>
+      <li class="i18n-ru">В режиме игры <strong>свайп ленты отключён</strong></li>
+      <li class="i18n-en"><strong>Feed swipe is off</strong> while playing</li>
+    </ul>
+    <div class="feed-nav-tip-actions feed-nav-tip-actions--stack">
+      <button type="button" class="sg-btn sg-btn--secondary feed-nav-tip-secondary" data-action="leave-feed-help-detail" data-i18n="feed_nav_back_detail">Назад к кратко</button>
+      <button type="button" class="sg-btn sg-btn--primary sg-btn--screen-cta" data-action="ack-feed-nav-tip" data-i18n="got_it">Понятно</button>
+    </div>
+  </div>
+</div>
+
+<!-- Первый запуск: welcome + демо свайпа по ленте (см. js/feed-onboarding.js) -->
+<div id="feed-onboarding-root" class="feed-onboarding-root" hidden aria-hidden="true">
+  <div id="feed-onboarding-welcome" class="feed-onboarding-welcome">
+    <div class="feed-onboarding-welcome-inner tg-glass">
+      <div class="feed-onboarding-brand sg-brand sg-brand--splash">
+        <div class="sg-brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect x="13" y="13" width="22" height="22" rx="8" fill="none" stroke="url(#sgLogoGradShared)" stroke-width="2.25"/><circle cx="24" cy="24" r="4.5" fill="url(#sgLogoGradShared)" opacity=".95"/></svg>
+        </div>
+        <div class="sg-brand-wordmark"><span class="sg-brand-word-muted">Smol</span><span class="sg-brand-word-accent">Game</span></div>
+      </div>
+      <h1 class="feed-onboarding-welcome-title" data-i18n="feed_onboard_title">Добро пожаловать в SmolGame</h1>
+      <p class="feed-onboarding-welcome-sub i18n-ru">Листай как в TikTok: превью → «Играть», понравился автор — подписка, не зашло — свайп дальше. Сейчас без принудительной рекламы перед игрой. Свою игру выложи через «Загрузить».</p>
+      <p class="feed-onboarding-welcome-sub i18n-en">Swipe like TikTok: preview → Play, follow authors you like, swipe on if not. No forced ads before play. Upload your game via Upload.</p>
+      <button type="button" class="sg-btn sg-btn--primary sg-btn--screen-cta feed-onboarding-welcome-cta" data-action="feed-onboarding-welcome-cta" data-i18n="feed_onboard_cta">Начать</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ НИЖНИЙ НАВ ══ -->
+<div id="bottom-nav">
+  <div class="nav-item active" id="nav-feed" data-action="switch-tab" data-tab="feed">
+    <div class="nav-icon sg-icon sg-icon--nav"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M7.5 8.25h9a3 3 0 013 3v7.5a1.5 1.5 0 01-1.5 1.5h-12A1.5 1.5 0 015 18.75v-7.5a3 3 0 013-3zM9 8.25V6a3 3 0 013-3h0a3 3 0 013 3v2.25" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"/><circle cx="9.75" cy="13.5" r="1.125" fill="currentColor"/><circle cx="14.25" cy="13.5" r="1.125" fill="currentColor"/><path d="M9.75 17.25h4.5a2.25 2.25 0 002.045-1.31l.022-.047" stroke="currentColor" stroke-width="1.65" stroke-linecap="round"/></svg></div>
+    <div class="nav-label" data-i18n="nav_feed">Лента</div>
+  </div>
+  <div class="nav-item" id="nav-games" data-action="switch-tab" data-tab="games">
+    <div class="nav-icon sg-icon sg-icon--nav"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+    <div class="nav-label" data-i18n="nav_games">Игры</div>
+  </div>
+  <div class="nav-item nav-item--upload" id="nav-upload" data-action="switch-tab" data-tab="upload">
+    <div class="nav-upload-fab" aria-hidden="true">
+      <svg class="nav-upload-fab-icon" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect x="13" y="13" width="22" height="22" rx="8" fill="none" stroke="url(#sgLogoGradShared)" stroke-width="2.25"/><circle cx="24" cy="24" r="4.5" fill="url(#sgLogoGradShared)" opacity=".95"/></svg>
+      <span class="nav-upload-fab-plus" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 5.25v13.5M5.25 12h13.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></span>
+    </div>
+    <div class="nav-label" data-i18n="nav_upload">Загрузить</div>
+  </div>
+  <div class="nav-item" id="nav-search" data-action="switch-tab" data-tab="search">
+    <div class="nav-icon sg-icon sg-icon--nav"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><circle cx="11" cy="11" r="6.75" stroke="currentColor" stroke-width="1.65"/><path d="M16.5 16.5L21 21" stroke="currentColor" stroke-width="1.65" stroke-linecap="round"/></svg></div>
+    <div class="nav-label" data-i18n="nav_search">Поиск</div>
+  </div>
+  <div class="nav-item" id="nav-profile" data-action="switch-tab" data-tab="profile">
+    <div class="nav-icon sg-icon sg-icon--nav"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><circle cx="12" cy="9" r="3.75" stroke="currentColor" stroke-width="1.65"/><path d="M6 19.5v-.75a4.5 4.5 0 014.5-4.5h3a4.5 4.5 0 014.5 4.5v.75" stroke="currentColor" stroke-width="1.65" stroke-linecap="round"/></svg></div>
+    <div class="nav-label" data-i18n="nav_profile">Профиль</div>
+  </div>
+</div>
+
+<!-- ══ ЭКРАН: ЗАГРУЗИТЬ ИГРУ (гайд и FAQ только здесь — лента без отвлечений) ══ -->
+<div id="upload-screen">
+  <div class="screen-header">
+    <button type="button" class="screen-back sg-btn sg-btn--ghost" data-action="close-upload" data-i18n-aria="upload_back_aria" aria-label="Назад к ленте" data-i18n="feed_back">← Лента</button>
+    <div class="screen-title" data-i18n="upload_title">Загрузить игру</div>
   </div>
 
-  <div id="app">
-    <!-- Header Chrome -->
-    <div id="app-tab-chrome" class="app-tab-chrome">
-        <div class="app-tab-chrome-inner">
-            <span id="app-tab-chrome-label">SmolGame</span>
-        </div>
+  <div class="upload-methods upload-methods--dual" id="upload-methods-anchor">
+    <div class="method-card method-card--url selected" id="method-url" data-action="select-method" data-method="url">
+      <div class="m-icon m-icon--svg" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M10 13a5 5 0 010-7l1.5-1.5a5 5 0 017.07 7.07l-.88.88M14 11a5 5 0 010 7l-1.5 1.5a5 5 0 01-7.07-7.07l.88-.88" stroke="currentColor" stroke-width="1.65" stroke-linecap="round"/></svg></div>
+      <div class="m-title" data-i18n="method_url_title">По ссылке</div>
+      <div class="m-desc" data-i18n="method_url_desc">Уже есть HTTPS URL</div>
+    </div>
+    <div class="method-card method-card--github" id="method-github" data-action="select-method" data-method="github">
+      <div class="m-icon m-icon--svg" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0-2-1.5-3-1.5-3-1.5-.3 1.15-.3 2.35 0 3.5a5.4 5.4 0 0 0-1 3.5c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M9 18c-4.51 2-5-2-7-2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <div class="m-title" data-i18n="method_gh_title">Через GitHub</div>
+      <div class="m-desc" data-i18n="method_gh_desc">Код → репозиторий → Pages</div>
+    </div>
+  </div>
+  <div class="upload-methods-more">
+    <button type="button" class="upload-more-btn" id="upload-premium-more" data-action="upload-show-premium" data-i18n-aria="premium_aria" aria-label="О премиуме"><span data-i18n="premium_btn">Премиум</span> <span class="upload-more-btn-sub" id="method-premium-desc" data-i18n="premium_soon">скоро</span></button>
+  </div>
+
+  <div class="upload-active-panel" id="upload-active-panel">
+
+  <div id="upload-welcome-block" class="upload-welcome-block tg-glass" hidden>
+    <div class="upload-welcome-card">
+      <div class="onboarding-body" id="welcomeBody"></div>
+      <div class="onboarding-footer welcome-footer" id="welcomeFooter"></div>
+    </div>
+  </div>
+
+  <!-- Вкладка: GitHub -->
+  <div class="form-section" id="form-github">
+    <div class="field-group" id="github-connect-row">
+      <div class="field-label" data-i18n="gh_account">Аккаунт GitHub</div>
+      <button type="button" class="sg-btn sg-btn--primary sg-btn--screen-cta github-connect-btn" id="btn-github-primary" data-action="auth-github">
+        <span class="github-btn-icon" aria-hidden="true"><svg class="sg-icon sg-icon--sm" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0-2-1.5-3-1.5-3-1.5-.3 1.15-.3 2.35 0 3.5a5.4 5.4 0 0 0-1 3.5c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M9 18c-4.51 2-5-2-7-2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span id="btn-github-primary-label" data-i18n="gh_login">Войти через GitHub</span>
+      </button>
+      <button type="button" class="sg-btn sg-btn--ghost github-unlink-btn" id="btn-github-unlink" data-action="github-unlink" hidden data-i18n="gh_unlink">Отвязать GitHub</button>
+      <div class="field-hint-center" id="github-connect-hint" data-i18n="gh_hint_connect">Привяжи GitHub — появится форма ниже.</div>
     </div>
 
-    <!-- ══ ЛЕНТА ══ -->
-    <div id="feed-container">
-      <div id="feed-track"></div>
-    </div>
-
-    <!-- UI Overlay for Feed -->
-    <div id="ui-overlay">
-      <div id="top-bar">
-        <div class="sg-brand" data-action="refresh-feed">
-          <div class="sg-brand-mark sg-brand-mark--xs" aria-hidden="true">
-            <svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect x="13" y="13" width="22" height="22" rx="8" fill="none" stroke="url(#sgLogoGradShared)" stroke-width="2.25"/><circle cx="24" cy="24" r="4.5" fill="url(#sgLogoGradShared)" opacity=".95"/></svg>
+    <!-- Два шага: код + карточка → репозиторий; затем обложка и модерация -->
+    <div id="github-publish-flow" class="github-publish-flow" hidden>
+      <div class="github-publish-card" role="region" aria-labelledby="github-publish-heading">
+        <div class="github-publish-head">
+          <div class="upload-steps github-publish-steps" aria-hidden="true">
+            <span class="upload-steps-label" data-i18n="gh_step_label">Этап</span>
+            <div class="upload-steps-track upload-steps-track--gh">
+              <span class="upload-steps-dot upload-steps-dot--1" id="ghwz-dot-1"></span>
+              <span class="upload-steps-dot upload-steps-dot--2" id="ghwz-dot-2"></span>
+            </div>
           </div>
-          <div class="sg-brand-wordmark sg-brand-wordmark--compact"><span class="sg-brand-word-muted">Smol</span><span class="sg-brand-word-accent">Game</span></div>
+          <h2 class="github-publish-heading" id="github-publish-heading" data-i18n="gh_heading_1">Код и карточка</h2>
+          <p class="github-publish-sub" data-i18n="gh_sub_1">Публичный репозиторий и GitHub Pages.</p>
         </div>
-        <div class="top-bar-actions">
-           <button class="top-btn" id="langToggleBtn" data-action="toggle-lang">RU</button>
-        </div>
-      </div>
-
-      <!-- Game info -->
-      <div id="game-info">
-        <div class="game-info-author" data-action="open-author">
-          <div class="author-avatar" id="authorAvatarSmall">?</div>
-          <span class="author-name" id="authorName">@—</span>
-          <button class="follow-btn" data-action="toggle-follow" data-i18n="follow_add">+ Подписаться</button>
-        </div>
-        <h2 class="game-title" id="feedGameTitle">—</h2>
-        <p class="game-desc" id="feedGameDesc">—</p>
-        <div class="game-tags" id="feedGameTags"></div>
-      </div>
-
-      <!-- Side actions -->
-      <div id="side-actions">
-        <div class="action-item" data-action="like-game">
-          <div class="action-icon like-icon" id="likeIcon"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" stroke="currentColor" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-          <span class="action-label" id="likeCount">0</span>
-        </div>
-        <div class="action-item" data-action="toggle-feed-reviews">
-          <div class="action-icon"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M12 20h9M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z" stroke="currentColor" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-          <span class="action-label" id="feedReviewCount">0</span>
-        </div>
-        <div class="action-item" data-action="share-game">
-          <div class="action-icon"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M8.59 13.51l6.83 3.98m-.01-10.98l-6.82 3.98M21 7a3 3 0 11-6 0 3 3 0 016 0zm-12 5a3 3 0 11-6 0 3 3 0 016 0zm12 5a3 3 0 11-6 0 3 3 0 016 0z" stroke="currentColor" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-          <span class="action-label" data-i18n="share">Поделиться</span>
-        </div>
-        <button class="play-btn" data-action="play-game">
-          <div class="play-btn-icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M8 5.14v14l11-7-11-7z"/></svg>
-          </div>
-          <span data-i18n="play">Играть</span>
-        </button>
-      </div>
-
-      <!-- Feed Swipe Tease -->
-      <div id="feed-swipe-tease" class="feed-swipe-tease" hidden>
-        <div class="feed-swipe-tease-icon">
-          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 19V5m0 0l-4 4m4-4l4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        </div>
-        <div class="feed-swipe-tease-text" data-i18n="feed_swipe_tease">Листай вверх</div>
-      </div>
-    </div>
-
-    <!-- Feed Reviews Drawer -->
-    <div id="feed-reviews-drawer" class="feed-reviews-drawer tg-glass--sheet" hidden aria-hidden="true">
-      <div class="feed-reviews-drawer-handle"></div>
-      <div class="feed-reviews-drawer-head">
-        <div class="feed-reviews-drawer-title" data-i18n="reviews_drawer_title">Отзывы</div>
-        <button class="feed-reviews-drawer-close" data-action="close-feed-reviews">✕</button>
-      </div>
-      <div id="feedReviewsDrawerList" class="feed-reviews-drawer-list"></div>
-      <div class="feed-reviews-drawer-compose">
-        <textarea id="feedReviewInput" class="field-input" maxlength="500" rows="2" placeholder="Написать отзыв…"></textarea>
-        <button class="sg-btn sg-btn--secondary" data-action="submit-feed-review" data-i18n="send">Отправить</button>
-      </div>
-    </div>
-
-    <!-- Fullscreen Game Frame -->
-    <div id="game-frame-container" hidden>
-      <div id="game-frame-header">
-        <button class="back-btn" data-action="close-game">← <span data-i18n="feed_back">Лента</span></button>
-        <span class="game-frame-title" id="activeGameTitle">Game</span>
-        <button class="game-menu-btn" data-action="open-game-menu">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="2" fill="currentColor"/><circle cx="12" cy="5" r="2" fill="currentColor"/><circle cx="12" cy="19" r="2" fill="currentColor"/></svg>
-        </button>
-      </div>
-      <iframe id="game-iframe" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
-    </div>
-
-    <div id="dots"></div>
-
-    <!-- ══ НИЖНИЙ НАВ ══ -->
-    <div id="bottom-nav">
-      <div class="nav-item active" id="nav-feed" data-action="switch-tab" data-tab="feed">
-        <div class="nav-icon sg-icon sg-icon--nav"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M7.5 8.25h9a3 3 0 013 3v7.5a1.5 1.5 0 01-1.5 1.5h-12A1.5 1.5 0 015 18.75v-7.5a3 3 0 013-3zM9 8.25V6a3 3 0 013-3h0a3 3 0 013 3v2.25" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"/><circle cx="9.75" cy="13.5" r="1.125" fill="currentColor"/><circle cx="14.25" cy="13.5" r="1.125" fill="currentColor"/><path d="M9.75 17.25h4.5a2.25 2.25 0 002.045-1.31l.022-.047" stroke="currentColor" stroke-width="1.65" stroke-linecap="round"/></svg></div>
-        <div class="nav-label" data-i18n="nav_feed">Лента</div>
-      </div>
-      <div class="nav-item" id="nav-games" data-action="switch-tab" data-tab="games">
-        <div class="nav-icon sg-icon sg-icon--nav"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-        <div class="nav-label" data-i18n="nav_games">Игры</div>
-      </div>
-      <div class="nav-item nav-item--upload" id="nav-upload" data-action="switch-tab" data-tab="upload">
-        <div class="nav-upload-fab" aria-hidden="true">
-          <svg class="nav-upload-fab-icon" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect x="13" y="13" width="22" height="22" rx="8" fill="none" stroke="url(#sgLogoGradShared)" stroke-width="2.25"/><circle cx="24" cy="24" r="4.5" fill="url(#sgLogoGradShared)" opacity=".95"/></svg>
-          <span class="nav-upload-fab-plus" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 5.25v13.5M5.25 12h13.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></span>
-        </div>
-        <div class="nav-label" data-i18n="nav_upload">Загрузить</div>
-      </div>
-      <div class="nav-item" id="nav-search" data-action="switch-tab" data-tab="search">
-        <div class="nav-icon sg-icon sg-icon--nav"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><circle cx="11" cy="11" r="6.75" stroke="currentColor" stroke-width="1.65"/><path d="M16.5 16.5L21 21" stroke="currentColor" stroke-width="1.65" stroke-linecap="round"/></svg></div>
-        <div class="nav-label" data-i18n="nav_search">Поиск</div>
-      </div>
-      <div class="nav-item" id="nav-profile" data-action="switch-tab" data-tab="profile">
-        <div class="nav-icon sg-icon sg-icon--nav"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><circle cx="12" cy="9" r="3.75" stroke="currentColor" stroke-width="1.65"/><path d="M6 19.5v-.75a4.5 4.5 0 014.5-4.5h3a4.5 4.5 0 014.5 4.5v.75" stroke="currentColor" stroke-width="1.65" stroke-linecap="round"/></svg></div>
-        <div class="nav-label" data-i18n="nav_profile">Профиль</div>
-      </div>
-    </div>
-  </div><!-- /#app -->
-
-  <!-- ══ ЭКРАНЫ (Вынесены из #app для стабильности z-index) ══ -->
-  <div id="upload-screen" class="screen-overlay" hidden>
-    <div class="screen-header">
-      <button type="button" class="screen-back sg-btn sg-btn--ghost" data-action="close-upload" data-i18n="feed_back">← Лента</button>
-      <div class="screen-title" data-i18n="upload_title">Загрузить игру</div>
-    </div>
-    <div class="screen-scroll">
-      <div id="upload-welcome-block" hidden></div>
-      <div class="upload-methods upload-methods--dual" id="upload-methods-anchor">
-        <div class="method-card method-card--url selected" id="method-url" data-action="select-method" data-method="url">
-          <div class="m-icon m-icon--svg"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M10 13a5 5 0 010-7l1.5-1.5a5 5 0 017.07 7.07l-.88.88M14 11a5 5 0 010 7l-1.5 1.5a5 5 0 01-7.07-7.07l.88-.88" stroke="currentColor" stroke-width="1.65" stroke-linecap="round"/></svg></div>
-          <div class="m-title" data-i18n="method_url_title">По ссылке</div>
-          <div class="m-desc" data-i18n="method_url_desc">Уже есть HTTPS URL</div>
-        </div>
-        <div class="method-card method-card--github" id="method-github" data-action="select-method" data-method="github">
-          <div class="m-icon m-icon--svg"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0-2-1.5-3-1.5-3-1.5-.3 1.15-.3 2.35 0 3.5a5.4 5.4 0 0 0-1 3.5c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M9 18c-4.51 2-5-2-7-2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-          <div class="m-title" data-i18n="method_gh_title">GitHub</div>
-          <div class="m-desc" data-i18n="method_gh_desc">Репозиторий → Pages</div>
-        </div>
-      </div>
-      <div class="upload-active-panel" id="upload-active-panel">
-         <div class="form-section visible" id="form-url">
-            <div class="upload-url-card">
-              <div class="field-group">
-                <div class="field-label" data-i18n="field_game_url">Ссылка на игру</div>
-                <input class="field-input" type="url" placeholder="https://..." id="urlInput">
+        <div class="github-publish-body">
+          <div class="github-publish-panel" id="ghwz-panel-1" data-ghwz-step="1">
+            <div class="upload-stack-section">
+              <span class="upload-stack-label" data-i18n="stack_code">Код</span>
+              <div class="github-input-mode" role="group" data-i18n-aria="gh_code_upload_aria" aria-label="Способ загрузки кода">
+                <button type="button" class="sg-btn sg-btn--secondary github-mode-btn selected" data-action="github-upload-set-mode" data-mode="paste" data-i18n="gh_mode_paste">HTML</button>
+                <button type="button" class="sg-btn sg-btn--secondary github-mode-btn" data-action="github-upload-set-mode" data-mode="files" data-i18n="gh_mode_files">Файлы</button>
               </div>
+              <div id="github-upload-paste-panel">
+                <div class="field-group">
+                  <div class="field-label" data-i18n="gh_one_file">Один файл index.html</div>
+                  <textarea class="code-area" placeholder="<!DOCTYPE html>..." id="githubPasteHtml"></textarea>
+                </div>
+              </div>
+              <div id="github-upload-files-panel" hidden>
+                <div class="field-group">
+                  <div class="field-label" data-i18n="gh_files_hint">До 20 файлов, латиница в именах, нужен index.html</div>
+                  <label class="image-upload">
+                    <input type="file" id="githubMultiFiles" multiple>
+                    <span data-i18n="choose_files">Выбрать файлы</span>
+                  </label>
+                  <div class="github-files-list" id="githubFilesList"></div>
+                </div>
+              </div>
+            </div>
+            <div class="upload-stack-section">
+              <span class="upload-stack-label" data-i18n="stack_card">Карточка в ленте</span>
               <div class="field-group">
                 <div class="field-label" data-i18n="field_title">Название</div>
-                <input class="field-input" type="text" placeholder="..." id="gameNameInput2" maxlength="40">
+                <input class="field-input" type="text" data-i18n-placeholder="field_title_placeholder" placeholder="Название в ленте" id="ghCodeWizardTitle" maxlength="40">
               </div>
               <div class="field-group">
                 <div class="field-label" data-i18n="field_desc">Описание</div>
-                <textarea class="field-input" id="gameDescInput2" maxlength="120"></textarea>
+                <textarea class="field-input" data-i18n-placeholder="field_desc_short" placeholder="Коротко о геймплее…" id="ghCodeWizardDesc" maxlength="120"></textarea>
               </div>
               <div class="field-group">
                 <div class="field-label" data-i18n="field_genre">Жанр</div>
-                <div class="genre-pills" id="genrePills2"></div>
+                <div class="genre-pills" id="genrePillsGhCode"></div>
               </div>
-              <button class="sg-btn sg-btn--primary sg-btn--screen-cta" data-action="submit-game" data-method="url" data-i18n="submit_moderation">На модерацию</button>
             </div>
-         </div>
-      </div>
-    </div>
-  </div>
-
-  <div id="profile-screen" class="screen-overlay" hidden>
-    <div class="profile-header">
-      <div class="screen-header screen-header--in-screen">
-        <button type="button" class="screen-back sg-btn sg-btn--ghost" data-action="close-profile" data-i18n="feed_back">← Лента</button>
-        <div class="screen-title" data-i18n="profile_title">Профиль</div>
-      </div>
-      <div class="profile-top">
-        <div class="profile-avatar" id="profileAvatar">?</div>
-        <div class="profile-stats">
-          <div class="stat-item"><div class="stat-num" id="statGames">0</div><div class="stat-lbl" data-i18n="stat_games">Игр</div></div>
-          <div class="stat-item"><div class="stat-num" id="statFollowers">0</div><div class="stat-lbl" data-i18n="stat_followers">Подписчиков</div></div>
-          <div class="stat-item"><div class="stat-num" id="statLikes">0</div><div class="stat-lbl" data-i18n="stat_likes">Лайки</div></div>
-        </div>
-      </div>
-      <div class="profile-name" id="profileName">Гость</div>
-      <div class="profile-handle" id="profileHandle">@—</div>
-      <p class="profile-bio" id="profileBio"></p>
-      <div class="profile-edit-actions">
-         <button class="profile-edit-toggle-btn primary" id="profileEditOpenBtn" data-action="profile-start-edit" data-i18n="profile_edit">Редактировать</button>
-      </div>
-    </div>
-    <div class="profile-games-title" data-i18n="my_games_title">Мои игры</div>
-    <div class="games-grid" id="myGamesGrid"></div>
-  </div>
-
-  <div id="games-library-screen" class="screen-overlay" hidden>
-    <div class="search-header">
-      <div class="search-header-top">
-        <button type="button" class="screen-back sg-btn sg-btn--ghost" data-action="close-games-library" data-i18n="feed_back">← Лента</button>
-        <div class="screen-title" data-i18n="games_lib_title">Игры</div>
-      </div>
-    </div>
-    <div class="screen-scroll">
-      <div class="games-library-section">
-        <h2 class="games-library-section-title" data-i18n="games_liked">Лайкнул</h2>
-        <div class="games-grid" id="likedGamesGrid"></div>
-      </div>
-      <div class="games-library-section">
-        <h2 class="games-library-section-title" data-i18n="games_played">Играл</h2>
-        <div class="games-grid" id="playedGamesGrid"></div>
-      </div>
-    </div>
-  </div>
-
-  <div id="search-screen" class="screen-overlay" hidden>
-    <div class="search-header">
-      <div class="search-header-top">
-        <button type="button" class="screen-back sg-btn sg-btn--ghost" data-action="close-search" data-i18n="feed_back">← Лента</button>
-        <div class="screen-title" data-i18n="search_title">Поиск</div>
-      </div>
-      <div class="search-bar">
-        <input type="search" placeholder="Поиск..." id="searchInput" data-input="search">
-      </div>
-      <div id="genreFilter" class="genre-scroll"></div>
-    </div>
-    <div class="search-results screen-scroll" id="searchResults"></div>
-  </div>
-
-  <div id="author-screen" class="screen-overlay" hidden>
-    <div class="profile-header">
-      <div class="screen-header screen-header--in-screen">
-        <button type="button" class="screen-back sg-btn sg-btn--ghost" data-action="close-author">← Назад</button>
-        <div class="screen-title">Разработчик</div>
-      </div>
-      <div class="profile-top">
-        <div class="profile-avatar" id="authorProfileAvatar">?</div>
-        <div class="profile-stats">
-          <div class="stat-item"><div class="stat-num" id="authorStatGames">0</div><div class="stat-lbl">Игр</div></div>
-          <div class="stat-item"><div class="stat-num" id="authorStatFollowers">0</div><div class="stat-lbl">Подписчиков</div></div>
-          <div class="stat-item"><div class="stat-num" id="authorStatLikes">0</div><div class="stat-lbl">Лайки</div></div>
-        </div>
-      </div>
-      <div class="profile-name" id="authorProfileName">—</div>
-      <div class="profile-handle" id="authorProfileHandle">@—</div>
-      <button class="author-follow-btn" id="authorFollowBtn" data-action="toggle-author-follow">Подписаться</button>
-    </div>
-    <div class="profile-games-title">Игры автора</div>
-    <div class="games-grid" id="authorGamesGrid"></div>
-  </div>
-
-  <!-- ══ КАРТОЧКА ИГРЫ ══ -->
-  <div id="game-detail-screen" class="game-detail-screen" hidden aria-hidden="true">
-    <div class="game-detail-topbar">
-      <button type="button" class="game-detail-back sg-btn sg-btn--ghost" data-action="close-game-detail">←</button>
-      <span class="game-detail-topbar-title" id="gameDetailTopTitle">Игра</span>
-    </div>
-    <div class="game-detail-scroll" id="gameDetailScroll">
-      <div class="game-detail-hero" id="gameDetailHero"></div>
-      <div class="game-detail-body">
-        <h1 class="game-detail-title" id="gameDetailTitle">—</h1>
-        <div id="gameDetailBadges" class="game-detail-badges"></div>
-        <p class="game-detail-desc" id="gameDetailDesc"></p>
-        <div id="gameDetailMeta" class="game-detail-meta"></div>
-        <button class="game-detail-play sg-btn sg-btn--primary sg-btn--screen-cta" id="gameDetailPlayBtn" data-i18n="play">Играть</button>
-        <div id="gameDetailAuthorCard"></div>
-        <div id="gameDetailOwnerActions" hidden></div>
-        <section class="game-detail-section">
-          <h2 class="game-detail-section-title" data-i18n="reviews_section">Отзывы</h2>
-          <div id="gameDetailReviews"></div>
-          <div class="game-detail-review-form" id="gameDetailReviewForm">
-            <textarea id="gameDetailReviewInput" class="field-input" maxlength="500" rows="3" placeholder="Написать отзыв…"></textarea>
-            <button class="sg-btn sg-btn--secondary" data-action="game-detail-submit-review" data-i18n="review_submit_btn">Отправить отзыв</button>
+            <div class="github-publish-actions github-publish-actions--single">
+              <button type="button" class="sg-btn sg-btn--primary sg-btn--screen-cta" data-action="github-wizard-publish-repo" data-i18n="create_repo">Создать репозиторий</button>
+            </div>
           </div>
-        </section>
+          <div class="github-publish-panel" id="ghwz-panel-2" data-ghwz-step="2" hidden>
+            <p class="upload-panel-lead upload-panel-lead--tight" data-i18n="gh_step2_lead">Репозиторий готов — добавь обложку и отправь на модерацию.</p>
+            <input type="hidden" id="ghCodeWizardPagesUrl" value="">
+            <div class="field-group">
+              <div class="field-label" data-i18n="cover_optional">Обложка (необязательно)</div>
+              <input class="field-input" type="url" id="ghCodeWizardCoverUrl" data-i18n-placeholder="cover_url_short" placeholder="https://… jpg/png">
+              <label class="image-upload">
+                <input type="file" accept="image/*" id="ghCodeWizardCoverFile">
+                <span data-i18n="cover_file">Файл</span>
+              </label>
+              <div class="image-preview" id="ghCodeWizardCoverPreview" data-i18n="no_cover">Нет обложки</div>
+            </div>
+            <div class="upload-review-box upload-review-box--compact" id="ghCodeWizardReview"></div>
+            <div class="github-publish-actions">
+              <button type="button" class="sg-btn sg-btn--secondary" data-action="github-wizard-step-back" data-i18n="back">Назад</button>
+              <button type="button" class="sg-btn sg-btn--primary sg-btn--screen-cta" data-action="github-wizard-submit-moderation" data-i18n="submit_moderation">На модерацию</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="code-branch-connect" class="code-upload-branch">
+      <p class="upload-wizard-hint" data-i18n="upload_wizard_hint">Войди через GitHub — откроется форма для кода и карточки в ленте.</p>
+    </div>
+
+    <div id="code-branch-github" class="code-upload-branch" hidden></div>
+  </div>
+
+  <!-- Вкладка: премиум — один экран для всех; доступ к ранним функциям по списку на Worker -->
+  <div class="form-section" id="form-premium">
+    <div class="upload-premium-page">
+      <div class="upload-premium-hero">
+        <h2 class="upload-premium-stub-title" data-i18n="premium_title">Премиум</h2>
+        <p class="upload-premium-lead i18n-ru">Закрытое хранение кода на стороне SmolGame вместо публичного репозитория — для команд, где важна тайна. Сейчас в разработке; игры в ленту по-прежнему через <strong>ссылку</strong> или <strong>GitHub</strong>.</p>
+        <p class="upload-premium-lead i18n-en">Private code hosting on SmolGame instead of a public repo — for teams that need secrecy. In development; publishing still via <strong>link</strong> or <strong>GitHub</strong>.</p>
+      </div>
+
+      <div class="upload-premium-block">
+        <h3 class="upload-premium-h3" data-i18n="premium_why">Зачем</h3>
+        <p class="upload-premium-p" data-i18n="premium_why_p">По ссылке и через GitHub игра обычно доступна всем с интернета. Премиум — отдельный путь, когда код не должен светиться в открытом Git.</p>
+      </div>
+
+      <div id="premium-access-active" class="upload-premium-callout upload-premium-callout--ok" hidden>
+        <p class="upload-premium-p" data-i18n="premium_active_p">Ранний доступ включён. Шаги загрузки в закрытое хранилище появятся здесь, когда подключим сценарий.</p>
+      </div>
+
+      <div id="premium-access-waitlist" class="upload-premium-callout">
+        <p class="upload-premium-p i18n-ru">Список тестеров закрытый — напиши владельцу бота. Пока можно пользоваться <strong>ссылкой</strong> и <strong>GitHub</strong> без ограничений.</p>
+        <p class="upload-premium-p i18n-en">Tester list is closed — message the bot owner. You can still use <strong>link</strong> and <strong>GitHub</strong> without limits.</p>
+      </div>
+
+      <div class="upload-premium-block upload-premium-block--muted">
+        <h3 class="upload-premium-h3" data-i18n="premium_plans">В планах</h3>
+        <p class="upload-premium-p" data-i18n="premium_plans_p">Подписки для игроков и отдельно для разработчиков (как премиум в Telegram). Поддержка авторов донатами и сигналами от аудитории, какие игры делать дальше. Реклама между играми — только если появится, заранее и аккуратно — не «смотри видео, иначе не поиграешь».</p>
       </div>
     </div>
   </div>
 
-  <div id="onboarding-screen" hidden>
-    <div class="onboarding-card tg-glass">
-      <div class="onboarding-body" id="onboardingBody"></div>
-      <div class="onboarding-footer" id="onboardingFooter"></div>
+  <!-- Форма: ссылка — одна прокручиваемая карточка -->
+  <div class="form-section visible" id="form-url">
+    <div class="upload-url-card" id="upload-url-card">
+      <p class="upload-panel-lead" data-i18n="upload_url_lead">Ссылка на игру и как она выглядит в ленте.</p>
+      <div class="field-group">
+        <div class="field-label" data-i18n="field_game_url">Ссылка на игру</div>
+        <input class="field-input" type="url" data-i18n-placeholder="field_game_url_ph" placeholder="https://username.github.io/game" id="urlInput">
+        <div class="field-hint" data-i18n="field_hint_hosting">GitHub Pages или любой хостинг с HTTPS</div>
+      </div>
+      <div class="upload-url-divider" aria-hidden="true"></div>
+      <div class="field-group">
+        <div class="field-label" data-i18n="field_title">Название</div>
+        <input class="field-input" type="text" data-i18n-placeholder="field_title_placeholder" placeholder="Название в ленте" id="gameNameInput2" maxlength="40">
+      </div>
+      <div class="field-group">
+        <div class="field-label" data-i18n="field_desc">Описание</div>
+        <textarea class="field-input" data-i18n-placeholder="field_desc_url" placeholder="Пара слов о чём игра..." id="gameDescInput2" maxlength="120"></textarea>
+      </div>
+      <div class="field-group">
+        <div class="field-label" data-i18n="field_genre">Жанр</div>
+        <div class="genre-pills" id="genrePills2"></div>
+      </div>
+      <div class="field-group">
+        <div class="field-label" data-i18n="cover_optional">Обложка (необязательно)</div>
+        <p class="field-hint field-hint--tight" data-i18n="cover_hint">Ссылка или файл — что удобнее.</p>
+        <input class="field-input" type="url" id="coverUrlInput" data-i18n-placeholder="cover_url_ph" placeholder="https://… картинка">
+        <label class="image-upload">
+          <input type="file" accept="image/*" id="gameImageInput">
+          <span data-i18n="cover_file_device">Файл с устройства</span>
+        </label>
+        <div class="image-preview" id="imagePreview" data-i18n="no_cover">Нет обложки</div>
+      </div>
+      <div class="upload-url-submit-wrap">
+        <button type="button" class="sg-btn sg-btn--primary sg-btn--screen-cta submit-btn--wide" data-action="submit-game" data-method="url" data-i18n="submit_moderation">На модерацию</button>
+      </div>
     </div>
   </div>
 
-  <div id="toast"></div>
+  <div id="upload-guide-block" class="upload-guide-block">
+    <p class="help-intro i18n-ru">Пошаговая памятка — форма выше.</p>
+    <p class="help-intro i18n-en">Step-by-step guide — form above.</p>
 
-  <!-- ══ SCRIPTS ══ -->
-  <script src="js/config.js?v=20260490"></script>
-  <script src="js/genre-icons.js?v=20260490"></script>
-  <script src="js/utils.js?v=20260490"></script>
-  <script src="js/i18n.js?v=20260490"></script>
-  <script src="js/telegram.js?v=20260490"></script>
-  <script src="js/telegram-initdata.js?v=20260490"></script>
-  <script src="js/tg-gate.js?v=20260490"></script>
-  <script src="js/boot-splash.js?v=20260490"></script>
-  <script src="js/state.js?v=20260490"></script>
-  <script src="js/api.js?v=20260490"></script>
-  <script src="js/onboarding.js?v=20260490"></script>
-  <script src="js/help-screens.js?v=20260490"></script>
-  <script src="js/feed.js?v=20260490"></script>
-  <script src="js/feed-nav-tip.js?v=20260490"></script>
-  <script src="js/feed-onboarding.js?v=20260490"></script>
-  <script src="js/actions.js?v=20260490"></script>
-  <script src="js/upload.js?v=20260490"></script>
-  <script src="js/genres.js?v=20260490"></script>
-  <script src="js/search.js?v=20260490"></script>
-  <script src="js/profile_new.js?v=20260490"></script>
-  <script src="js/game-editor.js?v=20260490"></script>
-  <script src="js/game-detail.js?v=20260490"></script>
-  <script src="js/liked-games.js?v=20260490"></script>
-  <script src="js/overlay-pull-close.js?v=20260490"></script>
-  <script src="js/admin.js?v=20260490"></script>
-  <script src="js/screens.js?v=20260490"></script>
-  <script src="js/events.js?v=20260490"></script>
-  <script src="js/main.js?v=20260490"></script>
+    <div class="i18n-ru">
+    <details class="help-acc help-acc--step1">
+      <summary><span class="help-acc-num">1</span> Создай игру с ИИ</summary>
+      <div class="help-acc-body">
+        <p>Зайди на <strong>claude.ai</strong> или <strong>chatgpt.com</strong> — оба бесплатны. Напиши (можно скопировать):</p>
+        <pre class="help-prompt">Напиши мне простую браузерную игру на HTML + JavaScript.
+Один файл, без внешних библиотек.
+Жанр: [змейка / тетрис / кликер / своё]
+Игра должна работать на мобильном телефоне.</pre>
+        <p>ИИ выдаст код — скопируй целиком. Не понравилось — попроси переделать.</p>
+      </div>
+    </details>
+    <details class="help-acc help-acc--step2">
+      <summary><span class="help-acc-num">2</span> Выложи на GitHub Pages</summary>
+      <div class="help-acc-body">
+        <p>Бесплатный хостинг от GitHub, без карты и серверов.</p>
+        <ol class="help-ol">
+          <li>github.com → регистрация (если нет)</li>
+          <li>+ → New repository, имя например <code>my-game</code>, <strong>Public</strong> → Create</li>
+          <li>Add file → Create new file → имя <code>index.html</code> → вставь код → Commit changes</li>
+          <li>Settings → Pages → Branch: <strong>main</strong> → Save</li>
+        </ol>
+        <p>Через 1–2 мин ссылка вида <code>https://твой-ник.github.io/my-game</code> — это URL игры.</p>
+      </div>
+    </details>
+    <details class="help-acc help-acc--step3">
+      <summary><span class="help-acc-num">3</span> Скопируй ссылку</summary>
+      <div class="help-acc-body">
+        <p>В <strong>Settings → Pages</strong> зелёная плашка: <em>Your site is live at https://…</em> — скопируй её. Подожди 1–3 мин после публикации, если не открывается сразу.</p>
+      </div>
+    </details>
+    <p class="upload-faq-title">FAQ</p>
+    <details class="help-faq-item"><summary>Это правда бесплатно?</summary><div class="help-acc-body"><p>Да. У Claude и ChatGPT есть бесплатные режимы. GitHub Pages бесплатен.</p></div></details>
+    <details class="help-faq-item"><summary>Нужно уметь программировать?</summary><div class="help-acc-body"><p>Нет. Ты описываешь желаемое ИИ — он пишет код.</p></div></details>
+    <details class="help-faq-item"><summary>Игра не работает — что делать?</summary><div class="help-acc-body"><p>Скопируй текст ошибки из браузера и отправь ИИ: «Вот ошибка, исправь код».</p></div></details>
+    <details class="help-faq-item"><summary>Какие игры подходят?</summary><div class="help-acc-body"><p>Браузерные на HTML, один файл <code>index.html</code>, без серверной части.</p></div></details>
+    <details class="help-faq-item"><summary>Можно обновить игру после публикации?</summary><div class="help-acc-body"><p>Да. Измени <code>index.html</code> в репозитории — через пару минут обновится по той же ссылке.</p></div></details>
+    <details class="help-faq-item"><summary>Почему GitHub?</summary><div class="help-acc-body"><p>Простой и надёжный бесплатный вариант: без карты и сложной настройки.</p></div></details>
+    </div>
+    <div class="i18n-en">
+    <details class="help-acc help-acc--step1">
+      <summary><span class="help-acc-num">1</span> Build a game with AI</summary>
+      <div class="help-acc-body">
+        <p>Open <strong>claude.ai</strong> or <strong>chatgpt.com</strong> — both have free tiers. Prompt (you can copy):</p>
+        <pre class="help-prompt">Make a simple browser game in HTML + JavaScript.
+Single file, no external libraries.
+Genre: [snake / tetris / clicker / your idea]
+Must work on a mobile phone.</pre>
+        <p>Copy the full code from the reply. Ask for changes if needed.</p>
+      </div>
+    </details>
+    <details class="help-acc help-acc--step2">
+      <summary><span class="help-acc-num">2</span> Publish on GitHub Pages</summary>
+      <div class="help-acc-body">
+        <p>Free hosting from GitHub, no card or servers.</p>
+        <ol class="help-ol">
+          <li>github.com → sign up (if needed)</li>
+          <li>+ → New repository, e.g. <code>my-game</code>, <strong>Public</strong> → Create</li>
+          <li>Add file → Create new file → name <code>index.html</code> → paste code → Commit changes</li>
+          <li>Settings → Pages → Branch: <strong>main</strong> → Save</li>
+        </ol>
+        <p>In 1–2 minutes you get a URL like <code>https://yourname.github.io/my-game</code> — that is your game URL.</p>
+      </div>
+    </details>
+    <details class="help-acc help-acc--step3">
+      <summary><span class="help-acc-num">3</span> Copy the link</summary>
+      <div class="help-acc-body">
+        <p>In <strong>Settings → Pages</strong> the green banner <em>Your site is live at https://…</em> — copy it. Wait 1–3 minutes after publish if it does not open immediately.</p>
+      </div>
+    </details>
+    <p class="upload-faq-title">FAQ</p>
+    <details class="help-faq-item"><summary>Is it really free?</summary><div class="help-acc-body"><p>Yes. Claude and ChatGPT have free modes. GitHub Pages is free.</p></div></details>
+    <details class="help-faq-item"><summary>Do I need to code?</summary><div class="help-acc-body"><p>No. Describe what you want — the model writes the code.</p></div></details>
+    <details class="help-faq-item"><summary>The game does not work — what now?</summary><div class="help-acc-body"><p>Copy the browser error text and send it to the model: “Here is the error, fix the code.”</p></div></details>
+    <details class="help-faq-item"><summary>What games are OK?</summary><div class="help-acc-body"><p>Browser HTML games, one <code>index.html</code> file, no backend.</p></div></details>
+    <details class="help-faq-item"><summary>Can I update after publishing?</summary><div class="help-acc-body"><p>Yes. Edit <code>index.html</code> in the repo — after a few minutes the same URL updates.</p></div></details>
+    <details class="help-faq-item"><summary>Why GitHub?</summary><div class="help-acc-body"><p>Simple, reliable free option — no card or heavy setup.</p></div></details>
+    </div>
+
+    <button type="button" class="sg-btn sg-btn--secondary upload-scroll-to-form" data-action="upload-scroll-to-form" data-i18n="upload_scroll_form">К форме</button>
+  </div>
+
+  </div><!-- /.upload-active-panel -->
+</div>
+
+<!-- ══ ЭКРАН: ПРОФИЛЬ ══ -->
+<div id="profile-screen">
+  <div class="profile-header">
+    <div class="screen-header screen-header--in-screen">
+      <button type="button" class="screen-back sg-btn sg-btn--ghost" data-action="close-profile" data-i18n-aria="upload_back_aria" aria-label="Назад к ленте" data-i18n="feed_back">← Лента</button>
+      <div class="screen-title" data-i18n="profile_title">Профиль</div>
+    </div>
+    <div class="profile-top">
+      <div class="profile-avatar" id="profileAvatar">?</div>
+      <div class="profile-stats">
+        <div class="stat-item">
+          <div class="stat-num" id="statGames">0</div>
+          <div class="stat-lbl" data-i18n="stat_games">Игр</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-num" id="statFollowers">0</div>
+          <div class="stat-lbl" data-i18n="stat_followers">Подписчиков</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-num" id="statLikes">0</div>
+          <div class="stat-lbl" data-i18n="stat_likes">Лайки</div>
+        </div>
+      </div>
+    </div>
+    <p class="profile-stats-hint" id="profileStatsHint" data-i18n="profile_stats_hint">Игры — опубликованные карточки. Лайки — сумма по всем твоим играм в ленте.</p>
+    <div id="profileMeBanner" class="profile-me-banner" hidden>
+      <p class="profile-me-banner-text" id="profileMeBannerText"></p>
+      <div class="profile-me-banner-actions">
+        <button type="button" class="profile-me-retry" data-action="profile-retry-me" id="profileMeRetryBtn" data-i18n="profile_me_retry">Повторить</button>
+        <button type="button" class="profile-me-retry profile-me-reload" data-action="profile-reload-miniapp" id="profileMeReloadBtn" data-i18n="profile_me_reload">Перезапустить мини-апп</button>
+      </div>
+    </div>
+    <div class="profile-name" id="profileName">Гость</div>
+    <div class="profile-handle" id="profileHandle">@—</div>
+    <p class="profile-bio" id="profileBio"></p>
+    <div class="profile-edit-actions">
+      <button type="button" class="profile-edit-toggle-btn primary" id="profileEditOpenBtn" data-action="profile-start-edit" data-i18n="profile_edit">Редактировать профиль</button>
+      <button type="button" class="profile-edit-toggle-btn primary" id="profileEditSaveBtn" data-action="profile-finish-edit" data-i18n="profile_save_btn">Сохранить</button>
+      <button type="button" class="profile-edit-toggle-btn" id="profileEditDiscardBtn" data-action="profile-discard-edit" data-i18n="profile_discard">Отмена</button>
+    </div>
+    <div id="profile-edit-wrap" class="profile-edit-wrap">
+      <div class="profile-edit-fields">
+        <p class="profile-id-readonly">ID: <strong id="profileSiteHandleRead">—</strong> <span class="profile-id-hint" data-i18n="profile_id_hint">при регистрации</span></p>
+        <label class="profile-field">
+          <span class="profile-field-lbl" data-i18n="profile_display_lbl">Имя в SmolGame</span>
+          <input class="field-input" type="text" id="profileDisplayName" maxlength="60" data-i18n-placeholder="profile_display_ph" placeholder="Как тебя видят другие">
+        </label>
+        <label class="profile-field">
+          <span class="profile-field-lbl" data-i18n="profile_bio_lbl">О себе</span>
+          <textarea class="field-input" id="profileBioInput" maxlength="280" rows="3" data-i18n-placeholder="profile_bio_ph" placeholder="Коротко о себе или своих играх…"></textarea>
+        </label>
+        <div class="profile-field">
+          <span class="profile-field-lbl" data-i18n="profile_photo_lbl">Фото профиля</span>
+          <div class="profile-avatar-row">
+            <label class="image-upload profile-avatar-upload">
+              <input type="file" accept="image/*" id="profileAvatarInput">
+              <span data-i18n="profile_photo_upload">Загрузить фото</span>
+            </label>
+            <button type="button" class="profile-text-btn" data-action="reset-profile-photo" data-i18n="profile_photo_reset">Как в Telegram</button>
+          </div>
+          <div class="profile-avatar-hint" data-i18n="profile_photo_max">До 2 МБ</div>
+        </div>
+      </div>
+      <button type="button" class="submit-btn profile-save-btn" data-action="save-profile" data-i18n="profile_save_main">Сохранить профиль</button>
+    </div>
+    <div class="profile-badges">
+      <div class="profile-badge" data-i18n="badge_player">🎮 Игрок</div>
+      <div class="profile-badge dev" id="devBadge" style="display:none" data-i18n="badge_dev">⚡ Разработчик</div>
+      <div class="profile-badge profile-badge--premium" id="premiumBadge" style="display:none" data-i18n="badge_premium">✦ Премиум</div>
+    </div>
+    <p class="profile-upload-hint i18n-ru">Как добавить игру, шаги и FAQ — на экране <strong>Загрузить</strong> (＋).</p>
+    <p class="profile-upload-hint i18n-en">How to add a game, steps and FAQ — on the <strong>Upload</strong> (+) tab.</p>
+  </div>
+  <!-- Модерация — видна только админу (body.is-admin) -->
+  <div class="admin-only">
+    <div class="profile-games-title" data-i18n="admin_queue_title">На модерации</div>
+    <div id="adminPendingList" style="padding:0 20px 20px;"></div>
+  </div>
+
+  <div class="profile-games-title" data-i18n="my_games_title">Мои игры</div>
+  <div class="games-grid" id="myGamesGrid">
+    <div class="my-games-empty-placeholder" style="grid-column:1/-1;text-align:center;padding:40px 0;color:var(--muted);font-size:14px;" data-i18n="no_games_grid">
+      Нет игр
+    </div>
+  </div>
+</div>
+
+<!-- ══ ЭКРАН: ИГРЫ ══ -->
+<div id="games-library-screen">
+  <div class="search-header">
+    <div class="search-header-top">
+      <button type="button" class="screen-back sg-btn sg-btn--ghost" data-action="close-games-library" data-i18n-aria="upload_back_aria" aria-label="Назад к ленте" data-i18n="feed_back">← Лента</button>
+      <div class="screen-title" data-i18n="games_lib_title">Игры</div>
+    </div>
+    <p class="games-library-lead" data-i18n="games_lib_lead">Лайкнул и недавно открывал — в двух списках ниже.</p>
+  </div>
+  <div class="games-library-section">
+    <h2 class="games-library-section-title" data-i18n="games_liked">Лайкнул</h2>
+    <div class="games-grid games-grid--library" id="likedGamesGrid">
+      <div class="games-lib-loading" style="grid-column:1/-1;text-align:center;padding:24px 0;color:var(--muted);font-size:14px;" data-i18n="loading">Загрузка…</div>
+    </div>
+  </div>
+  <div class="games-library-section">
+    <h2 class="games-library-section-title" data-i18n="games_played">Играл</h2>
+    <div class="games-grid games-grid--library" id="playedGamesGrid">
+      <div class="games-lib-loading" style="grid-column:1/-1;text-align:center;padding:24px 0;color:var(--muted);font-size:14px;" data-i18n="loading">Загрузка…</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ ЭКРАН: ПОИСК ══ -->
+<div id="search-screen">
+  <div class="search-header">
+    <div class="search-header-top">
+      <button type="button" class="screen-back sg-btn sg-btn--ghost" data-action="close-search" data-i18n-aria="upload_back_aria" aria-label="Назад к ленте" data-i18n="feed_back">← Лента</button>
+      <div class="screen-title" data-i18n="search_title">Поиск</div>
+    </div>
+    <div class="search-bar">
+      <span class="search-icon" aria-hidden="true"><svg class="sg-icon sg-icon--sm" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="11" cy="11" r="6.75" stroke="currentColor" stroke-width="1.65"/><path d="M16.5 16.5L21 21" stroke="currentColor" stroke-width="1.65" stroke-linecap="round"/></svg></span>
+      <input type="search" enterkeyhint="search" autocomplete="off" data-i18n-placeholder="search_ph" placeholder="Название или автор…" id="searchInput" data-input="search">
+    </div>
+    <div id="searchHintBar" class="search-hint-bar"></div>
+  </div>
+  <div class="genre-scroll-wrap">
+    <div class="genre-scroll-label" data-i18n="genre_filter_lbl">Жанр</div>
+    <div class="genre-scroll" id="genreFilter"></div>
+  </div>
+  <div class="search-results" id="searchResults"></div>
+</div>
+
+<!-- ══ ЭКРАН: АВТОР ══ -->
+<div id="author-screen">
+  <div class="profile-header">
+    <div class="screen-header screen-header--in-screen">
+      <button type="button" class="screen-back sg-btn sg-btn--ghost" data-action="close-author" data-i18n-aria="author_back_aria" aria-label="Назад" data-i18n="author_screen_back">← Назад</button>
+      <div class="screen-title" data-i18n="author_screen_title">Разработчик</div>
+    </div>
+    <div class="profile-top">
+      <div class="profile-avatar" id="authorProfileAvatar">?</div>
+      <div class="profile-stats">
+        <div class="stat-item">
+          <div class="stat-num" id="authorStatGames">0</div>
+          <div class="stat-lbl" data-i18n="stat_games">Игр</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-num" id="authorStatFollowers">0</div>
+          <div class="stat-lbl" data-i18n="stat_followers">Подписчиков</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-num" id="authorStatLikes">0</div>
+          <div class="stat-lbl" data-i18n="stat_likes">Лайки</div>
+        </div>
+      </div>
+    </div>
+    <div class="profile-name" id="authorProfileName">—</div>
+    <div class="profile-handle" id="authorProfileHandle">@—</div>
+    <p class="profile-bio" id="authorProfileBio" style="display:none"></p>
+    <button class="author-follow-btn" id="authorFollowBtn" data-action="toggle-author-follow" data-i18n="author_follow">Подписаться</button>
+  </div>
+  <div class="profile-games-title" data-i18n="author_games_title">Игры автора</div>
+  <div class="games-grid" id="authorGamesGrid"></div>
+</div>
+
+<!-- ══ ЭКРАН: РЕГИСТРАЦИЯ ══ -->
+<div id="onboarding-screen">
+  <div class="onboarding-card tg-glass">
+    <div class="onboarding-body" id="onboardingBody"></div>
+    <div class="onboarding-footer" id="onboardingFooter"></div>
+  </div>
+</div>
+
+<!-- ══ TOAST ══ -->
+<div id="toast"></div>
+
+<!-- ══ SCRIPTS ══ -->
+<!-- Порядок важен: config/utils/telegram → state → api → модули логики → события → main. -->
+<script src="js/config.js?v=20260490"></script>
+<script src="js/genre-icons.js?v=20260490"></script>
+<script src="js/utils.js?v=20260490"></script>
+<script src="js/i18n.js?v=20260490"></script>
+<script src="js/telegram.js?v=20260490"></script>
+<script src="js/telegram-initdata.js?v=20260490"></script>
+<script src="js/tg-gate.js?v=20260490"></script>
+<script src="js/boot-splash.js?v=20260490"></script>
+<script src="js/state.js?v=20260490"></script>
+<script src="js/api.js?v=20260490"></script>
+<script src="js/onboarding.js?v=20260490" hidden></script>
+<script src="js/help-screens.js?v=20260490"></script>
+<script src="js/feed.js?v=20260490"></script>
+<script src="js/feed-nav-tip.js?v=20260490"></script>
+<script src="js/feed-onboarding.js?v=20260490"></script>
+<script src="js/actions.js?v=20260490"></script>
+<script src="js/upload.js?v=20260490"></script>
+<script src="js/genres.js?v=20260490"></script>
+<script src="js/search.js?v=20260490"></script>
+<script src="js/screens.js?v=20260490"></script>
+<script>
+/** ══════════════════════════════════════════════════════════
+ *  EXTENDED LOGIC (Inlined to bypass WebView blocks)
+ *  ══════════════════════════════════════════════════════════ */
+(function() {
+  const t = typeof window.t === 'function' ? window.t : k => k;
+  const esc = window.esc || (s => String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'));
+
+  /** ══ ADMIN ══ */
+  window.loadAdminPending = async function() {
+    if (!document.body.classList.contains('is-admin')) return;
+    const host = document.getElementById('adminPendingList');
+    if (!host) return;
+    host.innerHTML = '<div class="admin-empty">' + t('loading') + '</div>';
+    try {
+      const { games } = await API.admin.pending();
+      if (!games || games.length === 0) { host.innerHTML = '<div class="admin-empty">Очередь пуста 🎉</div>'; return; }
+      host.innerHTML = games.map(g => `
+        <div class="admin-card" data-game-id="${esc(g.id)}">
+          <div class="admin-card-title"><span>${esc(g.title)}</span></div>
+          <div class="admin-card-meta">от ${esc(g.authorName || g.author_id)}<br><a href="${esc(g.url)}" target="_blank">${esc(g.url)}</a></div>
+          <div class="admin-actions">
+            <button class="admin-btn approve" data-action="admin-approve">✓ Одобрить</button>
+            <button class="admin-btn reject" data-action="admin-reject">✗ Отклонить</button>
+          </div>
+        </div>`).join('');
+    } catch (e) { host.innerHTML = `<div class="admin-empty">⚠️ ${esc(e.message)}</div>`; }
+  };
+
+  /** ══ GAME DETAIL ══ */
+  window.openGameDetail = async function(gameId) {
+    if (!gameId) return;
+    const screen = document.getElementById('game-detail-screen');
+    if (!screen) return;
+    screen.hidden = false;
+    document.body.classList.add('game-detail-open');
+    try {
+      const data = await API.game(gameId);
+      const game = data?.game;
+      const t = typeof window.t === 'function' ? window.t : k => k;
+      document.getElementById('gameDetailTitle').textContent = game.title;
+      document.getElementById('gameDetailDesc').textContent = game.description || '';
+      document.getElementById('gameDetailHero').innerHTML = game.imageUrl ? `<img src="${esc(game.imageUrl)}" class="game-detail-hero-img">` : '';
+      const playBtn = document.getElementById('gameDetailPlayBtn');
+      if (playBtn) playBtn.onclick = () => {
+         window.closeGameDetail();
+         window.switchTab('feed');
+         window.injectGameIntoFeed(gameId).then(idx => { if(idx >= 0) window.goTo(idx, false); });
+      };
+    } catch (e) { showToast(t('err_load')); window.closeGameDetail(); }
+  };
+  window.closeGameDetail = () => {
+    const s = document.getElementById('game-detail-screen');
+    if (s) s.hidden = true;
+    document.body.classList.remove('game-detail-open');
+  };
+
+  /** ══ ONBOARDING (AUTOMATED) ══ */
+  window.checkOnboarding = async function() {
+    try {
+      const data = await API.checkRegistered();
+      if (data?.registered) {
+        if (data.user?.siteHandle) USER.siteHandle = data.user.siteHandle;
+        return false; // Already registered
+      }
+      // AUTO-REGISTER if not registered
+      const tgUser = window.Telegram?.WebApp?.initDataUnsafe?.user;
+      if (tgUser) {
+        const handle = tgUser.username || `user_${tgUser.id}`;
+        try {
+          const res = await API.register({ 
+             siteHandle: handle,
+             dateOfBirth: '2000-01-01', // Default for auto-skip
+             privacyAccepted: true,
+             tosAccepted: true
+          });
+          USER.siteHandle = res?.user?.siteHandle || handle;
+          return false; // Skip UI, we just registered
+        } catch (regErr) {
+          console.warn('Auto-register failed, showing UI', regErr);
+          return true;
+        }
+      }
+      return true; // Show UI only if no TG data
+    } catch (e) { return false; }
+  };
+
+  /** ══ GAME EDITOR ══ */
+  window.toggleProfileGameEditor = function(gameId) {
+    const row = document.querySelector(`.profile-game-row[data-profile-game-id="${gameId}"]`);
+    const panel = document.getElementById('profileGameEditor-' + gameId);
+    if (panel && panel.hidden) {
+      panel.hidden = false;
+      if(row) row.classList.add('profile-game-row--editing');
+    } else if (panel) {
+      panel.hidden = true;
+      if(row) row.classList.remove('profile-game-row--editing');
+    }
+  };
+})();
+</script>
+<script>
+/** ══════════════════════════════════════════════════════════
+ *  PROFILE LOGIC (Inlined to bypass WebView blocks)
+ *  ══════════════════════════════════════════════════════════ */
+(function() {
+  const tf = typeof window.t === 'function' ? window.t : k => k;
+  const genreOtherApi = () => tf('genre_api_other');
+
+  function parseProfileStats(me) {
+    const raw = me?.stats;
+    if (!raw || typeof raw !== 'object') return { games: null, likes: null, followers: null };
+    const games = Number(raw.games ?? raw.gamesCount);
+    const likes = Number(raw.likes ?? raw.likesTotal);
+    const followers = Number(raw.followers ?? raw.followersCount);
+    return {
+      games: Number.isFinite(games) ? games : null,
+      likes: Number.isFinite(likes) ? likes : null,
+      followers: Number.isFinite(followers) ? followers : null,
+    };
+  }
+
+  function gameStatusBadgeHtml(status) {
+    if (status === 'pending') return `<span class="game-card-status-badge pending">${esc(tf('moderation'))}</span>`;
+    if (status === 'rejected') return `<span class="game-card-status-badge rejected">${esc(tf('rejected'))}</span>`;
+    return '';
+  }
+
+  async function waitTelegramUserForProfile(maxMs) {
+    const cap = Number(maxMs) > 0 ? Number(maxMs) : 3500;
+    const deadline = Date.now() + cap;
+    while (Date.now() < deadline) {
+      if (typeof ensureSmolgameInitDataFromUrl === 'function') ensureSmolgameInitDataFromUrl();
+      if (typeof window.syncUSERFromTelegramInit === 'function') window.syncUSERFromTelegramInit();
+      if (USER.id) return;
+      await new Promise(r => setTimeout(r, 70));
+    }
+  }
+
+  function setProfileMeBannerVisible(show, message) {
+    const box = document.getElementById('profileMeBanner');
+    const txt = document.getElementById('profileMeBannerText');
+    if (!box) return;
+    if (show && message && txt) txt.textContent = message;
+    if (show) box.removeAttribute('hidden'); else box.setAttribute('hidden', '');
+  }
+
+  function applyMeToProfileUi(me, { bioRead, handleRead, premBadge, setStatGames, setStatFollowers, setStatLikes }) {
+    const st = parseProfileStats(me);
+    if (st.games != null) setStatGames(String(st.games));
+    if (st.likes != null) setStatLikes(fmtNum(st.likes));
+    if (st.followers != null) setStatFollowers(fmtNum(st.followers));
+
+    if (me && me.user) {
+      const mu = me.user;
+      if (mu.id) { USER.id = String(mu.id); USER.tgId = String(mu.id); }
+      if (mu.siteHandle) USER.siteHandle = mu.siteHandle;
+      const bestName = mu.name || mu.displayName || mu.telegramName;
+      if (bestName) USER.name = bestName;
+      if (mu.avatar) USER.avatar = mu.avatar;
+      USER.isGithubConnected = Boolean(mu.isGithubConnected);
+      USER.isPremium = Boolean(mu.isPremium);
+      USER.displayName = mu.displayName || mu.name || USER.displayName || '';
+      USER.bio = mu.bio || USER.bio || '';
+      if (mu.isAdmin) document.body.classList.add('is-admin'); else document.body.classList.remove('is-admin');
+      if (mu.id) { try { localStorage.setItem('smolgame:persisted_id:v1', String(mu.id)); } catch(e) {} }
+      if (premBadge) premBadge.style.display = mu.isPremium ? 'inline-flex' : 'none';
+    }
+
+    const nameEl = document.getElementById('profileName');
+    if (nameEl) nameEl.textContent = USER.name || USER.id || tf('guest');
+    const handleEl = document.getElementById('profileHandle');
+    if (handleEl) handleEl.textContent = '@' + (USER.siteHandle || USER.id || '—');
+    if (handleRead) handleRead.textContent = USER.siteHandle || USER.id || '—';
+    if (bioRead) { bioRead.textContent = USER.bio || ''; bioRead.style.display = USER.bio ? '' : 'none'; }
+    setProfileAvatar(USER.avatar);
+    const dnInput = document.getElementById('profileDisplayName');
+    if (dnInput) dnInput.value = USER.displayName || USER.name || '';
+    const bioInput = document.getElementById('profileBioInput');
+    if (bioInput) bioInput.value = USER.bio || '';
+  }
+
+  async function renderProfile() {
+    const bioRead = document.getElementById('profileBio');
+    const handleRead = document.getElementById('profileSiteHandleRead');
+    await waitTelegramUserForProfile(4000);
+    setProfileMeBannerVisible(false);
+    setProfileAvatar(USER.avatar);
+    document.getElementById('profileName').textContent = USER.name || USER.id || tf('guest');
+    document.getElementById('profileHandle').textContent = '@' + (USER.siteHandle || USER.id || '—');
+    if (handleRead) handleRead.textContent = USER.siteHandle || USER.id || '—';
+    const setStatGames = v => { document.getElementById('statGames').textContent = v; };
+    const setStatFollowers = v => { document.getElementById('statFollowers').textContent = v; };
+    const setStatLikes = v => { document.getElementById('statLikes').textContent = v; };
+    setStatGames('…'); setStatFollowers('…'); setStatLikes('…');
+    const isDev = USER.isGithubConnected || document.body.classList.contains('is-admin');
+    document.getElementById('devBadge').style.display = isDev ? '' : 'none';
+    const premBadge = document.getElementById('premiumBadge');
+    if (premBadge) premBadge.style.display = USER.isPremium ? '' : 'none';
+
+    let me = null;
+    try {
+      me = await API.me();
+      if ((!me || !me.user) && USER.id) {
+        try {
+          const pub = await API.userProfile(USER.id);
+          if (pub && pub.user) {
+            me = { ...me, user: { ...pub.user, isAdmin: document.body.classList.contains('is-admin') }, stats: pub.stats };
+          }
+        } catch (e2) {}
+      }
+      applyMeToProfileUi(me, { bioRead, handleRead, premBadge, setStatGames, setStatFollowers, setStatLikes });
+    } catch (err) {
+      setProfileMeBannerVisible(true, err.message || tf('profile_me_failed'));
+    } finally {
+      document.getElementById('profileEditOpenBtn').style.display = USER.id ? '' : 'none';
+    }
+
+    let myGames = [];
+    try {
+      const res = await API.myGames();
+      myGames = Array.isArray(res?.games) ? res.games : [];
+    } catch (e) {
+      myGames = Array.isArray(GAMES) ? GAMES.filter(g => sameTelegramUserId(g.authorId, USER.id)) : [];
+    }
+
+    const publishedCount = myGames.filter(g => g?.status === 'published').length;
+    if (document.getElementById('statGames').textContent === '…') setStatGames(String(publishedCount));
+    if (document.getElementById('statFollowers').textContent === '…') setStatFollowers('0');
+    if (document.getElementById('statLikes').textContent === '…') {
+      const sumLikes = myGames.reduce((acc, g) => acc + (Number(g?.likes) || 0), 0);
+      setStatLikes(fmtNum(sumLikes));
+    }
+
+    const grid = document.getElementById('myGamesGrid');
+    if (!grid) return;
+    if (myGames.length === 0) {
+      grid.innerHTML = `<div class="sg-empty-state sg-empty-state--grid"><div class="sg-empty-state-title">${esc(tf('profile_empty_games_title'))}</div><div class="sg-empty-state-sub">${esc(tf('profile_empty_games_sub'))}</div></div>`;
+    } else {
+      grid.innerHTML = myGames.map(g => {
+        const idRaw = String(g.id || '');
+        const gid = esc(idRaw);
+        const canEdit = g.status !== 'rejected';
+        const titleEsc = esc(g.title || '');
+        const editorHtml = canEdit ? `
+        <div id="profileGameEditor-${idRaw}" class="profile-game-editor" hidden>
+          <div class="field-group"><div class="field-label">${esc(tf('field_title'))}</div><input class="field-input profile-game-editor-title" type="text" value="${titleEsc}"></div>
+          <div class="profile-game-editor-actions">
+            <button type="button" class="profile-text-btn" data-action="profile-game-editor-cancel" data-game-id="${idRaw}">${esc(tf('profile_discard'))}</button>
+            <button type="button" class="submit-btn" data-action="profile-game-editor-save" data-game-id="${idRaw}">${esc(tf('profile_save_review'))}</button>
+          </div>
+        </div>` : '';
+        return `<div class="profile-game-row" id="profileGameRow-${idRaw}" data-profile-game-id="${idRaw}">
+          <div class="game-card sg-store-card" data-action="open-game-detail" data-game-id="${gid}">
+            <div class="game-card-thumb sg-store-card-thumb">${gameStatusBadgeHtml(g.status)}${typeof gameThumbHtml === 'function' ? gameThumbHtml(g) : ''}</div>
+            <div class="game-card-info"><div class="game-card-name">${esc(g.title)}</div></div>
+          </div>
+          <div class="profile-game-actions profile-game-actions--icons">
+             <button type="button" class="profile-game-icon-btn profile-game-icon-btn--danger" data-action="delete-game" data-game-id="${gid}"><svg class="sg-icon" width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M9 3h6M4 7h16M6 7l1 14h10l1-14" stroke="currentColor" stroke-width="1.5"/><path d="M10 11v6M14 11v6" stroke="currentColor" stroke-width="1.5"/></svg></button>
+          </div>
+          ${editorHtml}
+        </div>`;
+      }).join('');
+    }
+  }
+
+  function setProfileAvatar(avatar) {
+    const el = document.getElementById('profileAvatar');
+    if (!el) return;
+    const url = avatarImgUrl(avatar);
+    if (url) el.innerHTML = `<img src="${esc(url)}" alt="" referrerpolicy="no-referrer">`;
+    else el.textContent = avatar || '?';
+  }
+
+  window.renderProfile = renderProfile;
+  window.saveProfile = async function() {
+    const displayName = document.getElementById('profileDisplayName').value.trim();
+    const bio = document.getElementById('profileBioInput').value.trim();
+    if (!displayName) { showToast(tf('profile_toast_name')); return false; }
+    try {
+      const me = await API.updateMe({ displayName, bio });
+      if (me?.user) {
+        USER.name = me.user.name || USER.name;
+        USER.displayName = me.user.displayName || '';
+        USER.bio = me.user.bio || '';
+        document.getElementById('profileName').textContent = USER.name;
+        document.getElementById('profileBio').textContent = USER.bio;
+      }
+      showToast(tf('profile_saved'));
+      document.getElementById('profile-screen')?.classList.remove('profile-edit-active');
+      return true;
+    } catch (e) { showToast(tf('err_load')); return false; }
+  };
+  window.startProfileEdit = () => document.getElementById('profile-screen')?.classList.add('profile-edit-active');
+  window.cancelProfileEdit = () => document.getElementById('profile-screen')?.classList.remove('profile-edit-active');
+
+  /** ══════════════════════════════════════════════════════════
+   *  LIKED/PLAYED GAMES LOGIC
+   *  ══════════════════════════════════════════════════════════ */
+  function renderGamesGridSection(gridId, games, emptyTitle, emptySub, emptyCtaTab) {
+    const grid = document.getElementById(gridId);
+    if (!grid) return;
+    if (games.length === 0) {
+      grid.innerHTML = `<div class="sg-empty-state sg-empty-state--grid" style="grid-column:1/-1"><div class="sg-empty-state-title">${esc(emptyTitle)}</div><div class="sg-empty-state-sub">${esc(emptySub)}</div></div>`;
+      return;
+    }
+    grid.innerHTML = games.map(g => `<div class="game-card sg-store-card" data-action="open-game-detail" data-game-id="${esc(g.id)}"><div class="game-card-thumb sg-store-card-thumb">${typeof gameThumbHtml === 'function' ? gameThumbHtml(g) : ''}</div><div class="game-card-info"><div class="game-card-name">${esc(g.title)}</div></div></div>`).join('');
+  }
+
+  window.loadGamesLibrary = async function() {
+    const lGrid = document.getElementById('likedGamesGrid');
+    const pGrid = document.getElementById('playedGamesGrid');
+    if (lGrid) lGrid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:24px;">' + esc(tf('loading')) + '</div>';
+    if (pGrid) pGrid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:24px;">' + esc(tf('loading')) + '</div>';
+    try {
+      const batch = await API.gamesLibrary();
+      renderGamesGridSection('likedGamesGrid', batch?.likedGames || [], tf('liked_empty_title'), tf('liked_empty_sub'), 'feed');
+      renderGamesGridSection('playedGamesGrid', batch?.playedGames || [], tf('played_empty_title'), tf('played_empty_sub'), 'feed');
+    } catch (e) {
+      const errHtml = `<div style="grid-column:1/-1;text-align:center;padding:24px;">${esc(tf('load_failed_title'))}</div>`;
+      if (lGrid) lGrid.innerHTML = errHtml; if (pGrid) pGrid.innerHTML = errHtml;
+    }
+  };
+  window.refreshGamesLibraryScreen = () => {
+    if (document.getElementById('games-library-screen')?.classList.contains('open')) window.loadGamesLibrary();
+  };
+})();
+</script>
+<script src="js/events.js?v=20260490"></script>
+<script src="js/overlay-pull-close.js?v=20260490"></script>
+<script src="js/main.js?v=20260490"></script>
 </body>
 </html>

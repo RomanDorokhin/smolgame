@@ -18,7 +18,6 @@ function syncBodyFeedHiddenUnderSheet() {
 /** Закрыть основные вкладки и оверлей автора (нижний таб не должен «застревать» под #author-screen). */
 function closeAllMainTabs() {
   if (typeof clearFeedSwipeTeaseTimers === 'function') clearFeedSwipeTeaseTimers();
-  if (typeof window.closeGameDetail === 'function') window.closeGameDetail();
   const upload = document.getElementById('upload-screen');
   if (upload?.classList.contains('open')) {
     upload.classList.remove('open');
