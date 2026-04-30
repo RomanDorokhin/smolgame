@@ -879,7 +879,8 @@ Must work on a mobile phone.</pre>
     const setStatFollowers = v => { document.getElementById('statFollowers').textContent = v; };
     const setStatLikes = v => { document.getElementById('statLikes').textContent = v; };
     setStatGames('…'); setStatFollowers('…'); setStatLikes('…');
-    document.getElementById('devBadge').style.display = USER.isGithubConnected ? '' : 'none';
+    const isDev = USER.isGithubConnected || document.body.classList.contains('is-admin');
+    document.getElementById('devBadge').style.display = isDev ? '' : 'none';
     const premBadge = document.getElementById('premiumBadge');
     if (premBadge) premBadge.style.display = USER.isPremium ? '' : 'none';
 
