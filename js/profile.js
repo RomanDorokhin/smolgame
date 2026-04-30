@@ -152,13 +152,11 @@ async function renderProfile() {
   let myGames = [];
 
   const debugPanel = document.getElementById('profileDebugPanel');
-  const isAdmin = document.body.classList.contains('is-admin');
   if (debugPanel) {
-    debugPanel.style.display = isAdmin ? 'block' : 'none';
     const dTime = document.getElementById('debugTime');
     if (dTime) dTime.textContent = new Date().toLocaleTimeString();
     const dUser = document.getElementById('debugUser');
-    if (dUser) dUser.textContent = JSON.stringify({ id: USER.id, name: USER.name, siteHandle: USER.siteHandle });
+    if (dUser) dUser.textContent = JSON.stringify({ id: USER.id, tgId: USER.tgId, name: USER.name });
   }
 
   let me = null;
@@ -185,14 +183,14 @@ async function renderProfile() {
       }
     }
 
-    applyMeToProfileUi(me, { bioRead, handleRead, premBadge, setStatGames, setStatFollowers, setStatLikes });
-    if (debugPanel && isAdmin) {
+    if (debugPanel) {
       document.getElementById('debugMe').textContent = JSON.stringify(me);
     }
+    applyMeToProfileUi(me, { bioRead, handleRead, premBadge, setStatGames, setStatFollowers, setStatLikes });
   } catch (err) {
     console.error('renderProfile failed', err);
     const hint = err.message || '';
-    if (debugPanel && isAdmin) {
+    if (debugPanel) {
       document.getElementById('debugLastErr').textContent = hint;
     }
     setProfileMeBannerVisible(true, hint || tf('profile_me_failed'));
@@ -520,6 +518,18 @@ window.startProfileEdit = startProfileEdit;
 window.cancelProfileEdit = cancelProfileEdit;
 window.discardProfileEdit = discardProfileEdit;
 window.finishProfileEdit = finishProfileEdit;
+
+async function debugClearCache() {
+  if (!confirm('Очистить sessionStorage, localStorage и перезагрузить?')) return;
+  try {
+    sessionStorage.clear();
+    localStorage.clear();
+    location.reload();
+  } catch (e) {
+    alert('Err: ' + e.message);
+  }
+}
+window.debugClearCache = debugClearCache;
 
 document.addEventListener('change', ev => {
   if (ev.target?.id === 'profileAvatarInput') onProfileAvatarFileChange(ev);

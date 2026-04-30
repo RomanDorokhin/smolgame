@@ -171,6 +171,9 @@ const CLICK_ACTIONS = {
   'admin-approve':  (el) => adminApproveGame(el.closest('.admin-card, .feed-moderation-card')),
   'admin-reject':   (el) => adminRejectGame (el.closest('.admin-card, .feed-moderation-card')),
   'admin-delete':   (el) => adminDeleteGame (el.closest('.admin-card, .feed-moderation-card')),
+  'debug-clear-cache': () => {
+    if (typeof debugClearCache === 'function') debugClearCache();
+  },
   'onboarding-next': () => onboardingNext(),
   'onboarding-finish': () => finishOnboarding(),
   'image-picker':   (el) => document.getElementById(el.dataset.target)?.click(),
