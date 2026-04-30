@@ -59,28 +59,33 @@ function setProfileMeBannerVisible(show, message) {
 
 /** Применить ответ GET /api/me к USER и DOM профиля (отдельно от списка игр). */
 function applyMeToProfileUi(me, { bioRead, handleRead, premBadge, setStatGames, setStatFollowers, setStatLikes }) {
+  console.log('[Profile] applyMeToProfileUi', { me, USER_before: { ...USER } });
   const st = parseProfileStats(me);
   if (st.games != null) setStatGames(String(st.games));
   if (st.likes != null) setStatLikes(fmtNum(st.likes));
   if (st.followers != null) setStatFollowers(fmtNum(st.followers));
-  if (me.user) {
+
+  if (me && me.user) {
     const mu = me.user;
-    // Синхронизируем ID если он был потерян на фронте (сбой Telegram init)
-    if (!USER.id && mu.id) {
+    // Всегда обновляем ID из API, если он пришел
+    if (mu.id) {
       USER.id = String(mu.id);
       USER.tgId = String(mu.id);
     }
-    USER.siteHandle = mu.siteHandle || USER.siteHandle;
-    // Имя: приоритет за тем что в БД, иначе за тем что в Telegram, иначе за хендлом
-    USER.name = mu.name || mu.displayName || mu.telegramName || USER.name || tf('guest');
-    USER.avatar = mu.avatar || USER.avatar;
+    if (mu.siteHandle) USER.siteHandle = mu.siteHandle;
+
+    // Имя: приоритет за тем что в БД (mu.name), иначе за mu.displayName, иначе за mu.telegramName
+    const bestName = mu.name || mu.displayName || mu.telegramName;
+    if (bestName) USER.name = bestName;
+
+    if (mu.avatar) USER.avatar = mu.avatar;
 
     USER.isGithubConnected = Boolean(mu.isGithubConnected);
     USER.githubUsername = mu.githubUsername || null;
     USER.hasGithubPublishToken = Boolean(mu.hasGithubPublishToken);
     USER.isPremium = Boolean(mu.isPremium);
-    USER.displayName = mu.displayName != null ? mu.displayName : (USER.displayName || '');
-    USER.bio = mu.bio != null ? mu.bio : (USER.bio || '');
+    USER.displayName = mu.displayName || mu.name || USER.displayName || '';
+    USER.bio = mu.bio || USER.bio || '';
 
     if (mu.isAdmin) document.body.classList.add('is-admin');
     else document.body.classList.remove('is-admin');
@@ -90,19 +95,33 @@ function applyMeToProfileUi(me, { bioRead, handleRead, premBadge, setStatGames, 
     }
   }
 
+  console.log('[Profile] USER_after', { ...USER });
+
   // Обновляем текст в любом случае (даже если me.user пустой, покажем что есть в USER)
-  document.getElementById('profileName').textContent = USER.name || tf('guest');
+  const nameEl = document.getElementById('profileName');
+  if (nameEl) {
+    // Если имени нет вообще, покажем ID как временный вариант
+    nameEl.textContent = USER.name || USER.id || tf('guest');
+  }
+
+  const handleEl = document.getElementById('profileHandle');
+  if (handleEl) {
+    handleEl.textContent = '@' + (USER.siteHandle || USER.id || '—');
+  }
+
   if (handleRead) {
     handleRead.textContent = USER.siteHandle || USER.id || '—';
   }
-  document.getElementById('profileHandle').textContent = '@' + (USER.siteHandle || USER.id || '—');
+
   if (bioRead) {
     bioRead.textContent = USER.bio || '';
     bioRead.style.display = USER.bio ? '' : 'none';
   }
   setProfileAvatar(USER.avatar);
-  document.getElementById('profileDisplayName').value = USER.displayName || USER.name || '';
-  document.getElementById('profileBioInput').value = USER.bio || '';
+  const dnInput = document.getElementById('profileDisplayName');
+  if (dnInput) dnInput.value = USER.displayName || USER.name || '';
+  const bioInput = document.getElementById('profileBioInput');
+  if (bioInput) bioInput.value = USER.bio || '';
 }
 
 async function renderProfile() {
@@ -114,7 +133,7 @@ async function renderProfile() {
   setProfileMeBannerVisible(false);
 
   setProfileAvatar(USER.avatar);
-  document.getElementById('profileName').textContent = USER.name || tf('guest');
+  document.getElementById('profileName').textContent = USER.name || USER.id || tf('guest');
   document.getElementById('profileHandle').textContent = '@' + (USER.siteHandle || USER.id || '—');
   if (handleRead) handleRead.textContent = USER.siteHandle || USER.id || '—';
   if (bioRead) bioRead.textContent = '';

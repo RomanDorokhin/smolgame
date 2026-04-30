@@ -162,6 +162,7 @@
         u = window.Telegram?.WebApp?.initDataUnsafe?.user;
       } catch (e) { /* ignore */ }
       if (u && u.id != null) {
+        console.log('[TG-Init] Using initDataUnsafe.user', u);
         window.USER.id = String(u.id);
         window.USER.tgId = String(u.id);
         const nm = [u.first_name, u.last_name].filter(Boolean).join(' ').trim();
@@ -183,8 +184,13 @@
             return '';
           }
         })();
+      console.log('[TG-Init] Raw initData length:', raw.length);
       u = extractTelegramUserFromInitDataString(raw);
-      if (!u || u.id == null) return;
+      if (!u || u.id == null) {
+        console.warn('[TG-Init] Failed to extract user from raw initData');
+        return;
+      }
+      console.log('[TG-Init] Extracted user from raw initData', u);
       window.USER.id = String(u.id);
       window.USER.tgId = String(u.id);
       const nm = [u.first_name, u.last_name].filter(Boolean).join(' ').trim();
@@ -195,7 +201,9 @@
         const ch = String(u.first_name).trim()[0];
         if (ch) window.USER.avatar = ch;
       }
-    } catch (e) { /* ignore */ }
+    } catch (e) {
+      console.error('[TG-Init] Error in syncUSERFromTelegramInit', e);
+    }
   }
 
   window.syncUSERFromTelegramInit = syncUSERFromTelegramInit;
