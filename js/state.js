@@ -5,6 +5,22 @@ const PERSIST_ID_KEY = 'smolgame:persisted_id:v1';
 let cachedId = '';
 try { cachedId = localStorage.getItem(PERSIST_ID_KEY) || ''; } catch(e) {}
 
+const THEME_KEY = 'smolgame:theme:v1';
+window.CURRENT_THEME = 'dark';
+try { window.CURRENT_THEME = localStorage.getItem(THEME_KEY) || 'dark'; } catch(e) {}
+
+window.setAppTheme = function(theme) {
+  window.CURRENT_THEME = theme;
+  try { localStorage.setItem(THEME_KEY, theme); } catch(e) {}
+  document.body.classList.remove('theme-light', 'theme-dark');
+  document.body.classList.add('theme-' + theme);
+  if (theme === 'light') {
+    document.documentElement.classList.add('theme-light');
+  } else {
+    document.documentElement.classList.remove('theme-light');
+  }
+};
+
 window.USER = {
   id: tgUser?.id ? String(tgUser.id) : cachedId,
   tgId: tgUser?.id ? String(tgUser.id) : null,

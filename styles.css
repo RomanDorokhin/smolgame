@@ -9,6 +9,26 @@ body,
   width: 100%;
   height: 100%;
   overflow: hidden;
+  background: #000;
+}
+
+/* Элементы управления в ленте всегда в тёмной гамме (Feed protection) */
+#feed, .slide, #side-actions, .feed-ui-layer, .game-info-overlay {
+  --bg: #000000;
+  --surface: #13141a;
+  --surface-elevated: #1c1e26;
+  --text: #ffffff;
+  --muted: rgba(255, 255, 255, 0.42);
+  --border: rgba(255, 255, 255, 0.08);
+  
+  --cta-bg: linear-gradient(180deg, #2f323a 0%, #22252c 55%, #1a1c22 100%);
+  --cta-bg-strong: linear-gradient(180deg, #3a4050 0%, #2a2f3a 52%, #1e222c 100%);
+  --cta-border: rgba(255, 255, 255, 0.11);
+  --cta-highlight: rgba(255, 255, 255, 0.05);
+
+  --tg-glass-bg: rgba(20, 22, 28, 0.72);
+  --tg-glass-bg-strong: rgba(18, 20, 26, 0.82);
+  --tg-glass-border: rgba(255, 255, 255, 0.1);
 }
 
 :root {
@@ -67,6 +87,75 @@ body,
   --tg-glass-saturate: 1.06;
   --tg-glass-shadow: 0 10px 36px rgba(0, 0, 0, 0.28);
   --tg-glass-inset: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+:root.theme-light {
+  --bg: #f5f6f8;
+  --surface: #ffffff;
+  --surface-elevated: #ffffff;
+  --border: rgba(0, 0, 0, 0.08);
+  --text: #111111;
+  --muted: #6e767e;
+  
+  --accent: #007aff;
+  --accent-soft: rgba(0, 122, 255, 0.08);
+  
+  --cta-bg: linear-gradient(180deg, #007aff 0%, #006ce6 100%);
+  --cta-bg-strong: linear-gradient(180deg, #006ce6 0%, #005bb5 100%);
+  --cta-bg-solid: #007aff;
+  --cta-border: rgba(0, 0, 0, 0.05);
+  --cta-highlight: rgba(255, 255, 255, 0.15);
+  
+  --tg-glass-bg: rgba(255, 255, 255, 0.88);
+  --tg-glass-bg-strong: rgba(255, 255, 255, 0.95);
+  --tg-glass-border: rgba(0, 0, 0, 0.08);
+  --tg-glass-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+  --tg-glass-inset: inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  
+  --nav-active: #007aff;
+  --btn-border: rgba(0, 0, 0, 0.08);
+  --sg-doodle-opacity: 0.015;
+}
+
+body.theme-light {
+  background: var(--bg);
+  color: var(--text);
+}
+
+body.theme-light .sg-icon {
+  color: var(--text);
+}
+
+body.theme-light .sg-btn--primary {
+  color: #ffffff !important;
+}
+
+body.theme-light .app-nav-item:not(.active) .sg-icon {
+  color: rgba(0, 0, 0, 0.4);
+}
+
+body.theme-light .action-label-caption,
+body.theme-light .action-label-num {
+  color: #111111;
+  text-shadow: 0 1px 4px rgba(255, 255, 255, 0.8);
+}
+
+body.theme-light .profile-stat-label,
+body.theme-light .profile-stat-num {
+  color: var(--text);
+}
+
+body.theme-light .game-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+}
+
+body.theme-light .game-card-info {
+  background: var(--surface);
+}
+
+body.theme-light .game-card-title {
+  color: var(--text);
 }
 
 /* Единое «стекло» для bottom sheet, карточек подсказок, онбординга */
@@ -5733,4 +5822,40 @@ body.keyboard-open .feed-reviews-drawer-compose {
   max-width: 280px;
   margin-left: auto;
   margin-right: auto;
+}
+/* Theme Selector in Profile */
+.profile-theme-selector {
+  display: flex;
+  background: rgba(0, 0, 0, 0.05);
+  padding: 4px;
+  border-radius: 12px;
+  margin-top: 8px;
+}
+
+body.theme-light .profile-theme-selector {
+  background: rgba(0, 0, 0, 0.03);
+}
+
+.theme-btn {
+  flex: 1;
+  border: none;
+  background: transparent;
+  padding: 8px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--muted);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.theme-btn.active {
+  background: var(--surface-elevated);
+  color: var(--text);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+body.theme-light .theme-btn.active {
+  background: #ffffff;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
 }

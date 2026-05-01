@@ -10,6 +10,11 @@ async function bootstrap() {
     return;
   }
   if (typeof window.syncUSERFromTelegramInit === 'function') window.syncUSERFromTelegramInit();
+  
+  if (typeof window.setAppTheme === 'function') {
+    window.setAppTheme(window.CURRENT_THEME || 'dark');
+  }
+
   console.log('[Main] Bootstrap: Telegram data ready. USER.id:', USER.id, 'HasInitData:', typeof hasTelegramInitData === 'function' ? hasTelegramInitData() : 'unknown');
   if (typeof hideTelegramOnlyWall === 'function') hideTelegramOnlyWall();
   if (typeof showBootSplash === 'function') showBootSplash();

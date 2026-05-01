@@ -392,6 +392,7 @@ function startProfileEdit() {
   window.profileEditSnapshot = {
     displayName: dn?.value ?? '',
     bio: bio?.value ?? '',
+    theme: window.CURRENT_THEME || 'dark',
   };
   document.getElementById('profile-screen')?.classList.add('profile-edit-active');
   const wrap = document.getElementById('profile-edit-wrap');
@@ -400,6 +401,11 @@ function startProfileEdit() {
   } catch (e) {
     wrap?.scrollIntoView();
   }
+  
+  if (typeof updateThemeSelectorUi === 'function') {
+    updateThemeSelectorUi(window.CURRENT_THEME || 'dark');
+  }
+
   setTimeout(() => dn?.focus(), 180);
 }
 
@@ -413,6 +419,9 @@ function discardProfileEdit() {
   if (snap && dn && bio) {
     dn.value = snap.displayName;
     bio.value = snap.bio;
+    if (snap.theme && typeof window.setAppTheme === 'function') {
+      window.setAppTheme(snap.theme);
+    }
   } else if (dn && bio) {
     dn.value = USER.displayName || USER.name || '';
     bio.value = USER.bio || '';
@@ -647,6 +656,28 @@ window.startProfileEdit = startProfileEdit;
 window.cancelProfileEdit = cancelProfileEdit;
 window.discardProfileEdit = discardProfileEdit;
 window.finishProfileEdit = finishProfileEdit;
+
+function updateThemeSelectorUi(currentTheme) {
+  const btns = document.querySelectorAll('#profileThemeSelector .theme-btn');
+  btns.forEach(b => {
+    if (b.getAttribute('data-theme') === currentTheme) {
+      b.classList.add('active');
+    } else {
+      b.classList.remove('active');
+    }
+  });
+}
+
+document.addEventListener('click', ev => {
+  const themeBtn = ev.target.closest('.theme-btn');
+  if (themeBtn) {
+    const theme = themeBtn.getAttribute('data-theme');
+    if (theme && typeof window.setAppTheme === 'function') {
+      window.setAppTheme(theme);
+      updateThemeSelectorUi(theme);
+    }
+  }
+});
 
 document.addEventListener('change', ev => {
   if (ev.target?.id === 'profileAvatarInput') onProfileAvatarFileChange(ev);
