@@ -435,6 +435,13 @@ async function openGameDetail(gameId) {
 
   screen.hidden = false;
   screen.setAttribute('aria-hidden', 'false');
+  
+  // Сбрасываем скролл к началу перед открытием
+  const scrollEl = document.getElementById('gameDetailScroll');
+  if (scrollEl) scrollEl.scrollTop = 0;
+  
+  // Форсируем перерисовку для запуска анимации
+  void screen.offsetHeight;
   document.body.classList.add('game-detail-open');
 
   try {
@@ -513,10 +520,15 @@ async function openGameDetail(gameId) {
 function closeGameDetail() {
   const screen = document.getElementById('game-detail-screen');
   if (!screen) return;
-  screen.hidden = true;
-  screen.setAttribute('aria-hidden', 'true');
   document.body.classList.remove('game-detail-open');
   _gameDetailId = null;
+
+  // Ждем завершения анимации (CSS: 0.3s) прежде чем реально скрыть DOM-элемент
+  setTimeout(() => {
+    screen.hidden = true;
+    screen.setAttribute('aria-hidden', 'true');
+  }, 300);
+
   const returnTo = window._gameDetailReturnTab || 'feed';
   if (typeof switchTab === 'function') switchTab(returnTo);
 }
