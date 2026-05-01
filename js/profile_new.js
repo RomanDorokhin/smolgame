@@ -168,8 +168,8 @@ async function renderProfile() {
     window._profileWatchdog = setInterval(() => {
       const el = document.getElementById('profileName');
       const cur = el?.textContent;
-      const tf = typeof window.t === 'function' ? window.t : k => k;
-      const guestText = tf('guest') || 'Гость';
+      const tFunc = typeof window.t === 'function' ? window.t : k => k;
+      const guestText = tFunc('guest') || 'Гость';
       if (el && USER.id && (cur === guestText || cur === 'Guest' || !cur || cur === '...')) {
         el.textContent = USER.name || USER.id;
       }

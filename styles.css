@@ -1923,7 +1923,7 @@ body.game-detail-open .app-tab-chrome{opacity:0;pointer-events:none;}
   overflow-y:auto;
   -webkit-overflow-scrolling:touch;
   overscroll-behavior-y:contain;
-  padding-bottom:calc(var(--safe-bottom) + 20px);
+  padding-bottom:calc(var(--safe-bottom) + 120px);
 }
 .game-detail-hero{
   width:100%;
@@ -2103,7 +2103,7 @@ body.game-detail-open .app-tab-chrome{opacity:0;pointer-events:none;}
 }
 /* Скролл shrinks when compose is visible */
 .game-detail-screen:has(.game-detail-compose:not([hidden])) .game-detail-scroll{
-  padding-bottom:0;
+  padding-bottom: 20px; 
 }
 .game-detail-owner-actions{
   margin-top:20px;

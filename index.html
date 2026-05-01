@@ -765,37 +765,31 @@ Must work on a mobile phone.</pre>
 
 <!-- ══ SCRIPTS ══ -->
 <!-- Порядок важен: config/utils/telegram → state → api → модули логики → события → main. -->
-<script src="js/config.js?v=20260501"></script>
-<script src="js/genre-icons.js?v=20260501"></script>
-<script src="js/utils.js?v=20260501"></script>
-<script src="js/i18n.js?v=20260501"></script>
-<script src="js/telegram.js?v=20260501"></script>
-<script src="js/telegram-initdata.js?v=20260501"></script>
-<script src="js/tg-gate.js?v=20260501"></script>
-<script src="js/boot-splash.js?v=20260501"></script>
-<script src="js/state.js?v=20260501"></script>
-<script src="js/api.js?v=20260501"></script>
-<script src="js/onboarding.js?v=20260501" hidden></script>
-<script src="js/help-screens.js?v=20260501"></script>
-<script src="js/feed.js?v=20260501"></script>
-<script src="js/feed-nav-tip.js?v=20260501"></script>
-<script src="js/feed-onboarding.js?v=20260501"></script>
-<script src="js/actions.js?v=20260501"></script>
-<script src="js/upload.js?v=20260501"></script>
-<script src="js/genres.js?v=20260501"></script>
-<script src="js/search.js?v=20260501"></script>
-<script src="js/screens.js?v=20260501"></script>
-<script src="js/liked-games.js?v=20260501"></script>
-<script src="js/game-detail.js?v=20260501"></script>
-<script src="js/game-editor.js?v=20260501"></script>
-<script src="js/profile_new.js?v=20260501"></script>
-<script src="js/admin.js?v=20260501"></script>
+<script src="js/config.js?v=20260502"></script>
+<script src="js/genre-icons.js?v=20260502"></script>
+<script src="js/utils.js?v=20260502"></script>
+<script src="js/i18n.js?v=20260502"></script>
+<script src="js/telegram.js?v=20260502"></script>
+<script src="js/telegram-initdata.js?v=20260502"></script>
+<script src="js/tg-gate.js?v=20260502"></script>
+<script src="js/boot-splash.js?v=20260502"></script>
+<script src="js/state.js?v=20260502"></script>
+<script src="js/api.js?v=20260502"></script>
+<script src="js/onboarding.js?v=20260502" hidden></script>
+<script src="js/help-screens.js?v=20260502"></script>
+<script src="js/feed.js?v=20260502"></script>
+<script src="js/feed-nav-tip.js?v=20260502"></script>
+<script src="js/feed-onboarding.js?v=20260502"></script>
+<script src="js/actions.js?v=20260502"></script>
+<script src="js/upload.js?v=20260502"></script>
+<script src="js/genres.js?v=20260502"></script>
+<script src="js/search.js?v=20260502"></script>
+<script src="js/screens.js?v=20260502"></script>
 <script>
 /** ══════════════════════════════════════════════════════════
- *  EXTENDED LOGIC (Inlined to bypass WebView blocks)
+ *  EXTENDED LOGIC (Auto-registration & Onboarding)
  *  ══════════════════════════════════════════════════════════ */
 (function() {
-  /** ══ ONBOARDING (AUTOMATED) ══ */
   window.checkOnboarding = async function() {
     try {
       const data = await API.checkRegistered();
@@ -816,7 +810,7 @@ Must work on a mobile phone.</pre>
           USER.siteHandle = res?.user?.siteHandle || handle;
           return false;
         } catch (regErr) {
-          console.warn('Auto-register failed, showing UI', regErr);
+          console.warn('Auto-register failed', regErr);
           return true;
         }
       }
@@ -824,11 +818,15 @@ Must work on a mobile phone.</pre>
     } catch (e) { return false; }
   };
 })();
-
-
 </script>
-<script src="js/events.js?v=20260501"></script>
-<script src="js/overlay-pull-close.js?v=20260501"></script>
-<script src="js/main.js?v=20260501"></script>
+
+<script src="js/liked-games.js?v=20260502"></script>
+<script src="js/game-detail.js?v=20260502"></script>
+<script src="js/game-editor.js?v=20260502"></script>
+<script src="js/profile_new.js?v=20260502"></script>
+<script src="js/admin.js?v=20260502"></script>
+<script src="js/events.js?v=20260502"></script>
+<script src="js/overlay-pull-close.js?v=20260502"></script>
+<script src="js/main.js?v=20260502"></script>
 </body>
 </html>
