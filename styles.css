@@ -308,6 +308,22 @@ body.theme-light:not(.feed-open) .app-tab-chrome-label {
   font-weight: 700;
 }
 
+body.theme-light .profile-edit-toggle-btn {
+  background: rgba(0, 0, 0, 0.05) !important;
+  color: #1c1c1e !important;
+  border: 1px solid rgba(0, 0, 0, 0.1) !important;
+}
+
+body.theme-light .profile-edit-toggle-btn.primary {
+  background: var(--accent) !important;
+  color: #ffffff !important;
+}
+
+body.theme-light .screen-back {
+  background: rgba(0, 0, 0, 0.05) !important;
+  color: #1c1c1e !important;
+}
+
 body.theme-light .sg-back-btn:not([hidden]) {
   background: #ffffff !important;
   color: #1c1c1e !important;
@@ -3819,16 +3835,28 @@ body.keyboard-open .app-tab-chrome {
 .screen-header {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 12px;
   padding: var(--safe-top, 0px) 16px 0;
   height: calc(var(--safe-top, 0px) + 56px);
-  margin-bottom: 24px;
+  margin-bottom: 16px;
+  position: sticky;
+  top: 0;
+  background: var(--bg);
+  z-index: 100;
 }
 
 .screen-header .screen-title {
-  flex: 1;
-  min-width: 0;
-  text-align: center;
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: 'Syne', sans-serif;
+  font-size: 20px;
+  font-weight: 800;
+  line-height: 1;
+  margin: 0;
+  white-space: nowrap;
+  pointer-events: none;
 }
 
 .screen-header--in-screen {
