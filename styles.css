@@ -2149,52 +2149,68 @@ body.feed-layout-vertical:not(.feed-game-focus) .slide.feed-slide--active .slide
   pointer-events: none;
 }
 
-body.feed-layout-vertical #game-info {
+#game-info {
   position: fixed;
-  left: 16px;
-  bottom: calc(var(--bottom-nav-height, 64px) + 20px);
-  right: 90px;
-  z-index: 120;
+  left: 0;
+  right: 0;
+  bottom: calc(var(--safe-bottom) + var(--nav-h));
+  min-height: var(--info-h);
+  max-height: 124px;
+  height: auto;
+  padding: 8px 14px 10px;
+  gap: 6px;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0.55) 28%, rgba(0, 0, 0, 0.94) 100%);
+  z-index: 300;
   display: flex;
-  align-items: center;
+  flex-direction: column;
+  justify-content: flex-end;
+  overflow: hidden;
   pointer-events: none;
-  background: transparent !important;
-  height: auto !important;
 }
 
-body.feed-layout-vertical #game-info .author-row {
-  pointer-events: auto;
+#game-info .author-row {
   display: flex;
   align-items: center;
   gap: 10px;
+  font-size: 16px;
+  font-weight: 600;
+  pointer-events: all;
   cursor: pointer;
-  padding: 6px 12px;
-  border-radius: 14px;
-  background: rgba(255, 255, 255, 0.12);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+  min-width: 0;
+  flex-shrink: 0;
 }
 
-body.feed-layout-vertical #game-info .author-row:active {
-  transform: scale(0.96);
-  background: rgba(255, 255, 255, 0.18);
+.author-block {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+}
+
+.author-role {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.38);
+  line-height: 1.25;
 }
 
 .author-avatar {
-  width: 38px;
-  height: 38px;
+  width: 42px;
+  height: 42px;
   border-radius: 50%;
-  background: var(--accent);
+  background: linear-gradient(160deg, #2a2d36 0%, #1c1e25 100%);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: 800;
-  color: #fff;
+  font-size: 16px;
+  font-weight: 700;
   flex-shrink: 0;
-  border: 1.5px solid rgba(255, 255, 255, 0.2);
   overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .author-avatar img {
@@ -2203,23 +2219,39 @@ body.feed-layout-vertical #game-info .author-row:active {
   object-fit: cover;
 }
 
-.author-meta {
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-}
-
 .author-name {
-  font-size: 14px;
-  font-weight: 700;
-  color: #fff;
+  font-size: 15px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.95);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
   line-height: 1.2;
 }
 
-.author-sub {
-  font-size: 11px;
-  color: rgba(255, 255, 255, 0.65);
-  font-weight: 500;
+.follow-btn {
+  flex-shrink: 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: #fff;
+  background: var(--cta-bg);
+  border: 1px solid var(--cta-border);
+  border-radius: 16px;
+  padding: 8px 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  line-height: 1.4;
+  box-shadow: 0 1px 0 var(--cta-highlight) inset;
+  pointer-events: all;
+}
+
+.follow-btn.following {
+  color: var(--muted);
+  background: var(--surface-elevated);
+  border: 1px solid var(--border);
+  box-shadow: none;
 }
 
 .games-library-section {
