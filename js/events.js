@@ -14,9 +14,9 @@ const CLICK_ACTIONS = {
   'close-search':   () => closeSearch(),
   'close-games-library': () => closeGamesLibrary(),
 
-  'toggle-like':    () => toggleLike(),
-  'share-game':     () => shareGame(),
-  'report-game':    () => reportGame(),
+  'toggle-like':    (_el, ev) => { if (ev) ev.stopPropagation(); toggleLike(); },
+  'share-game':     (_el, ev) => { if (ev) ev.stopPropagation(); shareGame(); },
+  'report-game':    (_el, ev) => { if (ev) ev.stopPropagation(); reportGame(); },
 
   'feed-retry':     () => { if (typeof loadGames === 'function') loadGames(); },
   'dismiss-feed-nav-tip': () => ackFeedNavTip(),
@@ -105,7 +105,8 @@ const CLICK_ACTIONS = {
       gameDetailOwnerDelete(el.dataset.gameId, el.dataset.gameTitle, el.dataset.gameUrl);
     }
   },
-  'toggle-feed-reviews': () => {
+  'toggle-feed-reviews': (el, ev) => {
+    if (ev) ev.stopPropagation();
     if (typeof openFeedReviewsDrawer === 'function') openFeedReviewsDrawer();
   },
   'close-feed-reviews': () => {

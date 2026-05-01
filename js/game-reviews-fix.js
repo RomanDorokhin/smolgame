@@ -154,8 +154,14 @@ function openFeedReviewsDrawer() {
   const input = document.getElementById('feedReviewInput');
   if (!drawer || !listEl) return;
 
+  if (_feedReviewsOpen) return;
   _feedReviewsOpen = true;
+  
+  // Принудительно показываем шторку перед анимацией
   drawer.hidden = false;
+  drawer.style.display = 'flex';
+  void drawer.offsetHeight; // Force reflow
+  
   drawer.setAttribute('aria-hidden', 'false');
 
   // Сбрасываем старые данные сразу, чтобы не было «прыжков» контента
@@ -172,10 +178,13 @@ function openFeedReviewsDrawer() {
 
   // Фокус с задержкой, чтобы дождаться окончания анимации шторки (0.25s) 
   // и избежать резких прыжков вьюпорта при открытии клавиатуры.
+  // Используем preventScroll, чтобы браузер не пытался сам скроллить к инпуту.
   if (input) {
     setTimeout(() => {
-      if (_feedReviewsOpen) input.focus();
-    }, 350);
+      if (_feedReviewsOpen) {
+        input.focus({ preventScroll: true });
+      }
+    }, 450);
   }
 
   _loadFeedReviewsData(listEl);
