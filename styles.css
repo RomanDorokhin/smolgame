@@ -2134,7 +2134,14 @@ body.feed-layout-vertical:not(.feed-game-focus) .slide.feed-slide--active .slide
 }
 
 body.feed-layout-vertical #game-info {
-  padding-top: calc(var(--feed-chrome-h) + var(--safe-top) + 4px);
+  position: fixed;
+  left: 16px;
+  bottom: calc(var(--bottom-nav-height, 64px) + 20px);
+  right: 90px;
+  z-index: 120;
+  display: flex;
+  align-items: center;
+  pointer-events: auto;
 }
 
 .games-library-section {
