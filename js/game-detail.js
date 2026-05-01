@@ -81,10 +81,10 @@ async function openFeedReviewsDrawer() {
       listEl.innerHTML = html || `<div class="feed-reviews-empty">${esc(t('gd_reviews_empty_drawer'))}</div>`;
     }
     
-    // Автофокус на ввод сразу (TikTok-style)
+    // Автофокус на ввод после небольшой задержки (чтобы анимация шторки началась)
     const input = document.getElementById('feedReviewInput');
     if (input) {
-      setTimeout(() => input.focus(), 60);
+      setTimeout(() => input.focus(), 150);
     }
   } catch (err) {
     console.error('[FeedReviews] Fatal Error:', err);
