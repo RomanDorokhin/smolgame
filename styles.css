@@ -242,7 +242,7 @@ body.theme-light .sg-back-btn {
   border: 1px solid rgba(0, 0, 0, 0.08) !important;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05) !important;
   opacity: 1 !important;
-  padding: 8px 16px !important;
+  padding: 0 16px !important;
   border-radius: 12px !important;
   font-size: 14px !important;
   font-weight: 700 !important;
@@ -252,8 +252,28 @@ body.theme-light .sg-back-btn {
   justify-content: center !important;
   top: calc(var(--safe-top, 0px) + 12px) !important;
   left: 12px !important;
-  position: absolute !important;
+  position: fixed !important;
   z-index: 2200 !important;
+}
+
+body.theme-light.feed-open .app-tab-chrome {
+  background: rgba(0, 0, 0, 0.3) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  box-shadow: none !important;
+}
+
+body.theme-light.feed-open .app-tab-chrome-label {
+  color: #ffffff !important;
+}
+
+body.theme-light.feed-open .lang-switch {
+  background: rgba(255, 255, 255, 0.1) !important;
+  color: rgba(255, 255, 255, 0.5) !important;
+}
+
+body.theme-light.feed-open .lang-switch--active {
+  background: rgba(255, 255, 255, 0.2) !important;
+  color: #ffffff !important;
 }
 
 body.theme-light .feed-exit-focus.sg-back-btn {
