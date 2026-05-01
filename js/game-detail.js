@@ -15,7 +15,8 @@ function formatGameDate(ts) {
 }
 
 function tf() {
-  return typeof window.t === 'function' ? window.t : k => k;
+  const globalT = window.t || window.T || window.i18n;
+  return typeof globalT === 'function' ? globalT : (k) => k;
 }
 
 async function fetchGameReviews(gameId) {
