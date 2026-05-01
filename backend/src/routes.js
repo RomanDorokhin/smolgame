@@ -1034,10 +1034,7 @@ export async function postGameReview(req, env, gameId) {
   try {
     await env.DB.prepare(
       `INSERT INTO game_reviews (id, game_id, user_id, body, created_at)
-       VALUES (?, ?, ?, ?, unixepoch())
-       ON CONFLICT(user_id, game_id) DO UPDATE SET
-         body = excluded.body,
-         created_at = unixepoch()`
+       VALUES (?, ?, ?, ?, unixepoch())`
     ).bind(id, gameId, user.id, ok.text).run();
   } catch (e) {
     if (isMissingTableError(e)) {

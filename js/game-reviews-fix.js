@@ -186,14 +186,48 @@ async function submitFeedReview() {
   }
   const g = Array.isArray(window.GAMES) ? window.GAMES[window.currentIdx] : null;
   if (!g?.id) return;
+
+  // ОПТИМИСТИЧНОЕ ОБНОВЛЕНИЕ (TikTok-style)
+  // Добавляем отзыв в список сразу, не дожидаясь сервера
+  const listEl = document.getElementById('feedReviewsDrawerList');
+  if (listEl) {
+    const author = esc(window.USER?.display_name || window.USER?.first_name || getReviewText('gd_player'));
+    const firstChar = author.charAt(0).toUpperCase();
+    const dateText = typeof window.getLang === 'function' && window.getLang() === 'en' ? 'Just now' : 'Только что';
+    
+    const newReviewHtml = `
+      <div class="feed-review-item optimistic" style="opacity: 0.7;">
+        <div class="feed-review-avatar">${firstChar}</div>
+        <div class="feed-review-content">
+          <span class="feed-review-author">${author}</span>
+          <p class="feed-review-body">${esc(text)}</p>
+          <div class="feed-review-footer">${dateText}</div>
+        </div>
+      </div>`;
+    
+    // Если была надпись "Отзывов нет", убираем её
+    if (listEl.querySelector('.feed-reviews-empty')) {
+      listEl.innerHTML = newReviewHtml;
+    } else {
+      listEl.insertAdjacentHTML('afterbegin', newReviewHtml);
+    }
+  }
+
   try {
-    await API.postGameReview(g.id, { body: text });
     if (ta) ta.value = '';
-    showToast(getReviewText('gd_review_saved'));
-    await openFeedReviewsDrawer();
+    // Посылаем на сервер
+    await API.postGameReview(g.id, { body: text });
+    
+    // Обновляем счетчик
     await loadFeedReviewCount();
+    
+    // Через секунду подгружаем актуальный список с сервера (чтобы убрать прозрачность и получить ID)
+    setTimeout(() => openFeedReviewsDrawer(), 1000);
+    
   } catch (e) {
     showToast(getReviewText('try_again'));
+    // В случае ошибки просто перерисовываем список
+    await openFeedReviewsDrawer();
   }
 }
 
