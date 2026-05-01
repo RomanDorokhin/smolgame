@@ -109,6 +109,7 @@ const CLICK_ACTIONS = {
     if (typeof openFeedReviewsDrawer === 'function') openFeedReviewsDrawer();
   },
   'close-feed-reviews': () => {
+    if (typeof hapticLight === 'function') hapticLight();
     if (typeof closeFeedReviewsDrawer === 'function') closeFeedReviewsDrawer();
   },
   'submit-feed-review': () => {

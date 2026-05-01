@@ -142,7 +142,7 @@ function renderReviewItem(r, isReply = false) {
     </div>`;
 }
 
-async function openFeedReviewsDrawer() {
+function openFeedReviewsDrawer() {
   const drawer = document.getElementById('feed-reviews-drawer');
   const backdrop = document.getElementById('feed-reviews-backdrop');
   const listEl = document.getElementById('feedReviewsDrawerList');
@@ -158,6 +158,18 @@ async function openFeedReviewsDrawer() {
     backdrop.onclick = closeFeedReviewsDrawer;
   }
   
+  if (typeof syncBackButton === 'function') syncBackButton();
+  
+  if (input) {
+    input.focus();
+    // Пинок для клавиатуры
+    setTimeout(() => input.focus(), 10);
+  }
+
+  _loadFeedReviewsData(listEl);
+}
+
+async function _loadFeedReviewsData(listEl) {
   const g = Array.isArray(window.GAMES) ? window.GAMES[window.currentIdx] : null;
   if (!g?.id) {
     listEl.innerHTML = '<div class="feed-reviews-empty">Game not found</div>';
@@ -341,6 +353,7 @@ function closeFeedReviewsDrawer() {
   drawer.setAttribute('aria-hidden', 'true');
   if (backdrop) backdrop.hidden = true;
   cancelReviewAction();
+  if (typeof syncBackButton === 'function') syncBackButton();
 }
 
 function renderGameDetailReviews(container, reviews) {
