@@ -90,12 +90,12 @@ body,
 }
 
 :root.theme-light {
-  --bg: #f5f6f8;
+  --bg: #f2f3f5;
   --surface: #ffffff;
   --surface-elevated: #ffffff;
   --border: rgba(0, 0, 0, 0.08);
-  --text: #111111;
-  --muted: #6e767e;
+  --text: #1c1c1e;
+  --muted: #8e8e93;
   
   --accent: #007aff;
   --accent-soft: rgba(0, 122, 255, 0.08);
@@ -107,14 +107,14 @@ body,
   --cta-highlight: rgba(255, 255, 255, 0.15);
   
   --tg-glass-bg: rgba(255, 255, 255, 0.88);
-  --tg-glass-bg-strong: rgba(255, 255, 255, 0.95);
+  --tg-glass-bg-strong: rgba(255, 255, 255, 0.96);
   --tg-glass-border: rgba(0, 0, 0, 0.08);
-  --tg-glass-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+  --tg-glass-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
   --tg-glass-inset: inset 0 1px 0 rgba(255, 255, 255, 0.8);
   
   --nav-active: #007aff;
-  --btn-border: rgba(0, 0, 0, 0.08);
-  --sg-doodle-opacity: 0.015;
+  --btn-border: rgba(0, 0, 0, 0.1);
+  --sg-doodle-opacity: 0.01;
 }
 
 body.theme-light {
@@ -136,8 +136,8 @@ body.theme-light .app-nav-item:not(.active) .sg-icon {
 
 body.theme-light .action-label-caption,
 body.theme-light .action-label-num {
-  color: #111111;
-  text-shadow: 0 1px 4px rgba(255, 255, 255, 0.8);
+  color: #1c1c1e;
+  text-shadow: none;
 }
 
 body.theme-light .profile-stat-label,
@@ -150,75 +150,331 @@ body.theme-light .game-card {
   border: 1px solid var(--border);
 }
 
-body.theme-light .game-card-info {
+body.theme-light .sg-store-card-info {
   background: var(--surface);
 }
 
-body.theme-light .game-card-title {
+body.theme-light .sg-store-card-title {
   color: var(--text);
 }
 
-body.theme-light .upload-method-card {
-  background: var(--surface);
-  border: 1px solid var(--border);
+body.theme-light .sg-store-card-cat {
+  color: var(--accent);
 }
 
-body.theme-light .upload-method-card .m-title {
-  color: var(--text);
-}
-
-body.theme-light .upload-method-card .m-desc {
+body.theme-light .sg-store-card-desc {
   color: var(--muted);
 }
 
-body.theme-light .search-bar {
-  background: var(--surface);
+body.theme-light .sg-mini-stat {
+  color: var(--muted);
+}
+
+body.theme-light .sg-store-card-badge {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+body.theme-light .upload-active-panel {
+  background: var(--bg);
+  border-top-color: var(--border);
+  box-shadow: 0 -12px 32px rgba(0, 0, 0, 0.05);
+}
+
+body.theme-light .upload-field-lbl {
+  color: var(--muted);
+}
+
+body.theme-light .upload-section-title {
+  color: var(--text);
+}
+
+body.theme-light .profile-game-icon-btn {
+  background: #ffffff;
   border: 1px solid var(--border);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+body.theme-light .profile-game-icon-btn .sg-icon {
+  color: #1c1c1e;
+}
+
+body.theme-light .profile-game-icon-btn.del {
+  background: #fff0f0;
+  border-color: #ffdada;
+}
+
+body.theme-light .profile-game-icon-btn.del .sg-icon {
+  color: #ff3b30;
+}
+
+body.theme-light .profile-edit-label {
+  color: var(--muted);
+}
+
+body.theme-light .field-input {
+  background: #ffffff;
+  border: 1px solid var(--border);
+  color: var(--text);
+}
+
+body.theme-light .field-input::placeholder {
+  color: #c7c7cc;
+}
+
+body.theme-light .profile-id-readonly {
+  background: rgba(0, 0, 0, 0.03);
+  color: var(--muted);
+}
+
+body.theme-light .profile-id-readonly strong {
+  color: var(--text);
+}
+
+body.theme-light .profile-badges {
+  background: transparent;
+}
+
+body.theme-light .profile-badge {
+  background: #ffffff;
+  border: 1px solid var(--border);
+  color: var(--text);
+}
+
+body.theme-light .profile-badge--premium {
+  background: linear-gradient(135deg, #fff9f0 0%, #fff 100%);
+  border-color: #ffe0b2;
+  color: #f57c00;
+}
+
+body.theme-light .search-bar {
+  background: #ffffff;
+  border: 1px solid var(--border);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+}
+
+body.theme-light .search-input {
+  color: var(--text);
+  background: transparent;
+}
+
+body.theme-light .method-card {
+  background: #ffffff;
+  border: 1px solid var(--border);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+}
+
+body.theme-light .method-card.selected {
+  background: #f0f7ff;
+  border-color: var(--accent);
+  box-shadow: 0 8px 24px rgba(0, 122, 255, 0.12);
+}
+
+body.theme-light .method-card .m-title {
+  color: var(--text);
+}
+
+body.theme-light .method-card .m-desc {
+  color: var(--muted);
+}
+
+body.theme-light .method-card .m-icon {
+  color: var(--accent);
+}
+
+body.theme-light .method-card--premium-locked {
+  background: #fcfcfc;
+  opacity: 0.85;
+}
+
+body.theme-light .upload-premium-callout {
+  background: #fff8eb;
+  border: 1px solid #ffe0b2;
+}
+
+body.theme-light .upload-premium-callout .upload-premium-p {
+  color: #855e00;
+}
+
+body.theme-light .upload-premium-callout .sg-icon {
+  color: #f57c00;
+}
+
+body.theme-light .upload-form-wrap {
+  background: #ffffff;
+}
+
+body.theme-light .field-label {
+  color: var(--muted);
+}
+
+body.theme-light .field-input {
+  background: #ffffff;
+  border: 1px solid var(--border);
+  color: var(--text);
+}
+
+body.theme-light .field-input:focus {
+  border-color: var(--accent);
+  background: #ffffff;
+}
+
+body.theme-light .help-faq-item {
+  background: #ffffff;
+  border: 1px solid var(--border);
+}
+
+body.theme-light .help-faq-item summary {
+  color: var(--text);
+}
+
+body.theme-light .help-acc-body {
+  color: var(--muted);
+  border-top-color: var(--border);
+}
+
+body.theme-light .help-prompt {
+  background: #f8f9fa;
+  color: #1c1c1e;
+  border: 1px solid var(--border);
+}
+
+body.theme-light .upload-faq-title {
+  color: var(--text);
+}
+
+body.theme-light .profile-upload-hint {
+  color: var(--muted);
+}
+
+body.theme-light .profile-upload-hint strong {
+  color: var(--text);
+}
+
+body.theme-light .game-detail-screen {
+  background: var(--bg);
+}
+
+body.theme-light .game-detail-topbar {
+  background: var(--tg-glass-bg);
+  border-bottom: 1px solid var(--border);
+}
+
+body.theme-light .game-detail-topbar-title {
+  color: var(--text);
+}
+
+body.theme-light .game-detail-body {
+  background: var(--surface);
+}
+
+body.theme-light .game-detail-title {
+  color: var(--text);
+}
+
+body.theme-light .game-detail-desc {
+  color: var(--muted);
+}
+
+body.theme-light .game-detail-meta-k {
+  color: var(--muted);
+}
+
+body.theme-light .game-detail-meta-v {
+  color: var(--text);
+}
+
+body.theme-light .game-detail-author-card {
+  background: var(--bg);
+  border: 1px solid var(--border);
+}
+
+body.theme-light .game-detail-author-name {
+  color: var(--text);
+}
+
+body.theme-light .game-detail-author-handle {
+  color: var(--muted);
+}
+
+body.theme-light .game-detail-section-title {
+  color: var(--text);
+}
+
+body.theme-light .game-detail-review p {
+  color: var(--text);
+}
+
+body.theme-light .game-detail-review-meta {
+  color: var(--muted);
+}
+
+body.theme-light .game-detail-compose {
+  background: var(--surface);
+  border-top-color: var(--border);
+}
+
+body.theme-light .game-detail-compose-input {
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+
+body.theme-light #author-screen {
+  background: var(--bg);
+}
+
+body.theme-light .author-profile-name {
+  color: var(--text);
+}
+
+body.theme-light .author-profile-handle {
+  color: var(--muted);
+}
+
+body.theme-light .author-profile-bio {
+  color: var(--text);
+}
+
+body.theme-light .danger-zone {
+  background: #fff5f5;
+  border-color: #ffcccc;
+}
+
+body.theme-light .danger-zone-title {
+  color: #ff3b30;
 }
 
 body.theme-light .search-input {
   color: var(--text);
 }
 
-body.theme-light .search-input::placeholder {
-  color: var(--muted);
-}
-
 body.theme-light .genre-btn {
-  background: var(--surface);
+  background: #ffffff;
   border: 1px solid var(--border);
-  color: var(--muted);
+  color: #1c1c1e;
 }
 
 body.theme-light .genre-btn.active {
-  background: var(--accent-soft);
-  border-color: var(--accent);
-  color: var(--accent);
-}
-
-body.theme-light .nav-upload-fab {
-  background: linear-gradient(165deg, #ffffff 0%, #f0f2f5 100%);
-  border-color: rgba(0, 0, 0, 0.1);
-  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.1);
-}
-
-body.theme-light .nav-upload-fab-plus {
-  background: #007aff;
-  border-color: #ffffff;
+  background: var(--accent);
   color: #ffffff;
+  border-color: var(--accent);
 }
 
-body.theme-light .nav-item.active .nav-icon {
-  color: #007aff;
+body.theme-light .nav-item .nav-label {
+  color: #8e8e93;
 }
 
 body.theme-light .nav-item.active .nav-label {
-  color: #007aff;
+  color: var(--accent);
 }
 
-body.theme-light .tg-glass {
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.06), var(--tg-glass-inset);
+body.theme-light .nav-item .nav-icon {
+  color: #8e8e93;
+}
+
+body.theme-light .nav-item.active .nav-icon {
+  color: var(--accent);
 }
 
 /* Единое «стекло» для bottom sheet, карточек подсказок, онбординга */
