@@ -10,6 +10,7 @@ const CLICK_ACTIONS = {
   'close-upload':   () => closeUpload(),
   'open-profile':   () => openProfile(),
   'close-profile':  () => closeProfile(),
+  'delete-account': () => { if (typeof deleteAccountAction === 'function') deleteAccountAction(); },
   'open-search':    () => openSearch(),
   'close-search':   () => closeSearch(),
   'close-games-library': () => closeGamesLibrary(),

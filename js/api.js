@@ -267,7 +267,8 @@ window.API = {
     return apiFetch(`/api/feed?${q.toString()}`);
   },
   me:           ()         => apiFetch(`/api/me?_t=${Date.now()}`),
-  updateMe:     (payload)  => apiFetch('/api/me', { method: 'PATCH', body: payload }),
+  updateMe:      (body)           => apiFetch('/api/me', { method: 'PATCH', body }),
+  deleteAccount: ()               => apiFetch('/api/me', { method: 'DELETE' }),
   myGames:      ()         => apiFetch(`/api/me/games?_t=${Date.now()}`),
   gamesLibrary: ()         => apiFetch(`/api/me/games-library?_t=${Date.now()}`),
   likedGames:   ()         => apiFetch(`/api/me/liked-games?_t=${Date.now()}`),

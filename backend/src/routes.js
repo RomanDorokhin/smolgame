@@ -524,6 +524,45 @@ export async function updateMe(req, env) {
   return getMe(req, env);
 }
 
+/**
+ * Удалить аккаунт текущего пользователя и все связанные данные.
+ * Это необратимое действие.
+ */
+export async function deleteAccount(req, env) {
+  const user = await authenticate(req, env);
+  if (!user) return error('unauthorized', 401);
+
+  const uid = user.id;
+
+  // 1. Получаем список игр пользователя, чтобы потенциально удалить их с GitHub
+  const games = await env.DB.prepare(
+    `SELECT id, url FROM games WHERE author_id = ?`
+  ).bind(uid).all();
+
+  // 2. Для каждой игры пробуем удалить репозиторий (если есть линк)
+  if (games && games.results) {
+    for (const g of games.results) {
+      if (g.url) {
+        await tryDeleteGithubRepoForAuthor(env, uid, g.url);
+      }
+    }
+  }
+
+  // 3. Удаляем всё из БД пачкой (batch)
+  await env.DB.batch([
+    env.DB.prepare(`DELETE FROM likes WHERE user_id = ?`).bind(uid),
+    env.DB.prepare(`DELETE FROM bookmarks WHERE user_id = ?`).bind(uid),
+    env.DB.prepare(`DELETE FROM game_reviews WHERE user_id = ?`).bind(uid),
+    env.DB.prepare(`DELETE FROM user_posts WHERE user_id = ?`).bind(uid),
+    env.DB.prepare(`DELETE FROM user_plays WHERE user_id = ?`).bind(uid),
+    env.DB.prepare(`DELETE FROM follows WHERE user_id = ? OR author_id = ?`).bind(uid, uid),
+    env.DB.prepare(`DELETE FROM games WHERE author_id = ?`).bind(uid),
+    env.DB.prepare(`DELETE FROM users WHERE id = ?`).bind(uid),
+  ]);
+
+  return json({ ok: true, message: 'Account deleted' });
+}
+
 /** POST /api/auth/github/unlink — снять привязку GitHub и удалить сохранённый токен. */
 export async function githubUnlink(req, env) {
   const user = await authenticate(req, env);

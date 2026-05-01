@@ -1,6 +1,6 @@
 import { withCors, preflight, error } from './http.js';
 import {
-  getFeed, getMe, updateMe, githubUnlink, getMyGames, getLikedGames, getPlayedGames, getMyGamesLibraryBatch, checkRegistered, register, submitGame, uploadImage, deleteGame,
+  getFeed, getMe, updateMe, deleteAccount, githubUnlink, getMyGames, getLikedGames, getPlayedGames, getMyGamesLibraryBatch, checkRegistered, register, submitGame, uploadImage, deleteGame,
   getGameById, updateGameListing, listGameReviews, postGameReview, updateGameReview, deleteGameReview,
   toggleLike, toggleFollow, toggleBookmark, getUserProfile, getUserGames, play,
   adminPending, adminApprove, adminReject,
@@ -83,6 +83,7 @@ async function route(req, env, pathname) {
   if (pathname === '/api/feed'   && m === 'GET')  return getFeed(req, env);
   if (pathname === '/api/me'     && m === 'GET')  return getMe(req, env);
   if (pathname === '/api/me'     && m === 'PATCH') return updateMe(req, env);
+  if (pathname === '/api/me'     && m === 'DELETE') return deleteAccount(req, env);
   if (pathname === '/api/me/games' && m === 'GET') return getMyGames(req, env);
   if (pathname === '/api/me/liked-games' && m === 'GET') return getLikedGames(req, env);
   if (pathname === '/api/me/played-games' && m === 'GET') return getPlayedGames(req, env);

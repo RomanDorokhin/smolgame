@@ -595,6 +595,45 @@ async function deleteProfilePost(postId, userId, containerId) {
   }
 }
 
+async function deleteAccountAction() {
+  const confirmed = await new Promise(resolve => {
+    if (window.Telegram?.WebApp?.showConfirm) {
+      window.Telegram.WebApp.showConfirm(tf('delete_account_confirm'), (ok) => resolve(ok));
+    } else {
+      resolve(confirm(tf('delete_account_confirm')));
+    }
+  });
+
+  if (!confirmed) return;
+
+  try {
+    const res = await API.deleteAccount();
+    if (res?.ok) {
+      showToast(tf('delete_account_done'));
+      if (typeof hapticSuccess === 'function') hapticSuccess();
+      
+      // Clear all local state
+      try {
+        localStorage.clear();
+        sessionStorage.clear();
+      } catch (e) {}
+
+      // Close app or reload to show onboarding
+      if (window.Telegram?.WebApp?.close) {
+        setTimeout(() => window.Telegram.WebApp.close(), 1500);
+      } else {
+        setTimeout(() => location.reload(), 1500);
+      }
+    } else {
+      throw new Error(res?.message || tf('err_load'));
+    }
+  } catch (e) {
+    showToast('⚠️ ' + (e.message || tf('err_error')));
+    if (typeof hapticWarning === 'function') hapticWarning();
+  }
+}
+
+window.deleteAccountAction = deleteAccountAction;
 window.loadUserPosts = loadUserPosts;
 window.submitProfilePost = submitProfilePost;
 window.deleteProfilePost = deleteProfilePost;

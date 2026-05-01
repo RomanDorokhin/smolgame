@@ -171,6 +171,10 @@
       admin_queue_title: 'На модерации',
       my_games_title: 'Мои игры',
       no_games_grid: 'Нет игр',
+      delete_account_btn: 'Удалить аккаунт',
+      delete_account_hint: 'Все твои игры, отзывы и посты будут удалены навсегда.',
+      delete_account_confirm: 'Удалить аккаунт и все данные навсегда? Это действие нельзя отменить.',
+      delete_account_done: 'Аккаунт удалён',
 
       games_lib_title: 'Игры',
       games_lib_lead: 'Лайкнул и недавно открывал — в двух списках ниже.',
@@ -564,6 +568,10 @@
       admin_queue_title: 'In review',
       my_games_title: 'My games',
       no_games_grid: 'No games',
+      delete_account_btn: 'Delete account',
+      delete_account_hint: 'All your games, reviews, and posts will be deleted forever.',
+      delete_account_confirm: 'Delete account and all data forever? This cannot be undone.',
+      delete_account_done: 'Account deleted',
 
       games_lib_title: 'Games',
       games_lib_lead: 'Liked and recently played — two lists below.',
