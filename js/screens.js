@@ -210,6 +210,13 @@ async function loadAuthorProfile(authorId) {
 function switchTab(tab) {
   if (!tab) return;
   const t = typeof window.t === 'function' ? window.t : k => k;
+  
+  if (tab === 'feed') {
+    document.body.classList.add('feed-open');
+  } else {
+    document.body.classList.remove('feed-open');
+  }
+
   if (
     typeof isFeedOnboardingBlocking === 'function' &&
     isFeedOnboardingBlocking() &&

@@ -225,23 +225,39 @@ body.theme-light .lang-switch--active {
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
 }
 
-body.theme-light .screen-back {
-  background: #ffffff !important;
-  color: #1c1c1e !important;
-  border: 1px solid rgba(0, 0, 0, 0.08) !important;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05) !important;
-  opacity: 1 !important;
-}
-
-body.theme-light .app-tab-chrome {
+body.theme-light:not(.feed-open) .app-tab-chrome {
   background: #ffffff;
   border: 1px solid rgba(0, 0, 0, 0.06);
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.04);
 }
 
-body.theme-light .app-tab-chrome-label {
+body.theme-light:not(.feed-open) .app-tab-chrome-label {
   color: #1c1c1e;
   font-weight: 700;
+}
+
+body.theme-light .sg-back-btn {
+  background: #ffffff !important;
+  color: #1c1c1e !important;
+  border: 1px solid rgba(0, 0, 0, 0.08) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05) !important;
+  opacity: 1 !important;
+  padding: 8px 16px !important;
+  border-radius: 12px !important;
+  font-size: 14px !important;
+  font-weight: 700 !important;
+  height: 36px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  top: calc(var(--safe-top, 0px) + 12px) !important;
+  left: 12px !important;
+  position: absolute !important;
+  z-index: 2200 !important;
+}
+
+body.theme-light .feed-exit-focus.sg-back-btn {
+  position: fixed !important;
 }
 
 body.theme-light .nav-label {
@@ -1948,17 +1964,36 @@ html[lang="ru"] .i18n-en {
   display: none !important;
 }
 
+.sg-back-btn {
+  height: 36px;
+  padding: 8px 16px !important;
+  border-radius: 12px !important;
+  font-size: 14px !important;
+  font-weight: 700 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  top: calc(var(--safe-top, 0px) + 12px) !important;
+  left: 12px !important;
+  white-space: nowrap;
+}
+
 .feed-exit-focus {
   position: fixed;
-  top: calc(var(--safe-top) + 12px);
-  left: max(16px, env(safe-area-inset-left, 0px));
-  z-index: 420;
-  padding: 14px 24px !important;
-  font-size: 16px !important;
-  font-weight: 700 !important;
-  border-radius: 999px !important;
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.1) !important;
-  transition: transform 0.2s ease, opacity 0.2s ease;
+  top: calc(var(--safe-top, 0px) + 12px);
+  left: 12px;
+  z-index: 2100;
+  padding: 8px 16px;
+  height: 36px;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 14px;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  opacity: 0;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .feed-exit-focus:active {

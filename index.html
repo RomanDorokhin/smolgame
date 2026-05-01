@@ -16,8 +16,8 @@
 <link rel="preconnect" href="https://smolgame.dorokhin731.workers.dev" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
-<!-- ?v=20260502_0128 сбрасывает кэш WebView Telegram после правок JS/CSS (меняй при каждом релизе фронта; при крупных фиксах — у всех script/link сразу). -->
-<link rel="stylesheet" href="styles.css?v=20260502_0128">
+<!-- ?v=20260502_0135 сбрасывает кэш WebView Telegram после правок JS/CSS (меняй при каждом релизе фронта; при крупных фиксах — у всех script/link сразу). -->
+<link rel="stylesheet" href="styles.css?v=20260502_0135">
 <script>
   /** WATCHDOG: Форсируем имя и аватар, если система его "забыла" */
   (function() {
@@ -90,7 +90,7 @@
   </div>
 </div>
 
-<button type="button" id="feed-exit-focus" class="feed-exit-focus sg-btn sg-btn--secondary" data-action="feed-exit-focus" hidden data-i18n-aria="feed_exit_aria" data-i18n="feed_back">← Лента</button>
+<button type="button" id="feed-exit-focus" class="feed-exit-focus sg-back-btn sg-btn sg-btn--secondary" data-action="feed-exit-focus" hidden data-i18n-aria="feed_exit_aria" data-i18n="feed_back">← Лента</button>
 
 <!-- ══ БОКОВЫЕ ДЕЙСТВИЯ: в DOM ДО #feed — иначе слой кнопок перекрывает iframe и ломает drag по игре ══ -->
 <div id="side-actions">
@@ -313,7 +313,7 @@
 <!-- ══ ЭКРАН: ЗАГРУЗИТЬ ИГРУ (гайд и FAQ только здесь — лента без отвлечений) ══ -->
 <div id="upload-screen">
   <div class="screen-header">
-    <button type="button" class="screen-back sg-btn sg-btn--ghost" data-action="close-upload" data-i18n-aria="upload_back_aria" aria-label="Назад к ленте" data-i18n="feed_back">← Лента</button>
+    <button type="button" class="screen-back sg-back-btn sg-btn sg-btn--ghost" data-action="close-upload" data-i18n-aria="upload_back_aria" aria-label="Назад к ленте" data-i18n="feed_back">← Лента</button>
     <div class="screen-title" data-i18n="upload_title">Загрузить игру</div>
   </div>
 
@@ -601,7 +601,7 @@ Must work on a mobile phone.</pre>
 <div id="profile-screen">
   <div class="profile-header">
     <div class="screen-header screen-header--in-screen">
-      <button type="button" class="screen-back sg-btn sg-btn--ghost" data-action="close-profile" data-i18n-aria="upload_back_aria" aria-label="Назад к ленте" data-i18n="feed_back">← Лента</button>
+      <button type="button" class="screen-back sg-back-btn sg-btn sg-btn--ghost" data-action="close-profile" data-i18n-aria="upload_back_aria" aria-label="Назад к ленте" data-i18n="feed_back">← Лента</button>
       <div class="screen-title" data-i18n="profile_title">Профиль</div>
     </div>
     <div class="profile-top">
@@ -711,7 +711,7 @@ Must work on a mobile phone.</pre>
 <div id="games-library-screen">
   <div class="search-header">
     <div class="search-header-top">
-      <button type="button" class="screen-back sg-btn sg-btn--ghost" data-action="close-games-library" data-i18n-aria="upload_back_aria" aria-label="Назад к ленте" data-i18n="feed_back">← Лента</button>
+      <button type="button" class="screen-back sg-back-btn sg-btn sg-btn--ghost" data-action="close-games-library" data-i18n-aria="upload_back_aria" aria-label="Назад к ленте" data-i18n="feed_back">← Лента</button>
       <div class="screen-title" data-i18n="games_lib_title">Игры</div>
     </div>
     <p class="games-library-lead" data-i18n="games_lib_lead">Лайкнул и недавно открывал — в двух списках ниже.</p>
@@ -734,7 +734,7 @@ Must work on a mobile phone.</pre>
 <div id="search-screen">
   <div class="search-header">
     <div class="search-header-top">
-      <button type="button" class="screen-back sg-btn sg-btn--ghost" data-action="close-search" data-i18n-aria="upload_back_aria" aria-label="Назад к ленте" data-i18n="feed_back">← Лента</button>
+      <button type="button" class="screen-back sg-back-btn sg-btn sg-btn--ghost" data-action="close-search" data-i18n-aria="upload_back_aria" aria-label="Назад к ленте" data-i18n="feed_back">← Лента</button>
       <div class="screen-title" data-i18n="search_title">Поиск</div>
     </div>
     <div class="search-bar">
@@ -802,26 +802,26 @@ Must work on a mobile phone.</pre>
 
 <!-- ══ SCRIPTS ══ -->
 <!-- Порядок важен: config/utils/telegram → state → api → модули логики → события → main. -->
-<script src="js/config.js?v=20260502_0128"></script>
-<script src="js/genre-icons.js?v=20260502_0128"></script>
-<script src="js/utils.js?v=20260502_0128"></script>
-<script src="js/i18n.js?v=20260502_0128"></script>
-<script src="js/telegram.js?v=20260502_0128"></script>
-<script src="js/telegram-initdata.js?v=20260502_0128"></script>
-<script src="js/tg-gate.js?v=20260502_0128"></script>
-<script src="js/boot-splash.js?v=20260502_0128"></script>
-<script src="js/state.js?v=20260502_0128"></script>
-<script src="js/api.js?v=20260502_0128"></script>
-<script src="js/onboarding.js?v=20260502_0128" hidden></script>
-<script src="js/help-screens.js?v=20260502_0128"></script>
-<script src="js/feed.js?v=20260502_0128"></script>
-<script src="js/feed-nav-tip.js?v=20260502_0128"></script>
-<script src="js/feed-onboarding.js?v=20260502_0128"></script>
-<script src="js/actions.js?v=20260502_0128"></script>
-<script src="js/upload.js?v=20260502_0128"></script>
-<script src="js/genres.js?v=20260502_0128"></script>
-<script src="js/search.js?v=20260502_0128"></script>
-<script src="js/screens.js?v=20260502_0128"></script>
+<script src="js/config.js?v=20260502_0135"></script>
+<script src="js/genre-icons.js?v=20260502_0135"></script>
+<script src="js/utils.js?v=20260502_0135"></script>
+<script src="js/i18n.js?v=20260502_0135"></script>
+<script src="js/telegram.js?v=20260502_0135"></script>
+<script src="js/telegram-initdata.js?v=20260502_0135"></script>
+<script src="js/tg-gate.js?v=20260502_0135"></script>
+<script src="js/boot-splash.js?v=20260502_0135"></script>
+<script src="js/state.js?v=20260502_0135"></script>
+<script src="js/api.js?v=20260502_0135"></script>
+<script src="js/onboarding.js?v=20260502_0135" hidden></script>
+<script src="js/help-screens.js?v=20260502_0135"></script>
+<script src="js/feed.js?v=20260502_0135"></script>
+<script src="js/feed-nav-tip.js?v=20260502_0135"></script>
+<script src="js/feed-onboarding.js?v=20260502_0135"></script>
+<script src="js/actions.js?v=20260502_0135"></script>
+<script src="js/upload.js?v=20260502_0135"></script>
+<script src="js/genres.js?v=20260502_0135"></script>
+<script src="js/search.js?v=20260502_0135"></script>
+<script src="js/screens.js?v=20260502_0135"></script>
 <script>
 /** ══════════════════════════════════════════════════════════
  *  EXTENDED LOGIC (Auto-registration & Onboarding)
@@ -857,13 +857,13 @@ Must work on a mobile phone.</pre>
 })();
 </script>
 
-<script src="js/liked-games.js?v=20260502_0128"></script>
-<script src="js/game-reviews-fix.js?v=20260502_0128"></script>
-<script src="js/game-editor.js?v=20260502_0128"></script>
-<script src="js/profile_new.js?v=20260502_0128"></script>
-<script src="js/admin.js?v=20260502_0128"></script>
-<script src="js/events.js?v=20260502_0128"></script>
-<script src="js/overlay-pull-close.js?v=20260502_0128"></script>
-<script src="js/main.js?v=20260502_0128"></script>
+<script src="js/liked-games.js?v=20260502_0135"></script>
+<script src="js/game-reviews-fix.js?v=20260502_0135"></script>
+<script src="js/game-editor.js?v=20260502_0135"></script>
+<script src="js/profile_new.js?v=20260502_0135"></script>
+<script src="js/admin.js?v=20260502_0135"></script>
+<script src="js/events.js?v=20260502_0135"></script>
+<script src="js/overlay-pull-close.js?v=20260502_0135"></script>
+<script src="js/main.js?v=20260502_0135"></script>
 </body>
 </html>
