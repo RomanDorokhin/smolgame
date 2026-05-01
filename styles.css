@@ -3874,7 +3874,7 @@ textarea.field-input{
   border-radius:14px;
   font-size:14px;
   font-weight:600;
-  z-index:600;
+  z-index:9999;
   opacity:0;
   transition:opacity 0.28s ease, transform 0.28s cubic-bezier(0.25,0.1,0.25,1);
   white-space:normal;
