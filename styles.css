@@ -9,83 +9,64 @@ body,
   width: 100%;
   height: 100%;
   overflow: hidden;
-  background: #000; /* Лента всегда чёрная */
-}
-
-/* Элементы управления в ленте всегда в тёмной гамме */
-#feed, .slide, #side-actions, .feed-ui-layer, .game-info-overlay {
-  --text: #ffffff;
-  --muted: rgba(255, 255, 255, 0.42);
-  --border: rgba(255, 255, 255, 0.08);
-  --tg-glass-bg: rgba(20, 22, 28, 0.72);
-  --tg-glass-border: rgba(255, 255, 255, 0.1);
 }
 
 :root {
-  /* Акцент — холодный серо-голубой */
+  /* Акцент — холодный серо-голубой, чуть ярче чтобы не сливаться с тёмным фоном */
   --accent: #a3b8d4;
   --accent2: #7a8faf;
   --accent-rgb: 163, 184, 212;
   --accent2-rgb: 122, 143, 175;
   --accent-soft: rgba(163, 184, 212, 0.14);
-  
+  /* Главные кнопки: нейтральный графит — не отвлекает от игр и контента */
   --cta-bg: linear-gradient(180deg, #2f323a 0%, #22252c 55%, #1a1c22 100%);
+  /* Чуть контрастнее primary на экранах без превью игры */
   --cta-bg-strong: linear-gradient(180deg, #3a4050 0%, #2a2f3a 52%, #1e222c 100%);
   --cta-bg-solid: #282b34;
   --cta-border: rgba(255, 255, 255, 0.11);
   --cta-highlight: rgba(255, 255, 255, 0.05);
-
+  /* Вордмарк / марка */
   --brand-1: #b4c7e0;
   --brand-2: #7d90a8;
-  
-  /* Тема: Dark (default) */
   --bg: #0a0b0e;
   --surface: #13141a;
   --surface-elevated: #1c1e26;
   --border: rgba(255, 255, 255, 0.06);
-  --text: #ffffff;
+  --text: #fff;
   --muted: rgba(255, 255, 255, 0.42);
-  
-  --tg-glass-bg: rgba(20, 22, 28, 0.72);
-  --tg-glass-bg-strong: rgba(18, 20, 26, 0.82);
-  --tg-glass-border: rgba(255, 255, 255, 0.1);
-  --tg-glass-shadow: 0 10px 36px rgba(0, 0, 0, 0.28);
-  --tg-glass-inset: inset 0 1px 0 rgba(255, 255, 255, 0.06);
-  
+  /* Лайк в ленте: тёплый кораллово-розовый (отдельно от холодного accent) */
   --like-on: #ff7a8a;
+  --like-on-rgb: 255, 122, 138;
+  --like-on-soft: rgba(255, 122, 138, 0.16);
   --nav-active: rgba(255, 255, 255, 0.92);
+  --btn-radius-md: 12px;
+  --btn-radius-lg: 14px;
+  --btn-pad-y: 14px;
+  --btn-pad-x: 18px;
   --btn-border: rgba(255, 255, 255, 0.1);
-  --sg-doodle-opacity: 0.038;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
 
+  /* Едва заметный «контурный» паттерн (как тонкий фон в TG) */
+  --sg-doodle: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200' viewBox='0 0 200 200'%3E%3Cdefs%3E%3Cpath id='a' d='M0 0h200v200H0z' fill='none'/%3E%3C/defs%3E%3Cg fill='none' stroke='%23ffffff' stroke-opacity='0.038' stroke-width='0.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='18' cy='24' r='5'/%3E%3Crect x='38' y='12' width='12' height='12' rx='2.5' transform='rotate(8 44 18)'/%3E%3Cpath d='M68 10c4-1.2 8.2-1.1 12.5.2'/%3E%3Cpath d='M100 18a10 10 0 11-9.5 13.8'/%3E%3Crect x='116' y='8' width='16' height='9' rx='2'/%3E%3Ccircle cx='156' cy='20' r='4'/%3E%3Cpath d='M172 12l6.5 4-2.2 7-6.4-3.5-6.3 3.6-2.2-7.1z'/%3E%3Cpath d='M8 58a6 6 0 1110.2-3'/%3E%3Crect x='32' y='50' width='18' height='10' rx='2' transform='rotate(-6 41 55)'/%3E%3Ccircle cx='70' cy='58' r='3'/%3E%3Cpath d='M86 48c2.5-1.2 5.3-1.1 8.1.2'/%3E%3Crect x='110' y='48' width='11' height='11' rx='2'/%3E%3Cpath d='M144 48c0-2.2 1.8-4 4-4'/%3E%3Cpath d='M170 48c-1.2-1-1-2.7.2-3.7'/%3E%3Cpath d='M6 102a5.2 5.2 0 1110-1'/%3E%3Crect x='30' y='92' width='14' height='14' rx='3'/%3E%3Cpath d='M58 98c0-2.2 1.8-4 4-4'/%3E%3Cpath d='M86 95a5.5 5.5 0 0010.2-1'/%3E%3Crect x='110' y='96' width='20' height='6' rx='1.5'/%3E%3Ccircle cx='150' cy='100' r='4'/%3E%3Cpath d='M170 96c1.2-1.2 2-1.1 3.2.1'/%3E%3Cpath d='M12 140a4.5 4.5 0 111-1'/%3E%3Crect x='30' y='132' width='10' height='10' rx='2' transform='rotate(12 35 137)'/%3E%3Cpath d='M56 126c2-1.1 4.3-1 6.4.2'/%3E%3Ccircle cx='90' cy='136' r='3'/%3E%3Crect x='110' y='128' width='16' height='9' rx='2'/%3E%3Cpath d='M144 130a5.5 5.5 0 0010.2-1'/%3E%3Cpath d='M170 130a4.5 4.5 0 11-1-1'/%3E%3Cpath d='M8 168a4.5 4.5 0 111-1'/%3E%3Crect x='32' y='162' width='12' height='12' rx='2'/%3E%3Cpath d='M60 170a3.5 3.5 0 11-1 1'/%3E%3Ccircle cx='94' cy='172' r='3'/%3E%3Cpath d='M122 166a3.5 3.5 0 11-1-1'/%3E%3Crect x='150' y='166' width='18' height='7' rx='1.5'/%3E%3Cpath d='M186 168a3.5 3.5 0 11-1-1'/%3E%3C/g%3E%3Cg fill='none' stroke='%23a3b8d4' stroke-opacity='0.05' stroke-width='0.75'%3E%3Cpath d='M24 86a2.5 2.5 0 11-1-1'/%3E%3Cpath d='M52 78a2.5 2.5 0 11-1-1'/%3E%3Cpath d='M128 66a2.5 2.5 0 11-1-1'/%3E%3Cpath d='M180 78a2.5 2.5 0 11-1-1'/%3E%3Cpath d='M24 188a2.5 2.5 0 11-1-1'/%3E%3Cpath d='M88 44a2.5 2.5 0 11-1-1'/%3E%3Cpath d='M194 130a2.5 2.5 0 11-1-1'/%3E%3C/g%3E%3C/svg%3E");
+  --sg-doodle-size: 200px 200px;
+
+  /* Чуть выше классического таббара — под центральную кнопку «загрузка» */
   --nav-h: 72px;
   --info-h: 76px;
   --feed-chrome-h: 44px;
+  --game-top: var(--safe-top);
+  --game-bottom: calc(var(--safe-bottom) + var(--nav-h) + var(--info-h));
+
+  /* Модальные панели в духе Telegram: лёгкое стекло, один blur на всех «листах» */
+  --tg-glass-bg: rgba(20, 22, 28, 0.72);
+  --tg-glass-bg-strong: rgba(18, 20, 26, 0.82);
+  --tg-glass-border: rgba(255, 255, 255, 0.1);
+  --tg-glass-border-soft: rgba(255, 255, 255, 0.06);
   --tg-glass-blur: 18px;
   --tg-glass-saturate: 1.06;
-}
-
-/* Светлая тема */
-:root.theme-light, body.theme-light {
-  --bg: #ffffff;
-  --surface: #f1f2f5;
-  --surface-elevated: #ffffff;
-  --border: rgba(0, 0, 0, 0.08);
-  --text: #000000;
-  --muted: rgba(0, 0, 0, 0.5);
-  
-  --tg-glass-bg: rgba(255, 255, 255, 0.82);
-  --tg-glass-bg-strong: rgba(255, 255, 255, 0.92);
-  --tg-glass-border: rgba(0, 0, 0, 0.08);
-  --tg-glass-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
-  --tg-glass-inset: inset 0 1px 0 rgba(255, 255, 255, 0.8);
-  
-  --accent: #2481cc;
-  --nav-active: #2481cc;
-  --btn-border: rgba(0, 0, 0, 0.1);
-  --cta-bg: linear-gradient(180deg, #f5f6f7 0%, #e8ebed 100%);
-  --cta-bg-solid: #f1f2f5;
-  --cta-border: rgba(0, 0, 0, 0.05);
-  --sg-doodle-opacity: 0.015;
+  --tg-glass-shadow: 0 10px 36px rgba(0, 0, 0, 0.28);
+  --tg-glass-inset: inset 0 1px 0 rgba(255, 255, 255, 0.06);
 }
 
 /* Единое «стекло» для bottom sheet, карточек подсказок, онбординга */
@@ -1042,8 +1023,7 @@ body.tg-only-wall #app-boot-splash {
 }
 
 .sg-brand-word-muted {
-  color: var(--text);
-  opacity: 0.42;
+  color: rgba(255, 255, 255, 0.42);
 }
 
 .sg-brand-word-accent {

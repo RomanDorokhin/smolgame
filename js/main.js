@@ -44,11 +44,6 @@ async function bootstrap() {
       maybeShowFeedNavTipAfterGames();
     }
     if (typeof refreshFeedCoachState === 'function') refreshFeedCoachState();
-    
-    syncTelegramTheme();
-    if (window.Telegram?.WebApp) {
-      window.Telegram.WebApp.onEvent('themeChanged', syncTelegramTheme);
-    }
 
     if (typeof window.syncUSERFromTelegramInit === 'function') {
       window.syncUSERFromTelegramInit();
@@ -67,33 +62,6 @@ async function bootstrap() {
     }
   } finally {
     if (!needOnboarding && typeof hideBootSplash === 'function') hideBootSplash();
-  }
-}
-
-/** Синхронизация темы с Telegram (светлая/тёмная) */
-function syncTelegramTheme() {
-  const tg = window.Telegram?.WebApp;
-  if (!tg) return;
-
-  const isLight = tg.colorScheme === 'light';
-  const root = document.documentElement;
-  
-  if (isLight) {
-    root.classList.add('theme-light');
-    root.classList.remove('theme-dark');
-    document.body.classList.add('theme-light');
-    document.body.classList.remove('theme-dark');
-  } else {
-    root.classList.add('theme-dark');
-    root.classList.remove('theme-light');
-    document.body.classList.add('theme-dark');
-    document.body.classList.remove('theme-light');
-  }
-
-  // Обновляем theme-color для браузера/системы
-  const meta = document.querySelector('meta[name="theme-color"]');
-  if (meta) {
-    meta.setAttribute('content', isLight ? '#ffffff' : '#0a0b0e');
   }
 }
 
