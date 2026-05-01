@@ -126,33 +126,92 @@ body.theme-light .sg-icon {
   color: var(--text);
 }
 
-body.theme-light .sg-btn--primary {
-  color: #ffffff !important;
+body.theme-light .profile-wall-title {
+  color: #1c1c1e !important;
+  font-weight: 800 !important;
+  margin-top: 32px !important;
+  font-size: 20px !important;
 }
 
-body.theme-light .app-nav-item:not(.active) .sg-icon {
-  color: rgba(0, 0, 0, 0.4);
+body.theme-light #profilePostInput {
+  background: #f2f2f7 !important;
+  color: #1c1c1e !important;
+  border: 1px solid rgba(0, 0, 0, 0.08) !important;
+  padding: 14px !important;
+  border-radius: 14px !important;
+  width: 100% !important;
+  font-size: 16px !important;
 }
 
-body.theme-light .game-detail-screen .action-label-caption,
-body.theme-light .game-detail-screen .action-label-num,
-body.theme-light .profile-header .action-label-caption,
-body.theme-light .profile-header .action-label-num {
-  color: #1c1c1e;
-  text-shadow: none;
-}
-
-body.theme-light .profile-post-body {
-  color: #1c1c1e;
+body.theme-light #profilePostInput::placeholder {
+  color: #8e8e93 !important;
+  opacity: 1 !important;
 }
 
 body.theme-light .profile-post-item {
-  background: #ffffff;
-  border: 1px solid var(--border);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
+  background: #ffffff !important;
+  border: 1px solid rgba(0, 0, 0, 0.05) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03) !important;
+  border-radius: 16px !important;
+  padding: 16px !important;
+  margin-bottom: 12px !important;
+}
+
+body.theme-light .profile-post-body {
+  color: #1c1c1e !important;
 }
 
 body.theme-light .profile-post-date {
+  color: #8e8e93 !important;
+}
+
+body.theme-light .feed-reviews-drawer {
+  background: #ffffff !important;
+  border-top: 1px solid rgba(0, 0, 0, 0.1) !important;
+  color: #1c1c1e !important;
+}
+
+body.theme-light .feed-reviews-drawer-title {
+  color: #1c1c1e !important;
+}
+
+body.theme-light .feed-reviews-drawer-close {
+  background: #f2f2f7 !important;
+  color: #1c1c1e !important;
+}
+
+body.theme-light .feed-review-author {
+  color: #1c1c1e !important;
+}
+
+body.theme-light .feed-review-text {
+  color: #2c2c2e !important;
+}
+
+body.theme-light .feed-review-date {
+  color: #8e8e93 !important;
+}
+
+body.theme-light .feed-reviews-drawer-compose {
+  background: #ffffff !important;
+  border-top: 1px solid rgba(0, 0, 0, 0.08) !important;
+}
+
+body.theme-light .feed-reviews-drawer-compose textarea {
+  background: #ffffff;
+  color: #1c1c1e;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+body.theme-light .feed-reviews-empty {
+  color: #8e8e93;
+}
+
+body.theme-light .feed-reviews-drawer-handle {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+body.theme-light .sg-mini-stat {
   color: #8e8e93;
 }
 

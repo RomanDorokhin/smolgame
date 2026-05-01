@@ -18,6 +18,7 @@ function syncBodyFeedHiddenUnderSheet() {
 /** Закрыть основные вкладки и оверлей автора (нижний таб не должен «застревать» под #author-screen). */
 function closeAllMainTabs() {
   if (typeof clearFeedSwipeTeaseTimers === 'function') clearFeedSwipeTeaseTimers();
+  document.getElementById('feed-exit-focus')?.setAttribute('hidden', '');
   // Закрыть карточку игры, если открыта (иначе «зомби»-слой после переключения вкладки)
   const gd = document.getElementById('game-detail-screen');
   if (gd) gd.hidden = true;
