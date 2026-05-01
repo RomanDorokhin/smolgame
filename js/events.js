@@ -177,6 +177,9 @@ const CLICK_ACTIONS = {
   'onboarding-next': () => onboardingNext(),
   'onboarding-finish': () => finishOnboarding(),
   'image-picker':   (el) => document.getElementById(el.dataset.target)?.click(),
+  'submit-profile-post': () => {
+    if (typeof submitProfilePost === 'function') submitProfilePost();
+  },
 };
 
 function handleDelegatedClick(ev) {
