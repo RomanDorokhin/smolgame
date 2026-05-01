@@ -113,32 +113,34 @@ function renderGameDetailReviews(container, reviews) {
 }
 
 async function openGameDetail(gameId) {
+  const t = typeof window.t === 'function' ? window.t : k => k;
+  
   if (typeof showToast === 'function') showToast('openGameDetail fired for ' + gameId);
   if (!gameId) {
     if (typeof showToast === 'function') showToast('No gameId provided');
     return;
   }
+
+  const screen = document.getElementById('game-detail-screen');
+  if (!screen) {
+    if (typeof showToast === 'function') showToast('No screen found');
+    return;
+  }
+  _gameDetailId = gameId;
+
+  const hero = document.getElementById('gameDetailHero');
+  const titleEl = document.getElementById('gameDetailTitle');
+  const topTitle = document.getElementById('gameDetailTopTitle');
+  const descEl = document.getElementById('gameDetailDesc');
+  const badges = document.getElementById('gameDetailBadges');
+  const meta = document.getElementById('gameDetailMeta');
+  const authorCard = document.getElementById('gameDetailAuthorCard');
+  const reviewsEl = document.getElementById('gameDetailReviews');
+  const reviewForm = document.getElementById('gameDetailReviewForm');
+  const ownerActions = document.getElementById('gameDetailOwnerActions');
+  const playBtn = document.getElementById('gameDetailPlayBtn');
+
   try {
-    const screen = document.getElementById('game-detail-screen');
-    if (!screen) {
-      if (typeof showToast === 'function') showToast('No screen found');
-      return;
-    }
-    _gameDetailId = gameId;
-
-    const hero = document.getElementById('gameDetailHero');
-    const titleEl = document.getElementById('gameDetailTitle');
-    const topTitle = document.getElementById('gameDetailTopTitle');
-    const descEl = document.getElementById('gameDetailDesc');
-    const badges = document.getElementById('gameDetailBadges');
-    const meta = document.getElementById('gameDetailMeta');
-    const authorCard = document.getElementById('gameDetailAuthorCard');
-    const reviewsEl = document.getElementById('gameDetailReviews');
-    const reviewForm = document.getElementById('gameDetailReviewForm');
-    const ownerActions = document.getElementById('gameDetailOwnerActions');
-    const playBtn = document.getElementById('gameDetailPlayBtn');
-    const t = tf();
-
     hero.innerHTML = '<div class="game-detail-hero-skel"></div>';
     titleEl.textContent = '…';
     if (topTitle) topTitle.textContent = t('game_word');
@@ -146,10 +148,12 @@ async function openGameDetail(gameId) {
     badges.innerHTML = '';
     meta.innerHTML = '';
     authorCard.innerHTML = '';
-    reviewsEl.innerHTML = '';
+    if (reviewsEl) reviewsEl.innerHTML = '';
     if (reviewForm) reviewForm.hidden = false;
-    ownerActions.hidden = true;
-    ownerActions.innerHTML = '';
+    if (ownerActions) {
+      ownerActions.hidden = true;
+      ownerActions.innerHTML = '';
+    }
 
     window._gameDetailReturnTab = window._activeMainTab || 'feed';
     ['games-library-screen', 'search-screen', 'profile-screen', 'author-screen']
