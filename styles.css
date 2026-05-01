@@ -2061,6 +2061,9 @@ body.keyboard-open .feed-reviews-drawer-compose {
   border-radius: 12px;
   width: 100%;
 }
+.feed-reviews-action-bar[hidden] {
+  display: none !important;
+}
 #feedReviewActionText {
   font-size: 12px;
   color: var(--muted);

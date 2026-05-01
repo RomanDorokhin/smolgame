@@ -77,7 +77,8 @@ function getReviewText(key) {
     'delete': isEn ? 'Delete' : 'Удл.',
     'cancel': isEn ? 'Cancel' : 'Отмена',
     'replying_to': isEn ? 'Replying to {name}' : 'Ответ {name}',
-    'editing_review': isEn ? 'Editing review' : 'Редактирование'
+    'editing_review': isEn ? 'Editing review' : 'Редактирование',
+    'review_short_placeholder': isEn ? 'Your review...' : 'Твой отзыв...'
   };
   return dict[key] || key;
 }
@@ -244,7 +245,7 @@ function cancelReviewAction() {
   const input = document.getElementById('feedReviewInput');
   if (bar) bar.hidden = true;
   if (input) {
-    input.placeholder = getReviewText('gd_reviews_empty_page');
+    input.placeholder = getReviewText('review_short_placeholder');
     input.value = '';
   }
 }
