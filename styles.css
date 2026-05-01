@@ -528,22 +528,29 @@ body.theme-light .method-card {
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
 }
 
-body.theme-light .method-card.selected {
-  background: #f0f7ff;
-  border-color: var(--accent);
-  box-shadow: 0 8px 24px rgba(0, 122, 255, 0.12);
+/* Light Theme Colorful Overrides */
+body.theme-light .method-card--url.selected {
+  background: linear-gradient(165deg, rgba(0, 122, 255, 0.08) 0%, #ffffff 100%);
+  border-color: rgba(0, 122, 255, 0.3);
+}
+body.theme-light .method-card--url .m-icon--svg {
+  color: #007aff;
 }
 
-body.theme-light .method-card .m-title {
-  color: var(--text);
+body.theme-light .method-card--github.selected {
+  background: linear-gradient(165deg, rgba(175, 82, 222, 0.08) 0%, #ffffff 100%);
+  border-color: rgba(175, 82, 222, 0.3);
+}
+body.theme-light .method-card--github .m-icon--svg {
+  color: #af52de;
 }
 
-body.theme-light .method-card .m-desc {
-  color: var(--muted);
+body.theme-light .method-card--premium.selected {
+  background: linear-gradient(165deg, rgba(255, 149, 0, 0.08) 0%, #ffffff 100%);
+  border-color: rgba(255, 149, 0, 0.3);
 }
-
-body.theme-light .method-card .m-icon {
-  color: var(--accent);
+body.theme-light .method-card--premium .m-icon--svg {
+  color: #ff9500;
 }
 
 body.theme-light .method-card--premium-locked {
