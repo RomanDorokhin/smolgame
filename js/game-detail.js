@@ -113,9 +113,16 @@ function renderGameDetailReviews(container, reviews) {
 }
 
 async function openGameDetail(gameId) {
-  if (!gameId) return;
+  if (typeof showToast === 'function') showToast('openGameDetail fired for ' + gameId);
+  if (!gameId) {
+    if (typeof showToast === 'function') showToast('No gameId provided');
+    return;
+  }
   const screen = document.getElementById('game-detail-screen');
-  if (!screen) return;
+  if (!screen) {
+    if (typeof showToast === 'function') showToast('No screen found');
+    return;
+  }
   _gameDetailId = gameId;
 
   const hero = document.getElementById('gameDetailHero');
@@ -159,10 +166,12 @@ async function openGameDetail(gameId) {
 
   let game;
   try {
+    if (typeof showToast === 'function') showToast('Fetching API.game...');
     console.log('[GameDetail] Fetching game:', gameId);
     const data = await API.game(gameId);
     game = data?.game;
     if (!game?.id) throw new Error(t('gd_no_data'));
+    if (typeof showToast === 'function') showToast('Game loaded successfully!');
     console.log('[GameDetail] Game loaded:', game);
   } catch (e) {
     console.error('[GameDetail] Load error:', e);
