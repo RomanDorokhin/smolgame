@@ -3504,21 +3504,21 @@ body.game-detail-open .game-detail-screen {
 #bottom-nav {
   position: fixed;
   bottom: 0;
-  left: 0;
-  right: 0;
-  /* Выше шитов (1800), подсказок ленты и сплэша — иначе «табы не жмутся» при наложении */
-  z-index: 1950;
-  height: calc(var(--safe-bottom) + var(--nav-h));
-  background: var(--tg-glass-bg);
-  border-top: 1px solid var(--tg-glass-border);
-  backdrop-filter: blur(var(--tg-glass-blur)) saturate(var(--tg-glass-saturate));
-  -webkit-backdrop-filter: blur(var(--tg-glass-blur)) saturate(var(--tg-glass-saturate));
-  padding: 8px 4px var(--safe-bottom);
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 600px;
+  height: var(--nav-h);
+  background: var(--nav-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   display: flex;
   justify-content: space-around;
-  align-items: flex-end;
-  overflow: visible;
-  box-shadow: var(--tg-glass-shadow);
+  align-items: center;
+  z-index: 5000; /* Always on top of screens */
+  border-top: 1px solid var(--border);
+  padding-bottom: var(--safe-bottom);
+  box-sizing: content-box;
 }
 
 body.app-boot-active #bottom-nav,
@@ -3552,9 +3552,8 @@ body.keyboard-open .app-tab-chrome {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: rgba(255, 255, 255, 0.92);
-  transition: opacity 0.2s, transform 0.2s;
-  opacity: 0.5;
+  color: var(--nav-inactive);
+  transition: opacity 0.2s, transform 0.2s, color 0.2s;
 }
 
 .nav-item .nav-icon svg {
@@ -3566,7 +3565,7 @@ body.keyboard-open .app-tab-chrome {
 .nav-item .nav-label {
   font-size: 10px;
   font-weight: 600;
-  color: var(--muted);
+  color: var(--nav-inactive);
   letter-spacing: 0.02em;
   transition: color 0.2s;
   text-transform: none;
@@ -3577,9 +3576,15 @@ body.keyboard-open .app-tab-chrome {
 }
 
 .nav-item.active .nav-icon {
-  opacity: 1;
   transform: translateY(-0.5px);
-  color: #fff;
+}
+#nav-feed.active .nav-icon { color: #5856d6; }
+#nav-games.active .nav-icon { color: #ff2d55; }
+#nav-search.active .nav-icon { color: #34c759; }
+#nav-profile.active .nav-icon { color: #af52de; }
+
+body.theme-light .nav-item.active .nav-icon {
+  filter: drop-shadow(0 0 2px rgba(0,0,0,0.1));
 }
 
 /* Центральная кнопка: марка smolgame + плюс (как в TikTok) */
@@ -3696,8 +3701,8 @@ body.keyboard-open .app-tab-chrome {
 #games-library-screen.open {
   display: flex;
   bottom: calc(var(--safe-bottom) + var(--nav-h));
-  z-index: 1800;
-  padding-bottom: calc(var(--safe-bottom) + var(--nav-h) + 16px);
+  z-index: 900; /* Below bottom-nav (5000) */
+  padding-bottom: 20px;
 }
 
 .games-grid--library {
@@ -3775,7 +3780,7 @@ body.keyboard-open .app-tab-chrome {
   display: flex;
   /* Панель над нижним таббаром, не на весь экран */
   bottom: calc(var(--safe-bottom) + var(--nav-h));
-  z-index: 1800;
+  z-index: 900; /* Below bottom-nav (5000) */
   padding-bottom: calc(var(--safe-bottom) + var(--nav-h) + 20px);
 }
 
@@ -4719,8 +4724,8 @@ textarea.field-input {
 #profile-screen.open,
 #author-screen.open {
   bottom: calc(var(--safe-bottom) + var(--nav-h));
-  z-index: 1800;
-  padding-bottom: calc(var(--safe-bottom) + var(--nav-h) + 16px);
+  z-index: 900;
+  padding-bottom: 20px;
 }
 
 .profile-header {
@@ -5355,8 +5360,8 @@ textarea.field-input {
 #search-screen.open {
   display: flex;
   bottom: calc(var(--safe-bottom) + var(--nav-h));
-  z-index: 1800;
-  padding-bottom: calc(var(--safe-bottom) + var(--nav-h) + 12px);
+  z-index: 900;
+  padding-bottom: 20px;
 }
 
 .search-header {

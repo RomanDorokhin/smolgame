@@ -83,6 +83,8 @@
   </div>
   <div class="app-tab-chrome-text">
     <span class="app-tab-chrome-brand">SmolGame</span>
+    <span class="app-tab-chrome-divider">/</span>
+    <span class="app-tab-chrome-label" id="app-tab-chrome-label" data-i18n="nav_feed">Лента</span>
   </div>
 </div>
 
@@ -639,15 +641,15 @@ Must work on a mobile phone.</pre>
         <p class="profile-id-readonly">ID: <strong id="profileSiteHandleRead">—</strong> <span class="profile-id-hint" data-i18n="profile_id_hint">при регистрации</span></p>
         <label class="profile-field">
           <span class="field-lbl" data-i18n="profile_name_lbl">Имя</span>
-          <input type="text" id="editProfileName" maxlength="32">
+          <input type="text" id="profileDisplayName" maxlength="32">
         </label>
         <label class="profile-field">
           <span class="field-lbl" data-i18n="profile_bio_lbl">О себе</span>
-          <textarea id="editProfileBio" maxlength="160"></textarea>
+          <textarea id="profileBioInput" maxlength="160"></textarea>
         </label>
         <div class="profile-field">
           <span class="field-lbl" data-i18n="profile_theme_lbl">Тема</span>
-          <div class="profile-theme-selector">
+          <div class="profile-theme-selector" id="profileThemeSelector">
             <button type="button" class="theme-btn" data-theme="dark" data-i18n="theme_dark">Тёмная</button>
             <button type="button" class="theme-btn" data-theme="light" data-i18n="theme_light">Светлая</button>
           </div>
@@ -660,7 +662,7 @@ Must work on a mobile phone.</pre>
           <div class="profile-avatar-btns">
             <label class="profile-file-btn">
               <span data-i18n="profile_photo_change">Изменить фото</span>
-              <input type="file" id="editAvatarInput" accept="image/*">
+              <input type="file" id="profileAvatarInput" accept="image/*">
             </label>
             <button type="button" class="profile-text-btn" data-action="reset-profile-photo" data-i18n="profile_photo_reset">Как в Telegram</button>
           </div>
