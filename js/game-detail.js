@@ -40,12 +40,11 @@ async function openFeedReviewsDrawer() {
   const drawer = document.getElementById('feed-reviews-drawer');
   const backdrop = document.getElementById('feed-reviews-backdrop');
   const listEl = document.getElementById('feedReviewsDrawerList');
-  if (!drawer || !listEl) return;
+  const input = document.getElementById('feedReviewInput');
   
-  const g = Array.isArray(window.GAMES) ? window.GAMES[window.currentIdx] : null;
-  if (!g?.id) return;
+  if (!drawer || !listEl) return;
 
-  _feedReviewsOpen = true;
+  // 1. Мгновенно даем фокус (TikTok-style), пока еще не ушли в сеть
   drawer.hidden = false;
   drawer.setAttribute('aria-hidden', 'false');
   if (backdrop) {
@@ -53,10 +52,24 @@ async function openFeedReviewsDrawer() {
     backdrop.onclick = closeFeedReviewsDrawer;
   }
   
+  if (input) {
+    input.focus();
+    // На iOS/Android иногда нужно пнуть еще раз через 0мс
+    setTimeout(() => input.focus(), 0);
+  }
+  
+  // 2. Определяем игру
+  const g = Array.isArray(window.GAMES) ? window.GAMES[window.currentIdx] : null;
+  if (!g?.id) {
+    listEl.innerHTML = '<div class="feed-reviews-empty">Игра не найдена</div>';
+    return;
+  }
+  
   const t = tf();
   listEl.innerHTML = `<div class="feed-reviews-loading">${esc(t('gd_reviews_loading'))}</div>`;
 
   try {
+    // 3. Грузим отзывы с форсированным сбросом кэша
     const list = await fetchGameReviews(g.id);
     const chipNum = document.getElementById('feedReviewCount');
     if (chipNum) chipNum.textContent = String(Array.isArray(list) ? list.length : 0);
@@ -87,14 +100,6 @@ async function openFeedReviewsDrawer() {
         .join('');
 
       listEl.innerHTML = html || `<div class="feed-reviews-empty">${esc(t('gd_reviews_empty_drawer'))}</div>`;
-    }
-    
-    // Мгновенный фокус (TikTok-style)
-    const input = document.getElementById('feedReviewInput');
-    if (input) {
-      input.focus();
-      // На некоторых iOS все равно нужна микро-задержка
-      setTimeout(() => input.focus(), 20);
     }
   } catch (err) {
     console.error('[FeedReviews] Fatal Error:', err);

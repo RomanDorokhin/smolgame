@@ -273,7 +273,7 @@ window.API = {
   likedGames:   ()         => apiFetch(`/api/me/liked-games?_t=${Date.now()}`),
   playedGames:  ()         => apiFetch(`/api/me/played-games?_t=${Date.now()}`),
   game:         (gameId)   => apiFetch(`/api/games/${encodeURIComponent(gameId)}?_t=${Date.now()}`),
-  gameReviews:  (gameId)   => apiFetch(`/api/games/${encodeURIComponent(gameId)}/reviews`),
+  gameReviews:  (gameId)   => apiFetch(`/api/games/${encodeURIComponent(gameId)}/reviews?_t=${Date.now()}`),
   postGameReview: (gameId, payload) =>
     apiFetch(`/api/games/${encodeURIComponent(gameId)}/reviews`, { method: 'POST', body: payload }),
   register:     (payload)  => apiFetch('/api/register', { method: 'POST', body: payload }),
