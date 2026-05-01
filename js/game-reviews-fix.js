@@ -170,9 +170,16 @@ function openFeedReviewsDrawer() {
 }
 
 async function _loadFeedReviewsData(listEl) {
-  const g = Array.isArray(window.GAMES) ? window.GAMES[window.currentIdx] : null;
+  // 2. Пытаемся определить игру более надежно
+  let g = Array.isArray(window.GAMES) ? window.GAMES[window.currentIdx] : null;
+  // Если не нашли через индекс, пробуем найти по активному экрану (если мы в Game Detail)
+  if (!g && window.location.hash.includes('game/')) {
+     const id = window.location.hash.split('game/')[1];
+     if (id && Array.isArray(window.GAMES)) g = window.GAMES.find(x => String(x.id) === String(id));
+  }
+
   if (!g?.id) {
-    listEl.innerHTML = '<div class="feed-reviews-empty">Game not found</div>';
+    listEl.innerHTML = `<div class="feed-reviews-empty">Game ID not found (idx: ${window.currentIdx})</div>`;
     return;
   }
   
@@ -181,7 +188,7 @@ async function _loadFeedReviewsData(listEl) {
   try {
     const all = await fetchGameReviews(g.id);
     if (all === null) {
-      listEl.innerHTML = `<div class="feed-reviews-empty">${esc(getReviewText('err_load'))}</div>`;
+      listEl.innerHTML = `<div class="feed-reviews-empty">${esc(getReviewText('err_load'))} (API Fail for ID: ${g.id})</div>`;
       return;
     }
     const chipNum = document.getElementById('feedReviewCount');

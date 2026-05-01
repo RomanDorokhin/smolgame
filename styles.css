@@ -1678,7 +1678,8 @@ body.feed-onboarding-ui .app-tab-chrome{
   bottom: 0;
   left: 0;
   right: 0;
-  height: 75vh;
+  top: 20%;
+  bottom: 0;
   background: rgba(20, 20, 25, 0.95);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
@@ -1699,9 +1700,6 @@ body.feed-onboarding-ui .app-tab-chrome{
   transform: translateY(0);
 }
 
-body.keyboard-open .feed-reviews-drawer {
-  height: 92vh; /* Поднимаем выше, чтобы клава не закрывала инпут */
-}
 
 .feed-reviews-drawer-handle {
   width: 40px;
