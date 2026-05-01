@@ -210,6 +210,7 @@ async function loadAuthorProfile(authorId) {
 
 function switchTab(tab) {
   if (!tab) return;
+  console.log('[Screens] switchTab:', tab);
   const t = typeof window.t === 'function' ? window.t : k => k;
   
   if (tab === 'feed') {

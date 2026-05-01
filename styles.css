@@ -2072,6 +2072,11 @@ body.game-detail-open .app-tab-chrome {
   gap: 2px;
 }
 
+body.theme-light .lang-switch-modern {
+  background: rgba(0, 0, 0, 0.05);
+  border-color: rgba(0, 0, 0, 0.05);
+}
+
 .lang-option {
   padding: 5px 10px;
   font-size: 11px;
@@ -2090,9 +2095,9 @@ body.game-detail-open .app-tab-chrome {
 }
 
 body.theme-light .lang-option.active {
-  background: rgba(var(--accent-rgb), 0.1);
+  background: #fff;
   color: var(--accent);
-  box-shadow: 0 0 0 1px var(--accent);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.1);
 }
 
 html[lang="en"] .i18n-ru {
@@ -3701,7 +3706,7 @@ body.theme-light .nav-item.active .nav-icon {
 #games-library-screen.open {
   display: flex;
   bottom: calc(var(--safe-bottom) + var(--nav-h));
-  z-index: 900; /* Below bottom-nav (5000) */
+  z-index: 1800;
   padding-bottom: 20px;
 }
 
@@ -4724,7 +4729,7 @@ textarea.field-input {
 #profile-screen.open,
 #author-screen.open {
   bottom: calc(var(--safe-bottom) + var(--nav-h));
-  z-index: 900;
+  z-index: 1800;
   padding-bottom: 20px;
 }
 
@@ -5360,7 +5365,7 @@ textarea.field-input {
 #search-screen.open {
   display: flex;
   bottom: calc(var(--safe-bottom) + var(--nav-h));
-  z-index: 900;
+  z-index: 1800;
   padding-bottom: 20px;
 }
 
