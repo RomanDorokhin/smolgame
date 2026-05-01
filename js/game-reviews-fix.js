@@ -158,6 +158,11 @@ function openFeedReviewsDrawer() {
   drawer.hidden = false;
   drawer.setAttribute('aria-hidden', 'false');
 
+  // Сбрасываем старые данные сразу, чтобы не было «прыжков» контента
+  listEl.innerHTML = '';
+  listEl.scrollTop = 0;
+  if (input) input.value = '';
+
   if (backdrop) {
     backdrop.hidden = false;
     backdrop.onclick = closeFeedReviewsDrawer;
@@ -165,10 +170,12 @@ function openFeedReviewsDrawer() {
 
   if (typeof syncBackButton === 'function') syncBackButton();
 
+  // Фокус с задержкой, чтобы дождаться окончания анимации шторки (0.25s) 
+  // и избежать резких прыжков вьюпорта при открытии клавиатуры.
   if (input) {
-    input.focus();
-    // Пинок для клавиатуры
-    setTimeout(() => input.focus(), 10);
+    setTimeout(() => {
+      if (_feedReviewsOpen) input.focus();
+    }, 350);
   }
 
   _loadFeedReviewsData(listEl);
@@ -224,11 +231,7 @@ async function _loadFeedReviewsData(listEl) {
       listEl.innerHTML = html || `<div class="feed-reviews-empty">${esc(getReviewText('gd_reviews_empty_drawer'))}</div>`;
     }
 
-    // Фокус после загрузки, если не в режиме редактирования/ответа
-    const input = document.getElementById('feedReviewInput');
-    if (!_replyingToId && !_editingReviewId && input) {
-      setTimeout(() => input.focus(), 150);
-    }
+    // Фокус убран отсюда, так как он теперь делается один раз в openFeedReviewsDrawer с задержкой
   } catch (err) {
     console.error('[FeedReviews] Render fail:', err);
     listEl.innerHTML = `<div class="feed-reviews-empty">${esc(getReviewText('err_load'))}</div>`;
