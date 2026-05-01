@@ -207,27 +207,26 @@ async function openGameDetail(gameId) {
     <div class="game-detail-meta-cell"><span class="game-detail-meta-k">${esc(t('meta_genre'))}</span><span class="game-detail-meta-v">${esc(genreMeta)}</span></div>
     <div class="game-detail-meta-cell"><span class="game-detail-meta-k">${esc(t('meta_likes'))}</span><span class="game-detail-meta-v">${esc(fmtNum(game.likes))}</span></div>
     <div class="game-detail-meta-cell"><span class="game-detail-meta-k">${esc(t('meta_plays'))}</span><span class="game-detail-meta-v">${esc(fmtNum(game.plays))}</span></div>
-    <div class="game-detail-meta-cell game-detail-meta-cell--wide"><span class="game-detail-meta-k">${esc(t('meta_date'))}</span><span class="game-detail-meta-v">${esc(pubLine)}</span></div>
   `;
 
   const av = game.authorAvatar;
   const avUrl = typeof avatarImgUrl === 'function' ? avatarImgUrl(av) : null;
   const avHtml = avUrl
     ? `<div class="game-detail-author-av"><img src="${esc(avUrl)}" alt="" referrerpolicy="no-referrer"></div>`
-    : `<div class="game-detail-author-av game-detail-author-av--txt">${esc(String(av || '?').slice(0, 1))}</div>`;
+    : `<div class="game-detail-author-av game-detail-author-av--txt">${esc(String(game.authorName || '?').slice(0, 1))}</div>`;
   const following = typeof followedSet !== 'undefined' && game.authorId && followedSet.has(game.authorId);
-    const isSelf = Boolean(game.authorId && USER?.id && sameTelegramUserId(game.authorId, USER.id));
+  const isSelf = Boolean(game.authorId && USER?.id && sameTelegramUserId(game.authorId, USER.id));
   const followLabel = following ? t('follow_done') : t('follow_add_author');
+  // Компактная карточка: аватар + имя + кнопка подписки в одну строку
   authorCard.innerHTML = `
-    <div class="game-detail-author-row">
-      ${avHtml}
-      <div class="game-detail-author-text">
-        <div class="game-detail-author-name">${esc(game.authorName || t('gd_author'))}</div>
-        <div class="game-detail-author-handle">${game.authorHandle ? '@' + esc(game.authorHandle) : ''}</div>
-      </div>
+    ${avHtml}
+    <div class="game-detail-author-text">
+      <div class="game-detail-author-name">${esc(game.authorName || t('gd_author'))}</div>
+      ${game.authorHandle ? `<div class="game-detail-author-handle">@${esc(game.authorHandle)}</div>` : ''}
     </div>
     <button type="button" class="sg-btn sg-btn--secondary game-detail-follow ${following ? 'following' : ''}" data-action="game-detail-follow" data-author-id="${esc(game.authorId)}" ${isSelf ? 'hidden' : ''}>${esc(followLabel)}</button>
   `;
+
 
   if (st === 'published' && playBtn) playBtn.hidden = false;
   else if (playBtn) playBtn.hidden = true;
