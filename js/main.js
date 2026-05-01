@@ -123,4 +123,16 @@ if (document.readyState === 'loading') {
   bootstrap();
 }
 
+// Слушатели для виртуальной клавиатуры (чтобы скрывать нижнее меню)
+document.addEventListener('focusin', (e) => {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+    document.body.classList.add('keyboard-open');
+  }
+});
+document.addEventListener('focusout', (e) => {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+    document.body.classList.remove('keyboard-open');
+  }
+});
+
 window.jumpToStartParamGame = jumpToStartParamGame;

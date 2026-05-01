@@ -43,6 +43,7 @@ function fillBootGenreDriftLayer() {
 function showBootSplash() {
   const el = document.getElementById('app-boot-splash');
   if (!el) return;
+  document.body.classList.add('app-boot-active');
   fillBootGenreDriftLayer();
   el.removeAttribute('hidden');
   requestAnimationFrame(() => el.classList.add('visible'));
@@ -51,6 +52,7 @@ function showBootSplash() {
 function hideBootSplash() {
   const el = document.getElementById('app-boot-splash');
   if (!el) return;
+  document.body.classList.remove('app-boot-active');
   el.classList.remove('visible');
   const done = () => el.setAttribute('hidden', '');
   el.addEventListener('transitionend', done, { once: true });

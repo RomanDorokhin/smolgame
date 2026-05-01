@@ -159,11 +159,13 @@ async function openGameDetail(gameId) {
 
   let game;
   try {
-
+    console.log('[GameDetail] Fetching game:', gameId);
     const data = await API.game(gameId);
     game = data?.game;
     if (!game?.id) throw new Error(t('gd_no_data'));
+    console.log('[GameDetail] Game loaded:', game);
   } catch (e) {
+    console.error('[GameDetail] Load error:', e);
     showToast(typeof userFacingError === 'function' ? userFacingError(e) : t('err_load'));
     closeGameDetail();
     return;

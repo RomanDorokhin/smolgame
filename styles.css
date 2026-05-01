@@ -1784,6 +1784,11 @@ body.feed-onboarding-ui .app-tab-chrome{
   pointer-events:all;
   padding-bottom:max(8px, env(safe-area-inset-bottom, 0px));
 }
+
+body.keyboard-open .feed-reviews-drawer {
+  bottom: 0;
+  max-height: 100vh;
+}
 .feed-reviews-drawer[hidden]{display:none !important;}
 .feed-reviews-drawer-handle{
   width:36px;height:3px;border-radius:99px;
@@ -2162,6 +2167,16 @@ body.game-detail-open .app-tab-chrome{opacity:0;pointer-events:none;}
   justify-content:space-around;
   align-items:flex-end;
   overflow:visible;
+}
+
+body.app-boot-active #bottom-nav,
+body.app-boot-active .app-tab-chrome {
+  display:none !important;
+}
+
+body.keyboard-open #bottom-nav,
+body.keyboard-open .app-tab-chrome {
+  display:none !important;
 }
 
 .nav-item{
