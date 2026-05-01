@@ -19,7 +19,8 @@
     "db:migrate:remote:bio": "wrangler d1 execute smolgame --remote --file=./migrations/0008_users_bio.sql",
     "db:migrate:remote:dob-consent": "wrangler d1 execute smolgame --remote --file=./migrations/0009_users_dob_consent.sql",
     "db:migrate:remote:reviews": "wrangler d1 execute smolgame --remote --file=./migrations/0010_game_reviews.sql",
-    "db:migrate:remote:multi-reviews": "wrangler d1 execute smolgame --remote --file=./migrations/0011_allow_multi_reviews.sql"
+    "db:migrate:remote:multi-reviews": "wrangler d1 execute smolgame --remote --file=./migrations/0011_allow_multi_reviews.sql",
+    "db:migrate:remote:multi-reviews-reply": "wrangler d1 execute smolgame --remote --file=./migrations/0012_review_system_upgrade.sql"
   },
   "devDependencies": {
     "wrangler": "^4.86.0"

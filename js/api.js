@@ -274,8 +274,9 @@ window.API = {
   playedGames:  ()         => apiFetch(`/api/me/played-games?_t=${Date.now()}`),
   game:         (gameId)   => apiFetch(`/api/games/${encodeURIComponent(gameId)}?_t=${Date.now()}`),
   gameReviews:  (gameId)   => apiFetch(`/api/games/${encodeURIComponent(gameId)}/reviews?_t=${Date.now()}`),
-  postGameReview: (gameId, payload) =>
-    apiFetch(`/api/games/${encodeURIComponent(gameId)}/reviews`, { method: 'POST', body: payload }),
+  postGameReview: (gameId, data) => apiFetch(`/api/games/${encodeURIComponent(gameId)}/reviews`, { method: 'POST', body: JSON.stringify(data) }),
+  deleteReview:   (id)             => apiFetch(`/api/reviews/${encodeURIComponent(id)}`, { method: 'DELETE' }),
+  updateReview:   (id, text)       => apiFetch(`/api/reviews/${encodeURIComponent(id)}`, { method: 'PATCH', body: JSON.stringify({ body: text }) }),
   register:     (payload)  => apiFetch('/api/register', { method: 'POST', body: payload }),
   checkRegistered: ()      => apiFetch('/api/me/registered'),
   submit:       (payload)  => apiFetch('/api/submit', { method: 'POST', body: payload }),

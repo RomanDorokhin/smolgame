@@ -964,22 +964,22 @@ export async function getGameById(req, env, gameId) {
 }
 
 const REVIEWS_LIST_SQL_VARIANTS = [
-  `SELECT r.id, r.body, r.created_at AS createdAt, r.user_id AS authorId,
+  `SELECT r.id, r.body, r.created_at AS createdAt, r.user_id AS authorId, r.parent_id AS parentId,
           u.display_name AS authorDisplayName, u.first_name AS authorFirst, u.last_name AS authorLast,
           u.site_handle AS authorHandle
      FROM game_reviews r
      LEFT JOIN users u ON u.id = r.user_id
     WHERE r.game_id = ?
     ORDER BY r.created_at DESC
-    LIMIT 50`,
-  `SELECT r.id, r.body, r.created_at AS createdAt, r.user_id AS authorId,
+    LIMIT 100`,
+  `SELECT r.id, r.body, r.created_at AS createdAt, r.user_id AS authorId, r.parent_id AS parentId,
           CAST(NULL AS TEXT) AS authorDisplayName, u.first_name AS authorFirst, u.last_name AS authorLast,
           u.site_handle AS authorHandle
      FROM game_reviews r
      LEFT JOIN users u ON u.id = r.user_id
     WHERE r.game_id = ?
     ORDER BY r.created_at DESC
-    LIMIT 50`,
+    LIMIT 100`,
 ];
 
 function mapReviewRow(r) {
@@ -994,6 +994,7 @@ function mapReviewRow(r) {
     createdAt: r.createdAt != null ? Number(r.createdAt) : null,
     authorId: r.authorId,
     authorName,
+    parentId: r.parentId || null,
   };
 }
 
@@ -1033,15 +1034,53 @@ export async function postGameReview(req, env, gameId) {
   const id = newId();
   try {
     await env.DB.prepare(
-      `INSERT INTO game_reviews (id, game_id, user_id, body, created_at)
-       VALUES (?, ?, ?, ?, unixepoch())`
-    ).bind(id, gameId, user.id, ok.text).run();
+      `INSERT INTO game_reviews (id, game_id, user_id, parent_id, body, created_at)
+       VALUES (?, ?, ?, ?, ?, unixepoch())`
+    ).bind(id, gameId, user.id, body.parentId || null, ok.text).run();
   } catch (e) {
     if (isMissingTableError(e)) {
       return error('Отзывы пока недоступны — админ должен выполнить миграцию БД (game_reviews).', 503);
     }
     throw e;
   }
+
+  return json({ ok: true, id });
+}
+
+export async function updateGameReview(req, env, reviewId) {
+  const user = await authenticate(req, env);
+  if (!user) return error('unauthorized', 401);
+
+  let body;
+  try { body = await req.json(); } catch (e) { return error('invalid json'); }
+  const { ok, error: verr } = validateGameReview(body);
+  if (verr) return error(verr);
+
+  const row = await env.DB.prepare(`SELECT user_id FROM game_reviews WHERE id = ?`).bind(reviewId).first();
+  if (!row) return error('not found', 404);
+  if (row.user_id !== user.id) return error('forbidden', 403);
+
+  await env.DB.prepare(`UPDATE game_reviews SET body = ?, created_at = unixepoch() WHERE id = ?`)
+    .bind(ok.text, reviewId).run();
+
+  return json({ ok: true });
+}
+
+export async function deleteGameReview(req, env, reviewId) {
+  const user = await authenticate(req, env);
+  if (!user) return error('unauthorized', 401);
+
+  const row = await env.DB.prepare(`SELECT user_id FROM game_reviews WHERE id = ?`).bind(reviewId).first();
+  if (!row) return error('not found', 404);
+
+  // Разрешаем удалять автору или админу
+  const isAdmin = typeof env.ADMIN_TG_IDS === 'string' && env.ADMIN_TG_IDS.split(',').includes(String(user.id));
+  if (row.user_id !== user.id && !isAdmin) return error('forbidden', 403);
+
+  // При удалении комментария также удаляем (или "зачищаем") ответы? 
+  // В TikTok обычно ответы остаются или удаляются каскадно. Сделаем каскадно для чистоты.
+  await env.DB.prepare(`DELETE FROM game_reviews WHERE id = ? OR parent_id = ?`)
+    .bind(reviewId, reviewId).run();
 
   return json({ ok: true });
 }

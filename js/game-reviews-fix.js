@@ -4,6 +4,8 @@
 
 let _gameDetailId = null;
 let _feedReviewsOpen = false;
+let _replyingToId = null;
+let _editingReviewId = null;
 
 // Хелпер для экранирования
 function esc(s) {
@@ -16,7 +18,7 @@ function esc(s) {
     .replace(/'/g, '&#039;');
 }
 
-// Форматирование даты без внешних зависимостей
+// Форматирование даты
 function formatGameDate(ts) {
   if (ts == null || !Number.isFinite(Number(ts))) return '—';
   try {
@@ -29,7 +31,7 @@ function formatGameDate(ts) {
   }
 }
 
-// Глобальный словарь, чтобы не зависеть от window.t
+// Глобальный словарь
 function getReviewText(key) {
   const isEn = typeof window.getLang === 'function' && window.getLang() === 'en';
   const dict = {
@@ -44,7 +46,7 @@ function getReviewText(key) {
     'follow_add_author': isEn ? 'Follow' : 'Подписаться',
     'game_word': isEn ? 'Game' : 'Игра',
     'gd_no_desc': isEn ? 'No description' : 'Нет описания',
-    'gd_no_data': isEn ? 'No data' : 'Нет данных',
+    'gd_no_data': isEn ? 'No data' : 'Не удалось загрузить данные',
     'pending_banner': isEn ? 'Under Review' : 'На проверке',
     'gd_badge_rejected': isEn ? 'Rejected' : 'Отклонено',
     'free': isEn ? 'Free' : 'Бесплатно',
@@ -61,13 +63,17 @@ function getReviewText(key) {
     'unsubscribed': isEn ? 'Unsubscribed' : 'Вы отписались',
     'subscribed': isEn ? 'Subscribed!' : 'Подписка оформлена!',
     'try_again': isEn ? 'Try again' : 'Попробуй еще раз',
-    'gd_reviews_empty_page': isEn ? 'No reviews yet' : 'Отзывов пока нет'
+    'gd_reviews_empty_page': isEn ? 'No reviews yet' : 'Отзывов пока нет',
+    'reply': isEn ? 'Reply' : 'Ответить',
+    'edit': isEn ? 'Edit' : 'Изм.',
+    'delete': isEn ? 'Delete' : 'Удл.',
+    'cancel': isEn ? 'Cancel' : 'Отмена',
+    'replying_to': isEn ? 'Replying to {name}' : 'Ответ {name}',
+    'editing_review': isEn ? 'Editing review' : 'Редактирование'
   };
-  let res = dict[key] || key;
-  return res;
+  return dict[key] || key;
 }
 
-// Замена плейсхолдеров
 function getReviewTextFmt(key, replacements = {}) {
   let text = getReviewText(key);
   for (const k in replacements) {
@@ -97,6 +103,36 @@ async function loadFeedReviewCount() {
   } catch (e) {}
 }
 
+/** Рендеринг одного отзыва */
+function renderReviewItem(r, isReply = false) {
+  if (!r) return '';
+  const author = esc(r.authorName || getReviewText('gd_player'));
+  const firstChar = author.charAt(0).toUpperCase();
+  const date = esc(formatGameDate(r.createdAt));
+  const body = esc(r.body || '');
+  if (!body && author === getReviewText('gd_player')) return '';
+  
+  const isMy = Boolean(r.authorId && USER?.id && sameTelegramUserId(r.authorId, USER.id));
+  const isAdmin = typeof window.USER_IS_ADMIN !== 'undefined' ? window.USER_IS_ADMIN : false;
+
+  return `
+    <div class="feed-review-item ${isReply ? 'feed-review-item--reply' : ''}" id="review-${r.id}">
+      <div class="feed-review-avatar">${firstChar}</div>
+      <div class="feed-review-content">
+        <div class="feed-review-header">
+          <span class="feed-review-author">${author}</span>
+          <span class="feed-review-date">${date}</span>
+        </div>
+        <p class="feed-review-body">${body}</p>
+        <div class="feed-review-actions">
+          <button class="feed-review-action" onclick="setReviewReply('${r.id}', '${author.replace(/'/g, "\\'")}')">${getReviewText('reply')}</button>
+          ${isMy ? `<button class="feed-review-action" onclick="setReviewEdit('${r.id}', '${body.replace(/'/g, "\\'")}')">${getReviewText('edit')}</button>` : ''}
+          ${isMy || isAdmin ? `<button class="feed-review-action feed-review-action--danger" onclick="deleteFeedReview('${r.id}')">${getReviewText('delete')}</button>` : ''}
+        </div>
+      </div>
+    </div>`;
+}
+
 async function openFeedReviewsDrawer() {
   const drawer = document.getElementById('feed-reviews-drawer');
   const backdrop = document.getElementById('feed-reviews-backdrop');
@@ -108,11 +144,12 @@ async function openFeedReviewsDrawer() {
   drawer.hidden = false;
   drawer.setAttribute('aria-hidden', 'false');
   
-  // Небольшая задержка перед фокусом, чтобы шторка начала движение плавно
+  // Сбрасываем состояния при открытии
+  cancelReviewAction();
+
   setTimeout(() => {
     if (input) {
       input.focus();
-      // Повторный пинок для iOS
       setTimeout(() => input.focus(), 50);
     }
   }, 150);
@@ -131,41 +168,153 @@ async function openFeedReviewsDrawer() {
   listEl.innerHTML = `<div class="feed-reviews-loading">${esc(getReviewText('gd_reviews_loading'))}</div>`;
 
   try {
-    const list = await fetchGameReviews(g.id);
-    if (list === null) {
+    const all = await fetchGameReviews(g.id);
+    if (all === null) {
       listEl.innerHTML = `<div class="feed-reviews-empty">${esc(getReviewText('err_load'))}</div>`;
       return;
     }
     const chipNum = document.getElementById('feedReviewCount');
-    if (chipNum) chipNum.textContent = String(list.length);
+    if (chipNum) chipNum.textContent = String(all.length);
 
-    if (list.length === 0) {
+    if (all.length === 0) {
       listEl.innerHTML = `<div class="feed-reviews-empty">${esc(getReviewText('gd_reviews_empty_drawer'))}</div>`;
     } else {
-      const html = list
-        .map(r => {
-          if (!r) return '';
-          const author = esc(r.authorName || getReviewText('gd_player'));
-          const firstChar = author.charAt(0).toUpperCase();
-          const date = esc(formatGameDate(r.createdAt));
-          const body = esc(r.body || '');
-          if (!body && author === (getReviewText('gd_player'))) return '';
-          return `
-            <div class="feed-review-item">
-              <div class="feed-review-avatar">${firstChar}</div>
-              <div class="feed-review-content">
-                <span class="feed-review-author">${author}</span>
-                <p class="feed-review-body">${body}</p>
-                <div class="feed-review-footer">${date}</div>
-              </div>
-            </div>`;
-        })
-        .filter(Boolean)
-        .join('');
+      // Строим дерево: сначала корневые, потом под ними ответы
+      const roots = all.filter(r => !r.parentId);
+      const replies = all.filter(r => r.parentId);
+      
+      let html = '';
+      roots.forEach(root => {
+        html += renderReviewItem(root, false);
+        const childs = replies.filter(rep => rep.parentId === root.id);
+        childs.reverse().forEach(child => {
+          html += renderReviewItem(child, true);
+        });
+      });
+      
       listEl.innerHTML = html || `<div class="feed-reviews-empty">${esc(getReviewText('gd_reviews_empty_drawer'))}</div>`;
     }
   } catch (err) {
     listEl.innerHTML = `<div class="feed-reviews-empty">${esc(getReviewText('err_load'))}</div>`;
+  }
+}
+
+function setReviewReply(id, name) {
+  _replyingToId = id;
+  _editingReviewId = null;
+  const bar = document.getElementById('feedReviewActionBar');
+  const txt = document.getElementById('feedReviewActionText');
+  const input = document.getElementById('feedReviewInput');
+  if (bar && txt) {
+    txt.textContent = getReviewTextFmt('replying_to', { name });
+    bar.hidden = false;
+  }
+  if (input) {
+    input.focus();
+    input.placeholder = `@${name}, ...`;
+  }
+}
+
+function setReviewEdit(id, currentText) {
+  _editingReviewId = id;
+  _replyingToId = null;
+  const bar = document.getElementById('feedReviewActionBar');
+  const txt = document.getElementById('feedReviewActionText');
+  const input = document.getElementById('feedReviewInput');
+  if (bar && txt) {
+    txt.textContent = getReviewText('editing_review');
+    bar.hidden = false;
+  }
+  if (input) {
+    input.value = currentText;
+    input.focus();
+  }
+}
+
+function cancelReviewAction() {
+  _replyingToId = null;
+  _editingReviewId = null;
+  const bar = document.getElementById('feedReviewActionBar');
+  const input = document.getElementById('feedReviewInput');
+  if (bar) bar.hidden = true;
+  if (input) {
+    input.placeholder = getReviewText('gd_reviews_empty_page'); // Fallback placeholder
+    input.value = '';
+  }
+}
+
+async function submitFeedReview() {
+  const ta = document.getElementById('feedReviewInput');
+  const text = ta?.value?.trim() || '';
+  if (!text) {
+    showToast(getReviewText('gd_review_empty'));
+    return;
+  }
+  const g = Array.isArray(window.GAMES) ? window.GAMES[window.currentIdx] : null;
+  if (!g?.id) return;
+
+  const editingId = _editingReviewId;
+  const replyingId = _replyingToId;
+
+  // Оптимистичное обновление
+  const listEl = document.getElementById('feedReviewsDrawerList');
+  if (listEl && !editingId) {
+    const author = esc(window.USER?.display_name || window.USER?.first_name || getReviewText('gd_player'));
+    const firstChar = author.charAt(0).toUpperCase();
+    const dateText = typeof window.getLang === 'function' && window.getLang() === 'en' ? 'Just now' : 'Только что';
+    
+    const newReviewHtml = `
+      <div class="feed-review-item optimistic ${replyingId ? 'feed-review-item--reply' : ''}" style="opacity: 0.7;">
+        <div class="feed-review-avatar">${firstChar}</div>
+        <div class="feed-review-content">
+          <div class="feed-review-header">
+            <span class="feed-review-author">${author}</span>
+            <span class="feed-review-date">${dateText}</span>
+          </div>
+          <p class="feed-review-body">${esc(text)}</p>
+        </div>
+      </div>`;
+    
+    if (listEl.querySelector('.feed-reviews-empty')) {
+      listEl.innerHTML = newReviewHtml;
+    } else {
+      if (replyingId) {
+        const parentEl = document.getElementById(`review-${replyingId}`);
+        if (parentEl) parentEl.insertAdjacentHTML('afterend', newReviewHtml);
+        else listEl.insertAdjacentHTML('afterbegin', newReviewHtml);
+      } else {
+        listEl.insertAdjacentHTML('afterbegin', newReviewHtml);
+      }
+    }
+  }
+
+  try {
+    if (ta) ta.value = '';
+    
+    if (editingId) {
+      await API.updateReview(editingId, text);
+    } else {
+      await API.postGameReview(g.id, { body: text, parentId: replyingId });
+    }
+    
+    cancelReviewAction();
+    await loadFeedReviewCount();
+    setTimeout(() => openFeedReviewsDrawer(), 800);
+    
+  } catch (e) {
+    showToast(getReviewText('try_again'));
+    await openFeedReviewsDrawer();
+  }
+}
+
+async function deleteFeedReview(id) {
+  if (!confirm(getReviewText('delete') + '?')) return;
+  try {
+    await API.deleteReview(id);
+    await openFeedReviewsDrawer();
+    await loadFeedReviewCount();
+  } catch (e) {
+    showToast(getReviewText('try_again'));
   }
 }
 
@@ -182,60 +331,7 @@ function closeFeedReviewsDrawer() {
   drawer.hidden = true;
   drawer.setAttribute('aria-hidden', 'true');
   if (backdrop) backdrop.hidden = true;
-}
-
-async function submitFeedReview() {
-  const ta = document.getElementById('feedReviewInput');
-  const text = ta?.value?.trim() || '';
-  if (!text) {
-    showToast(getReviewText('gd_review_empty'));
-    return;
-  }
-  const g = Array.isArray(window.GAMES) ? window.GAMES[window.currentIdx] : null;
-  if (!g?.id) return;
-
-  // ОПТИМИСТИЧНОЕ ОБНОВЛЕНИЕ (TikTok-style)
-  // Добавляем отзыв в список сразу, не дожидаясь сервера
-  const listEl = document.getElementById('feedReviewsDrawerList');
-  if (listEl) {
-    const author = esc(window.USER?.display_name || window.USER?.first_name || getReviewText('gd_player'));
-    const firstChar = author.charAt(0).toUpperCase();
-    const dateText = typeof window.getLang === 'function' && window.getLang() === 'en' ? 'Just now' : 'Только что';
-    
-    const newReviewHtml = `
-      <div class="feed-review-item optimistic" style="opacity: 0.7;">
-        <div class="feed-review-avatar">${firstChar}</div>
-        <div class="feed-review-content">
-          <span class="feed-review-author">${author}</span>
-          <p class="feed-review-body">${esc(text)}</p>
-          <div class="feed-review-footer">${dateText}</div>
-        </div>
-      </div>`;
-    
-    // Если была надпись "Отзывов нет", убираем её
-    if (listEl.querySelector('.feed-reviews-empty')) {
-      listEl.innerHTML = newReviewHtml;
-    } else {
-      listEl.insertAdjacentHTML('afterbegin', newReviewHtml);
-    }
-  }
-
-  try {
-    if (ta) ta.value = '';
-    // Посылаем на сервер
-    await API.postGameReview(g.id, { body: text });
-    
-    // Обновляем счетчик
-    await loadFeedReviewCount();
-    
-    // Через секунду подгружаем актуальный список с сервера (чтобы убрать прозрачность и получить ID)
-    setTimeout(() => openFeedReviewsDrawer(), 1000);
-    
-  } catch (e) {
-    showToast(getReviewText('try_again'));
-    // В случае ошибки просто перерисовываем список
-    await openFeedReviewsDrawer();
-  }
+  cancelReviewAction();
 }
 
 function renderGameDetailReviews(container, reviews) {
@@ -244,6 +340,7 @@ function renderGameDetailReviews(container, reviews) {
     container.innerHTML = `<p class="game-detail-reviews-empty">${esc(getReviewText('gd_reviews_empty_page'))}</p>`;
     return;
   }
+  // В детальной карточке просто плоский список для простоты
   container.innerHTML = reviews
     .map(r => `
     <div class="game-detail-review">
@@ -311,8 +408,6 @@ async function openGameDetail(gameId) {
     const genreS = game.genre && typeof genreDisplayFromApi === 'function' ? genreDisplayFromApi(game.genre) : game.genre || '';
     badges.innerHTML = bHtml + (genreS ? `<span class="game-detail-badge game-detail-badge--muted">${esc(genreS)}</span>` : '');
 
-    const pubL = st === 'published' ? getReviewTextFmt('gd_in_catalog', { date: formatGameDate(game.updatedAt ?? game.createdAt) }) : st === 'pending' ? getReviewText('gd_pending_check') : getReviewText('gd_not_listed');
-    
     meta.innerHTML = `
       <div class="game-detail-meta-cell"><span class="game-detail-meta-k">${esc(getReviewText('meta_genre'))}</span><span class="game-detail-meta-v">${esc(genreS || '—')}</span></div>
       <div class="game-detail-meta-cell"><span class="game-detail-meta-k">${esc(getReviewText('meta_likes'))}</span><span class="game-detail-meta-v">${esc(fmtNum(game.likes))}</span></div>
@@ -448,3 +543,7 @@ window.loadFeedReviewCount = loadFeedReviewCount;
 window.openFeedReviewsDrawer = openFeedReviewsDrawer;
 window.closeFeedReviewsDrawer = closeFeedReviewsDrawer;
 window.submitFeedReview = submitFeedReview;
+window.setReviewReply = setReviewReply;
+window.setReviewEdit = setReviewEdit;
+window.cancelReviewAction = cancelReviewAction;
+window.deleteFeedReview = deleteFeedReview;
