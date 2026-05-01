@@ -263,16 +263,16 @@ window.API = {
     const q = new URLSearchParams();
     if (params.offset != null) q.set('offset', String(params.offset));
     if (params.limit != null) q.set('limit', String(params.limit));
-    const qs = q.toString();
-    return apiFetch('/api/feed' + (qs ? '?' + qs : ''));
+    q.set('_t', String(Date.now()));
+    return apiFetch(`/api/feed?${q.toString()}`);
   },
-  me:           ()         => apiFetch('/api/me'),
+  me:           ()         => apiFetch(`/api/me?_t=${Date.now()}`),
   updateMe:     (payload)  => apiFetch('/api/me', { method: 'PATCH', body: payload }),
-  myGames:      ()         => apiFetch('/api/me/games'),
-  gamesLibrary: ()         => apiFetch('/api/me/games-library'),
-  likedGames:   ()         => apiFetch('/api/me/liked-games'),
-  playedGames:  ()         => apiFetch('/api/me/played-games'),
-  game:         (gameId)   => apiFetch(`/api/games/${encodeURIComponent(gameId)}`),
+  myGames:      ()         => apiFetch(`/api/me/games?_t=${Date.now()}`),
+  gamesLibrary: ()         => apiFetch(`/api/me/games-library?_t=${Date.now()}`),
+  likedGames:   ()         => apiFetch(`/api/me/liked-games?_t=${Date.now()}`),
+  playedGames:  ()         => apiFetch(`/api/me/played-games?_t=${Date.now()}`),
+  game:         (gameId)   => apiFetch(`/api/games/${encodeURIComponent(gameId)}?_t=${Date.now()}`),
   gameReviews:  (gameId)   => apiFetch(`/api/games/${encodeURIComponent(gameId)}/reviews`),
   postGameReview: (gameId, payload) =>
     apiFetch(`/api/games/${encodeURIComponent(gameId)}/reviews`, { method: 'POST', body: payload }),
