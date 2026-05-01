@@ -83,12 +83,6 @@
   </div>
   <div class="app-tab-chrome-text">
     <span class="app-tab-chrome-brand">SmolGame</span>
-    <span class="app-tab-chrome-sep" aria-hidden="true">·</span>
-    <span class="app-tab-chrome-label" id="app-tab-chrome-label" data-i18n="nav_feed">Лента</span>
-    <div class="app-tab-chrome-lang" role="group" aria-label="" data-i18n-aria="lang_hint">
-      <button type="button" class="lang-switch lang-switch--active" id="langSwitchRu" data-action="set-lang-ru" aria-pressed="true">RU</button>
-      <button type="button" class="lang-switch" id="langSwitchEn" data-action="set-lang-en" aria-pressed="false">EN</button>
-    </div>
   </div>
 </div>
 
@@ -315,8 +309,11 @@
 <!-- ══ ЭКРАН: ЗАГРУЗИТЬ ИГРУ (гайд и FAQ только здесь — лента без отвлечений) ══ -->
 <div id="upload-screen">
   <div class="screen-header">
-    <button type="button" class="screen-back sg-back-btn sg-btn sg-btn--ghost" data-action="close-upload" data-i18n-aria="upload_back_aria" aria-label="Назад к ленте" data-i18n="feed_back">← Лента</button>
+    <div class="screen-header-left">
+      <button type="button" class="screen-back sg-back-btn sg-btn sg-btn--ghost" data-action="close-upload" data-i18n-aria="upload_back_aria" aria-label="Назад к ленте" data-i18n="feed_back">← Лента</button>
+    </div>
     <div class="screen-title" data-i18n="upload_title">Загрузить игру</div>
+    <div class="screen-header-right"></div>
   </div>
 
   <div class="upload-methods upload-methods--dual" id="upload-methods-anchor">
@@ -602,14 +599,18 @@ Must work on a mobile phone.</pre>
 <!-- ══ ЭКРАН: ПРОФИЛЬ ══ -->
 <div id="profile-screen">
   <div class="profile-header">
-    <div class="screen-header screen-header--in-screen">
+  <div class="screen-header">
+    <div class="screen-header-left">
       <button type="button" class="screen-back sg-back-btn sg-btn sg-btn--ghost" data-action="close-profile" data-i18n-aria="upload_back_aria" aria-label="Назад к ленте" data-i18n="feed_back">← Лента</button>
-      <div class="screen-title" data-i18n="profile_title">Профиль</div>
-      <div class="lang-switch-modern" data-action="toggle-lang">
-        <div class="lang-option active" data-lang="ru">RU</div>
-        <div class="lang-option" data-lang="en">EN</div>
+    </div>
+    <div class="screen-title" data-i18n="profile_title">Профиль</div>
+    <div class="screen-header-right">
+      <div class="lang-switch-modern">
+        <div class="lang-option active" data-action="set-lang-ru" data-lang="ru">RU</div>
+        <div class="lang-option" data-action="set-lang-en" data-lang="en">EN</div>
       </div>
     </div>
+  </div>
     <div class="profile-top">
       <div class="profile-avatar" id="profileAvatar">?</div>
       <div class="profile-stats">
@@ -715,11 +716,13 @@ Must work on a mobile phone.</pre>
 
 <!-- ══ ЭКРАН: ИГРЫ ══ -->
 <div id="games-library-screen">
-  <div class="search-header">
-    <div class="search-header-top">
+  <div class="screen-header">
+    <div class="screen-header-left">
       <button type="button" class="screen-back sg-back-btn sg-btn sg-btn--ghost" data-action="close-games-library" data-i18n-aria="upload_back_aria" aria-label="Назад к ленте" data-i18n="feed_back">← Лента</button>
-      <div class="screen-title" data-i18n="games_lib_title">Игры</div>
     </div>
+    <div class="screen-title" data-i18n="games_lib_title">Игры</div>
+    <div class="screen-header-right"></div>
+  </div>
     <p class="games-library-lead" data-i18n="games_lib_lead">Лайкнул и недавно открывал — в двух списках ниже.</p>
   </div>
   <div class="games-library-section">
@@ -738,11 +741,13 @@ Must work on a mobile phone.</pre>
 
 <!-- ══ ЭКРАН: ПОИСК ══ -->
 <div id="search-screen">
-  <div class="search-header">
-    <div class="search-header-top">
+  <div class="screen-header">
+    <div class="screen-header-left">
       <button type="button" class="screen-back sg-back-btn sg-btn sg-btn--ghost" data-action="close-search" data-i18n-aria="upload_back_aria" aria-label="Назад к ленте" data-i18n="feed_back">← Лента</button>
-      <div class="screen-title" data-i18n="search_title">Поиск</div>
     </div>
+    <div class="screen-title" data-i18n="search_title">Поиск</div>
+    <div class="screen-header-right"></div>
+  </div>
     <div class="search-bar">
       <span class="search-icon" aria-hidden="true"><svg class="sg-icon sg-icon--sm" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="11" cy="11" r="6.75" stroke="currentColor" stroke-width="1.65"/><path d="M16.5 16.5L21 21" stroke="currentColor" stroke-width="1.65" stroke-linecap="round"/></svg></span>
       <input type="search" enterkeyhint="search" autocomplete="off" data-i18n-placeholder="search_ph" placeholder="Название или автор…" id="searchInput" data-input="search">
@@ -759,10 +764,13 @@ Must work on a mobile phone.</pre>
 <!-- ══ ЭКРАН: АВТОР ══ -->
 <div id="author-screen">
   <div class="profile-header">
-    <div class="screen-header screen-header--in-screen">
+  <div class="screen-header">
+    <div class="screen-header-left">
       <button type="button" class="screen-back sg-btn sg-btn--ghost" data-action="close-author" data-i18n-aria="author_back_aria" aria-label="Назад" data-i18n="author_screen_back">← Назад</button>
-      <div class="screen-title" data-i18n="author_screen_title">Разработчик</div>
     </div>
+    <div class="screen-title" data-i18n="author_screen_title">Разработчик</div>
+    <div class="screen-header-right"></div>
+  </div>
     <div class="profile-top">
       <div class="profile-avatar" id="authorProfileAvatar">?</div>
       <div class="profile-stats">

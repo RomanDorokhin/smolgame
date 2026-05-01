@@ -874,6 +874,12 @@
     if (le) le.setAttribute('aria-pressed', getLang() === 'en' ? 'true' : 'false');
     if (lr) lr.classList.toggle('lang-switch--active', getLang() === 'ru');
     if (le) le.classList.toggle('lang-switch--active', getLang() === 'en');
+
+    // Update modern lang pills
+    const currentLang = getLang();
+    document.querySelectorAll('.lang-option').forEach(p => {
+      p.classList.toggle('active', p.dataset.lang === currentLang);
+    });
   }
 
   function initI18n() {
