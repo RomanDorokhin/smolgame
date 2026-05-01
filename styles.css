@@ -329,23 +329,28 @@ body.theme-light .sg-back-btn:not([hidden]) {
 }
 
 body.theme-light.feed-open .app-tab-chrome {
-  background: rgba(0, 0, 0, 0.3) !important;
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.5) 0%, rgba(0, 0, 0, 0) 100%) !important;
+  border: none !important;
   box-shadow: none !important;
 }
 
-body.theme-light.feed-open .app-tab-chrome-label {
+body.theme-light.feed-open .app-tab-chrome-label,
+body.theme-light.feed-open .app-tab-chrome-brand {
   color: #ffffff !important;
+  text-shadow: 0 1px 4px rgba(0,0,0,0.5) !important;
 }
 
 body.theme-light.feed-open .lang-switch {
   background: rgba(255, 255, 255, 0.1) !important;
-  color: rgba(255, 255, 255, 0.5) !important;
+  color: rgba(255, 255, 255, 0.6) !important;
+  border: none !important;
+  backdrop-filter: blur(4px) !important;
 }
 
 body.theme-light.feed-open .lang-switch--active {
-  background: rgba(255, 255, 255, 0.2) !important;
+  background: rgba(255, 255, 255, 0.25) !important;
   color: #ffffff !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2) !important;
 }
 
 body.theme-light .feed-exit-focus.sg-back-btn {
