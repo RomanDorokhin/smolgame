@@ -39,35 +39,67 @@ async function loadFeedReviewCount() {
 async function openFeedReviewsDrawer() {
   const drawer = document.getElementById('feed-reviews-drawer');
   const listEl = document.getElementById('feedReviewsDrawerList');
-  if (!drawer || !listEl || !Array.isArray(window.GAMES) || GAMES.length === 0) return;
-  const g = GAMES[window.currentIdx];
+  if (!drawer || !listEl) return;
+  
+  const g = Array.isArray(window.GAMES) ? window.GAMES[window.currentIdx] : null;
   if (!g?.id) return;
+
   _feedReviewsOpen = true;
   drawer.hidden = false;
   drawer.setAttribute('aria-hidden', 'false');
+  
   const t = tf();
-  listEl.innerHTML = `<p class="feed-reviews-loading">${esc(t('gd_reviews_loading'))}</p>`;
-  const list = await fetchGameReviews(g.id);
-  const chipNum = document.getElementById('feedReviewCount');
-  if (chipNum) chipNum.textContent = String(list.length);
-  if (list.length === 0) {
-    listEl.innerHTML = `<p class="feed-reviews-empty">${esc(t('gd_reviews_empty_drawer'))}</p>`;
-  } else {
-    listEl.innerHTML = list
-      .map(
-        r => `
-      <div class="feed-review-item">
-        <div class="feed-review-item-head"><span class="feed-review-author">${esc(r.authorName || t('gd_player'))}</span><span class="feed-review-date">${esc(formatGameDate(r.createdAt))}</span></div>
-        <p class="feed-review-body">${esc(r.body || '')}</p>
-      </div>`
-      )
-      .join('');
+  listEl.innerHTML = `<div class="feed-reviews-loading">${esc(t('gd_reviews_loading'))}</div>`;
+
+  try {
+    const list = await fetchGameReviews(g.id);
+    const chipNum = document.getElementById('feedReviewCount');
+    if (chipNum) chipNum.textContent = String(Array.isArray(list) ? list.length : 0);
+
+    if (!Array.isArray(list) || list.length === 0) {
+      listEl.innerHTML = `<div class="feed-reviews-empty">${esc(t('gd_reviews_empty_drawer'))}</div>`;
+    } else {
+      const html = list
+        .map(r => {
+          if (!r) return '';
+          const author = esc(r.authorName || t('gd_player') || 'Игрок');
+          const date = esc(formatGameDate(r.createdAt));
+          const body = esc(r.body || '');
+          if (!body && author === 'Игрок') return '';
+          return `
+            <div class="feed-review-item">
+              <div class="feed-review-item-head">
+                <span class="feed-review-author">${author}</span>
+                <span class="feed-review-date">${date}</span>
+              </div>
+              <p class="feed-review-body">${body || '...'}</p>
+            </div>`;
+        })
+        .filter(Boolean)
+        .join('');
+
+      listEl.innerHTML = html || `<div class="feed-reviews-empty">${esc(t('gd_reviews_empty_drawer'))}</div>`;
+    }
+    
+    // Автофокус на ввод сразу (TikTok-style)
+    const input = document.getElementById('feedReviewInput');
+    if (input) {
+      setTimeout(() => input.focus(), 60);
+    }
+  } catch (err) {
+    console.error('[FeedReviews] Fatal Error:', err);
+    listEl.innerHTML = `<div class="feed-reviews-empty">${esc(t('err_load'))}</div>`;
   }
 }
 
 function closeFeedReviewsDrawer() {
   const drawer = document.getElementById('feed-reviews-drawer');
   if (!drawer) return;
+  
+  // Убираем фокус с инпута принудительно, чтобы закрыть клаву вместе с окном
+  const input = document.getElementById('feedReviewInput');
+  if (input) input.blur();
+
   _feedReviewsOpen = false;
   drawer.hidden = true;
   drawer.setAttribute('aria-hidden', 'true');

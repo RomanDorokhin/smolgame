@@ -1001,14 +1001,19 @@ html[lang="ru"] .i18n-en{display:none !important;}
 
 .feed-exit-focus{
   position:fixed;
-  top:calc(var(--safe-top) + 8px);
-  left:max(12px, env(safe-area-inset-left, 0px));
+  top:calc(var(--safe-top) + 12px);
+  left:max(16px, env(safe-area-inset-left, 0px));
   z-index:420;
-  padding:10px 16px !important;
-  font-size:14px !important;
+  padding:14px 24px !important;
+  font-size:16px !important;
   font-weight:700 !important;
   border-radius:999px !important;
-  box-shadow:0 8px 28px rgba(0,0,0,0.45);
+  box-shadow:0 12px 32px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.1) !important;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+.feed-exit-focus:active {
+  transform: scale(0.95);
+  opacity: 0.9;
 }
 .feed-exit-focus[hidden]{display:none !important;}
 
