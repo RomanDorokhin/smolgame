@@ -104,15 +104,22 @@ async function openFeedReviewsDrawer() {
   const input = document.getElementById('feedReviewInput');
   if (!drawer || !listEl) return;
 
+  _feedReviewsOpen = true;
   drawer.hidden = false;
   drawer.setAttribute('aria-hidden', 'false');
+  
+  // Небольшая задержка перед фокусом, чтобы шторка начала движение плавно
+  setTimeout(() => {
+    if (input) {
+      input.focus();
+      // Повторный пинок для iOS
+      setTimeout(() => input.focus(), 50);
+    }
+  }, 150);
+
   if (backdrop) {
     backdrop.hidden = false;
     backdrop.onclick = closeFeedReviewsDrawer;
-  }
-  if (input) {
-    input.focus();
-    setTimeout(() => input.focus(), 50);
   }
   
   const g = Array.isArray(window.GAMES) ? window.GAMES[window.currentIdx] : null;
