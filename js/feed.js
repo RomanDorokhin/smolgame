@@ -8,6 +8,7 @@ window.feedHasMore = true;
 window.feedLoadingMore = false;
 /** Сколько опубликованных игр уже подгружено (без очереди модерации в начале). */
 window.feedPublishedLoaded = 0;
+window.currentIdx = 0;
 
 function feedEl() {
   return document.getElementById('feed');

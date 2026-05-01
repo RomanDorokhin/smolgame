@@ -104,12 +104,17 @@ async function fetchGameReviews(gameId) {
 async function loadFeedReviewCount() {
   const chip = document.getElementById('feedReviewCount');
   if (!chip || !Array.isArray(window.GAMES) || window.GAMES.length === 0) return;
-  const g = GAMES[window.currentIdx];
-  if (!g?.id) return;
+  const g = window.GAMES ? window.GAMES[window.currentIdx] : null;
+  if (!g?.id) {
+    console.debug('[FeedReviews] loadFeedReviewCount: No game at currentIdx', window.currentIdx);
+    return;
+  }
   try {
     const list = await fetchGameReviews(g.id);
     if (Array.isArray(list)) chip.textContent = String(list.length);
-  } catch (e) { }
+  } catch (e) {
+    console.warn('[FeedReviews] loadFeedReviewCount fail:', e);
+  }
 }
 
 /** Рендеринг одного отзыва */
@@ -183,7 +188,9 @@ async function _loadFeedReviewsData(listEl) {
   }
 
   if (!g?.id) {
-    listEl.innerHTML = `<div class="feed-reviews-empty">Game ID not found (idx: ${window.currentIdx || 'none'})</div>`;
+    const idxStr = (window.currentIdx !== undefined && window.currentIdx !== null) ? window.currentIdx : 'none';
+    console.warn('[FeedReviews] _loadFeedReviewsData: Game not found', { idx: window.currentIdx, gamesLen: window.GAMES?.length });
+    listEl.innerHTML = `<div class="feed-reviews-empty">Game not found (idx: ${idxStr})</div>`;
     return;
   }
   
@@ -218,6 +225,7 @@ async function _loadFeedReviewsData(listEl) {
     }
 
     // Фокус после загрузки, если не в режиме редактирования/ответа
+    const input = document.getElementById('feedReviewInput');
     if (!_replyingToId && !_editingReviewId && input) {
       setTimeout(() => input.focus(), 150);
     }
