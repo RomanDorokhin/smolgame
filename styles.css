@@ -2054,12 +2054,15 @@ body.game-detail-open .app-tab-chrome {
 
 .lang-switch-modern {
   display: flex;
+  flex-direction: row;
+  align-items: center;
   background: rgba(255, 255, 255, 0.05);
-  padding: 3px;
+  padding: 2px;
   border-radius: 10px;
   border: 1px solid rgba(255, 255, 255, 0.08);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
+  gap: 2px;
 }
 
 .lang-option {
@@ -3924,15 +3927,16 @@ body.keyboard-open .app-tab-chrome {
 
 .screen-header {
   display: grid;
-  grid-template-columns: 1fr auto 1fr;
+  grid-template-columns: 100px 1fr 100px;
   align-items: center;
-  gap: 12px;
-  padding: var(--safe-top, 0px) 16px 0;
-  height: calc(var(--safe-top, 0px) + 56px);
+  margin-top: var(--safe-top, 0px);
+  height: 56px;
+  padding: 0 16px;
   margin-bottom: 48px;
   position: relative;
   background: var(--bg);
   z-index: 100;
+  box-sizing: border-box;
 }
 
 .screen-header-left {
@@ -3951,11 +3955,14 @@ body.keyboard-open .app-tab-chrome {
   font-family: 'Syne', sans-serif;
   font-size: 20px;
   font-weight: 800;
-  line-height: 1;
+  line-height: 36px; /* Match button height for perfect alignment */
   margin: 0;
   white-space: nowrap;
   text-align: center;
   z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .screen-back {
