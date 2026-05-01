@@ -3928,10 +3928,12 @@ body.keyboard-open .app-tab-chrome {
 .screen-header {
   display: grid;
   grid-template-columns: 100px 1fr 100px;
+  grid-template-rows: 56px;
   align-items: center;
-  margin-top: var(--safe-top, 0px);
-  height: 56px;
-  padding: 0 16px;
+  padding-top: var(--safe-top, 0px);
+  height: calc(var(--safe-top, 0px) + 56px);
+  padding-left: 16px;
+  padding-right: 16px;
   margin-bottom: 48px;
   position: relative;
   background: var(--bg);
@@ -3939,15 +3941,19 @@ body.keyboard-open .app-tab-chrome {
   box-sizing: border-box;
 }
 
-.screen-header-left {
+.screen-header-left,
+.screen-header-right,
+.screen-header .screen-title {
   display: flex;
   align-items: center;
+  height: 100%;
+}
+
+.screen-header-left {
   justify-content: flex-start;
 }
 
 .screen-header-right {
-  display: flex;
-  align-items: center;
   justify-content: flex-end;
 }
 
@@ -3955,14 +3961,13 @@ body.keyboard-open .app-tab-chrome {
   font-family: 'Syne', sans-serif;
   font-size: 20px;
   font-weight: 800;
-  line-height: 36px; /* Match button height for perfect alignment */
+  line-height: 1;
   margin: 0;
   white-space: nowrap;
   text-align: center;
-  z-index: 1;
-  display: flex;
-  align-items: center;
   justify-content: center;
+  z-index: 1;
+  color: var(--text);
 }
 
 .screen-back {
