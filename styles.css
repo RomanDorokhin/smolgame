@@ -1990,11 +1990,11 @@ body.feed-game-focus .app-tab-chrome {
   z-index: 340;
   display: none;
   align-items: center;
-  gap: 10px;
-  padding: calc(var(--safe-top) + 6px) 14px 10px max(14px, env(safe-area-inset-left, 0px));
-  padding-right: max(14px, env(safe-area-inset-right, 0px));
+  gap: 12px;
+  padding: var(--safe-top, 0px) 16px 0;
+  height: calc(var(--safe-top, 0px) + 56px);
   pointer-events: none;
-  background: linear-gradient(180deg, rgba(0, 0, 0, 0.55) 0%, rgba(0, 0, 0, 0) 100%);
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.5) 0%, rgba(0, 0, 0, 0) 100%);
 }
 
 body.game-detail-open .app-tab-chrome {
@@ -2016,33 +2016,29 @@ body.game-detail-open .app-tab-chrome {
 
 .app-tab-chrome-text {
   display: flex;
-  align-items: baseline;
-  flex-wrap: wrap;
-  gap: 6px;
+  align-items: center;
+  gap: 8px;
   min-width: 0;
   flex: 1;
   justify-content: flex-start;
-  font-size: 13px;
-  font-weight: 600;
-  color: rgba(255, 255, 255, 0.88);
-  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.8);
-}
-
-body.app-main-chrome .app-tab-chrome {
-  display: flex;
+  font-size: 14px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.95);
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+  line-height: 1.2;
 }
 
 .app-tab-chrome-brand {
-  font-weight: 700;
-  letter-spacing: 0.02em;
+  letter-spacing: -0.01em;
 }
 
 .app-tab-chrome-sep {
-  opacity: 0.35;
+  opacity: 0.4;
+  font-weight: 400;
 }
 
 .app-tab-chrome-label {
-  color: rgba(255, 255, 255, 0.62);
+  opacity: 0.8;
   font-weight: 600;
 }
 
@@ -2090,8 +2086,8 @@ html[lang="ru"] .i18n-en {
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
-  top: calc(var(--safe-top, 0px) + 12px) !important;
-  left: 12px !important;
+  top: calc(var(--safe-top, 0px) + 10px) !important;
+  left: 16px !important;
   position: fixed !important;
   z-index: 2200 !important;
   transition: all 0.2s ease !important;
@@ -2099,8 +2095,9 @@ html[lang="ru"] .i18n-en {
 
 .feed-exit-focus {
   position: fixed;
-  top: calc(var(--safe-top, 0px) + 12px);
-  left: 12px;
+  top: calc(var(--safe-top, 0px) + 10px);
+  right: 16px;
+  left: auto;
   z-index: 2100;
   padding: 8px 16px;
   height: 36px;
@@ -3816,8 +3813,9 @@ body.keyboard-open .app-tab-chrome {
   display: flex;
   align-items: center;
   gap: 12px;
-  flex-wrap: wrap;
-  margin-bottom: 28px;
+  padding: var(--safe-top, 0px) 16px 0;
+  height: calc(var(--safe-top, 0px) + 56px);
+  margin-bottom: 24px;
 }
 
 .screen-header .screen-title {
@@ -3832,16 +3830,17 @@ body.keyboard-open .app-tab-chrome {
 
 .screen-back {
   flex-shrink: 0;
-  padding: 8px 12px !important;
-  font-size: 14px !important;
-  font-weight: 700 !important;
   white-space: nowrap;
 }
 
 .screen-title {
   font-family: 'Syne', sans-serif;
-  font-size: 24px;
+  font-size: 22px;
   font-weight: 800;
+  line-height: 1;
+  flex: 1;
+  text-align: center;
+  margin: 0;
 }
 
 .upload-active-panel {
