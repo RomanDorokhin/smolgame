@@ -176,16 +176,13 @@ function openFeedReviewsDrawer() {
 
   if (typeof syncBackButton === 'function') syncBackButton();
 
-  // Фокус с задержкой, чтобы дождаться окончания анимации шторки (0.25s) 
-  // и избежать резких прыжков вьюпорта при открытии клавиатуры.
-  // Используем preventScroll, чтобы браузер не пытался сам скроллить к инпуту.
-  if (input) {
-    setTimeout(() => {
-      if (_feedReviewsOpen) {
-        input.focus({ preventScroll: true });
-      }
-    }, 450);
-  }
+  // Добавляем класс стабильности после завершения анимации (0.25s)
+  // Это позволит отключить transitions, чтобы клавиатура не вызывала «прыжков» шторки.
+  setTimeout(() => {
+    if (_feedReviewsOpen) {
+      drawer.classList.add('is-stable');
+    }
+  }, 300);
 
   _loadFeedReviewsData(listEl);
 }
@@ -380,6 +377,7 @@ function closeFeedReviewsDrawer() {
     input.value = '';
   }
   _feedReviewsOpen = false;
+  drawer.classList.remove('is-stable');
   drawer.hidden = true;
   drawer.setAttribute('aria-hidden', 'true');
   if (backdrop) backdrop.hidden = true;

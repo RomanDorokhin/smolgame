@@ -5555,6 +5555,9 @@ body.is-admin .admin-only {
   display: flex;
   transform: translateY(0);
 }
+.feed-reviews-drawer.is-stable:not([hidden]) {
+  transition: none !important;
+}
 
 .feed-reviews-drawer-handle {
   width: 40px;
