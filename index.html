@@ -542,59 +542,19 @@
         <p>В <strong>Settings → Pages</strong> зелёная плашка: <em>Your site is live at https://…</em> — скопируй её. Подожди 1–3 мин после публикации, если не открывается сразу.</p>
       </div>
     </details>
-    <p class="upload-faq-title">FAQ</p>
-    <details class="help-faq-item"><summary>Это правда бесплатно?</summary><div class="help-acc-body"><p>Да. У Claude и ChatGPT есть бесплатные режимы. GitHub Pages бесплатен.</p></div></details>
-    <details class="help-faq-item"><summary>Нужно уметь программировать?</summary><div class="help-acc-body"><p>Нет. Ты описываешь желаемое ИИ — он пишет код.</p></div></details>
-    <details class="help-faq-item"><summary>Игра не работает — что делать?</summary><div class="help-acc-body"><p>Скопируй текст ошибки из браузера и отправь ИИ: «Вот ошибка, исправь код».</p></div></details>
-    <details class="help-faq-item"><summary>Какие игры подходят?</summary><div class="help-acc-body"><p>Браузерные на HTML, один файл <code>index.html</code>, без серверной части.</p></div></details>
-    <details class="help-faq-item"><summary>Можно обновить игру после публикации?</summary><div class="help-acc-body"><p>Да. Измени <code>index.html</code> в репозитории — через пару минут обновится по той же ссылке.</p></div></details>
-    <details class="help-faq-item"><summary>Почему GitHub?</summary><div class="help-acc-body"><p>Простой и надёжный бесплатный вариант: без карты и сложной настройки.</p></div></details>
-    </div>
-    <div class="i18n-en">
-    <details class="help-acc help-acc--step1">
-      <summary><span class="help-acc-num">1</span> Build a game with AI</summary>
-      <div class="help-acc-body">
-        <p>Open <strong>claude.ai</strong> or <strong>chatgpt.com</strong> — both have free tiers. Prompt (you can copy):</p>
-        <pre class="help-prompt">Make a simple browser game in HTML + JavaScript.
-Single file, no external libraries.
-Genre: [snake / tetris / clicker / your idea]
-Must work on a mobile phone.</pre>
-        <p>Copy the full code from the reply. Ask for changes if needed.</p>
-      </div>
-    </details>
-    <details class="help-acc help-acc--step2">
-      <summary><span class="help-acc-num">2</span> Publish on GitHub Pages</summary>
-      <div class="help-acc-body">
-        <p>Free hosting from GitHub, no card or servers.</p>
-        <ol class="help-ol">
-          <li>github.com → sign up (if needed)</li>
-          <li>+ → New repository, e.g. <code>my-game</code>, <strong>Public</strong> → Create</li>
-          <li>Add file → Create new file → name <code>index.html</code> → paste code → Commit changes</li>
-          <li>Settings → Pages → Branch: <strong>main</strong> → Save</li>
-        </ol>
-        <p>In 1–2 minutes you get a URL like <code>https://yourname.github.io/my-game</code> — that is your game URL.</p>
-      </div>
-    </details>
-    <details class="help-acc help-acc--step3">
-      <summary><span class="help-acc-num">3</span> Copy the link</summary>
-      <div class="help-acc-body">
-        <p>In <strong>Settings → Pages</strong> the green banner <em>Your site is live at https://…</em> — copy it. Wait 1–3 minutes after publish if it does not open immediately.</p>
-      </div>
-    </details>
-    <p class="upload-faq-title">FAQ</p>
-    <details class="help-faq-item"><summary>Is it really free?</summary><div class="help-acc-body"><p>Yes. Claude and ChatGPT have free modes. GitHub Pages is free.</p></div></details>
-    <details class="help-faq-item"><summary>Do I need to code?</summary><div class="help-acc-body"><p>No. Describe what you want — the model writes the code.</p></div></details>
-    <details class="help-faq-item"><summary>The game does not work — what now?</summary><div class="help-acc-body"><p>Copy the browser error text and send it to the model: “Here is the error, fix the code.”</p></div></details>
-    <details class="help-faq-item"><summary>What games are OK?</summary><div class="help-acc-body"><p>Browser HTML games, one <code>index.html</code> file, no backend.</p></div></details>
-    <details class="help-faq-item"><summary>Can I update after publishing?</summary><div class="help-acc-body"><p>Yes. Edit <code>index.html</code> in the repo — after a few minutes the same URL updates.</p></div></details>
-    <details class="help-faq-item"><summary>Why GitHub?</summary><div class="help-acc-body"><p>Simple, reliable free option — no card or heavy setup.</p></div></details>
-    </div>
-
     <button type="button" class="sg-btn sg-btn--secondary upload-scroll-to-form" data-action="upload-scroll-to-form" data-i18n="upload_scroll_form">К форме</button>
-  </div>
+    </div>
 
+    <div class="i18n-en">
+      <details class="help-acc help-acc--step1">
+        <summary><span class="help-acc-num">1</span> Build with AI</summary>
+        <div class="help-acc-body"><p>Use <strong>claude.ai</strong> or <strong>chatgpt.com</strong>.</p></div>
+      </details>
+      <button type="button" class="sg-btn sg-btn--secondary upload-scroll-to-form" data-action="upload-scroll-to-form" data-i18n="upload_scroll_form">To form</button>
+    </div>
+    </div>
   </div><!-- /.upload-active-panel -->
-</div>
+</div><!-- /#upload-screen -->
 
 <!-- ══ ЭКРАН: ПРОФИЛЬ ══ -->
 <div id="profile-screen">
@@ -610,6 +570,8 @@ Must work on a mobile phone.</pre>
       </div>
     </div>
   </div>
+  
+  <div class="screen-content">
     <div class="profile-top">
       <div class="profile-avatar" id="profileAvatar">?</div>
       <div class="profile-stats">
@@ -628,6 +590,7 @@ Must work on a mobile phone.</pre>
       </div>
     </div>
     <p class="profile-stats-hint" id="profileStatsHint" data-i18n="profile_stats_hint">Игры — опубликованные карточки. Лайки — сумма по всем твоим играм в ленте.</p>
+    
     <div id="profileMeBanner" class="profile-me-banner" hidden>
       <p class="profile-me-banner-text" id="profileMeBannerText"></p>
       <div class="profile-me-banner-actions">
@@ -635,38 +598,44 @@ Must work on a mobile phone.</pre>
         <button type="button" class="profile-me-retry profile-me-reload" data-action="profile-reload-miniapp" id="profileMeReloadBtn" data-i18n="profile_me_reload">Перезапустить мини-апп</button>
       </div>
     </div>
+
     <div class="profile-name" id="profileName">Гость</div>
     <div class="profile-handle" id="profileHandle">@—</div>
     <p class="profile-bio" id="profileBio"></p>
+    
     <div class="profile-edit-actions">
       <button type="button" class="profile-edit-toggle-btn primary" id="profileEditOpenBtn" data-action="profile-start-edit" data-i18n="profile_edit">Редактировать профиль</button>
       <button type="button" class="profile-edit-toggle-btn primary" id="profileEditSaveBtn" data-action="profile-finish-edit" data-i18n="profile_save_btn">Сохранить</button>
       <button type="button" class="profile-edit-toggle-btn" id="profileEditDiscardBtn" data-action="profile-discard-edit" data-i18n="profile_discard">Отмена</button>
     </div>
+
     <div id="profile-edit-wrap" class="profile-edit-wrap">
       <div class="profile-edit-fields">
         <p class="profile-id-readonly">ID: <strong id="profileSiteHandleRead">—</strong> <span class="profile-id-hint" data-i18n="profile_id_hint">при регистрации</span></p>
         <label class="profile-field">
-          <span class="profile-field-lbl" data-i18n="profile_display_lbl">Имя в SmolGame</span>
-          <input class="field-input" type="text" id="profileDisplayName" maxlength="60" data-i18n-placeholder="profile_display_ph" placeholder="Как тебя видят другие">
+          <span class="field-lbl" data-i18n="profile_name_lbl">Имя</span>
+          <input type="text" id="editProfileName" maxlength="32">
         </label>
         <label class="profile-field">
-          <span class="profile-field-lbl" data-i18n="profile_bio_lbl">О себе</span>
-          <textarea class="field-input" id="profileBioInput" maxlength="280" rows="3" data-i18n-placeholder="profile_bio_ph" placeholder="Коротко о себе или своих играх…"></textarea>
+          <span class="field-lbl" data-i18n="profile_bio_lbl">О себе</span>
+          <textarea id="editProfileBio" maxlength="160"></textarea>
         </label>
         <div class="profile-field">
-          <span class="profile-field-lbl" data-i18n="profile_theme_lbl">Тема оформления</span>
-          <div class="profile-theme-selector" id="profileThemeSelector">
+          <span class="field-lbl" data-i18n="profile_theme_lbl">Тема</span>
+          <div class="profile-theme-selector">
             <button type="button" class="theme-btn" data-theme="dark" data-i18n="theme_dark">Тёмная</button>
             <button type="button" class="theme-btn" data-theme="light" data-i18n="theme_light">Светлая</button>
           </div>
         </div>
-        <div class="profile-field">
-          <span class="profile-field-lbl" data-i18n="profile_photo_lbl">Фото профиля</span>
-          <div class="profile-avatar-row">
-            <label class="image-upload profile-avatar-upload">
-              <input type="file" accept="image/*" id="profileAvatarInput">
-              <span data-i18n="profile_photo_upload">Загрузить фото</span>
+        <div class="profile-avatar-edit">
+          <div class="profile-avatar-preview">
+            <img id="editAvatarImg" src="" style="display:none">
+            <div id="editAvatarPlaceholder">?</div>
+          </div>
+          <div class="profile-avatar-btns">
+            <label class="profile-file-btn">
+              <span data-i18n="profile_photo_change">Изменить фото</span>
+              <input type="file" id="editAvatarInput" accept="image/*">
             </label>
             <button type="button" class="profile-text-btn" data-action="reset-profile-photo" data-i18n="profile_photo_reset">Как в Telegram</button>
           </div>
@@ -675,6 +644,7 @@ Must work on a mobile phone.</pre>
       </div>
       <button type="button" class="submit-btn profile-save-btn" data-action="save-profile" data-i18n="profile_save_main">Сохранить профиль</button>
     </div>
+    
     <div class="profile-badges">
       <div class="profile-badge" data-i18n="badge_player">🎮 Игрок</div>
       <div class="profile-badge dev" id="devBadge" style="display:none" data-i18n="badge_dev">⚡ Разработчик</div>
@@ -682,34 +652,33 @@ Must work on a mobile phone.</pre>
     </div>
     <p class="profile-upload-hint i18n-ru">Как добавить игру, шаги и FAQ — на экране <strong>Загрузить</strong> (＋).</p>
     <p class="profile-upload-hint i18n-en">How to add a game, steps and FAQ — on the <strong>Upload</strong> (+) tab.</p>
-  </div>
-  <!-- Модерация — видна только админу (body.is-admin) -->
-  <div class="admin-only">
-    <div class="profile-games-title" data-i18n="admin_queue_title">На модерации</div>
-    <div id="adminPendingList" style="padding:0 20px 20px;"></div>
-  </div>
-
-  <div class="profile-wall-section">
-    <div class="profile-wall-header">
-      <h3 class="profile-wall-title">Стена</h3>
+    
+    <!-- Модерация — видна только админу (body.is-admin) -->
+    <div class="admin-only">
+      <div class="profile-games-title" data-i18n="admin_queue_title">На модерации</div>
+      <div id="adminPendingList" style="padding:0 20px 20px;"></div>
     </div>
-    <div id="profileWallCompose" class="profile-wall-compose" hidden>
-      <textarea id="profilePostInput" class="profile-post-input" maxlength="1000" placeholder="Что нового?"></textarea>
-      <button type="button" class="sg-btn sg-btn--primary" data-action="submit-profile-post">Опубликовать</button>
-    </div>
-    <div id="profilePostList" class="profile-post-list"></div>
-  </div>
 
-  <div class="profile-games-title" data-i18n="my_games_title">Мои игры</div>
-  <div class="games-grid" id="myGamesGrid">
-    <div class="my-games-empty-placeholder" style="grid-column:1/-1;text-align:center;padding:40px 0;color:var(--muted);font-size:14px;" data-i18n="no_games_grid">
-      Нет игр
+    <div class="profile-wall-section">
+      <div class="profile-wall-header">
+        <h3 class="profile-wall-title">Стена</h3>
+      </div>
+      <div id="profileWallCompose" class="profile-wall-compose" hidden>
+        <textarea id="profilePostInput" class="profile-post-input" maxlength="1000" placeholder="Что нового?"></textarea>
+        <button type="button" class="sg-btn sg-btn--primary" data-action="submit-profile-post">Опубликовать</button>
+      </div>
+      <div id="profilePostList" class="profile-post-list"></div>
     </div>
-  </div>
 
-  <div class="profile-danger-zone">
-    <button type="button" class="profile-danger-btn" data-action="delete-account" data-i18n="delete_account_btn">Удалить аккаунт</button>
-    <p class="profile-danger-hint" data-i18n="delete_account_hint">Все твои игры, отзывы и посты будут удалены навсегда.</p>
+    <div class="profile-games-title" data-i18n="my_games_title">Мои игры</div>
+    <div class="games-grid" id="myGamesGrid">
+      <div class="my-games-empty-placeholder" style="grid-column:1/-1;text-align:center;padding:40px 0;color:var(--muted);font-size:14px;" data-i18n="no_games_grid">Нет игр</div>
+    </div>
+
+    <div class="profile-danger-zone">
+      <button type="button" class="profile-danger-btn" data-action="delete-account" data-i18n="delete_account_btn">Удалить аккаунт</button>
+      <p class="profile-danger-hint" data-i18n="delete_account_hint">Все твои игры, отзывы и посты будут удалены навсегда.</p>
+    </div>
   </div>
 </div>
 
@@ -722,17 +691,19 @@ Must work on a mobile phone.</pre>
     <div class="screen-title" data-i18n="games_lib_title">Игры</div>
     <div class="screen-header-right"></div>
   </div>
-  <p class="games-library-lead" data-i18n="games_lib_lead">Лайкнул и недавно открывал — в двух списках ниже.</p>
-  <div class="games-library-section">
-    <h2 class="games-library-section-title" data-i18n="games_liked">Лайкнул</h2>
-    <div class="games-grid games-grid--library" id="likedGamesGrid">
-      <div class="games-lib-loading" style="grid-column:1/-1;text-align:center;padding:24px 0;color:var(--muted);font-size:14px;" data-i18n="loading">Загрузка…</div>
+  <div class="screen-content">
+    <p class="games-library-lead" data-i18n="games_lib_lead">Лайкнул и недавно открывал — в двух списках ниже.</p>
+    <div class="games-library-section">
+      <h2 class="games-library-section-title" data-i18n="games_liked">Лайкнул</h2>
+      <div class="games-grid games-grid--library" id="likedGamesGrid">
+        <div class="games-lib-loading" style="grid-column:1/-1;text-align:center;padding:24px 0;color:var(--muted);font-size:14px;" data-i18n="loading">Загрузка…</div>
+      </div>
     </div>
-  </div>
-  <div class="games-library-section">
-    <h2 class="games-library-section-title" data-i18n="games_played">Играл</h2>
-    <div class="games-grid games-grid--library" id="playedGamesGrid">
-      <div class="games-lib-loading" style="grid-column:1/-1;text-align:center;padding:24px 0;color:var(--muted);font-size:14px;" data-i18n="loading">Загрузка…</div>
+    <div class="games-library-section">
+      <h2 class="games-library-section-title" data-i18n="games_played">Играл</h2>
+      <div class="games-grid games-grid--library" id="playedGamesGrid">
+        <div class="games-lib-loading" style="grid-column:1/-1;text-align:center;padding:24px 0;color:var(--muted);font-size:14px;" data-i18n="loading">Загрузка…</div>
+      </div>
     </div>
   </div>
 </div>
@@ -746,6 +717,7 @@ Must work on a mobile phone.</pre>
     <div class="screen-title" data-i18n="search_title">Поиск</div>
     <div class="screen-header-right"></div>
   </div>
+  <div class="screen-content">
     <div class="search-bar">
       <span class="search-icon" aria-hidden="true"><svg class="sg-icon sg-icon--sm" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="11" cy="11" r="6.75" stroke="currentColor" stroke-width="1.65"/><path d="M16.5 16.5L21 21" stroke="currentColor" stroke-width="1.65" stroke-linecap="round"/></svg></span>
       <input type="search" enterkeyhint="search" autocomplete="off" data-i18n-placeholder="search_ph" placeholder="Название или автор…" id="searchInput" data-input="search">
@@ -756,6 +728,7 @@ Must work on a mobile phone.</pre>
     <div class="genre-scroll" id="genreFilter"></div>
   </div>
   <div class="search-results" id="searchResults"></div>
+  </div>
 </div>
 
 <!-- ══ ЭКРАН: АВТОР ══ -->
@@ -767,6 +740,7 @@ Must work on a mobile phone.</pre>
     <div class="screen-title" data-i18n="author_screen_title">Разработчик</div>
     <div class="screen-header-right"></div>
   </div>
+  <div class="screen-content">
     <div class="profile-top">
       <div class="profile-avatar" id="authorProfileAvatar">?</div>
       <div class="profile-stats">
@@ -788,14 +762,13 @@ Must work on a mobile phone.</pre>
     <div class="profile-handle" id="authorProfileHandle">@—</div>
     <p class="profile-bio" id="authorProfileBio" style="display:none"></p>
     <button class="author-follow-btn" id="authorFollowBtn" data-action="toggle-author-follow" data-i18n="author_follow">Подписаться</button>
-  <div class="profile-wall-section">
     <div class="profile-wall-header">
       <h3 class="profile-wall-title">Стена</h3>
     </div>
     <div id="authorPostList" class="profile-post-list"></div>
+    <div class="profile-games-title" data-i18n="author_games_title">Игры автора</div>
+    <div class="games-grid" id="authorGamesGrid"></div>
   </div>
-  <div class="profile-games-title" data-i18n="author_games_title">Игры автора</div>
-  <div class="games-grid" id="authorGamesGrid"></div>
 </div>
 
 <!-- ══ ЭКРАН: РЕГИСТРАЦИЯ ══ -->
