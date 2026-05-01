@@ -815,6 +815,12 @@ Must work on a mobile phone.</pre>
     if (!gameId) return;
     const screen = document.getElementById('game-detail-screen');
     if (!screen) return;
+    // Запоминаем, откуда открыли — чтобы «Назад» вернул туда
+    window._gameDetailReturnTab = window._activeMainTab || 'feed';
+    // Скрываем текущие экраны, чтобы не было наложения
+    ['games-library-screen', 'search-screen', 'profile-screen', 'author-screen']
+      .forEach(id => document.getElementById(id)?.classList.remove('open'));
+    if (typeof syncBodyFeedHiddenUnderSheet === 'function') syncBodyFeedHiddenUnderSheet();
     screen.hidden = false;
     document.body.classList.add('game-detail-open');
     try {
@@ -836,6 +842,10 @@ Must work on a mobile phone.</pre>
     const s = document.getElementById('game-detail-screen');
     if (s) s.hidden = true;
     document.body.classList.remove('game-detail-open');
+    // Возвращаемся на вкладку, откуда открыли карточку
+    const returnTo = window._gameDetailReturnTab || 'feed';
+    window._gameDetailReturnTab = null;
+    if (typeof switchTab === 'function') switchTab(returnTo);
   };
 
   /** ══ ONBOARDING (AUTOMATED) ══ */
