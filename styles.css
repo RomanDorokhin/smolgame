@@ -158,6 +158,69 @@ body.theme-light .game-card-title {
   color: var(--text);
 }
 
+body.theme-light .upload-method-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+}
+
+body.theme-light .upload-method-card .m-title {
+  color: var(--text);
+}
+
+body.theme-light .upload-method-card .m-desc {
+  color: var(--muted);
+}
+
+body.theme-light .search-bar {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+}
+
+body.theme-light .search-input {
+  color: var(--text);
+}
+
+body.theme-light .search-input::placeholder {
+  color: var(--muted);
+}
+
+body.theme-light .genre-btn {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--muted);
+}
+
+body.theme-light .genre-btn.active {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+body.theme-light .nav-upload-fab {
+  background: linear-gradient(165deg, #ffffff 0%, #f0f2f5 100%);
+  border-color: rgba(0, 0, 0, 0.1);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.1);
+}
+
+body.theme-light .nav-upload-fab-plus {
+  background: #007aff;
+  border-color: #ffffff;
+  color: #ffffff;
+}
+
+body.theme-light .nav-item.active .nav-icon {
+  color: #007aff;
+}
+
+body.theme-light .nav-item.active .nav-label {
+  color: #007aff;
+}
+
+body.theme-light .tg-glass {
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.06), var(--tg-glass-inset);
+}
+
 /* Единое «стекло» для bottom sheet, карточек подсказок, онбординга */
 .tg-glass {
   background: var(--tg-glass-bg);
@@ -2781,15 +2844,16 @@ body.game-detail-open .game-detail-screen {
   /* Выше шитов (1800), подсказок ленты и сплэша — иначе «табы не жмутся» при наложении */
   z-index: 1950;
   height: calc(var(--safe-bottom) + var(--nav-h));
-  background: rgba(0, 0, 0, 0.78);
-  border-top: 1px solid var(--border);
-  backdrop-filter: blur(24px) saturate(1.05);
-  -webkit-backdrop-filter: blur(24px) saturate(1.05);
+  background: var(--tg-glass-bg);
+  border-top: 1px solid var(--tg-glass-border);
+  backdrop-filter: blur(var(--tg-glass-blur)) saturate(var(--tg-glass-saturate));
+  -webkit-backdrop-filter: blur(var(--tg-glass-blur)) saturate(var(--tg-glass-saturate));
   padding: 8px 4px var(--safe-bottom);
   display: flex;
   justify-content: space-around;
   align-items: flex-end;
   overflow: visible;
+  box-shadow: var(--tg-glass-shadow);
 }
 
 body.app-boot-active #bottom-nav,
