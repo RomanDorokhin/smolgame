@@ -137,6 +137,19 @@ body.theme-light .profile-wall-title {
   font-size: 20px !important;
 }
 
+body.theme-light #feed,
+body.theme-light .slide,
+body.theme-light #side-actions,
+body.theme-light .feed-ui-layer,
+body.theme-light .game-info-overlay {
+  --bg: #f2f3f5;
+  --surface: #ffffff;
+  --surface-elevated: #ffffff;
+  --text: #1c1c1e;
+  --muted: #8e8e93;
+  --border: rgba(0, 0, 0, 0.08);
+}
+
 body.theme-light #profilePostInput {
   background: #f2f2f7 !important;
   color: #1c1c1e !important;
@@ -1996,14 +2009,14 @@ body.feed-game-focus .app-tab-chrome {
   top: 0;
   left: 0;
   right: 0;
-  z-index: 340;
+  z-index: 4500;
   display: none;
   align-items: center;
   gap: 12px;
   padding: var(--safe-top, 0px) 16px 0;
   height: calc(var(--safe-top, 0px) + 56px);
   pointer-events: none;
-  background: linear-gradient(180deg, rgba(0, 0, 0, 0.5) 0%, rgba(0, 0, 0, 0) 100%);
+  background: var(--surface);
 }
 
 body.game-detail-open .app-tab-chrome {
@@ -2343,6 +2356,9 @@ body.feed-layout-vertical:not(.feed-game-focus) .slide.feed-slide--active .slide
 }
 
 #feed {
+  background: #000;
+}
+body.theme-light #feed {
   background: var(--bg);
 }
 
