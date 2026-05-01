@@ -173,6 +173,7 @@
           const ch = String(u.first_name).trim()[0];
           if (ch) window.USER.avatar = ch;
         }
+        if (typeof window.refreshStorageKeys === 'function') window.refreshStorageKeys();
         return;
       }
       const raw =
@@ -201,6 +202,7 @@
         const ch = String(u.first_name).trim()[0];
         if (ch) window.USER.avatar = ch;
       }
+      if (typeof window.refreshStorageKeys === 'function') window.refreshStorageKeys();
     } catch (e) {
       console.error('[TG-Init] Error in syncUSERFromTelegramInit', e);
     }

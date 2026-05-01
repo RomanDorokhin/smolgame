@@ -108,6 +108,14 @@ async function apiFetch(path, { method = 'GET', body, _did401Retry = false, _for
   const isFormData = typeof FormData !== 'undefined' && body instanceof FormData;
   const jsonBody = body !== undefined && !isFormData ? JSON.stringify(body) : undefined;
 
+  if (path !== '/api/feed') {
+    console.log(`[API] ${method} ${path}, initData: ${initRaw ? 'YES (' + initRaw.length + ')' : 'NO'}, USER.id: ${window.USER?.id}`);
+  }
+
+  if (path !== '/api/feed') {
+    console.log(`[API] ${method} ${path}, initData: ${initRaw ? 'YES (' + initRaw.length + ')' : 'NO'}, USER.id: ${window.USER?.id}`);
+  }
+
   function doFetch(urlPath, includeInitHeader, signal) {
     const headers = {};
     if (includeInitHeader && initHdr) headers['x-telegram-init-data'] = initHdr;

@@ -137,6 +137,7 @@ function applyMeToProfileUi(me, { bioRead, handleRead, premBadge, setStatGames, 
 }
 
 async function renderProfile() {
+  console.log('[Profile] renderProfile start. USER.id:', USER.id, 'siteHandle:', USER.siteHandle);
   const bioRead = document.getElementById('profileBio');
   const handleRead = document.getElementById('profileSiteHandleRead');
 
@@ -222,20 +223,21 @@ async function renderProfile() {
   document.getElementById('devBadge').style.display = USER.isGithubConnected ? '' : 'none';
 
   try {
+    console.log('[Profile] Fetching myGames, USER.id:', USER.id);
     const myGamesRes = await API.myGames();
+    console.log('[Profile] API.myGames response:', myGamesRes);
     const games = myGamesRes?.games;
     myGames = Array.isArray(games) ? games : [];
   } catch (e) {
-    console.warn('profile myGames failed', e);
-    try {
-      const { games } = await API.myGames();
-      myGames = Array.isArray(games) ? games : [];
-    } catch (e2) {
-      myGames = Array.isArray(GAMES) ? GAMES.filter(g => sameTelegramUserId(g.authorId, USER.id)) : [];
-    }
+    console.warn('[Profile] API.myGames failed', e);
+    // FALLBACK: если API упал, фильтруем то что уже загружено в общую ленту (только для опубликованных)
+    myGames = Array.isArray(window.GAMES) ? window.GAMES.filter(g => sameTelegramUserId(g.authorId, USER.id)) : [];
+    console.log('[Profile] Fallback from global GAMES:', myGames.length);
   }
 
   const publishedCount = myGames.filter(g => g && g.status === 'published').length;
+  console.log('[Profile] Final myGames count:', myGames.length, 'published:', publishedCount);
+
   if (document.getElementById('statGames').textContent === '…') {
     setStatGames(String(publishedCount));
   }
@@ -259,6 +261,7 @@ async function renderProfile() {
         : `<div class="sg-empty-state sg-empty-state--grid"><div class="sg-empty-state-title">${esc(tf('profile_empty_games_title'))}</div><div class="sg-empty-state-sub">${esc(tf('profile_empty_games_sub'))}</div></div>`;
   } else {
     grid.innerHTML = myGames.map(g => {
+      if (!g) return '';
       const idRaw = String(g.id || '');
       const gid = esc(idRaw);
       const canEdit = g.status !== 'rejected';

@@ -19,33 +19,25 @@ window.USER = {
   isPremium: false,
 };
 
-// Ключи локального хранилища — привязаны к Telegram id.
-window.STORAGE_KEYS = {
-  liked:      'smolgame:liked:' + (USER.id || 'anon'),
-  followed:   'smolgame:followed:' + (USER.id || 'anon'),
-  bookmarked: 'smolgame:bookmarked:' + (USER.id || 'anon'),
-  feedNavTip: 'smolgame:feedNavTip2:' + (USER.id || 'anon'),
-  /** После первого успешного свайпа/переключения игры — выключаем пульсацию полоски */
-  feedSwipeLearned: 'smolgame:feedSwipeLearned:' + (USER.id || 'anon'),
-  /** Один раз показали «дёргни экран» при первом coach — дальше только по таймауту скуки */
-  feedSwipeTeaseShown: 'smolgame:feedSwipeTeaseShown:' + (USER.id || 'anon'),
-  welcomeOnboarding: 'smolgame:welcome3:' + (USER.id || 'anon'),
-  /** Первый запуск: анимация онбординга ленты (welcome + демо свайпа) */
-  feedOnboardingDone: 'smolgame:feedOnboard1:' + (USER.id || 'anon'),
+window.refreshStorageKeys = function() {
+  const uid = USER.id || 'anon';
+  window.STORAGE_KEYS = {
+    liked:      'smolgame:liked:' + uid,
+    followed:   'smolgame:followed:' + uid,
+    bookmarked: 'smolgame:bookmarked:' + uid,
+    feedNavTip: 'smolgame:feedNavTip2:' + uid,
+    feedSwipeLearned: 'smolgame:feedSwipeLearned:' + uid,
+    feedSwipeTeaseShown: 'smolgame:feedSwipeTeaseShown:' + uid,
+    welcomeOnboarding: 'smolgame:welcome3:' + uid,
+    feedOnboardingDone: 'smolgame:feedOnboard1:' + uid,
+  };
+  // Re-load sets if ID changed
+  window.likedSet      = typeof loadSet === 'function' ? loadSet(STORAGE_KEYS.liked)      : new Set();
+  window.followedSet   = typeof loadSet === 'function' ? loadSet(STORAGE_KEYS.followed)   : new Set();
+  window.bookmarkedSet = typeof loadSet === 'function' ? loadSet(STORAGE_KEYS.bookmarked) : new Set();
 };
 
-window.likedSet      = loadSet(STORAGE_KEYS.liked);
-window.followedSet   = loadSet(STORAGE_KEYS.followed);
-window.bookmarkedSet = loadSet(STORAGE_KEYS.bookmarked);
-
-window.GAMES = [];
-
-window.currentIdx = 0;
-window.slides = [];
-
-window.selectedGenre = '';
-window.selectedUploadMethod = 'url';
-window.selectedGenres = { code: '', url: '', ghCode: '' };
+window.refreshStorageKeys();
 
 if (typeof window.syncUSERFromTelegramInit === 'function') {
   window.syncUSERFromTelegramInit();

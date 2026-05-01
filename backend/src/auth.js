@@ -62,6 +62,7 @@ export async function authenticate(req, env) {
       .filter(Boolean)
   );
   const uid = String(user.id);
+  user.id = uid; // ENSURE STRING ID for DB queries
   user.isAdmin = [...adminIds].some(a => String(a) === uid);
   user.isPremium = [...premiumIds].some(a => String(a) === uid);
   return user;
