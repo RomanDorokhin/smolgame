@@ -19,8 +19,6 @@ body,
   --border: rgba(255, 255, 255, 0.08);
   --tg-glass-bg: rgba(20, 22, 28, 0.72);
   --tg-glass-border: rgba(255, 255, 255, 0.1);
-  --cta-bg: linear-gradient(180deg, #2f323a 0%, #22252c 55%, #1a1c22 100%);
-  --cta-border: rgba(255, 255, 255, 0.11);
 }
 
 :root {
@@ -64,24 +62,6 @@ body,
   --feed-chrome-h: 44px;
   --tg-glass-blur: 18px;
   --tg-glass-saturate: 1.06;
-
-  --btn-radius-md: 12px;
-  --btn-radius-lg: 14px;
-  --btn-pad-y: 14px;
-  --btn-pad-x: 18px;
-
-  --safe-top: env(safe-area-inset-top, 0px);
-  --safe-bottom: env(safe-area-inset-bottom, 0px);
-
-  --game-top: var(--safe-top);
-  --game-bottom: calc(var(--safe-bottom) + var(--nav-h) + var(--info-h));
-
-  --like-on-rgb: 255, 122, 138;
-  --like-on-soft: rgba(255, 122, 138, 0.16);
-
-  /* Едва заметный «контурный» паттерн */
-  --sg-doodle: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200' viewBox='0 0 200 200'%3E%3Cdefs%3E%3Cpath id='a' d='M0 0h200v200H0z' fill='none'/%3E%3C/defs%3E%3Cg fill='none' stroke='%23ffffff' stroke-opacity='0.038' stroke-width='0.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='18' cy='24' r='5'/%3E%3Crect x='38' y='12' width='12' height='12' rx='2.5' transform='rotate(8 44 18)'/%3E%3Cpath d='M68 10c4-1.2 8.2-1.1 12.5.2'/%3E%3Cpath d='M100 18a10 10 0 11-9.5 13.8'/%3E%3Crect x='116' y='8' width='16' height='9' rx='2'/%3E%3Ccircle cx='156' cy='20' r='4'/%3E%3Cpath d='M172 12l6.5 4-2.2 7-6.4-3.5-6.3 3.6-2.2-7.1z'/%3E%3Cpath d='M8 58a6 6 0 1110.2-3'/%3E%3Crect x='32' y='50' width='18' height='10' rx='2' transform='rotate(-6 41 55)'/%3E%3Ccircle cx='70' cy='58' r='3'/%3E%3Cpath d='M86 48c2.5-1.2 5.3-1.1 8.1.2'/%3E%3Crect x='110' y='48' width='11' height='11' rx='2'/%3E%3Cpath d='M144 48c0-2.2 1.8-4 4-4'/%3E%3Cpath d='M170 48c-1.2-1-1-2.7.2-3.7'/%3E%3Cpath d='M6 102a5.2 5.2 0 1110-1'/%3E%3Crect x='30' y='92' width='14' height='14' rx='3'/%3E%3Cpath d='M58 98c0-2.2 1.8-4 4-4'/%3E%3Cpath d='M86 95a5.5 5.5 0 0010.2-1'/%3E%3Crect x='110' y='96' width='20' height='6' rx='1.5'/%3E%3Ccircle cx='150' cy='100' r='4'/%3E%3Cpath d='M170 96c1.2-1.2 2-1.1 3.2.1'/%3E%3Cpath d='M12 140a4.5 4.5 0 111-1'/%3E%3Crect x='30' y='132' width='10' height='10' rx='2' transform='rotate(12 35 137)'/%3E%3Cpath d='M56 126c2-1.1 4.3-1 6.4.2'/%3E%3Ccircle cx='90' cy='136' r='3'/%3E%3Crect x='110' y='128' width='16' height='9' rx='2'/%3E%3Cpath d='M144 130a5.5 5.5 0 0010.2-1'/%3E%3Cpath d='M170 130a4.5 4.5 0 11-1-1'/%3E%3Cpath d='M8 168a4.5 4.5 0 111-1'/%3E%3Crect x='32' y='162' width='12' height='12' rx='2'/%3E%3Cpath d='M60 170a3.5 3.5 0 11-1 1'/%3E%3Ccircle cx='94' cy='172' r='3'/%3E%3Cpath d='M122 166a3.5 3.5 0 11-1-1'/%3E%3Crect x='150' y='166' width='18' height='7' rx='1.5'/%3E%3Cpath d='M186 168a3.5 3.5 0 11-1-1'/%3E%3C/g%3E%3Cg fill='none' stroke='%23a3b8d4' stroke-opacity='0.05' stroke-width='0.75'%3E%3Cpath d='M24 86a2.5 2.5 0 11-1-1'/%3E%3Cpath d='M52 78a2.5 2.5 0 11-1-1'/%3E%3Cpath d='M128 66a2.5 2.5 0 11-1-1'/%3E%3Cpath d='M180 78a2.5 2.5 0 11-1-1'/%3E%3Cpath d='M24 188a2.5 2.5 0 11-1-1'/%3E%3Cpath d='M88 44a2.5 2.5 0 11-1-1'/%3E%3Cpath d='M194 130a2.5 2.5 0 11-1-1'/%3E%3C/g%3E%3C/svg%3E");
-  --sg-doodle-size: 200px 200px;
 }
 
 /* Светлая тема */
@@ -2166,9 +2146,9 @@ body.feed-onboarding-ui .app-tab-chrome {
 
 #side-actions {
   position: fixed;
-  top: auto;
-  bottom: calc(var(--safe-bottom) + 120px);
+  top: calc(var(--safe-top) + 10px);
   right: 10px;
+  bottom: auto;
   display: flex;
   flex-direction: column;
   align-items: center;
