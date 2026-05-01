@@ -9,13 +9,21 @@ let _editingReviewId = null;
 
 // Хелпер для экранирования
 function esc(s) {
-  if (!s) return '';
+  if (s == null) return '';
   return String(s)
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#039;');
+}
+
+function _isMe(authorId) {
+  if (!authorId || !window.USER?.id) return false;
+  if (typeof window.sameTelegramUserId === 'function') {
+    return window.sameTelegramUserId(authorId, window.USER.id);
+  }
+  return String(authorId) === String(window.USER.id);
 }
 
 // Форматирование даты
@@ -87,7 +95,7 @@ async function fetchGameReviews(gameId) {
     const data = await API.gameReviews(gameId);
     return Array.isArray(data?.reviews) ? data.reviews : [];
   } catch (e) {
-    console.warn('[FeedReviews] Silent fetch fail:', e.message || e);
+    console.warn('[FeedReviews] Fetch fail:', e.message || e);
     return null;
   }
 }
@@ -107,12 +115,12 @@ async function loadFeedReviewCount() {
 function renderReviewItem(r, isReply = false) {
   if (!r) return '';
   const author = esc(r.authorName || getReviewText('gd_player'));
-  const firstChar = author.charAt(0).toUpperCase();
+  const firstChar = author.charAt(0).toUpperCase() || '?';
   const date = esc(formatGameDate(r.createdAt));
   const body = esc(r.body || '');
-  if (!body && author === getReviewText('gd_player')) return '';
+  if (!body && !r.authorId) return '';
   
-  const isMy = Boolean(r.authorId && USER?.id && sameTelegramUserId(r.authorId, USER.id));
+  const isMy = _isMe(r.authorId);
   const isAdmin = typeof window.USER_IS_ADMIN !== 'undefined' ? window.USER_IS_ADMIN : false;
 
   return `
@@ -125,9 +133,9 @@ function renderReviewItem(r, isReply = false) {
         </div>
         <p class="feed-review-body">${body}</p>
         <div class="feed-review-actions">
-          <button class="feed-review-action" onclick="setReviewReply('${r.id}', '${author.replace(/'/g, "\\'")}')">${getReviewText('reply')}</button>
-          ${isMy ? `<button class="feed-review-action" onclick="setReviewEdit('${r.id}', '${body.replace(/'/g, "\\'")}')">${getReviewText('edit')}</button>` : ''}
-          ${isMy || isAdmin ? `<button class="feed-review-action feed-review-action--danger" onclick="deleteFeedReview('${r.id}')">${getReviewText('delete')}</button>` : ''}
+          <button type="button" class="feed-review-action" onclick="setReviewReply('${r.id}', '${author.replace(/'/g, "\\'")}')">${getReviewText('reply')}</button>
+          ${isMy ? `<button type="button" class="feed-review-action" onclick="setReviewEdit('${r.id}', '${body.replace(/'/g, "\\'")}')">${getReviewText('edit')}</button>` : ''}
+          ${isMy || isAdmin ? `<button type="button" class="feed-review-action feed-review-action--danger" onclick="deleteFeedReview('${r.id}')">${getReviewText('delete')}</button>` : ''}
         </div>
       </div>
     </div>`;
@@ -144,16 +152,6 @@ async function openFeedReviewsDrawer() {
   drawer.hidden = false;
   drawer.setAttribute('aria-hidden', 'false');
   
-  // Сбрасываем состояния при открытии
-  cancelReviewAction();
-
-  setTimeout(() => {
-    if (input) {
-      input.focus();
-      setTimeout(() => input.focus(), 50);
-    }
-  }, 150);
-
   if (backdrop) {
     backdrop.hidden = false;
     backdrop.onclick = closeFeedReviewsDrawer;
@@ -179,22 +177,28 @@ async function openFeedReviewsDrawer() {
     if (all.length === 0) {
       listEl.innerHTML = `<div class="feed-reviews-empty">${esc(getReviewText('gd_reviews_empty_drawer'))}</div>`;
     } else {
-      // Строим дерево: сначала корневые, потом под ними ответы
+      // Строим дерево
       const roots = all.filter(r => !r.parentId);
       const replies = all.filter(r => r.parentId);
       
       let html = '';
       roots.forEach(root => {
         html += renderReviewItem(root, false);
-        const childs = replies.filter(rep => rep.parentId === root.id);
-        childs.reverse().forEach(child => {
+        const childs = replies.filter(rep => String(rep.parentId) === String(root.id));
+        childs.sort((a,b) => (a.createdAt || 0) - (b.createdAt || 0)).forEach(child => {
           html += renderReviewItem(child, true);
         });
       });
       
       listEl.innerHTML = html || `<div class="feed-reviews-empty">${esc(getReviewText('gd_reviews_empty_drawer'))}</div>`;
     }
+    
+    // Фокус после загрузки, если не в режиме редактирования/ответа
+    if (!_replyingToId && !_editingReviewId && input) {
+      setTimeout(() => input.focus(), 150);
+    }
   } catch (err) {
+    console.error('[FeedReviews] Render fail:', err);
     listEl.innerHTML = `<div class="feed-reviews-empty">${esc(getReviewText('err_load'))}</div>`;
   }
 }
@@ -210,8 +214,9 @@ function setReviewReply(id, name) {
     bar.hidden = false;
   }
   if (input) {
-    input.focus();
+    input.value = ''; // Сбрасываем текст при ответе
     input.placeholder = `@${name}, ...`;
+    input.focus();
   }
 }
 
@@ -227,6 +232,7 @@ function setReviewEdit(id, currentText) {
   }
   if (input) {
     input.value = currentText;
+    input.placeholder = '';
     input.focus();
   }
 }
@@ -238,7 +244,7 @@ function cancelReviewAction() {
   const input = document.getElementById('feedReviewInput');
   if (bar) bar.hidden = true;
   if (input) {
-    input.placeholder = getReviewText('gd_reviews_empty_page'); // Fallback placeholder
+    input.placeholder = getReviewText('gd_reviews_empty_page');
     input.value = '';
   }
 }
@@ -256,11 +262,11 @@ async function submitFeedReview() {
   const editingId = _editingReviewId;
   const replyingId = _replyingToId;
 
-  // Оптимистичное обновление
+  // Оптимистичное обновление (только для новых)
   const listEl = document.getElementById('feedReviewsDrawerList');
   if (listEl && !editingId) {
     const author = esc(window.USER?.display_name || window.USER?.first_name || getReviewText('gd_player'));
-    const firstChar = author.charAt(0).toUpperCase();
+    const firstChar = author.charAt(0).toUpperCase() || '?';
     const dateText = typeof window.getLang === 'function' && window.getLang() === 'en' ? 'Just now' : 'Только что';
     
     const newReviewHtml = `
@@ -299,9 +305,11 @@ async function submitFeedReview() {
     
     cancelReviewAction();
     await loadFeedReviewCount();
-    setTimeout(() => openFeedReviewsDrawer(), 800);
+    // Даем серверу время
+    setTimeout(() => openFeedReviewsDrawer(), 500);
     
   } catch (e) {
+    console.error('[FeedReviews] Submit error:', e);
     showToast(getReviewText('try_again'));
     await openFeedReviewsDrawer();
   }
@@ -336,11 +344,10 @@ function closeFeedReviewsDrawer() {
 
 function renderGameDetailReviews(container, reviews) {
   if (!container) return;
-  if (!reviews.length) {
+  if (!reviews || !reviews.length) {
     container.innerHTML = `<p class="game-detail-reviews-empty">${esc(getReviewText('gd_reviews_empty_page'))}</p>`;
     return;
   }
-  // В детальной карточке просто плоский список для простоты
   container.innerHTML = reviews
     .map(r => `
     <div class="game-detail-review">
@@ -418,7 +425,7 @@ async function openGameDetail(gameId) {
     const avUrl = typeof avatarImgUrl === 'function' ? avatarImgUrl(av) : null;
     const avH = avUrl ? `<div class="game-detail-author-av"><img src="${esc(avUrl)}" alt="" referrerpolicy="no-referrer"></div>` : `<div class="game-detail-author-av game-detail-author-av--txt">${esc(String(game.authorName || '?').slice(0, 1))}</div>`;
     const following = typeof followedSet !== 'undefined' && game.authorId && followedSet.has(game.authorId);
-    const isSelf = Boolean(game.authorId && USER?.id && sameTelegramUserId(game.authorId, USER.id));
+    const isSelf = Boolean(game.authorId && window.USER?.id && _isMe(game.authorId));
     const fLabel = following ? getReviewText('follow_done') : getReviewText('follow_add_author');
     
     authorCard.innerHTML = `
@@ -499,7 +506,7 @@ async function gameDetailSubmitReview() {
 
 async function gameDetailToggleFollow(el) {
   const authorId = el?.dataset?.authorId;
-  if (!authorId || sameTelegramUserId(authorId, USER?.id)) return;
+  if (!authorId || _isMe(authorId)) return;
   const was = typeof followedSet !== 'undefined' && followedSet.has(authorId);
   if (was) followedSet.delete(authorId); else followedSet.add(authorId);
   el.textContent = was ? getReviewText('follow_add_author') : getReviewText('follow_done');
