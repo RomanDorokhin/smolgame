@@ -4,6 +4,7 @@ import {
   getGameById, updateGameListing, listGameReviews, postGameReview, updateGameReview, deleteGameReview,
   toggleLike, toggleFollow, toggleBookmark, getUserProfile, getUserGames, play,
   adminPending, adminApprove, adminReject,
+  listUserPosts, createUserPost, deleteUserPost,
 } from './routes.js';
 import { githubOAuthStart, githubOAuthCallback } from './github-oauth.js';
 import { githubOAuthDonePage } from './github-oauth-done.js';
@@ -129,6 +130,14 @@ async function route(req, env, pathname) {
   }
   if ((match = pathname.match(/^\/api\/users\/([^/]+)\/follow$/))) {
     if (m === 'POST' || m === 'DELETE') return toggleFollow(req, env, match[1], m);
+  }
+
+  if ((match = pathname.match(/^\/api\/users\/([^/]+)\/posts$/)) && m === 'GET') {
+    return listUserPosts(req, env, match[1]);
+  }
+  if (pathname === '/api/posts' && m === 'POST') return createUserPost(req, env);
+  if ((match = pathname.match(/^\/api\/posts\/([^/]+)$/)) && m === 'DELETE') {
+    return deleteUserPost(req, env, match[1]);
   }
 
   if (pathname === '/api/admin/pending' && m === 'GET') return adminPending(req, env);

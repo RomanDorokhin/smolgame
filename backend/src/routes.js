@@ -1085,6 +1085,48 @@ export async function deleteGameReview(req, env, reviewId) {
   return json({ ok: true });
 }
 
+export async function listUserPosts(req, env, userId) {
+  const posts = await env.DB.prepare(`
+    SELECT id, body, created_at as createdAt
+    FROM user_posts
+    WHERE user_id = ?
+    ORDER BY created_at DESC
+  `).bind(userId).all();
+  return json({ posts: posts.results || [] });
+}
+
+export async function createUserPost(req, env) {
+  const user = await authenticate(req, env);
+  if (!user) return error('unauthorized', 401);
+
+  let body;
+  try { body = await req.json(); } catch (e) { return error('invalid json'); }
+  const text = String(body?.body || '').trim().slice(0, 1000);
+  if (!text) return error('post is empty');
+
+  const id = crypto.randomUUID();
+  await env.DB.prepare(`
+    INSERT INTO user_posts (id, user_id, body, created_at)
+    VALUES (?, ?, ?, unixepoch())
+  `).bind(id, user.id, text).run();
+
+  return json({ ok: true, id });
+}
+
+export async function deleteUserPost(req, env, postId) {
+  const user = await authenticate(req, env);
+  if (!user) return error('unauthorized', 401);
+
+  const row = await env.DB.prepare(`SELECT user_id FROM user_posts WHERE id = ?`).bind(postId).first();
+  if (!row) return error('not found', 404);
+
+  const isAdmin = typeof env.ADMIN_TG_IDS === 'string' && env.ADMIN_TG_IDS.split(',').includes(String(user.id));
+  if (row.user_id !== user.id && !isAdmin) return error('forbidden', 403);
+
+  await env.DB.prepare(`DELETE FROM user_posts WHERE id = ?`).bind(postId).run();
+  return json({ ok: true });
+}
+
 export async function deleteGame(req, env, gameId) {
   const user = await authenticate(req, env);
   if (!user) return error('unauthorized', 401);

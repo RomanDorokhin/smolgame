@@ -676,6 +676,17 @@ Must work on a mobile phone.</pre>
     <div id="adminPendingList" style="padding:0 20px 20px;"></div>
   </div>
 
+  <div class="profile-wall-section">
+    <div class="profile-wall-header">
+      <h3 class="profile-wall-title">Стена</h3>
+    </div>
+    <div id="profileWallCompose" class="profile-wall-compose" hidden>
+      <textarea id="profilePostInput" class="profile-post-input" maxlength="1000" placeholder="Что нового?"></textarea>
+      <button type="button" class="sg-btn sg-btn--secondary" data-action="submit-profile-post">Опубликовать</button>
+    </div>
+    <div id="profilePostList" class="profile-post-list"></div>
+  </div>
+
   <div class="profile-games-title" data-i18n="my_games_title">Мои игры</div>
   <div class="games-grid" id="myGamesGrid">
     <div class="my-games-empty-placeholder" style="grid-column:1/-1;text-align:center;padding:40px 0;color:var(--muted);font-size:14px;" data-i18n="no_games_grid">
@@ -756,6 +767,12 @@ Must work on a mobile phone.</pre>
     <p class="profile-bio" id="authorProfileBio" style="display:none"></p>
     <button class="author-follow-btn" id="authorFollowBtn" data-action="toggle-author-follow" data-i18n="author_follow">Подписаться</button>
   </div>
+  <div class="profile-wall-section">
+    <div class="profile-wall-header">
+      <h3 class="profile-wall-title">Стена</h3>
+    </div>
+    <div id="authorPostList" class="profile-post-list"></div>
+  </div>
   <div class="profile-games-title" data-i18n="author_games_title">Игры автора</div>
   <div class="games-grid" id="authorGamesGrid"></div>
 </div>
@@ -831,7 +848,7 @@ Must work on a mobile phone.</pre>
 <script src="js/liked-games.js?v=20260502"></script>
 <script src="js/game-reviews-fix.js?v=20260524"></script>
 <script src="js/game-editor.js?v=20260502"></script>
-<script src="js/profile_new.js?v=20260503"></script>
+<script src="js/profile_new.js?v=20260525"></script>
 <script src="js/admin.js?v=20260502"></script>
 <script src="js/events.js?v=20260502"></script>
 <script src="js/overlay-pull-close.js?v=20260502"></script>

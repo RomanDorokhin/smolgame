@@ -200,6 +200,7 @@ async function loadAuthorProfile(authorId) {
         </div>
       `).join('');
     }
+    if (typeof loadUserPosts === 'function') await loadUserPosts(authorId, 'authorPostList');
   } catch (e) {
     document.getElementById('authorProfileName').textContent = t('author_load_fail');
     showToast('⚠️ ' + (e.message || t('profile_err')));
@@ -259,6 +260,9 @@ function switchTab(tab) {
     void (async () => {
       if (typeof renderProfile === 'function') await renderProfile();
       if (typeof loadAdminPending === 'function') loadAdminPending();
+      if (typeof loadUserPosts === 'function' && window.USER?.id) {
+        await loadUserPosts(window.USER.id, 'profilePostList');
+      }
     })();
   } else if (tab === 'games') {
     document.getElementById('games-library-screen')?.classList.add('open');

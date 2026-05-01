@@ -157,6 +157,9 @@ async function renderProfile() {
   setStatGames('…');
   setStatFollowers('…');
   setStatLikes('…');
+  
+  const compose = document.getElementById('profileWallCompose');
+  if (compose) compose.hidden = false;
 
   document.getElementById('devBadge').style.display = USER.isGithubConnected ? '' : 'none';
   const premBadge = document.getElementById('premiumBadge');
@@ -530,6 +533,71 @@ async function deleteGame(gameId, titleHint, playUrlHint) {
   }
 }
 
+async function loadUserPosts(userId, containerId) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  
+  if (!container.innerHTML || container.innerHTML.includes('feed-reviews-empty')) {
+    container.innerHTML = '<div class="feed-reviews-loading">Загрузка постов...</div>';
+  }
+
+  try {
+    const data = await API.userPosts(userId);
+    const posts = data?.posts || [];
+    
+    if (posts.length === 0) {
+      container.innerHTML = '<div class="feed-reviews-empty" style="padding:20px;text-align:center;color:var(--muted);font-size:14px;">На стене пока пусто</div>';
+      return;
+    }
+
+    const isMy = String(userId) === String(window.USER?.id);
+    const isAdmin = typeof window.USER_IS_ADMIN !== 'undefined' ? window.USER_IS_ADMIN : false;
+
+    container.innerHTML = posts.map(p => `
+      <div class="profile-post-item" id="post-${p.id}">
+        <div class="profile-post-body">${esc(p.body)}</div>
+        <div class="profile-post-footer">
+          <span class="profile-post-date">${esc(formatGameDate(p.createdAt))}</span>
+          ${(isMy || isAdmin) ? `<button type="button" class="profile-post-delete" onclick="deleteProfilePost('${p.id}', '${userId}', '${containerId}')">Удалить</button>` : ''}
+        </div>
+      </div>
+    `).join('');
+  } catch (e) {
+    console.error('[Wall] Load error', e);
+    container.innerHTML = '<div class="feed-reviews-empty">Не удалось загрузить стену</div>';
+  }
+}
+
+async function submitProfilePost() {
+  const ta = document.getElementById('profilePostInput');
+  const text = ta?.value?.trim() || '';
+  if (!text) return;
+
+  try {
+    await API.createPost(text);
+    if (ta) ta.value = '';
+    showToast('Опубликовано!');
+    if (window.USER?.id) {
+      await loadUserPosts(window.USER.id, 'profilePostList');
+    }
+  } catch (e) {
+    showToast('Ошибка публикации');
+  }
+}
+
+async function deleteProfilePost(postId, userId, containerId) {
+  if (!confirm('Удалить пост?')) return;
+  try {
+    await API.deletePost(postId);
+    await loadUserPosts(userId, containerId);
+  } catch (e) {
+    showToast('Ошибка удаления');
+  }
+}
+
+window.loadUserPosts = loadUserPosts;
+window.submitProfilePost = submitProfilePost;
+window.deleteProfilePost = deleteProfilePost;
 window.renderProfile = renderProfile;
 window.deleteGame = deleteGame;
 window.saveProfile = saveProfile;
@@ -539,8 +607,6 @@ window.openGameInFeedFromProfile = openGameInFeedFromProfile;
 window.startProfileEdit = startProfileEdit;
 window.cancelProfileEdit = cancelProfileEdit;
 window.discardProfileEdit = discardProfileEdit;
-window.finishProfileEdit = finishProfileEdit;
-
 window.finishProfileEdit = finishProfileEdit;
 
 document.addEventListener('change', ev => {

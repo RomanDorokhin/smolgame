@@ -4367,3 +4367,75 @@ body.is-admin .admin-only{display:block;}
   color: #0f0;
   word-break: break-all;
 }
+
+/* Profile Wall */
+.profile-wall-section {
+  padding: 20px;
+  border-top: 1px solid rgba(255,255,255,0.06);
+  margin-top: 10px;
+}
+.profile-wall-header {
+  margin-bottom: 15px;
+}
+.profile-wall-title {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0;
+}
+.profile-wall-compose {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 20px;
+  padding: 12px;
+  background: rgba(255,255,255,0.03);
+  border-radius: 16px;
+}
+.profile-post-input {
+  background: transparent;
+  border: none;
+  color: #fff;
+  font-size: 14px;
+  resize: none;
+  min-height: 60px;
+  outline: none;
+  padding: 4px;
+}
+.profile-post-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.profile-post-item {
+  padding: 16px;
+  background: rgba(255,255,255,0.04);
+  border-radius: 16px;
+}
+.profile-post-body {
+  font-size: 14px;
+  line-height: 1.5;
+  color: #eee;
+  white-space: pre-wrap;
+  margin-bottom: 8px;
+}
+.profile-post-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.profile-post-date {
+  font-size: 11px;
+  color: var(--muted);
+}
+.profile-post-delete {
+  background: transparent;
+  border: none;
+  color: var(--danger);
+  font-size: 11px;
+  padding: 4px 8px;
+  cursor: pointer;
+  opacity: 0.7;
+}
+.profile-post-delete:hover {
+  opacity: 1;
+}
