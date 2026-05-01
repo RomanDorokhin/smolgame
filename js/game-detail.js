@@ -118,51 +118,55 @@ async function openGameDetail(gameId) {
     if (typeof showToast === 'function') showToast('No gameId provided');
     return;
   }
-  const screen = document.getElementById('game-detail-screen');
-  if (!screen) {
-    if (typeof showToast === 'function') showToast('No screen found');
+  try {
+    const screen = document.getElementById('game-detail-screen');
+    if (!screen) {
+      if (typeof showToast === 'function') showToast('No screen found');
+      return;
+    }
+    _gameDetailId = gameId;
+
+    const hero = document.getElementById('gameDetailHero');
+    const titleEl = document.getElementById('gameDetailTitle');
+    const topTitle = document.getElementById('gameDetailTopTitle');
+    const descEl = document.getElementById('gameDetailDesc');
+    const badges = document.getElementById('gameDetailBadges');
+    const meta = document.getElementById('gameDetailMeta');
+    const authorCard = document.getElementById('gameDetailAuthorCard');
+    const reviewsEl = document.getElementById('gameDetailReviews');
+    const reviewForm = document.getElementById('gameDetailReviewForm');
+    const ownerActions = document.getElementById('gameDetailOwnerActions');
+    const playBtn = document.getElementById('gameDetailPlayBtn');
+    const t = tf();
+
+    hero.innerHTML = '<div class="game-detail-hero-skel"></div>';
+    titleEl.textContent = '…';
+    if (topTitle) topTitle.textContent = t('game_word');
+    descEl.textContent = '';
+    badges.innerHTML = '';
+    meta.innerHTML = '';
+    authorCard.innerHTML = '';
+    reviewsEl.innerHTML = '';
+    if (reviewForm) reviewForm.hidden = false;
+    ownerActions.hidden = true;
+    ownerActions.innerHTML = '';
+
+    window._gameDetailReturnTab = window._activeMainTab || 'feed';
+    ['games-library-screen', 'search-screen', 'profile-screen', 'author-screen']
+      .forEach(id => document.getElementById(id)?.classList.remove('open'));
+    if (typeof syncBodyFeedHiddenUnderSheet === 'function') syncBodyFeedHiddenUnderSheet();
+
+    screen.hidden = false;
+    screen.setAttribute('aria-hidden', 'false');
+    document.body.classList.add('game-detail-open');
+
+    const inp = document.getElementById('gameDetailReviewInput');
+    if (inp) inp.value = '';
+  } catch (syncErr) {
+    if (typeof showToast === 'function') showToast('Crash: ' + syncErr.message);
+    console.error('DOM setup crash:', syncErr);
     return;
   }
-  _gameDetailId = gameId;
-
-  const hero = document.getElementById('gameDetailHero');
-  const titleEl = document.getElementById('gameDetailTitle');
-  const topTitle = document.getElementById('gameDetailTopTitle');
-  const descEl = document.getElementById('gameDetailDesc');
-  const badges = document.getElementById('gameDetailBadges');
-  const meta = document.getElementById('gameDetailMeta');
-  const authorCard = document.getElementById('gameDetailAuthorCard');
-  const reviewsEl = document.getElementById('gameDetailReviews');
-  const reviewForm = document.getElementById('gameDetailReviewForm');
-  const ownerActions = document.getElementById('gameDetailOwnerActions');
-  const playBtn = document.getElementById('gameDetailPlayBtn');
-  const t = tf();
-
-  hero.innerHTML = '<div class="game-detail-hero-skel"></div>';
-  titleEl.textContent = '…';
-  if (topTitle) topTitle.textContent = t('game_word');
-  descEl.textContent = '';
-  badges.innerHTML = '';
-  meta.innerHTML = '';
-  authorCard.innerHTML = '';
-  reviewsEl.innerHTML = '';
-  if (reviewForm) reviewForm.hidden = false; // показываем compose по умолчанию; owner — скроем позже
-  ownerActions.hidden = true;
-  ownerActions.innerHTML = '';
-
-  // Навигация: запоминаем откуда открыли, скрываем другие экраны
-  window._gameDetailReturnTab = window._activeMainTab || 'feed';
-  ['games-library-screen', 'search-screen', 'profile-screen', 'author-screen']
-    .forEach(id => document.getElementById(id)?.classList.remove('open'));
-  if (typeof syncBodyFeedHiddenUnderSheet === 'function') syncBodyFeedHiddenUnderSheet();
-
-  screen.hidden = false;
-  screen.setAttribute('aria-hidden', 'false');
-  document.body.classList.add('game-detail-open');
-
-  // Сбрасываем поле ввода отзыва
-  const inp = document.getElementById('gameDetailReviewInput');
-  if (inp) inp.value = '';
 
   let game;
   try {
