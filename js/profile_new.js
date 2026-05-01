@@ -10,8 +10,8 @@ function debugClearCache() {
 }
 window.debugClearCache = debugClearCache;
 
-const tf = typeof window.t === 'function' ? window.t : k => k;
-const genreOtherApi = () => tf('genre_api_other');
+var tf = typeof window.t === 'function' ? window.t : k => k;
+var genreOtherApi = () => tf('genre_api_other');
 
 /** Нормализация ответа GET /api/me (статы могут прийти строками из D1). */
 function parseProfileStats(me) {

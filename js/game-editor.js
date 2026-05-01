@@ -1,7 +1,7 @@
 /** Редактирование карточки своей игры в профиле: PATCH → pending; синхронизация ленты и поиска. */
 
-const tf = typeof window.t === 'function' ? window.t : k => k;
-const genreOtherApi = () => tf('genre_api_other');
+var tf = typeof window.t === 'function' ? window.t : k => k;
+var genreOtherApi = () => tf('genre_api_other');
 
 window.gameEditorState = {
   coverFile: null,

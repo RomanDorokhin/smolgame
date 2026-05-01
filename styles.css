@@ -1923,8 +1923,7 @@ body.game-detail-open .app-tab-chrome{opacity:0;pointer-events:none;}
   overflow-y:auto;
   -webkit-overflow-scrolling:touch;
   overscroll-behavior-y:contain;
-  /* padding-bottom includes the sticky compose bar height (~80px) + safe area */
-  padding-bottom:calc(var(--safe-bottom) + 88px);
+  padding-bottom:calc(var(--safe-bottom) + 20px);
 }
 .game-detail-hero{
   width:100%;

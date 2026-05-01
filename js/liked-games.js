@@ -1,7 +1,7 @@
 /**
  * Экран «Игры»: лайкнутые и недавно открытые (сервер).
  */
-const tf = typeof window.t === 'function' ? window.t : k => k;
+var tf = typeof window.t === 'function' ? window.t : k => k;
 
 function renderGamesGridSection(gridId, games, emptyTitle, emptySub, emptyCtaTab) {
   const grid = document.getElementById(gridId);
