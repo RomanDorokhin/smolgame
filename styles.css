@@ -3750,7 +3750,6 @@ body.keyboard-open .app-tab-chrome {
   -webkit-overflow-scrolling: touch;
   overscroll-behavior-y: contain;
   touch-action: pan-y;
-  padding: calc(var(--safe-top) + 60px) 20px calc(var(--safe-bottom) + 20px);
   isolation: isolate;
 }
 
