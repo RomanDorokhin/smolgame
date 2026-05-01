@@ -24,7 +24,9 @@ async function fetchGameReviews(gameId) {
     const data = await API.gameReviews(gameId);
     return Array.isArray(data?.reviews) ? data.reviews : [];
   } catch (e) {
-    return [];
+    console.warn('[FeedReviews] Silent fetch fail:', e.message || e);
+    // Возвращаем null вместо [], чтобы отличить «пусто» от «ошибки сети»
+    return null;
   }
 }
 
@@ -33,8 +35,16 @@ async function loadFeedReviewCount() {
   if (!chip || !Array.isArray(window.GAMES) || window.GAMES.length === 0) return;
   const g = GAMES[window.currentIdx];
   if (!g?.id) return;
-  const list = await fetchGameReviews(g.id);
-  chip.textContent = String(list.length);
+  
+  try {
+    const list = await fetchGameReviews(g.id);
+    // Если list === null (ошибка сети), просто не обновляем счетчик
+    if (Array.isArray(list)) {
+      chip.textContent = String(list.length);
+    }
+  } catch (e) {
+    // Тихо игнорируем ошибки счетчика
+  }
 }
 
 async function openFeedReviewsDrawer() {
@@ -72,10 +82,17 @@ async function openFeedReviewsDrawer() {
   try {
     // 3. Грузим отзывы с форсированным сбросом кэша
     const list = await fetchGameReviews(g.id);
-    const chipNum = document.getElementById('feedReviewCount');
-    if (chipNum) chipNum.textContent = String(Array.isArray(list) ? list.length : 0);
+    
+    // Если list === null, значит была ошибка сети
+    if (list === null) {
+      listEl.innerHTML = `<div class="feed-reviews-empty">${esc(t('err_load')) || 'Ошибка загрузки. Проверь интернет.'}</div>`;
+      return;
+    }
 
-    if (!Array.isArray(list) || list.length === 0) {
+    const chipNum = document.getElementById('feedReviewCount');
+    if (chipNum) chipNum.textContent = String(list.length);
+
+    if (list.length === 0) {
       listEl.innerHTML = `<div class="feed-reviews-empty">${esc(t('gd_reviews_empty_drawer'))}</div>`;
     } else {
       const html = list
