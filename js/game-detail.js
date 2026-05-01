@@ -76,8 +76,9 @@ async function openFeedReviewsDrawer() {
     return;
   }
   
-  const t = tf();
-  listEl.innerHTML = `<div class="feed-reviews-loading">${esc(t('gd_reviews_loading'))}</div>`;
+  const i18n = tf();
+  const loadingText = typeof i18n === 'function' ? i18n('gd_reviews_loading') : 'Загрузка отзывов...';
+  listEl.innerHTML = `<div class="feed-reviews-loading">${esc(loadingText)}</div>`;
 
   try {
     // 3. Грузим отзывы с форсированным сбросом кэша
@@ -85,7 +86,8 @@ async function openFeedReviewsDrawer() {
     
     // Если list === null, значит была ошибка сети
     if (list === null) {
-      listEl.innerHTML = `<div class="feed-reviews-empty">${esc(t('err_load')) || 'Ошибка загрузки. Проверь интернет.'}</div>`;
+      const errTxt = (typeof i18n === 'function' ? i18n('err_load') : null) || 'Ошибка загрузки. Проверь интернет.';
+      listEl.innerHTML = `<div class="feed-reviews-empty">${esc(errTxt)}</div>`;
       return;
     }
 
@@ -93,12 +95,13 @@ async function openFeedReviewsDrawer() {
     if (chipNum) chipNum.textContent = String(list.length);
 
     if (list.length === 0) {
-      listEl.innerHTML = `<div class="feed-reviews-empty">${esc(t('gd_reviews_empty_drawer'))}</div>`;
+      const emptyTxt = typeof i18n === 'function' ? i18n('gd_reviews_empty_drawer') : 'Отзывов пока нет. Будь первым!';
+      listEl.innerHTML = `<div class="feed-reviews-empty">${esc(emptyTxt)}</div>`;
     } else {
       const html = list
         .map(r => {
           if (!r) return '';
-          const author = esc(r.authorName || t('gd_player') || 'Игрок');
+          const author = esc(r.authorName || (typeof i18n === 'function' ? i18n('gd_player') : 'Игрок'));
           const firstChar = author.charAt(0).toUpperCase();
           const date = esc(formatGameDate(r.createdAt));
           const body = esc(r.body || '');
@@ -117,11 +120,13 @@ async function openFeedReviewsDrawer() {
         .filter(Boolean)
         .join('');
 
-      listEl.innerHTML = html || `<div class="feed-reviews-empty">${esc(t('gd_reviews_empty_drawer'))}</div>`;
+      const emptyTxtFallback = typeof i18n === 'function' ? i18n('gd_reviews_empty_drawer') : 'Отзывов пока нет.';
+      listEl.innerHTML = html || `<div class="feed-reviews-empty">${esc(emptyTxtFallback)}</div>`;
     }
   } catch (err) {
     console.error('[FeedReviews] Fatal Error:', err);
-    listEl.innerHTML = `<div class="feed-reviews-empty">${esc(t('err_load'))}</div>`;
+    const fatalErr = (typeof i18n === 'function' ? i18n('err_load') : null) || 'Ошибка загрузки';
+    listEl.innerHTML = `<div class="feed-reviews-empty">${esc(fatalErr)}</div>`;
   }
 }
 
@@ -146,17 +151,18 @@ function closeFeedReviewsDrawer() {
 async function submitFeedReview() {
   const ta = document.getElementById('feedReviewInput');
   const text = ta?.value?.trim() || '';
+  const i18n = tf();
   if (!text) {
-    showToast(tf('gd_review_empty'));
+    showToast(typeof i18n === 'function' ? i18n('gd_review_empty') : 'Текст пуст');
     return;
   }
   if (!Array.isArray(window.GAMES) || GAMES.length === 0) return;
   const g = GAMES[window.currentIdx];
   if (!g?.id) return;
   try {
-    await API.postGameReview(g.id, { text });
-    ta.value = '';
-    showToast(tf('gd_review_saved'));
+    await API.postGameReview(g.id, { body: text });
+    if (ta) ta.value = '';
+    showToast(typeof i18n === 'function' ? i18n('gd_review_saved') : 'Сохранено');
     await openFeedReviewsDrawer();
     await loadFeedReviewCount();
   } catch (e) {
