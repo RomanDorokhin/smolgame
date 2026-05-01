@@ -2049,7 +2049,52 @@ body.game-detail-open .app-tab-chrome{opacity:0;pointer-events:none;}
   color:var(--muted);
 }
 .game-detail-review p{margin:0;color:rgba(255,255,255,0.88);}
-.game-detail-review-form{margin-top:14px;display:flex;flex-direction:column;gap:10px;}
+/* Sticky compose bar (отзыв) */
+.game-detail-compose{
+  flex-shrink:0;
+  display:flex;
+  align-items:flex-end;
+  gap:10px;
+  padding:10px 14px calc(var(--safe-bottom) + 10px);
+  border-top:1px solid var(--border);
+  background:rgba(10,11,14,0.97);
+  backdrop-filter:blur(18px);
+  -webkit-backdrop-filter:blur(18px);
+}
+.game-detail-compose[hidden]{display:none !important;}
+.game-detail-compose-input{
+  flex:1;
+  resize:none;
+  min-height:40px;
+  max-height:100px;
+  padding:10px 12px;
+  font-size:14px;
+  line-height:1.4;
+  border-radius:14px;
+  background:var(--surface);
+  border:1px solid var(--border);
+  color:var(--text);
+  overflow-y:auto;
+  -webkit-overflow-scrolling:touch;
+}
+.game-detail-compose-input:focus{
+  outline:none;
+  border-color:rgba(255,255,255,0.22);
+}
+.game-detail-compose-send{
+  flex-shrink:0;
+  width:42px;
+  height:42px;
+  padding:0;
+  border-radius:50%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+/* Скролл shrinks when compose is visible */
+.game-detail-screen:has(.game-detail-compose:not([hidden])) .game-detail-scroll{
+  padding-bottom:0;
+}
 .game-detail-owner-actions{
   margin-top:20px;
   padding-top:18px;

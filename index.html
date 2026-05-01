@@ -187,15 +187,19 @@
       <section class="game-detail-section">
         <h2 class="game-detail-section-title" data-i18n="reviews_section">Отзывы</h2>
         <div id="gameDetailReviews"></div>
-        <div class="game-detail-review-form" id="gameDetailReviewForm">
-          <textarea id="gameDetailReviewInput" class="field-input" maxlength="500" rows="3" data-i18n-placeholder="review_write_placeholder" placeholder="Написать отзыв…"></textarea>
-          <button type="button" class="sg-btn sg-btn--secondary" data-action="game-detail-submit-review" data-i18n="review_submit_btn">Отправить отзыв</button>
-        </div>
       </section>
       <div class="game-detail-owner-actions" id="gameDetailOwnerActions" hidden></div>
     </div>
   </div>
+  <!-- Sticky compose bar — всегда прикреплена снизу, не в скролле -->
+  <div class="game-detail-compose" id="gameDetailReviewForm">
+    <textarea id="gameDetailReviewInput" class="game-detail-compose-input field-input" maxlength="500" rows="2" data-i18n-placeholder="review_write_placeholder" placeholder="Написать отзыв…"></textarea>
+    <button type="button" class="game-detail-compose-send sg-btn sg-btn--primary" data-action="game-detail-submit-review" aria-label="Отправить">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M22 2L11 13" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M22 2L15 22L11 13L2 9L22 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+  </div>
 </div>
+
 
 <!-- ══ ПРОГРЕСС ══ -->
 <div id="dots"></div>
@@ -810,44 +814,6 @@ Must work on a mobile phone.</pre>
     } catch (e) { host.innerHTML = `<div class="admin-empty">⚠️ ${esc(e.message)}</div>`; }
   };
 
-  /** ══ GAME DETAIL ══ */
-  window.openGameDetail = async function(gameId) {
-    if (!gameId) return;
-    const screen = document.getElementById('game-detail-screen');
-    if (!screen) return;
-    // Запоминаем, откуда открыли — чтобы «Назад» вернул туда
-    window._gameDetailReturnTab = window._activeMainTab || 'feed';
-    // Скрываем текущие экраны, чтобы не было наложения
-    ['games-library-screen', 'search-screen', 'profile-screen', 'author-screen']
-      .forEach(id => document.getElementById(id)?.classList.remove('open'));
-    if (typeof syncBodyFeedHiddenUnderSheet === 'function') syncBodyFeedHiddenUnderSheet();
-    screen.hidden = false;
-    document.body.classList.add('game-detail-open');
-    try {
-      const data = await API.game(gameId);
-      const game = data?.game;
-      const t = typeof window.t === 'function' ? window.t : k => k;
-      document.getElementById('gameDetailTitle').textContent = game.title;
-      document.getElementById('gameDetailDesc').textContent = game.description || '';
-      document.getElementById('gameDetailHero').innerHTML = game.imageUrl ? `<img src="${esc(game.imageUrl)}" class="game-detail-hero-img">` : '';
-      const playBtn = document.getElementById('gameDetailPlayBtn');
-      if (playBtn) playBtn.onclick = () => {
-         window.closeGameDetail();
-         window.switchTab('feed');
-         window.injectGameIntoFeed(gameId).then(idx => { if(idx >= 0) window.goTo(idx, false); });
-      };
-    } catch (e) { showToast(t('err_load')); window.closeGameDetail(); }
-  };
-  window.closeGameDetail = () => {
-    const s = document.getElementById('game-detail-screen');
-    if (s) s.hidden = true;
-    document.body.classList.remove('game-detail-open');
-    // Возвращаемся на вкладку, откуда открыли карточку
-    const returnTo = window._gameDetailReturnTab || 'feed';
-    window._gameDetailReturnTab = null;
-    if (typeof switchTab === 'function') switchTab(returnTo);
-  };
-
   /** ══ ONBOARDING (AUTOMATED) ══ */
   window.checkOnboarding = async function() {
     try {
@@ -878,219 +844,15 @@ Must work on a mobile phone.</pre>
     } catch (e) { return false; }
   };
 
-  /** ══ GAME EDITOR ══ */
-  window.toggleProfileGameEditor = function(gameId) {
-    const row = document.querySelector(`.profile-game-row[data-profile-game-id="${gameId}"]`);
-    const panel = document.getElementById('profileGameEditor-' + gameId);
-    if (panel && panel.hidden) {
-      panel.hidden = false;
-      if(row) row.classList.add('profile-game-row--editing');
-    } else if (panel) {
-      panel.hidden = true;
-      if(row) row.classList.remove('profile-game-row--editing');
-    }
-  };
 })();
 </script>
 <script>
-/** ══════════════════════════════════════════════════════════
- *  PROFILE LOGIC (Inlined to bypass WebView blocks)
- *  ══════════════════════════════════════════════════════════ */
+/** Помощники библиотеки игр (лайкнутые/сыгранные) — не дублируются в других файлах */
 (function() {
   const tf = typeof window.t === 'function' ? window.t : k => k;
-  const genreOtherApi = () => tf('genre_api_other');
+  const esc = window.esc || (s => String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'));
 
-  function parseProfileStats(me) {
-    const raw = me?.stats;
-    if (!raw || typeof raw !== 'object') return { games: null, likes: null, followers: null };
-    const games = Number(raw.games ?? raw.gamesCount);
-    const likes = Number(raw.likes ?? raw.likesTotal);
-    const followers = Number(raw.followers ?? raw.followersCount);
-    return {
-      games: Number.isFinite(games) ? games : null,
-      likes: Number.isFinite(likes) ? likes : null,
-      followers: Number.isFinite(followers) ? followers : null,
-    };
-  }
-
-  function gameStatusBadgeHtml(status) {
-    if (status === 'pending') return `<span class="game-card-status-badge pending">${esc(tf('moderation'))}</span>`;
-    if (status === 'rejected') return `<span class="game-card-status-badge rejected">${esc(tf('rejected'))}</span>`;
-    return '';
-  }
-
-  async function waitTelegramUserForProfile(maxMs) {
-    const cap = Number(maxMs) > 0 ? Number(maxMs) : 3500;
-    const deadline = Date.now() + cap;
-    while (Date.now() < deadline) {
-      if (typeof ensureSmolgameInitDataFromUrl === 'function') ensureSmolgameInitDataFromUrl();
-      if (typeof window.syncUSERFromTelegramInit === 'function') window.syncUSERFromTelegramInit();
-      if (USER.id) return;
-      await new Promise(r => setTimeout(r, 70));
-    }
-  }
-
-  function setProfileMeBannerVisible(show, message) {
-    const box = document.getElementById('profileMeBanner');
-    const txt = document.getElementById('profileMeBannerText');
-    if (!box) return;
-    if (show && message && txt) txt.textContent = message;
-    if (show) box.removeAttribute('hidden'); else box.setAttribute('hidden', '');
-  }
-
-  function applyMeToProfileUi(me, { bioRead, handleRead, premBadge, setStatGames, setStatFollowers, setStatLikes }) {
-    const st = parseProfileStats(me);
-    if (st.games != null) setStatGames(String(st.games));
-    if (st.likes != null) setStatLikes(fmtNum(st.likes));
-    if (st.followers != null) setStatFollowers(fmtNum(st.followers));
-
-    if (me && me.user) {
-      const mu = me.user;
-      if (mu.id) { USER.id = String(mu.id); USER.tgId = String(mu.id); }
-      if (mu.siteHandle) USER.siteHandle = mu.siteHandle;
-      const bestName = mu.name || mu.displayName || mu.telegramName;
-      if (bestName) USER.name = bestName;
-      if (mu.avatar) USER.avatar = mu.avatar;
-      USER.isGithubConnected = Boolean(mu.isGithubConnected);
-      USER.isPremium = Boolean(mu.isPremium);
-      USER.displayName = mu.displayName || mu.name || USER.displayName || '';
-      USER.bio = mu.bio || USER.bio || '';
-      if (mu.isAdmin) document.body.classList.add('is-admin'); else document.body.classList.remove('is-admin');
-      if (mu.id) { try { localStorage.setItem('smolgame:persisted_id:v1', String(mu.id)); } catch(e) {} }
-      if (premBadge) premBadge.style.display = mu.isPremium ? 'inline-flex' : 'none';
-    }
-
-    const nameEl = document.getElementById('profileName');
-    if (nameEl) nameEl.textContent = USER.name || USER.id || tf('guest');
-    const handleEl = document.getElementById('profileHandle');
-    if (handleEl) handleEl.textContent = '@' + (USER.siteHandle || USER.id || '—');
-    if (handleRead) handleRead.textContent = USER.siteHandle || USER.id || '—';
-    if (bioRead) { bioRead.textContent = USER.bio || ''; bioRead.style.display = USER.bio ? '' : 'none'; }
-    setProfileAvatar(USER.avatar);
-    const dnInput = document.getElementById('profileDisplayName');
-    if (dnInput) dnInput.value = USER.displayName || USER.name || '';
-    const bioInput = document.getElementById('profileBioInput');
-    if (bioInput) bioInput.value = USER.bio || '';
-  }
-
-  async function renderProfile() {
-    const bioRead = document.getElementById('profileBio');
-    const handleRead = document.getElementById('profileSiteHandleRead');
-    await waitTelegramUserForProfile(4000);
-    setProfileMeBannerVisible(false);
-    setProfileAvatar(USER.avatar);
-    document.getElementById('profileName').textContent = USER.name || USER.id || tf('guest');
-    document.getElementById('profileHandle').textContent = '@' + (USER.siteHandle || USER.id || '—');
-    if (handleRead) handleRead.textContent = USER.siteHandle || USER.id || '—';
-    const setStatGames = v => { document.getElementById('statGames').textContent = v; };
-    const setStatFollowers = v => { document.getElementById('statFollowers').textContent = v; };
-    const setStatLikes = v => { document.getElementById('statLikes').textContent = v; };
-    setStatGames('…'); setStatFollowers('…'); setStatLikes('…');
-    const isDev = USER.isGithubConnected || document.body.classList.contains('is-admin');
-    document.getElementById('devBadge').style.display = isDev ? '' : 'none';
-    const premBadge = document.getElementById('premiumBadge');
-    if (premBadge) premBadge.style.display = USER.isPremium ? '' : 'none';
-
-    let me = null;
-    try {
-      me = await API.me();
-      if ((!me || !me.user) && USER.id) {
-        try {
-          const pub = await API.userProfile(USER.id);
-          if (pub && pub.user) {
-            me = { ...me, user: { ...pub.user, isAdmin: document.body.classList.contains('is-admin') }, stats: pub.stats };
-          }
-        } catch (e2) {}
-      }
-      applyMeToProfileUi(me, { bioRead, handleRead, premBadge, setStatGames, setStatFollowers, setStatLikes });
-    } catch (err) {
-      setProfileMeBannerVisible(true, err.message || tf('profile_me_failed'));
-    } finally {
-      document.getElementById('profileEditOpenBtn').style.display = USER.id ? '' : 'none';
-    }
-
-    let myGames = [];
-    try {
-      const res = await API.myGames();
-      myGames = Array.isArray(res?.games) ? res.games : [];
-    } catch (e) {
-      myGames = Array.isArray(GAMES) ? GAMES.filter(g => sameTelegramUserId(g.authorId, USER.id)) : [];
-    }
-
-    const publishedCount = myGames.filter(g => g?.status === 'published').length;
-    if (document.getElementById('statGames').textContent === '…') setStatGames(String(publishedCount));
-    if (document.getElementById('statFollowers').textContent === '…') setStatFollowers('0');
-    if (document.getElementById('statLikes').textContent === '…') {
-      const sumLikes = myGames.reduce((acc, g) => acc + (Number(g?.likes) || 0), 0);
-      setStatLikes(fmtNum(sumLikes));
-    }
-
-    const grid = document.getElementById('myGamesGrid');
-    if (!grid) return;
-    if (myGames.length === 0) {
-      grid.innerHTML = `<div class="sg-empty-state sg-empty-state--grid"><div class="sg-empty-state-title">${esc(tf('profile_empty_games_title'))}</div><div class="sg-empty-state-sub">${esc(tf('profile_empty_games_sub'))}</div></div>`;
-    } else {
-      grid.innerHTML = myGames.map(g => {
-        const idRaw = String(g.id || '');
-        const gid = esc(idRaw);
-        const canEdit = g.status !== 'rejected';
-        const titleEsc = esc(g.title || '');
-        const editorHtml = canEdit ? `
-        <div id="profileGameEditor-${idRaw}" class="profile-game-editor" hidden>
-          <div class="field-group"><div class="field-label">${esc(tf('field_title'))}</div><input class="field-input profile-game-editor-title" type="text" value="${titleEsc}"></div>
-          <div class="profile-game-editor-actions">
-            <button type="button" class="profile-text-btn" data-action="profile-game-editor-cancel" data-game-id="${idRaw}">${esc(tf('profile_discard'))}</button>
-            <button type="button" class="submit-btn" data-action="profile-game-editor-save" data-game-id="${idRaw}">${esc(tf('profile_save_review'))}</button>
-          </div>
-        </div>` : '';
-        return `<div class="profile-game-row" id="profileGameRow-${idRaw}" data-profile-game-id="${idRaw}">
-          <div class="game-card sg-store-card" data-action="open-game-detail" data-game-id="${gid}">
-            <div class="game-card-thumb sg-store-card-thumb">${gameStatusBadgeHtml(g.status)}${typeof gameThumbHtml === 'function' ? gameThumbHtml(g) : ''}</div>
-            <div class="game-card-info"><div class="game-card-name">${esc(g.title)}</div></div>
-          </div>
-          <div class="profile-game-actions profile-game-actions--icons">
-             <button type="button" class="profile-game-icon-btn profile-game-icon-btn--danger" data-action="delete-game" data-game-id="${gid}"><svg class="sg-icon" width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M9 3h6M4 7h16M6 7l1 14h10l1-14" stroke="currentColor" stroke-width="1.5"/><path d="M10 11v6M14 11v6" stroke="currentColor" stroke-width="1.5"/></svg></button>
-          </div>
-          ${editorHtml}
-        </div>`;
-      }).join('');
-    }
-  }
-
-  function setProfileAvatar(avatar) {
-    const el = document.getElementById('profileAvatar');
-    if (!el) return;
-    const url = avatarImgUrl(avatar);
-    if (url) el.innerHTML = `<img src="${esc(url)}" alt="" referrerpolicy="no-referrer">`;
-    else el.textContent = avatar || '?';
-  }
-
-  window.renderProfile = renderProfile;
-  window.saveProfile = async function() {
-    const displayName = document.getElementById('profileDisplayName').value.trim();
-    const bio = document.getElementById('profileBioInput').value.trim();
-    if (!displayName) { showToast(tf('profile_toast_name')); return false; }
-    try {
-      const me = await API.updateMe({ displayName, bio });
-      if (me?.user) {
-        USER.name = me.user.name || USER.name;
-        USER.displayName = me.user.displayName || '';
-        USER.bio = me.user.bio || '';
-        document.getElementById('profileName').textContent = USER.name;
-        document.getElementById('profileBio').textContent = USER.bio;
-      }
-      showToast(tf('profile_saved'));
-      document.getElementById('profile-screen')?.classList.remove('profile-edit-active');
-      return true;
-    } catch (e) { showToast(tf('err_load')); return false; }
-  };
-  window.startProfileEdit = () => document.getElementById('profile-screen')?.classList.add('profile-edit-active');
-  window.cancelProfileEdit = () => document.getElementById('profile-screen')?.classList.remove('profile-edit-active');
-
-  /** ══════════════════════════════════════════════════════════
-   *  LIKED/PLAYED GAMES LOGIC
-   *  ══════════════════════════════════════════════════════════ */
-  function renderGamesGridSection(gridId, games, emptyTitle, emptySub, emptyCtaTab) {
+  function renderGamesGridSection(gridId, games, emptyTitle, emptySub) {
     const grid = document.getElementById(gridId);
     if (!grid) return;
     if (games.length === 0) {
@@ -1103,21 +865,24 @@ Must work on a mobile phone.</pre>
   window.loadGamesLibrary = async function() {
     const lGrid = document.getElementById('likedGamesGrid');
     const pGrid = document.getElementById('playedGamesGrid');
-    if (lGrid) lGrid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:24px;">' + esc(tf('loading')) + '</div>';
-    if (pGrid) pGrid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:24px;">' + esc(tf('loading')) + '</div>';
+    if (lGrid) lGrid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:24px;">' + tf('loading') + '</div>';
+    if (pGrid) pGrid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:24px;">' + tf('loading') + '</div>';
     try {
       const batch = await API.gamesLibrary();
-      renderGamesGridSection('likedGamesGrid', batch?.likedGames || [], tf('liked_empty_title'), tf('liked_empty_sub'), 'feed');
-      renderGamesGridSection('playedGamesGrid', batch?.playedGames || [], tf('played_empty_title'), tf('played_empty_sub'), 'feed');
+      renderGamesGridSection('likedGamesGrid',  batch?.likedGames  || [], tf('liked_empty_title'),  tf('liked_empty_sub'));
+      renderGamesGridSection('playedGamesGrid', batch?.playedGames || [], tf('played_empty_title'), tf('played_empty_sub'));
     } catch (e) {
-      const errHtml = `<div style="grid-column:1/-1;text-align:center;padding:24px;">${esc(tf('load_failed_title'))}</div>`;
-      if (lGrid) lGrid.innerHTML = errHtml; if (pGrid) pGrid.innerHTML = errHtml;
+      const errHtml = `<div style="grid-column:1/-1;text-align:center;padding:24px;">${tf('load_failed_title')}</div>`;
+      if (lGrid) lGrid.innerHTML = errHtml;
+      if (pGrid) pGrid.innerHTML = errHtml;
     }
   };
+
   window.refreshGamesLibraryScreen = () => {
     if (document.getElementById('games-library-screen')?.classList.contains('open')) window.loadGamesLibrary();
   };
 })();
+</script>
 </script>
 <script src="js/events.js?v=20260490"></script>
 <script src="js/overlay-pull-close.js?v=20260490"></script>

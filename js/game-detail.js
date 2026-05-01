@@ -139,20 +139,27 @@ async function openGameDetail(gameId) {
   meta.innerHTML = '';
   authorCard.innerHTML = '';
   reviewsEl.innerHTML = '';
-  if (reviewForm) {
-    reviewForm.hidden = false;
-    const inp = document.getElementById('gameDetailReviewInput');
-    if (inp) inp.value = '';
-  }
+  if (reviewForm) reviewForm.hidden = false; // показываем compose по умолчанию; owner — скроем позже
   ownerActions.hidden = true;
   ownerActions.innerHTML = '';
+
+  // Навигация: запоминаем откуда открыли, скрываем другие экраны
+  window._gameDetailReturnTab = window._activeMainTab || 'feed';
+  ['games-library-screen', 'search-screen', 'profile-screen', 'author-screen']
+    .forEach(id => document.getElementById(id)?.classList.remove('open'));
+  if (typeof syncBodyFeedHiddenUnderSheet === 'function') syncBodyFeedHiddenUnderSheet();
 
   screen.hidden = false;
   screen.setAttribute('aria-hidden', 'false');
   document.body.classList.add('game-detail-open');
 
+  // Сбрасываем поле ввода отзыва
+  const inp = document.getElementById('gameDetailReviewInput');
+  if (inp) inp.value = '';
+
   let game;
   try {
+
     const data = await API.game(gameId);
     game = data?.game;
     if (!game?.id) throw new Error(t('gd_no_data'));
@@ -161,6 +168,7 @@ async function openGameDetail(gameId) {
     closeGameDetail();
     return;
   }
+
 
   const gword = t('game_word');
   titleEl.textContent = game.title || gword;
@@ -254,6 +262,10 @@ function closeGameDetail() {
   screen.setAttribute('aria-hidden', 'true');
   document.body.classList.remove('game-detail-open');
   _gameDetailId = null;
+  // Возвращаемся на вкладку, откуда открыли карточку
+  const returnTo = window._gameDetailReturnTab || 'feed';
+  window._gameDetailReturnTab = null;
+  if (typeof switchTab === 'function') switchTab(returnTo);
 }
 
 async function gameDetailPlay() {
