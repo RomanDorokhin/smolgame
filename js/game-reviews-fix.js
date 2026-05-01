@@ -109,7 +109,7 @@ async function loadFeedReviewCount() {
   try {
     const list = await fetchGameReviews(g.id);
     if (Array.isArray(list)) chip.textContent = String(list.length);
-  } catch (e) {}
+  } catch (e) { }
 }
 
 /** Рендеринг одного отзыва */
@@ -120,7 +120,7 @@ function renderReviewItem(r, isReply = false) {
   const date = esc(formatGameDate(r.createdAt));
   const body = esc(r.body || '');
   if (!body && !r.authorId) return '';
-  
+
   const isMy = _isMe(r.authorId);
   const isAdmin = typeof window.USER_IS_ADMIN !== 'undefined' ? window.USER_IS_ADMIN : false;
 
@@ -152,14 +152,14 @@ function openFeedReviewsDrawer() {
   _feedReviewsOpen = true;
   drawer.hidden = false;
   drawer.setAttribute('aria-hidden', 'false');
-  
+
   if (backdrop) {
     backdrop.hidden = false;
     backdrop.onclick = closeFeedReviewsDrawer;
   }
-  
+
   if (typeof syncBackButton === 'function') syncBackButton();
-  
+
   if (input) {
     input.focus();
     // Пинок для клавиатуры
@@ -170,16 +170,20 @@ function openFeedReviewsDrawer() {
 }
 
 async function _loadFeedReviewsData(listEl) {
-  // 2. Пытаемся определить игру более надежно
+  // 1. Пытаемся найти игру по текущему индексу в ленте
   let g = Array.isArray(window.GAMES) ? window.GAMES[window.currentIdx] : null;
-  // Если не нашли через индекс, пробуем найти по активному экрану (если мы в Game Detail)
+  
+  // 2. Если в ленте пусто или индекс сбоит, пробуем достать из URL (если мы на странице игры)
   if (!g && window.location.hash.includes('game/')) {
-     const id = window.location.hash.split('game/')[1];
-     if (id && Array.isArray(window.GAMES)) g = window.GAMES.find(x => String(x.id) === String(id));
+    const parts = window.location.hash.split('game/');
+    const id = parts[parts.length - 1];
+    if (id && Array.isArray(window.GAMES)) {
+      g = window.GAMES.find(x => String(x.id) === String(id));
+    }
   }
 
   if (!g?.id) {
-    listEl.innerHTML = `<div class="feed-reviews-empty">Game ID not found (idx: ${window.currentIdx})</div>`;
+    listEl.innerHTML = `<div class="feed-reviews-empty">Game ID not found (idx: ${window.currentIdx || 'none'})</div>`;
     return;
   }
   
@@ -200,19 +204,19 @@ async function _loadFeedReviewsData(listEl) {
       // Строим дерево
       const roots = all.filter(r => !r.parentId);
       const replies = all.filter(r => r.parentId);
-      
+
       let html = '';
       roots.forEach(root => {
         html += renderReviewItem(root, false);
         const childs = replies.filter(rep => String(rep.parentId) === String(root.id));
-        childs.sort((a,b) => (a.createdAt || 0) - (b.createdAt || 0)).forEach(child => {
+        childs.sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0)).forEach(child => {
           html += renderReviewItem(child, true);
         });
       });
-      
+
       listEl.innerHTML = html || `<div class="feed-reviews-empty">${esc(getReviewText('gd_reviews_empty_drawer'))}</div>`;
     }
-    
+
     // Фокус после загрузки, если не в режиме редактирования/ответа
     if (!_replyingToId && !_editingReviewId && input) {
       setTimeout(() => input.focus(), 150);
@@ -288,7 +292,7 @@ async function submitFeedReview() {
     const author = esc(window.USER?.display_name || window.USER?.first_name || getReviewText('gd_player'));
     const firstChar = author.charAt(0).toUpperCase() || '?';
     const dateText = typeof window.getLang === 'function' && window.getLang() === 'en' ? 'Just now' : 'Только что';
-    
+
     const newReviewHtml = `
       <div class="feed-review-item optimistic ${replyingId ? 'feed-review-item--reply' : ''}" style="opacity: 0.7;">
         <div class="feed-review-avatar">${firstChar}</div>
@@ -300,7 +304,7 @@ async function submitFeedReview() {
           <p class="feed-review-body">${esc(text)}</p>
         </div>
       </div>`;
-    
+
     if (listEl.querySelector('.feed-reviews-empty')) {
       listEl.innerHTML = newReviewHtml;
     } else {
@@ -316,18 +320,18 @@ async function submitFeedReview() {
 
   try {
     if (ta) ta.value = '';
-    
+
     if (editingId) {
       await API.updateReview(editingId, text);
     } else {
       await API.postGameReview(g.id, { body: text, parentId: replyingId });
     }
-    
+
     cancelReviewAction();
     await loadFeedReviewCount();
     // Даем серверу время
     setTimeout(() => openFeedReviewsDrawer(), 500);
-    
+
   } catch (e) {
     console.error('[FeedReviews] Submit error:', e);
     showToast(getReviewText('try_again'));
@@ -353,7 +357,7 @@ function closeFeedReviewsDrawer() {
   const input = document.getElementById('feedReviewInput');
   if (input) {
     input.blur();
-    input.value = ''; 
+    input.value = '';
   }
   _feedReviewsOpen = false;
   drawer.hidden = true;
@@ -404,11 +408,11 @@ async function openGameDetail(gameId) {
   meta.innerHTML = '';
   authorCard.innerHTML = '';
   if (reviewsEl) reviewsEl.innerHTML = '';
-  
+
   window._gameDetailReturnTab = window._activeMainTab || 'feed';
   ['games-library-screen', 'search-screen', 'profile-screen', 'author-screen']
     .forEach(id => document.getElementById(id)?.classList.remove('open'));
-  
+
   screen.hidden = false;
   screen.setAttribute('aria-hidden', 'false');
   document.body.classList.add('game-detail-open');
@@ -448,7 +452,7 @@ async function openGameDetail(gameId) {
     const following = typeof followedSet !== 'undefined' && game.authorId && followedSet.has(game.authorId);
     const isSelf = Boolean(game.authorId && window.USER?.id && _isMe(game.authorId));
     const fLabel = following ? getReviewText('follow_done') : getReviewText('follow_add_author');
-    
+
     authorCard.innerHTML = `
       ${avH}
       <div class="game-detail-author-text">
