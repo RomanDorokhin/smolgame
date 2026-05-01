@@ -3706,7 +3706,7 @@ body.theme-light .nav-item.active .nav-icon {
 #games-library-screen.open {
   display: flex;
   bottom: calc(var(--safe-bottom) + var(--nav-h));
-  z-index: 1800;
+  z-index: 4000;
   padding-bottom: 20px;
 }
 
@@ -4711,7 +4711,6 @@ textarea.field-input {
   -webkit-overflow-scrolling: touch;
   overscroll-behavior-y: contain;
   touch-action: pan-y;
-  isolation: isolate;
 }
 
 #profile-screen>*,
@@ -4729,7 +4728,7 @@ textarea.field-input {
 #profile-screen.open,
 #author-screen.open {
   bottom: calc(var(--safe-bottom) + var(--nav-h));
-  z-index: 1800;
+  z-index: 4000;
   padding-bottom: 20px;
 }
 
@@ -5365,7 +5364,7 @@ textarea.field-input {
 #search-screen.open {
   display: flex;
   bottom: calc(var(--safe-bottom) + var(--nav-h));
-  z-index: 1800;
+  z-index: 4000;
   padding-bottom: 20px;
 }
 

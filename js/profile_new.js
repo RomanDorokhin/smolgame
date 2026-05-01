@@ -172,13 +172,31 @@ async function renderProfile() {
     const premBadge = document.getElementById('premiumBadge');
     if (premBadge) premBadge.style.display = USER.isPremium ? '' : 'none';
 
-    let me = null;
     try {
       me = await API.me();
       console.log('[Profile] API.me success:', Boolean(me?.user));
+
+      // FALLBACK: Если API.me вернул Гостя (user: null), но у нас есть хоть какой-то USER.id
+      if ((!me || !me.user) && USER.id) {
+        console.log('[Profile] API.me returned Guest, trying fallback to API.userProfile for ID:', USER.id);
+        try {
+          const pub = await API.userProfile(USER.id);
+          if (pub && pub.user) {
+            me = {
+              ...me,
+              user: { ...pub.user, isAdmin: document.body.classList.contains('is-admin') },
+              stats: pub.stats
+            };
+            console.log('[Profile] Fallback success', me);
+          }
+        } catch (e2) {
+          console.warn('[Profile] Fallback failed', e2);
+        }
+      }
       applyMeToProfileUi(me, { bioRead, handleRead, premBadge, setStatGames, setStatFollowers, setStatLikes });
     } catch (err) {
       console.error('[Profile] API.me failed', err);
+      setProfileMeBannerVisible(true, err.message || tf('profile_me_failed'));
     }
 
     let myGames = [];
