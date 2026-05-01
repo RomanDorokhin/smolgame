@@ -2082,8 +2082,8 @@ html[lang="ru"] .i18n-en {
 }
 
 .sg-back-btn {
-  height: 36px;
-  padding: 8px 16px !important;
+  height: 36px !important;
+  padding: 0 16px !important;
   border-radius: 12px !important;
   font-size: 14px !important;
   font-weight: 700 !important;
@@ -2092,7 +2092,9 @@ html[lang="ru"] .i18n-en {
   justify-content: center !important;
   top: calc(var(--safe-top, 0px) + 12px) !important;
   left: 12px !important;
-  white-space: nowrap;
+  position: fixed !important;
+  z-index: 2200 !important;
+  transition: all 0.2s ease !important;
 }
 
 .feed-exit-focus {
