@@ -2153,9 +2153,10 @@ html[lang="ru"] .i18n-en {
   pointer-events: auto;
   opacity: 1;
 }
-  display: flex;
-  align-items: center;
-  justify-content: center;
+
+/* Показываем шапку, когда открыты основные экраны */
+body.app-main-chrome .app-tab-chrome {
+  display: flex !important;
 }
 
 .feed-exit-focus:active {
