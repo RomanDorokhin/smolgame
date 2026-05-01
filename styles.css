@@ -2086,7 +2086,13 @@ body.game-detail-open .app-tab-chrome {
 .lang-option.active {
   background: var(--surface-elevated);
   color: var(--text);
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  box-shadow: 0 0 0 1px var(--border), 0 2px 8px rgba(0,0,0,0.1);
+}
+
+body.theme-light .lang-option.active {
+  background: rgba(var(--accent-rgb), 0.1);
+  color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent);
 }
 
 html[lang="en"] .i18n-ru {
@@ -3810,6 +3816,10 @@ body.keyboard-open .app-tab-chrome {
 .screen-content {
   padding: 20px 16px 120px;
   flex: 1;
+  max-width: 600px;
+  width: 100%;
+  margin: 0 auto;
+  box-sizing: border-box;
 }
 
 /* Строка «моя игра»: карточка + раскрывающийся редактор на всю ширину сетки */

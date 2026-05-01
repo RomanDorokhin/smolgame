@@ -547,8 +547,34 @@
 
     <div class="i18n-en">
       <details class="help-acc help-acc--step1">
-        <summary><span class="help-acc-num">1</span> Build with AI</summary>
-        <div class="help-acc-body"><p>Use <strong>claude.ai</strong> or <strong>chatgpt.com</strong>.</p></div>
+        <summary><span class="help-acc-num">1</span> Build a game with AI</summary>
+        <div class="help-acc-body">
+          <p>Open <strong>claude.ai</strong> or <strong>chatgpt.com</strong>. Prompt (you can copy):</p>
+          <pre class="help-prompt">Make a simple browser game in HTML + JavaScript.
+Single file, no external libraries.
+Genre: [snake / tetris / clicker / your idea]
+Must work on a mobile phone.</pre>
+          <p>Copy the full code. Ask for changes if needed.</p>
+        </div>
+      </details>
+      <details class="help-acc help-acc--step2">
+        <summary><span class="help-acc-num">2</span> Publish on GitHub Pages</summary>
+        <div class="help-acc-body">
+          <p>Free hosting from GitHub, no card or servers.</p>
+          <ol class="help-ol">
+            <li>github.com → sign up</li>
+            <li>+ → New repository, name it e.g. <code>my-game</code>, <strong>Public</strong></li>
+            <li>Add file → Create new file → <code>index.html</code> → paste code</li>
+            <li>Settings → Pages → Branch: <strong>main</strong> → Save</li>
+          </ol>
+          <p>In 1–2 mins your link is <code>https://username.github.io/my-game</code>.</p>
+        </div>
+      </details>
+      <details class="help-acc help-acc--step3">
+        <summary><span class="help-acc-num">3</span> Copy the link</summary>
+        <div class="help-acc-body">
+          <p>In <strong>Settings → Pages</strong> find the green banner — copy it. Wait 1–3 mins if it doesn't open immediately.</p>
+        </div>
       </details>
       <button type="button" class="sg-btn sg-btn--secondary upload-scroll-to-form" data-action="upload-scroll-to-form" data-i18n="upload_scroll_form">To form</button>
     </div>
