@@ -38,6 +38,7 @@ async function loadFeedReviewCount() {
 
 async function openFeedReviewsDrawer() {
   const drawer = document.getElementById('feed-reviews-drawer');
+  const backdrop = document.getElementById('feed-reviews-backdrop');
   const listEl = document.getElementById('feedReviewsDrawerList');
   if (!drawer || !listEl) return;
   
@@ -47,6 +48,10 @@ async function openFeedReviewsDrawer() {
   _feedReviewsOpen = true;
   drawer.hidden = false;
   drawer.setAttribute('aria-hidden', 'false');
+  if (backdrop) {
+    backdrop.hidden = false;
+    backdrop.onclick = closeFeedReviewsDrawer;
+  }
   
   const t = tf();
   listEl.innerHTML = `<div class="feed-reviews-loading">${esc(t('gd_reviews_loading'))}</div>`;
@@ -63,16 +68,19 @@ async function openFeedReviewsDrawer() {
         .map(r => {
           if (!r) return '';
           const author = esc(r.authorName || t('gd_player') || 'Игрок');
+          const firstChar = author.charAt(0).toUpperCase();
           const date = esc(formatGameDate(r.createdAt));
           const body = esc(r.body || '');
           if (!body && author === 'Игрок') return '';
+          
           return `
             <div class="feed-review-item">
-              <div class="feed-review-item-head">
+              <div class="feed-review-avatar">${firstChar}</div>
+              <div class="feed-review-content">
                 <span class="feed-review-author">${author}</span>
-                <span class="feed-review-date">${date}</span>
+                <p class="feed-review-body">${body}</p>
+                <div class="feed-review-footer">${date}</div>
               </div>
-              <p class="feed-review-body">${body || '...'}</p>
             </div>`;
         })
         .filter(Boolean)
@@ -81,10 +89,12 @@ async function openFeedReviewsDrawer() {
       listEl.innerHTML = html || `<div class="feed-reviews-empty">${esc(t('gd_reviews_empty_drawer'))}</div>`;
     }
     
-    // Автофокус на ввод после небольшой задержки (чтобы анимация шторки началась)
+    // Мгновенный фокус (TikTok-style)
     const input = document.getElementById('feedReviewInput');
     if (input) {
-      setTimeout(() => input.focus(), 150);
+      input.focus();
+      // На некоторых iOS все равно нужна микро-задержка
+      setTimeout(() => input.focus(), 20);
     }
   } catch (err) {
     console.error('[FeedReviews] Fatal Error:', err);
@@ -94,15 +104,20 @@ async function openFeedReviewsDrawer() {
 
 function closeFeedReviewsDrawer() {
   const drawer = document.getElementById('feed-reviews-drawer');
+  const backdrop = document.getElementById('feed-reviews-backdrop');
   if (!drawer) return;
   
-  // Убираем фокус с инпута принудительно, чтобы закрыть клаву вместе с окном
+  // Убираем фокус с инпута принудительно — это ПРЯЧЕТ клаву сразу
   const input = document.getElementById('feedReviewInput');
-  if (input) input.blur();
+  if (input) {
+    input.blur();
+    input.value = ''; 
+  }
 
   _feedReviewsOpen = false;
   drawer.hidden = true;
   drawer.setAttribute('aria-hidden', 'true');
+  if (backdrop) backdrop.hidden = true;
 }
 
 async function submitFeedReview() {
