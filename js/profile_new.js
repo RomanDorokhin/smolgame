@@ -201,6 +201,7 @@ async function renderProfile() {
       }
     }
 
+    const debugPanel = document.getElementById('debugPanel');
     if (debugPanel) {
       document.getElementById('debugMe').textContent = JSON.stringify(me);
     }
@@ -208,6 +209,7 @@ async function renderProfile() {
   } catch (err) {
     console.error('renderProfile failed', err);
     const hint = err.message || '';
+    const debugPanel = document.getElementById('debugPanel');
     if (debugPanel) {
       document.getElementById('debugLastErr').textContent = hint;
     }
