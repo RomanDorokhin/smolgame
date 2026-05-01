@@ -5,7 +5,7 @@
   "description": "SmolGame API on Cloudflare Workers + D1",
   "scripts": {
     "dev": "wrangler dev",
-    "deploy": "wrangler deploy",
+    "deploy": "npx wrangler deploy",
     "db:create": "wrangler d1 create smolgame",
     "db:migrate:local": "wrangler d1 execute smolgame --local --file=./schema.sql",
     "db:migrate:remote": "wrangler d1 execute smolgame --remote --file=./schema.sql",
@@ -18,7 +18,8 @@
     "db:migrate:remote:display-name": "wrangler d1 execute smolgame --remote --file=./migrations/0007_users_display_name.sql",
     "db:migrate:remote:bio": "wrangler d1 execute smolgame --remote --file=./migrations/0008_users_bio.sql",
     "db:migrate:remote:dob-consent": "wrangler d1 execute smolgame --remote --file=./migrations/0009_users_dob_consent.sql",
-    "db:migrate:remote:reviews": "wrangler d1 execute smolgame --remote --file=./migrations/0010_game_reviews.sql"
+    "db:migrate:remote:reviews": "wrangler d1 execute smolgame --remote --file=./migrations/0010_game_reviews.sql",
+    "db:migrate:remote:multi-reviews": "wrangler d1 execute smolgame --remote --file=./migrations/0011_allow_multi_reviews.sql"
   },
   "devDependencies": {
     "wrangler": "^4.86.0"
