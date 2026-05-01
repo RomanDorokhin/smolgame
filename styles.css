@@ -141,10 +141,18 @@ body.theme-light #profilePostInput {
   border-radius: 14px !important;
   width: 100% !important;
   font-size: 16px !important;
+  caret-color: var(--accent) !important;
 }
 
 body.theme-light #profilePostInput::placeholder {
   color: #8e8e93 !important;
+  opacity: 0.8 !important;
+}
+
+body.theme-light .profile-wall-title,
+body.theme-light .profile-games-title,
+body.theme-light .upload-faq-title {
+  color: #1c1c1e !important;
   opacity: 1 !important;
 }
 
@@ -201,6 +209,11 @@ body.theme-light .feed-reviews-drawer-compose textarea {
   background: #ffffff;
   color: #1c1c1e;
   border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+body.theme-light .feed-reviews-drawer-head {
+  background: #ffffff !important;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08) !important;
 }
 
 body.theme-light .feed-reviews-empty {
@@ -295,7 +308,7 @@ body.theme-light:not(.feed-open) .app-tab-chrome-label {
   font-weight: 700;
 }
 
-body.theme-light .sg-back-btn {
+body.theme-light .sg-back-btn:not([hidden]) {
   background: #ffffff !important;
   color: #1c1c1e !important;
   border: 1px solid rgba(0, 0, 0, 0.08) !important;
