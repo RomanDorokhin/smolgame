@@ -833,6 +833,15 @@
       localStorage.setItem(STORAGE_KEY, l);
     } catch (e) { /* ignore */ }
     document.documentElement.lang = l === 'en' ? 'en' : 'ru';
+    
+    // Toggle active class on all language switchers
+    document.querySelectorAll('.lang-switch').forEach(btn => {
+      const action = btn.getAttribute('data-action');
+      const active = (l === 'ru' && action === 'set-lang-ru') || (l === 'en' && action === 'set-lang-en');
+      btn.classList.toggle('lang-switch--active', active);
+      btn.setAttribute('aria-pressed', active ? 'true' : 'false');
+    });
+
     applyDomI18n();
     if (typeof window.refreshDynamicI18n === 'function') window.refreshDynamicI18n();
   }
