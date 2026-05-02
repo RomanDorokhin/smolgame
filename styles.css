@@ -1962,12 +1962,11 @@ body.feed-layout-vertical #feed {
   width: 100%;
 }
 
-/* Вертикальная лента: карточка + оверлей «Играть» */
+/* Вертикальная лента: карточка на весь экран */
 body.feed-layout-vertical .slide-placeholder,
 body.feed-layout-vertical .slide-game {
-  top: var(--safe-top);
-  height: calc(100dvh - var(--safe-top) - var(--game-bottom));
-  height: calc(100vh - var(--safe-top) - var(--game-bottom));
+  top: 0;
+  height: 100%;
 }
 
 .slide-discovery {
