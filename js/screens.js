@@ -222,13 +222,15 @@ function switchTab(tab) {
   };
   const titleText = keyMap[tab] ? t(keyMap[tab]) : '';
 
-  const titleEl = document.getElementById('screen-top-title');
-  if (titleEl) {
-    titleEl.textContent = (tab === 'feed') ? '' : titleText;
-  }
   const chromeLabel = document.getElementById('app-tab-chrome-label');
   if (chromeLabel) {
-    chromeLabel.textContent = titleText || t('nav_feed');
+    if (tab === 'feed') {
+      chromeLabel.textContent = 'SmolGame';
+      chromeLabel.classList.add('is-logo');
+    } else {
+      chromeLabel.textContent = titleText;
+      chromeLabel.classList.remove('is-logo');
+    }
   }
 
   setBottomNavActive(tab);

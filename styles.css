@@ -1968,7 +1968,10 @@ body.feed-layout-vertical #feed {
 
 .slide-inner {
   position: absolute;
-  inset: 0;
+  top: calc(var(--safe-top, 0px) + var(--header-h));
+  bottom: 0;
+  left: 0;
+  right: 0;
   display: flex;
   flex-direction: column;
 }
@@ -2101,6 +2104,11 @@ body.feed-game-focus .app-tab-chrome {
   display: none !important;
 }
 
+/* Unified Header Constants */
+:root {
+  --header-h: 56px;
+}
+
 /* Шапка-якорь */
 .app-tab-chrome {
   position: fixed;
@@ -2110,9 +2118,9 @@ body.feed-game-focus .app-tab-chrome {
   z-index: 2500;
   display: none;
   align-items: center;
-  gap: 12px;
-  padding: var(--safe-top, 0px) 16px 0;
-  height: calc(var(--safe-top, 0px) + 44px);
+  justify-content: center;
+  padding: var(--safe-top, 0px) 0 0;
+  height: calc(var(--safe-top, 0px) + var(--header-h));
   pointer-events: auto;
   background: var(--surface);
   backdrop-filter: blur(24px);
@@ -2129,6 +2137,27 @@ body.author-screen-active .app-tab-chrome {
   display: none !important;
 }
 
+.app-tab-chrome-left,
+.app-tab-chrome-right {
+  position: absolute;
+  top: var(--safe-top, 0px);
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  z-index: 2;
+}
+.app-tab-chrome-left { left: 16px; }
+.app-tab-chrome-right { right: 16px; }
+
+.app-tab-chrome-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  width: 100%;
+  z-index: 1;
+}
+
 .app-tab-chrome-mark {
   width: 28px;
   height: 28px;
@@ -2142,12 +2171,18 @@ body.author-screen-active .app-tab-chrome {
   height: 100%;
 }
 
+.app-tab-chrome-title {
+  font-family: 'Syne', sans-serif;
+  font-size: 19px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  margin: 0;
+  text-align: center;
+}
+
 .screen-top-title {
-  position: fixed;
-  top: calc(var(--safe-top, 0px) + 18px);
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 2005;
+  display: none !important; /* Deprecated in favor of unified app-tab-chrome-title */
+}
   font-weight: 700;
   font-size: 16px;
   color: #fff;
@@ -4246,30 +4281,50 @@ body.keyboard-open .app-tab-chrome {
 }
 
 .screen-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
+  justify-content: center;
   padding: var(--safe-top, 0px) 16px 0;
-  height: calc(var(--safe-top, 0px) + 56px);
-  margin-bottom: 16px;
-  position: relative;
+  height: calc(var(--safe-top, 0px) + var(--header-h));
   background: var(--bg);
-  z-index: 100;
+  z-index: 2100;
+  border-bottom: 1px solid var(--border);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
 }
 
-.screen-header .screen-title {
+.screen-header .screen-title,
+.screen-header .app-tab-chrome-title {
   position: absolute;
   left: 50%;
   transform: translateX(-50%);
+  top: var(--safe-top, 0px);
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   font-family: 'Syne', sans-serif;
-  font-size: 20px;
+  font-size: 19px;
   font-weight: 800;
   line-height: 1;
   margin: 0;
   white-space: nowrap;
   pointer-events: none;
   z-index: 1;
+}
+
+.screen-header .screen-back {
+  position: absolute;
+  left: 16px;
+  top: var(--safe-top, 0px);
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  z-index: 2;
 }
 
 .screen-header--in-screen {
@@ -5000,7 +5055,10 @@ textarea.field-input {
    ЭКРАН: ПРОФИЛЬ
 ══════════════════════════════ */
 #profile-screen,
-#author-screen {
+#author-screen,
+#search-screen,
+#games-library-screen,
+#upload-screen {
   position: fixed;
   inset: 0;
   z-index: 500;
@@ -5012,7 +5070,7 @@ textarea.field-input {
   -webkit-overflow-scrolling: touch;
   overscroll-behavior-y: contain;
   touch-action: pan-y;
-  padding-top: 0;
+  padding-top: calc(var(--safe-top, 0px) + var(--header-h));
   padding-bottom: 90px;
 }
 
@@ -5913,10 +5971,15 @@ textarea.field-input {
   padding-bottom: calc(var(--safe-bottom) + var(--nav-h) + 12px);
 }
 
-.search-header {
-  padding: 80px 16px 14px;
+.search-bar-wrap,
+.games-library-header-sub {
+  padding: 14px 16px;
+  background: var(--bg);
   border-bottom: 1px solid var(--border);
-  background: rgba(0, 0, 0, 0.2);
+}
+
+.search-header {
+  display: none; /* Deprecated */
 }
 
 .search-header-top {
