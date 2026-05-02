@@ -1828,10 +1828,11 @@ body.tg-only-wall #toast {
 }
 
 .author-top-row {
-  display: flex;
+  display: flex !important;
+  flex-direction: row !important;
   align-items: center;
   gap: 12px;
-  flex-wrap: nowrap;
+  flex-wrap: nowrap !important;
 }
 
 .author-name {
@@ -2196,7 +2197,7 @@ body.feed-layout-vertical:not(.feed-game-focus) .slide.feed-slide--active .slide
 body.feed-layout-vertical #game-info {
   position: fixed;
   left: 16px;
-  bottom: 110px !important;
+  bottom: 90px !important;
   right: 90px;
   z-index: 120;
   display: flex;
@@ -3178,23 +3179,25 @@ body.feed-onboarding-ui .app-tab-chrome {
   color: rgba(var(--like-on-rgb), 0.95);
 }
 
+body.feed-game-focus .nav-header-sticky {
+  display: none !important;
+}
+
 .nav-header-sticky {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   z-index: 2000;
-  background: var(--bg-header, rgba(0, 0, 0, 0.85));
+  background: rgba(0, 0, 0, 0.85);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   border-bottom: 1px solid var(--border);
   transition: transform 0.3s ease, background 0.3s ease, opacity 0.3s ease;
 }
 
-body.feed-game-focus .nav-header-sticky {
-  opacity: 0;
-  pointer-events: none;
-  transform: translateY(-100%);
+body.theme-light .nav-header-sticky {
+  background: rgba(255, 255, 255, 0.9) !important;
 }
 
 .action-label--stack {
