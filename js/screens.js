@@ -10,14 +10,12 @@ function syncBodyFeedHiddenUnderSheet() {
     'search-screen',
     'games-library-screen',
     'upload-screen',
-    'author-screen',
-    'game-detail-screen'
+    'author-screen'
   ];
-  const feedHidden = screens.some(id => {
-    const el = document.getElementById(id);
-    return el && (el.classList.contains('open') || !el.hidden || el.style.display === 'flex');
-  });
+  const anyScreenOpen = screens.some(id => document.getElementById(id)?.classList.contains('open'));
+  const gameDetailOpen = document.body.classList.contains('game-detail-open');
   
+  const feedHidden = anyScreenOpen || gameDetailOpen;
   document.body.classList.toggle('app-feed-hidden-under-sheet', feedHidden);
 }
 
