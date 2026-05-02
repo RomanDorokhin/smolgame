@@ -207,40 +207,39 @@ async function loadAuthorProfile(authorId) {
     showToast('⚠️ ' + (e.message || t('profile_err')));
   }
 }
-
 function switchTab(tab) {
-  if (!tab) return;
-  console.log('[Screens] switchTab:', tab);
-  const t = typeof window.t === 'function' ? window.t : k => k;
-  
-  if (tab === 'feed') {
-    document.body.classList.add('feed-open');
-  } else {
-    document.body.classList.remove('feed-open');
+  if (typeof hapticLight === 'function') hapticLight();
+
+  // Consolidated Header Title & Nav Update
+  const keyMap = {
+    'feed': 'nav_feed',
+    'games': 'nav_games',
+    'upload': 'nav_upload',
+    'search': 'nav_search',
+    'profile': 'nav_profile'
+  };
+  const titleText = keyMap[tab] ? t(keyMap[tab]) : '';
+
+  const titleEl = document.getElementById('screen-top-title');
+  if (titleEl) {
+    titleEl.textContent = (tab === 'feed') ? '' : titleText;
+  }
+  const chromeLabel = document.getElementById('app-tab-chrome-label');
+  if (chromeLabel) {
+    chromeLabel.textContent = titleText || t('nav_feed');
   }
 
-  if (
-    typeof isFeedOnboardingBlocking === 'function' &&
-    isFeedOnboardingBlocking() &&
-    typeof window.forceDismissFeedOnboarding === 'function'
-  ) {
-    window.forceDismissFeedOnboarding();
-  }
-  // Не блокируем табы вторым return: класс feed-onboarding-ui мог залипнуть без карточки —
-  // тогда профиль/игры «мёртвые». forceDismiss выше уже снял UI.
-  if (typeof hapticLight === 'function') hapticLight();
+  setBottomNavActive(tab);
+  window._activeMainTab = tab;
+  window.currentTab = tab;
 
   if (tab === 'feed') {
     closeAllMainTabs();
     document.body.classList.add('is-tab-feed');
     syncBodyFeedHiddenUnderSheet();
-    const chrome = document.getElementById('app-tab-chrome-label');
-    if (chrome) chrome.textContent = t('nav_feed');
     if (typeof refreshFeedCoachState === 'function') refreshFeedCoachState();
     if (typeof scheduleFeedSwipeTeaseBoredom === 'function') scheduleFeedSwipeTeaseBoredom();
     if (typeof maybeStartFeedOnboarding === 'function') requestAnimationFrame(() => maybeStartFeedOnboarding());
-    setBottomNavActive(tab);
-    window._activeMainTab = tab;
     document.body.classList.toggle(
       'app-main-chrome',
       tab === 'feed' || tab === 'games' || tab === 'search' || tab === 'profile' || tab === 'upload'
@@ -253,16 +252,12 @@ function switchTab(tab) {
   if (typeof stopFeedSwipeTeaseForLeavingFeed === 'function') stopFeedSwipeTeaseForLeavingFeed();
 
   if (tab === 'search') {
-    const chrome = document.getElementById('app-tab-chrome-label');
-    if (chrome) chrome.textContent = t('nav_search');
     document.getElementById('search-screen')?.classList.add('open');
     if (typeof renderGenreFilter === 'function') renderGenreFilter();
     if (typeof initSearchInput === 'function') initSearchInput();
     const q = document.getElementById('searchInput')?.value || '';
     if (typeof onSearch === 'function') onSearch(q);
   } else if (tab === 'profile') {
-    const chrome = document.getElementById('app-tab-chrome-label');
-    if (chrome) chrome.textContent = t('nav_profile');
     const screen = document.getElementById('profile-screen');
     screen?.classList.remove('profile-edit-active');
     screen?.classList.add('open');
@@ -275,12 +270,8 @@ function switchTab(tab) {
     })();
   } else if (tab === 'games') {
     document.getElementById('games-library-screen')?.classList.add('open');
-    const chrome = document.getElementById('app-tab-chrome-label');
-    if (chrome) chrome.textContent = t('nav_games');
     if (typeof loadGamesLibrary === 'function') loadGamesLibrary();
   } else if (tab === 'upload') {
-    const chrome = document.getElementById('app-tab-chrome-label');
-    if (chrome) chrome.textContent = t('nav_upload');
     const upload = document.getElementById('upload-screen');
     upload?.classList.add('open');
     upload.scrollTop = 0;
@@ -301,23 +292,10 @@ function switchTab(tab) {
 
   syncBodyFeedHiddenUnderSheet();
 
-  setBottomNavActive(tab);
-  window._activeMainTab = tab;
-  // Обновляем центральный заголовок экрана
-  const titleEl = document.getElementById('screen-top-title');
-  if (titleEl) {
-    if (tab === 'feed') {
-      titleEl.textContent = '';
-    } else {
-      const keyMap = {
-        'games': 'nav_games',
-        'upload': 'nav_upload',
-        'search': 'nav_search',
-        'profile': 'nav_profile'
-      };
-      titleEl.textContent = keyMap[tab] ? t(keyMap[tab]) : '';
-    }
-  }
+  document.body.classList.toggle(
+    'app-main-chrome',
+    tab === 'feed' || tab === 'games' || tab === 'search' || tab === 'profile' || tab === 'upload'
+  );
 }
 
 window.openUpload = openUpload;
