@@ -605,41 +605,41 @@ Must work on a mobile phone.</pre>
   <div class="screen-header screen-header--profile">
     <button type="button" class="screen-back sg-back-btn sg-btn sg-btn--ghost" data-action="close-profile" data-i18n-aria="upload_back_aria" aria-label="Назад к ленте" data-i18n="feed_back">← Лента</button>
   </div>
-    <div class="profile-main-info">
-      <div class="profile-avatar-wrap">
-        <div class="profile-avatar" id="profileAvatar">?</div>
+    <div class="profile-header-main">
+      <div class="profile-avatar-row">
+        <div class="profile-avatar-wrap">
+          <div class="profile-avatar" id="profileAvatar">?</div>
+        </div>
+        <div class="profile-stats-grid">
+          <div class="stat-item">
+            <div class="stat-num" id="statGames">0</div>
+            <div class="stat-lbl" data-i18n="stat_games">Игр</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-num" id="statFollowers">0</div>
+            <div class="stat-lbl" data-i18n="stat_followers">Подписчиков</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-num" id="statLikes">0</div>
+            <div class="stat-lbl" data-i18n="stat_likes">Лайки</div>
+          </div>
+        </div>
       </div>
-      <div class="profile-text-info">
+
+      <div class="profile-info-block">
         <div class="profile-name" id="profileName">Гость</div>
         <div class="profile-handle" id="profileHandle">@—</div>
+        <p class="profile-bio" id="profileBio"></p>
         <div class="profile-badges">
-          <div class="profile-badge" data-i18n="badge_player">🎮 Игрок</div>
           <div class="profile-badge dev" id="devBadge" style="display:none" data-i18n="badge_dev">⚡ Разработчик</div>
           <div class="profile-badge profile-badge--premium" id="premiumBadge" style="display:none" data-i18n="badge_premium">✦ Премиум</div>
         </div>
       </div>
     </div>
-
-    <p class="profile-bio" id="profileBio"></p>
-
-    <div class="profile-stats-grid">
-      <div class="stat-item">
-        <div class="stat-num" id="statGames">0</div>
-        <div class="stat-lbl" data-i18n="stat_games">Игр</div>
-      </div>
-      <div class="stat-item">
-        <div class="stat-num" id="statFollowers">0</div>
-        <div class="stat-lbl" data-i18n="stat_followers">Подписчиков</div>
-      </div>
-      <div class="stat-item">
-        <div class="stat-num" id="statLikes">0</div>
-        <div class="stat-lbl" data-i18n="stat_likes">Лайки</div>
-      </div>
-    </div>
-    <div class="profile-edit-actions">
-      <button type="button" class="profile-edit-toggle-btn primary" id="profileEditOpenBtn" data-action="profile-start-edit" data-i18n="profile_edit">Редактировать профиль</button>
-      <button type="button" class="profile-edit-toggle-btn primary" id="profileEditSaveBtn" data-action="profile-finish-edit" data-i18n="profile_save_btn">Сохранить</button>
-      <button type="button" class="profile-edit-toggle-btn" id="profileEditDiscardBtn" data-action="profile-discard-edit" data-i18n="profile_discard">Отмена</button>
+    <div class="profile-action-buttons">
+      <button type="button" class="profile-btn profile-btn--secondary" id="profileEditOpenBtn" data-action="profile-start-edit" data-i18n="profile_edit">Редактировать профиль</button>
+      <button type="button" class="profile-btn profile-btn--primary" id="profileEditSaveBtn" data-action="profile-finish-edit" data-i18n="profile_save_btn" style="display:none">Сохранить</button>
+      <button type="button" class="profile-btn" id="profileEditDiscardBtn" data-action="profile-discard-edit" data-i18n="profile_discard" style="display:none">Отмена</button>
     </div>
     <div id="profile-edit-wrap" class="profile-edit-wrap">
       <div class="profile-edit-fields">
