@@ -2160,7 +2160,7 @@ body.feed-layout-vertical #game-info {
   position: fixed;
   left: 16px;
   bottom: calc(var(--bottom-nav-height, 64px) + 100px);
-  right: 16px;
+  right: 90px;
   z-index: 120;
   display: flex;
   align-items: center;
@@ -5108,6 +5108,20 @@ textarea.field-input {
   grid-template-columns: 1fr;
   gap: 8px;
   padding: 10px 20px 20px;
+}
+
+#profile-screen:not(.profile-edit-active) #profileEditSaveBtn,
+#profile-screen:not(.profile-edit-active) #profileEditDiscardBtn {
+  display: none !important;
+}
+
+#profile-screen.profile-edit-active #profileEditOpenBtn {
+  display: none !important;
+}
+
+#profile-screen.profile-edit-active #profileEditSaveBtn,
+#profile-screen.profile-edit-active #profileEditDiscardBtn {
+  display: flex !important;
 }
 
 .profile-btn {
