@@ -155,6 +155,11 @@ const CLICK_ACTIONS = {
   'profile-discard-edit': () => {
     if (typeof discardProfileEdit === 'function') discardProfileEdit();
   },
+  'set-profile-tab': (el) => {
+    const tab = el.dataset.tab;
+    document.querySelectorAll('.profile-tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+    document.querySelectorAll('.profile-tab-content').forEach(c => c.classList.toggle('active', c.id === 'profile-tab-' + tab));
+  },
   'profile-retry-me': () => {
     if (typeof renderProfile === 'function') renderProfile();
   },

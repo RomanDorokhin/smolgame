@@ -601,43 +601,49 @@ Must work on a mobile phone.</pre>
 
 <!-- ══ ЭКРАН: ПРОФИЛЬ ══ -->
 <div id="profile-screen">
-  <div class="profile-header">
-    <div class="screen-header screen-header--in-screen">
+  <div class="screen-header screen-header--profile">
+    <div class="screen-header-left">
       <button type="button" class="screen-back sg-back-btn sg-btn sg-btn--ghost" data-action="close-profile" data-i18n-aria="upload_back_aria" aria-label="Назад к ленте" data-i18n="feed_back">← Лента</button>
-      <div class="screen-title" data-i18n="profile_title">Профиль</div>
-      <div class="lang-switch-modern" data-action="toggle-lang">
-        <div class="lang-option active" data-lang="ru">RU</div>
-        <div class="lang-option" data-lang="en">EN</div>
+    </div>
+    <div class="screen-title" data-i18n="profile_title">Профиль</div>
+    <div class="screen-header-right">
+      <div class="lang-switch-modern" id="profileLangSwitch">
+        <div class="lang-option active" data-action="set-lang-ru" data-lang="ru">RU</div>
+        <div class="lang-option" data-action="set-lang-en" data-lang="en">EN</div>
       </div>
     </div>
-    <div class="profile-top">
-      <div class="profile-avatar" id="profileAvatar">?</div>
-      <div class="profile-stats">
-        <div class="stat-item">
-          <div class="stat-num" id="statGames">0</div>
-          <div class="stat-lbl" data-i18n="stat_games">Игр</div>
-        </div>
-        <div class="stat-item">
-          <div class="stat-num" id="statFollowers">0</div>
-          <div class="stat-lbl" data-i18n="stat_followers">Подписчиков</div>
-        </div>
-        <div class="stat-item">
-          <div class="stat-num" id="statLikes">0</div>
-          <div class="stat-lbl" data-i18n="stat_likes">Лайки</div>
+  </div>
+    <div class="profile-main-info">
+      <div class="profile-avatar-wrap">
+        <div class="profile-avatar" id="profileAvatar">?</div>
+      </div>
+      <div class="profile-text-info">
+        <div class="profile-name" id="profileName">Гость</div>
+        <div class="profile-handle" id="profileHandle">@—</div>
+        <div class="profile-badges">
+          <div class="profile-badge" data-i18n="badge_player">🎮 Игрок</div>
+          <div class="profile-badge dev" id="devBadge" style="display:none" data-i18n="badge_dev">⚡ Разработчик</div>
+          <div class="profile-badge profile-badge--premium" id="premiumBadge" style="display:none" data-i18n="badge_premium">✦ Премиум</div>
         </div>
       </div>
     </div>
-    <p class="profile-stats-hint" id="profileStatsHint" data-i18n="profile_stats_hint">Игры — опубликованные карточки. Лайки — сумма по всем твоим играм в ленте.</p>
-    <div id="profileMeBanner" class="profile-me-banner" hidden>
-      <p class="profile-me-banner-text" id="profileMeBannerText"></p>
-      <div class="profile-me-banner-actions">
-        <button type="button" class="profile-me-retry" data-action="profile-retry-me" id="profileMeRetryBtn" data-i18n="profile_me_retry">Повторить</button>
-        <button type="button" class="profile-me-retry profile-me-reload" data-action="profile-reload-miniapp" id="profileMeReloadBtn" data-i18n="profile_me_reload">Перезапустить мини-апп</button>
-      </div>
-    </div>
-    <div class="profile-name" id="profileName">Гость</div>
-    <div class="profile-handle" id="profileHandle">@—</div>
+
     <p class="profile-bio" id="profileBio"></p>
+
+    <div class="profile-stats-grid">
+      <div class="stat-item">
+        <div class="stat-num" id="statGames">0</div>
+        <div class="stat-lbl" data-i18n="stat_games">Игр</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-num" id="statFollowers">0</div>
+        <div class="stat-lbl" data-i18n="stat_followers">Подписчиков</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-num" id="statLikes">0</div>
+        <div class="stat-lbl" data-i18n="stat_likes">Лайки</div>
+      </div>
+    </div>
     <div class="profile-edit-actions">
       <button type="button" class="profile-edit-toggle-btn primary" id="profileEditOpenBtn" data-action="profile-start-edit" data-i18n="profile_edit">Редактировать профиль</button>
       <button type="button" class="profile-edit-toggle-btn primary" id="profileEditSaveBtn" data-action="profile-finish-edit" data-i18n="profile_save_btn">Сохранить</button>
@@ -675,42 +681,37 @@ Must work on a mobile phone.</pre>
       </div>
       <button type="button" class="submit-btn profile-save-btn" data-action="save-profile" data-i18n="profile_save_main">Сохранить профиль</button>
     </div>
-    <div class="profile-badges">
-      <div class="profile-badge" data-i18n="badge_player">🎮 Игрок</div>
-      <div class="profile-badge dev" id="devBadge" style="display:none" data-i18n="badge_dev">⚡ Разработчик</div>
-      <div class="profile-badge profile-badge--premium" id="premiumBadge" style="display:none" data-i18n="badge_premium">✦ Премиум</div>
+    <div class="profile-tabs-segment">
+      <button type="button" class="profile-tab-btn active" data-action="set-profile-tab" data-tab="games">
+        <span class="profile-tab-btn-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg></span>
+        <span class="profile-tab-btn-text" data-i18n="my_games_title">Мои игры</span>
+      </button>
+      <button type="button" class="profile-tab-btn" data-action="set-profile-tab" data-tab="wall">
+        <span class="profile-tab-btn-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span>
+        <span class="profile-tab-btn-text">Стена</span>
+      </button>
     </div>
-    <p class="profile-upload-hint i18n-ru">Как добавить игру, шаги и FAQ — на экране <strong>Загрузить</strong> (＋).</p>
-    <p class="profile-upload-hint i18n-en">How to add a game, steps and FAQ — on the <strong>Upload</strong> (+) tab.</p>
-  </div>
-  <!-- Модерация — видна только админу (body.is-admin) -->
-  <div class="admin-only">
-    <div class="profile-games-title" data-i18n="admin_queue_title">На модерации</div>
-    <div id="adminPendingList" style="padding:0 20px 20px;"></div>
-  </div>
 
-  <div class="profile-wall-section">
-    <div class="profile-wall-header">
-      <h3 class="profile-wall-title">Стена</h3>
+    <div class="profile-tab-content active" id="profile-tab-games">
+      <div class="games-grid" id="myGamesGrid">
+        <div class="my-games-empty-placeholder" style="grid-column:1/-1;text-align:center;padding:40px 0;color:var(--muted);font-size:14px;" data-i18n="no_games_grid">
+          Нет игр
+        </div>
+      </div>
     </div>
-    <div id="profileWallCompose" class="profile-wall-compose" hidden>
-      <textarea id="profilePostInput" class="profile-post-input" maxlength="1000" placeholder="Что нового?"></textarea>
-      <button type="button" class="sg-btn sg-btn--primary" data-action="submit-profile-post">Опубликовать</button>
-    </div>
-    <div id="profilePostList" class="profile-post-list"></div>
-  </div>
 
-  <div class="profile-games-title" data-i18n="my_games_title">Мои игры</div>
-  <div class="games-grid" id="myGamesGrid">
-    <div class="my-games-empty-placeholder" style="grid-column:1/-1;text-align:center;padding:40px 0;color:var(--muted);font-size:14px;" data-i18n="no_games_grid">
-      Нет игр
+    <div class="profile-tab-content" id="profile-tab-wall">
+      <div id="profileWallCompose" class="profile-wall-compose">
+        <textarea id="profilePostInput" class="profile-post-input" maxlength="1000" placeholder="Что нового?"></textarea>
+        <button type="button" class="sg-btn sg-btn--primary" data-action="submit-profile-post">Опубликовать</button>
+      </div>
+      <div id="profilePostList" class="profile-post-list"></div>
     </div>
-  </div>
 
-  <div class="profile-danger-zone">
-    <button type="button" class="profile-danger-btn" data-action="delete-account" data-i18n="delete_account_btn">Удалить аккаунт</button>
-    <p class="profile-danger-hint" data-i18n="delete_account_hint">Все твои игры, отзывы и посты будут удалены навсегда.</p>
-  </div>
+    <div class="profile-danger-zone">
+      <button type="button" class="profile-danger-btn" data-action="delete-account" data-i18n="delete_account_btn">Удалить аккаунт</button>
+      <p class="profile-danger-hint" data-i18n="delete_account_hint">Все твои игры, отзывы и посты будут удалены навсегда.</p>
+    </div>
 </div>
 
 <!-- ══ ЭКРАН: ИГРЫ ══ -->

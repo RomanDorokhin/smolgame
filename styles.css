@@ -3977,6 +3977,36 @@ body.keyboard-open .app-tab-chrome {
   margin: 0;
 }
 
+.lang-switch-modern {
+  display: flex;
+  background: var(--surface-elevated);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 2px;
+  height: 32px;
+  align-items: stretch;
+}
+
+.lang-option {
+  padding: 0 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 800;
+  border-radius: 8px;
+  color: var(--muted);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 32px;
+}
+
+.lang-option.active {
+  background: var(--accent);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
 .upload-active-panel {
   margin-top: 4px;
 }
@@ -4669,56 +4699,39 @@ textarea.field-input {
   overscroll-behavior-y: contain;
   touch-action: pan-y;
   isolation: isolate;
-}
-
-#profile-screen>*,
-#author-screen>* {
-  position: relative;
-  z-index: 1;
+  padding-bottom: calc(var(--safe-bottom) + var(--nav-h) + 20px);
 }
 
 #profile-screen.open,
 #author-screen.open {
   display: flex;
-}
-
-/* Выше #app-boot-splash (1500): иначе сплэш остаётся поверх шитов и «профиль не работает» */
-#profile-screen.open,
-#author-screen.open {
-  bottom: calc(var(--safe-bottom) + var(--nav-h));
   z-index: 1800;
-  padding-bottom: calc(var(--safe-bottom) + var(--nav-h) + 16px);
 }
 
-.profile-header {
-  padding: calc(var(--safe-top) + 20px) 20px 20px;
-  background: linear-gradient(180deg, var(--surface) 0%, var(--bg) 100%);
-  border-bottom: 1px solid var(--border);
-}
-
-.profile-top {
+.profile-main-info {
   display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 20px;
+  padding: 16px 20px;
+  gap: 20px;
+  align-items: center;
+}
+
+.profile-avatar-wrap {
+  position: relative;
+  width: 84px;
+  height: 84px;
+  flex-shrink: 0;
 }
 
 .profile-avatar {
-  width: 72px;
-  height: 72px;
-  min-width: 72px;
-  min-height: 72px;
-  max-width: 72px;
-  max-height: 72px;
-  aspect-ratio: 1/1;
+  width: 100%;
+  height: 100%;
   border-radius: 50%;
-  background: linear-gradient(160deg, #2a2d36 0%, #1c1e25 100%);
+  background: var(--surface-elevated);
+  border: 1px solid var(--border);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 28px;
-  font-weight: 800;
-  flex: 0 0 72px;
   overflow: hidden;
 }
 
@@ -4728,59 +4741,208 @@ textarea.field-input {
   object-fit: cover;
 }
 
-.profile-stats {
+.profile-text-info {
   display: flex;
-  gap: 24px;
-}
-
-.stat-item {
-  text-align: center;
-  min-width: 52px;
-}
-
-.stat-num {
-  font-family: 'Space Grotesk', 'SF Pro Text', system-ui, sans-serif;
-  font-size: 21px;
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-  letter-spacing: -0.02em;
-  color: rgba(255, 255, 255, 0.96);
-}
-
-.stat-lbl {
-  font-size: 10px;
-  color: rgba(255, 255, 255, 0.38);
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  font-weight: 600;
+  flex-direction: column;
+  gap: 4px;
 }
 
 .profile-name {
   font-family: 'Syne', sans-serif;
-  font-size: 20px;
+  font-size: 22px;
   font-weight: 800;
-  margin-bottom: 4px;
+  color: #fff;
+  line-height: 1.2;
 }
 
 .profile-handle {
-  font-size: 13px;
-  color: rgba(163, 184, 212, 0.72);
-  margin-bottom: 8px;
-  font-variant-numeric: tabular-nums;
-  letter-spacing: 0.02em;
+  font-size: 14px;
+  color: var(--muted);
+  font-family: 'Space Grotesk', sans-serif;
+}
+
+.profile-badges {
+  display: flex;
+  gap: 6px;
+  margin-top: 4px;
+  flex-wrap: wrap;
+}
+
+.profile-badge {
+  font-size: 11px;
+  padding: 2px 8px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 6px;
+  color: rgba(255, 255, 255, 0.8);
+  font-weight: 600;
 }
 
 .profile-bio {
+  padding: 0 20px 20px;
   font-size: 14px;
-  line-height: 1.45;
-  color: rgba(255, 255, 255, 0.72);
-  margin: 0 0 14px;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.9);
   white-space: pre-wrap;
-  word-break: break-word;
+  margin: 0;
 }
 
-.profile-bio:empty {
+/* Stats Grid */
+.profile-stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  padding: 16px 20px;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 4px;
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.stat-num {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 18px;
+  font-weight: 800;
+  color: #fff;
+}
+
+.stat-lbl {
+  font-size: 11px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 600;
+}
+
+/* Tabs Segment */
+.profile-tabs-segment {
+  display: flex;
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  background: var(--bg);
+  z-index: 10;
+}
+
+.profile-tab-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 14px 0;
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  position: relative;
+  transition: all 0.2s ease;
+}
+
+.profile-tab-btn.active {
+  color: #fff;
+}
+
+.profile-tab-btn.active::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: #fff;
+}
+
+.profile-tab-btn-icon {
+  display: flex;
+  align-items: center;
+  opacity: 0.7;
+}
+
+.profile-tab-btn.active .profile-tab-btn-icon {
+  opacity: 1;
+}
+
+.profile-tab-btn-icon svg {
+  width: 18px;
+  height: 18px;
+}
+
+.profile-tab-btn-text {
+  font-weight: 700;
+  font-size: 13px;
+}
+
+.profile-tab-content {
   display: none;
+  padding-bottom: 40px;
+}
+
+.profile-tab-content.active {
+  display: block;
+}
+
+/* Wall / Posts */
+.profile-wall-compose {
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.profile-post-input {
+  background: var(--surface-elevated);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px;
+  color: #fff;
+  font-size: 15px;
+  min-height: 80px;
+  resize: none;
+  font-family: inherit;
+}
+
+.profile-post-item {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.profile-post-body {
+  font-size: 15px;
+  line-height: 1.5;
+  color: #fff;
+  margin-bottom: 12px;
+}
+
+.profile-post-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.profile-post-date {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.profile-post-delete {
+  font-size: 12px;
+  color: var(--muted);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
+.profile-post-delete:active {
+  background: rgba(255, 255, 255, 0.05);
 }
 
 /* Форма редактирования — только после «Редактировать» */
