@@ -111,7 +111,11 @@ async function shareGame() {
   const t = uilang();
   const g = GAMES[window.currentIdx];
   const url = buildGameShareUrl(g.id);
-  const text = t('share_text', { title: g.title || t('game_fallback') });
+  const author = g.authorDisplayName || g.authorHandle || '';
+  const text = t('share_text', { 
+    title: g.title || t('game_fallback'),
+    author: author ? ` by ${author}` : ''
+  });
 
   // 1) Лучший путь в Telegram: нативный share-sheet в чат.
   try {

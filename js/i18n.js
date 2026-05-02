@@ -214,7 +214,7 @@
       unsubscribed: 'Отписались',
       subscribed: 'Подписка оформлена',
       share_text:
-        '{title} — мини-игра в SmolGame (лента в Telegram, без обязательной рекламы перед игрой). Запусти по ссылке:',
+        '{title}{author} — мини-игра в SmolGame (лента в Telegram, без обязательной рекламы перед игрой). Запусти по ссылке:',
 
       search_empty_title: 'Поиск по играм',
       search_empty_sub: 'Введи название или ник. Жанр — полоска выше.',
@@ -614,7 +614,7 @@
       unsubscribed: 'Unfollowed',
       subscribed: 'Subscribed',
       share_text:
-        '{title} — a mini-game on SmolGame (Telegram feed, no forced ad before play). Open via link:',
+        '{title}{author} — a mini-game on SmolGame (Telegram feed, no forced ad before play). Open via link:',
 
       search_empty_title: 'Search games',
       search_empty_sub: 'Enter a title or handle. Genre — chips above.',

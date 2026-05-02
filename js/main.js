@@ -106,19 +106,10 @@ async function jumpToStartParamGame() {
   const gameId = startParam.startsWith('g_')
     ? decodeURIComponent(startParam.slice(2))
     : startParam;
-  let idx = (window.GAMES || []).findIndex(g => g.id === gameId);
-  if (idx >= 0) {
-    goTo(idx, true);
-    hideHint();
-    return;
-  }
-  if (typeof injectGameIntoFeed === 'function') {
-    await injectGameIntoFeed(gameId);
-    idx = (window.GAMES || []).findIndex(g => g.id === gameId);
-    if (idx >= 0) {
-      goTo(idx, true);
-      hideHint();
-    }
+  
+  if (typeof openGameDetail === 'function') {
+    console.log('[Main] Deep link detected, opening game:', gameId);
+    openGameDetail(gameId);
   }
 }
 
