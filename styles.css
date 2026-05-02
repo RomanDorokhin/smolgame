@@ -5134,47 +5134,59 @@ textarea.field-input {
 }
 
 /* Stats Grid */
-/* ══ PROFILE STATS 3.0 ══ */
 .profile-stats-grid {
   flex: 1;
-  display: flex;
-  justify-content: space-around;
-  align-items: center;
-  padding: var(--gap-sm) 0;
+  display: flex !important;
+  flex-direction: row !important;
+  justify-content: space-around !important;
+  align-items: center !important;
+  padding: 0;
+  margin: 0;
+  background: transparent;
+  min-width: 0;
+}
+
+.theme-light .stat-num {
+  color: #000 !important;
+}
+
+.theme-light .stat-label {
+  color: #8e8e93 !important;
 }
 
 .stat-item {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2px;
+  justify-content: center;
+  gap: 1px;
+  flex: 1;
 }
 
 .stat-num {
-  font-family: 'Syne', sans-serif;
-  font-size: 20px;
-  font-weight: 800;
+  font-size: 18px;
+  font-weight: 700;
   color: var(--text);
+  line-height: 1.2;
 }
 
 .stat-lbl {
-  font-size: 10px;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--muted);
+  font-size: 13px;
+  color: var(--text);
+  opacity: 0.8;
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: 0;
 }
 
-/* ══ PROFILE TABS 3.0 ══ */
+/* Tabs Segment */
 .profile-tabs-segment {
   display: flex;
-  background: var(--surface-elevated);
-  margin: var(--gap-md);
-  padding: 4px;
-  border-radius: var(--radius-md);
+  border-bottom: 1px solid var(--border);
   position: sticky;
   top: 0;
-  z-index: var(--z-badge);
+  background: var(--bg);
+  z-index: 10;
 }
 
 .profile-tab-btn {
@@ -5183,26 +5195,9 @@ textarea.field-input {
   align-items: center;
   justify-content: center;
   gap: 8px;
-  padding: 10px 0;
-  border-radius: calc(var(--radius-md) - 4px);
+  padding: 14px 0;
   background: transparent;
   border: none;
-  font-weight: 700;
-  color: var(--text-dim);
-  transition: all 0.2s ease;
-  cursor: pointer;
-}
-
-.profile-tab-btn.active {
-  background: var(--accent-gradient);
-  color: #fff;
-  box-shadow: var(--shadow-sm);
-}
-
-.profile-tab-btn .sg-icon {
-  width: 18px;
-  height: 18px;
-}
   color: rgba(255, 255, 255, 0.4);
   cursor: pointer;
   position: relative;
