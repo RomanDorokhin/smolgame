@@ -72,6 +72,7 @@ function closeGamesLibrary() {
 function openAuthorScreen(authorId) {
   if (!authorId) return;
   document.body.classList.remove('is-tab-feed');
+  document.body.classList.add('author-screen-active');
   if (typeof stopFeedSwipeTeaseForLeavingFeed === 'function') stopFeedSwipeTeaseForLeavingFeed();
   document.getElementById('author-screen').classList.add('open');
   syncBodyFeedHiddenUnderSheet();
@@ -79,6 +80,7 @@ function openAuthorScreen(authorId) {
 }
 function closeAuthorScreen() {
   document.getElementById('author-screen').classList.remove('open');
+  document.body.classList.remove('author-screen-active');
   syncBodyFeedHiddenUnderSheet();
   if (document.getElementById('nav-feed')?.classList.contains('active')) {
     document.body.classList.add('is-tab-feed');

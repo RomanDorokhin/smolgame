@@ -4052,7 +4052,7 @@ body.keyboard-open .app-tab-chrome {
   -webkit-overflow-scrolling: touch;
   overscroll-behavior-y: contain;
   touch-action: pan-y;
-  padding: calc(var(--safe-top) + 80px) 20px calc(var(--safe-bottom) + 20px);
+  padding: 0 20px calc(var(--safe-bottom) + 20px);
   isolation: isolate;
 }
 
@@ -4994,7 +4994,7 @@ textarea.field-input {
   -webkit-overflow-scrolling: touch;
   overscroll-behavior-y: contain;
   touch-action: pan-y;
-  padding-top: calc(var(--safe-top, 0px) + 80px);
+  padding-top: 0;
   padding-bottom: 90px;
 }
 
