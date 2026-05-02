@@ -2148,8 +2148,8 @@ html[lang="ru"] .i18n-en {
 .feed-exit-focus {
   position: fixed;
   top: calc(var(--safe-top, 0px) + 10px);
-  right: 16px;
-  left: auto;
+  left: 16px;
+  right: auto;
   z-index: 2100;
   padding: 8px 16px;
   height: 36px;
@@ -2162,6 +2162,13 @@ html[lang="ru"] .i18n-en {
   display: flex;
   align-items: center;
   justify-content: center;
+  background: rgba(0, 0, 0, 0.6);
+  color: #fff;
+}
+
+body.feed-game-focus .feed-exit-focus {
+  opacity: 1 !important;
+  pointer-events: auto !important;
 }
 
 .feed-exit-focus:active {
@@ -3170,9 +3177,27 @@ body.feed-onboarding-ui .app-tab-chrome {
   color: rgba(var(--like-on-rgb), 0.95);
 }
 
+.nav-header-sticky {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 2000;
+  background: var(--bg-header, rgba(0, 0, 0, 0.85));
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--border);
+  transition: transform 0.3s ease, background 0.3s ease, opacity 0.3s ease;
+}
+
+body.feed-game-focus .nav-header-sticky {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-100%);
+}
+
 .action-label--stack {
   display: flex;
-  flex-direction: column;
   align-items: center;
   gap: 1px;
   line-height: 1.1;
@@ -3588,6 +3613,14 @@ body.game-detail-open .game-detail-screen {
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+:root {
+  --bg-header: rgba(0, 0, 0, 0.85);
+}
+
+body.theme-light {
+  --bg-header: rgba(255, 255, 255, 0.9);
 }
 
 /* Скролл shrinks when compose is visible */

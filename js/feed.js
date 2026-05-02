@@ -22,6 +22,7 @@ function truncateDesc(text, maxLen) {
 
 function enterGameFocusMode() {
   document.body.classList.add('feed-game-focus');
+  document.getElementById('feed-exit-focus')?.removeAttribute('hidden');
 }
 
 function exitGameFocusMode() {
