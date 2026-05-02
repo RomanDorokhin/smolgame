@@ -1831,6 +1831,7 @@ body.tg-only-wall #toast {
   display: flex;
   align-items: center;
   gap: 12px;
+  flex-wrap: nowrap;
 }
 
 .author-name {
@@ -2195,7 +2196,7 @@ body.feed-layout-vertical:not(.feed-game-focus) .slide.feed-slide--active .slide
 body.feed-layout-vertical #game-info {
   position: fixed;
   left: 16px;
-  bottom: 130px !important;
+  bottom: 110px !important;
   right: 90px;
   z-index: 120;
   display: flex;
@@ -5206,12 +5207,34 @@ textarea.field-input {
   font-weight: 600;
   cursor: pointer;
   border: none;
-  transition: opacity 0.2s;
+  transition: all 0.2s;
   background: rgba(255, 255, 255, 0.1);
   color: #fff;
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+body.theme-light .profile-btn {
+  background: #efefef;
+  color: #000;
+}
+
+body.theme-light .profile-btn--primary {
+  background: #0095f6;
+  color: #fff;
+}
+
+body.theme-light .stat-num {
+  color: #000;
+}
+
+body.theme-light .stat-label {
+  color: #8e8e93;
+}
+
+body.theme-light .profile-name {
+  color: #000;
 }
 
 .profile-btn--secondary {
