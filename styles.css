@@ -3234,7 +3234,9 @@ body.feed-onboarding-ui .app-tab-chrome {
 }
 
 body.feed-game-focus .nav-header-sticky,
-body.feed-layout-vertical:not(.author-screen-active):not(.game-detail-active) .nav-header-sticky {
+body.feed-game-focus .app-tab-chrome,
+body.feed-layout-vertical:not(.author-screen-active):not(.game-detail-active) .nav-header-sticky,
+body.feed-layout-vertical:not(.author-screen-active):not(.game-detail-active) .app-tab-chrome {
   display: none !important;
 }
 
