@@ -65,7 +65,9 @@
 
 <div id="tg-only-wall" class="tg-only-wall" hidden>
   <div class="tg-only-card tg-glass">
-    <div class="sg-brand sg-brand--card" style="margin-bottom:8px">
+    <div class="sg-brand sg-brand--card" style="padding-top: calc(var(--safe-top, 0px) + 80px);
+  padding-bottom: 90px;
+}">
       <div class="sg-brand-mark sg-brand-mark--sm" aria-hidden="true">
         <svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect x="13" y="13" width="22" height="22" rx="8" fill="none" stroke="url(#sgLogoGradShared)" stroke-width="2.25"/><circle cx="24" cy="24" r="4.5" fill="url(#sgLogoGradShared)" opacity=".95"/></svg>
       </div>
@@ -601,15 +603,7 @@ Must work on a mobile phone.</pre>
 <!-- ══ ЭКРАН: ПРОФИЛЬ ══ -->
 <div id="profile-screen">
   <div class="screen-header screen-header--profile">
-    <div class="screen-header-left">
-      <button type="button" class="screen-back sg-back-btn sg-btn sg-btn--ghost" data-action="close-profile" data-i18n-aria="upload_back_aria" aria-label="Назад к ленте" data-i18n="feed_back">← Лента</button>
-    </div>
-    <div class="screen-header-right">
-      <div class="lang-switch-modern" id="profileLangSwitch">
-        <div class="lang-option active" data-action="set-lang-ru" data-lang="ru">RU</div>
-        <div class="lang-option" data-action="set-lang-en" data-lang="en">EN</div>
-      </div>
-    </div>
+    <button type="button" class="screen-back sg-back-btn sg-btn sg-btn--ghost" data-action="close-profile" data-i18n-aria="upload_back_aria" aria-label="Назад к ленте" data-i18n="feed_back">← Лента</button>
   </div>
     <div class="profile-main-info">
       <div class="profile-avatar-wrap">

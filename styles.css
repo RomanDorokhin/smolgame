@@ -2175,12 +2175,12 @@ body.feed-layout-vertical #game-info .author-row {
   align-items: center;
   gap: 8px;
   cursor: pointer;
-  padding: 6px 12px 6px 6px;
-  border-radius: 50px;
-  background: rgba(0, 0, 0, 0.25);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  padding: 4px 0;
+  background: transparent !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border: none !important;
+  box-shadow: none !important;
   transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -2236,14 +2236,14 @@ body.feed-layout-vertical #game-info .author-row:active {
 }
 
 .follow-btn {
-  margin-left: 4px;
-  padding: 4px 12px;
-  background: rgba(255, 255, 255, 0.1);
+  margin-left: 8px;
+  padding: 4px 10px;
+  background: transparent !important;
   color: #fff;
-  border-radius: 6px;
+  border-radius: 4px;
   font-weight: 700;
-  font-size: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.25);
+  font-size: 13px;
+  border: 1px solid rgba(255, 255, 255, 0.35);
   transition: all 0.2s ease;
   pointer-events: auto;
 }
@@ -2795,7 +2795,7 @@ body.feed-layout-vertical #game-info .author-row:active {
 .nav-upload-fab {
   width: 44px;
   height: 44px;
-  background: rgba(255, 255, 255, 0.08);
+  background: linear-gradient(135deg, rgba(138, 43, 226, 0.15) 0%, rgba(255, 45, 85, 0.15) 100%);
   border-radius: 14px;
   display: flex;
   align-items: center;
@@ -2803,7 +2803,14 @@ body.feed-layout-vertical #game-info .author-row:active {
   position: relative;
   transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   margin-top: -8px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1.5px solid rgba(138, 43, 226, 0.3);
+  color: #8a2be2;
+}
+
+body.theme-light .nav-upload-fab {
+  background: linear-gradient(135deg, rgba(138, 43, 226, 0.1) 0%, rgba(255, 45, 85, 0.1) 100%);
+  border-color: rgba(138, 43, 226, 0.25);
+  color: #8a2be2;
 }
 
 .nav-item--upload.active .nav-upload-fab {
@@ -2816,7 +2823,7 @@ body.feed-layout-vertical #game-info .author-row:active {
 .nav-upload-fab-icon {
   width: 24px;
   height: 24px;
-  color: var(--text);
+  color: currentColor;
 }
 
 .nav-upload-fab-plus {
@@ -2825,7 +2832,7 @@ body.feed-layout-vertical #game-info .author-row:active {
   right: -2px;
   width: 18px;
   height: 18px;
-  background: var(--surface-elevated);
+  background: #8a2be2;
   border: 2px solid var(--surface);
   border-radius: 50%;
   display: flex;
@@ -3871,7 +3878,7 @@ body.keyboard-open .app-tab-chrome {
   -webkit-overflow-scrolling: touch;
   overscroll-behavior-y: contain;
   touch-action: pan-y;
-  padding: calc(var(--safe-top) + 60px) 20px calc(var(--safe-bottom) + 20px);
+  padding: calc(var(--safe-top) + 80px) 20px calc(var(--safe-bottom) + 20px);
   isolation: isolate;
 }
 
@@ -4813,7 +4820,7 @@ textarea.field-input {
   -webkit-overflow-scrolling: touch;
   overscroll-behavior-y: contain;
   touch-action: pan-y;
-  padding-top: calc(var(--safe-top, 0px) + 44px);
+  padding-top: calc(var(--safe-top, 0px) + 80px);
   padding-bottom: 90px;
 }
 
@@ -4914,11 +4921,9 @@ textarea.field-input {
 .profile-stats-grid {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
-  padding: 16px 20px;
-  border-top: 1px solid var(--border);
-  border-bottom: 1px solid var(--border);
-  background: rgba(255, 255, 255, 0.03);
-  margin-bottom: 8px;
+  padding: 12px 20px;
+  margin: 8px 0;
+  background: transparent;
 }
 
 .stat-item {
@@ -4930,9 +4935,10 @@ textarea.field-input {
 
 .stat-num {
   font-family: 'Syne', sans-serif;
-  font-size: 18px;
+  font-size: 20px;
   font-weight: 800;
   color: var(--text);
+  line-height: 1;
 }
 
 .stat-lbl {
@@ -4940,7 +4946,7 @@ textarea.field-input {
   color: var(--muted);
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  margin-top: 2px;
+  font-weight: 600;
 }
 
 /* Tabs Segment */
@@ -5615,7 +5621,7 @@ textarea.field-input {
 }
 
 .search-header {
-  padding: calc(var(--safe-top) + 14px) 16px 14px;
+  padding: calc(var(--safe-top) + 26px) 16px 14px;
   border-bottom: 1px solid var(--border);
   background: rgba(0, 0, 0, 0.2);
 }
@@ -6403,7 +6409,7 @@ body.is-admin .admin-only {
   }
 
   .profile-header {
-    padding: calc(var(--safe-top) + 16px) 16px 18px;
+    padding: calc(var(--safe-top) + 26px) 16px 18px;
   }
 
   .profile-top {
