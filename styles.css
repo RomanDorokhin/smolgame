@@ -3256,15 +3256,14 @@ body.feed-onboarding-ui .app-tab-chrome {
 
 #side-actions {
   position: fixed;
-  top: calc(var(--safe-top) + 10px);
-  right: 10px;
-  bottom: auto;
+  right: 12px;
+  bottom: calc(var(--safe-bottom, 0px) + var(--nav-h) + 16px);
+  top: auto;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 10px;
+  gap: 20px;
   z-index: 350;
-  /* Тачи ловят только .action-icon — пустое место колонки уходит в iframe (нет «залипания») */
   pointer-events: none;
   padding-right: max(0px, env(safe-area-inset-right, 0px));
 }
@@ -3275,35 +3274,39 @@ body.feed-onboarding-ui .app-tab-chrome {
   cursor: pointer;
 }
 
-#side-actions .action-label {
-  pointer-events: auto;
-  touch-action: manipulation;
-  cursor: pointer;
+#side-actions .action-label-num {
+  pointer-events: none;
 }
 
 .action-btn {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 5px;
+  gap: 4px;
   cursor: default;
   user-select: none;
   pointer-events: none;
 }
 
 .action-icon {
-  width: 52px;
-  height: 52px;
-  background: rgba(28, 28, 30, 0.72);
-  border: 1px solid var(--border);
+  width: 48px;
+  height: 48px;
+  background: rgba(20, 20, 24, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 22px;
-  backdrop-filter: blur(12px);
-  transition: transform 0.15s, background 0.2s, border-color 0.2s;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  transition: transform 0.15s, background 0.2s;
   position: relative;
+}
+
+.action-icon .sg-icon {
+  width: 22px;
+  height: 22px;
+  color: rgba(255, 255, 255, 0.9);
 }
 
 .action-icon:active {
@@ -3312,8 +3315,7 @@ body.feed-onboarding-ui .app-tab-chrome {
 
 .action-icon.active-like {
   background: var(--like-on-soft);
-  border-color: rgba(var(--like-on-rgb), 0.48);
-  box-shadow: 0 0 0 1px rgba(var(--like-on-rgb), 0.08) inset, 0 8px 22px rgba(var(--like-on-rgb), 0.18);
+  border-color: rgba(var(--like-on-rgb), 0.4);
 }
 
 .action-icon.active-like .sg-icon--heart {
@@ -3324,103 +3326,67 @@ body.feed-onboarding-ui .app-tab-chrome {
   color: var(--like-on);
 }
 
-.action-btn.active-like-row .action-label {
-  color: rgba(var(--like-on-rgb), 0.95);
-}
-
-body.feed-game-focus .nav-header-sticky,
-body.feed-game-focus .app-tab-chrome,
-body.feed-layout-vertical:not(.author-screen-active):not(.game-detail-active) .nav-header-sticky,
-body.feed-layout-vertical:not(.author-screen-active):not(.game-detail-active) .app-tab-chrome {
-  display: none !important;
-}
-
-.nav-header-sticky {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 2000;
-  background: rgba(0, 0, 0, 0.85);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border-bottom: 1px solid var(--border);
-  transition: transform 0.3s ease, background 0.3s ease, opacity 0.3s ease;
-}
-
-.theme-light .nav-header-sticky {
-  background: rgba(255, 255, 255, 0.9) !important;
-}
-
-.action-label--stack {
-  display: flex;
-  align-items: center;
-  gap: 1px;
-  line-height: 1.1;
-}
-
 .action-label-num {
   font-size: 12px;
   font-weight: 700;
+  color: rgba(255, 255, 255, 0.88);
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.9);
+  line-height: 1;
 }
 
-.action-label-caption {
-  font-size: 9px;
-  font-weight: 600;
-  letter-spacing: 0.02em;
-  text-transform: lowercase;
-  color: rgba(255, 255, 255, 0.52);
-  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.85);
+/* три точки — pointer-events для всей кнопки */
+.action-btn--more {
+  position: relative;
 }
-
-.action-btn--plays .action-icon {
-  cursor: default;
-}
-
-.action-btn--plays .action-icon:active {
-  transform: none;
-}
-
-.action-share-link {
-  appearance: none;
-  -webkit-appearance: none;
-  margin: 2px 0 0;
-  padding: 4px 8px;
-  border: none;
-  background: transparent;
-  font-family: 'Space Grotesk', sans-serif;
-  font-size: 11px;
-  font-weight: 700;
-  color: rgba(163, 184, 212, 0.95);
-  text-decoration: underline;
-  text-underline-offset: 2px;
-  cursor: pointer;
+.action-btn--more .action-icon {
   pointer-events: auto;
-  touch-action: manipulation;
-  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.85);
 }
 
-.action-share-link:active {
-  opacity: 0.75;
+/* Дроп-меню жалобы */
+.side-action-popup {
+  position: fixed;
+  right: 72px;
+  bottom: calc(var(--safe-bottom, 0px) + var(--nav-h) + 16px);
+  background: rgba(28, 28, 32, 0.96);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 14px;
+  overflow: hidden;
+  z-index: 360;
+  pointer-events: auto;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  min-width: 180px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+}
+
+.side-action-popup-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 14px 18px;
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.88);
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: background 0.15s;
+}
+
+.side-action-popup-item:active {
+  background: rgba(255, 255, 255, 0.08);
 }
 
 /* Анимация лайка */
 @keyframes likePop {
-  0% {
-    transform: scale(1)
-  }
-
-  30% {
-    transform: scale(1.4)
-  }
-
-  60% {
-    transform: scale(0.9)
-  }
-
-  100% {
-    transform: scale(1)
-  }
+  0% { transform: scale(1) }
+  30% { transform: scale(1.4) }
+  60% { transform: scale(0.9) }
+  100% { transform: scale(1) }
 }
 
 .action-icon.pop {

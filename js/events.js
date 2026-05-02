@@ -17,7 +17,7 @@ const CLICK_ACTIONS = {
 
   'toggle-like':    (_el, ev) => { if (ev) ev.stopPropagation(); toggleLike(); },
   'share-game':     (_el, ev) => { if (ev) ev.stopPropagation(); shareGame(); },
-  'report-game':    (_el, ev) => { if (ev) ev.stopPropagation(); reportGame(); },
+  'report-game':    (_el, ev) => { if (ev) ev.stopPropagation(); closeSideActionPopup(); reportGame(); },
 
   'feed-retry':     () => { if (typeof loadGames === 'function') loadGames(); },
   'dismiss-feed-nav-tip': () => ackFeedNavTip(),
@@ -226,3 +226,27 @@ function handleDelegatedFileChange(ev) {
 document.addEventListener('click', handleDelegatedClick);
 document.addEventListener('input', handleDelegatedInput);
 document.addEventListener('change', handleDelegatedFileChange);
+
+// ── Попап "три точки" в боковой панели ──
+function closeSideActionPopup() {
+  const p = document.getElementById('sideActionPopup');
+  if (p) p.hidden = true;
+}
+
+(function initSideActionMore() {
+  const btn = document.getElementById('sideActionMore');
+  const popup = document.getElementById('sideActionPopup');
+  if (!btn || !popup) return;
+
+  btn.querySelector('.action-icon')?.addEventListener('click', (ev) => {
+    ev.stopPropagation();
+    popup.hidden = !popup.hidden;
+  });
+
+  document.addEventListener('click', (ev) => {
+    if (popup.hidden) return;
+    if (!popup.contains(ev.target) && !btn.contains(ev.target)) {
+      popup.hidden = true;
+    }
+  });
+})();
