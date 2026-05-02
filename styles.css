@@ -1386,6 +1386,10 @@ body.theme-light .badge--premium {
   background: linear-gradient(180deg, #3a3e48 0%, #262930 100%);
 }
 
+body.theme-light .sg-btn--primary:active:not(:disabled) {
+  background: linear-gradient(180deg, #006ce6 0%, #005bb5 100%);
+}
+
 .sg-btn--screen-cta.sg-btn--primary {
   background: var(--cta-bg-strong);
   border-color: rgba(255, 255, 255, 0.14);
@@ -1395,8 +1399,17 @@ body.theme-light .badge--premium {
     0 12px 32px rgba(0, 0, 0, 0.42);
 }
 
+body.theme-light .sg-btn--screen-cta.sg-btn--primary {
+  background: var(--cta-bg-strong);
+  box-shadow: 0 8px 24px rgba(0, 122, 255, 0.2);
+}
+
 .sg-btn--screen-cta.sg-btn--primary:active:not(:disabled) {
   background: linear-gradient(180deg, #454b5c 0%, #2e343f 100%);
+}
+
+body.theme-light .sg-btn--screen-cta.sg-btn--primary:active:not(:disabled) {
+  background: #005bb5;
 }
 
 .sg-btn--secondary {
@@ -2028,6 +2041,14 @@ body.feed-layout-vertical .slide-game {
   font-weight: 700 !important;
   padding: 14px 20px !important;
   border-radius: 14px !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4) !important;
+}
+
+body.theme-light .slide-play-btn {
+  background: var(--cta-bg) !important;
+  color: #fff !important;
+  border: none !important;
+  box-shadow: 0 8px 24px rgba(0, 122, 255, 0.3) !important;
 }
 
 body.feed-game-focus.feed-layout-vertical .slide.feed-slide--active .slide-discovery {
