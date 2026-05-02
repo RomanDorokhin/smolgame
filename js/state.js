@@ -58,3 +58,29 @@ window.refreshStorageKeys();
 if (typeof window.syncUSERFromTelegramInit === 'function') {
   window.syncUSERFromTelegramInit();
 }
+
+/** 
+ * АВТОМАТИЧЕСКАЯ ПРИВЯЗКА ТЕМЫ К TELEGRAM
+ * Если в ТГ светлая тема -> ставим светлую, если темная -> темную.
+ */
+window.syncThemeWithTelegram = function() {
+  const tg = window.Telegram?.WebApp;
+  if (!tg) return;
+  
+  // Telegram.WebApp.colorScheme возвращает 'light' или 'dark'
+  const colorScheme = tg.colorScheme || 'dark';
+  console.log('[Theme] Syncing with Telegram:', colorScheme);
+  
+  if (typeof window.setAppTheme === 'function') {
+    window.setAppTheme(colorScheme);
+  }
+};
+
+// Вызываем при запуске
+window.syncThemeWithTelegram();
+
+// И вешаем слушатель на изменения темы внутри самого Telegram
+window.Telegram?.WebApp?.onEvent('themeChanged', () => {
+  console.log('[Theme] Telegram theme changed event');
+  window.syncThemeWithTelegram();
+});
