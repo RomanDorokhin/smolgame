@@ -63,6 +63,8 @@ async function loadGames() {
   try {
     const data = await API.feed({ offset: 0, limit: FEED_PAGE_SIZE, shuffle: true });
     const published = Array.isArray(data?.games) ? data.games : [];
+    // Frontend-shuffle the first page to guarantee a fresh experience every time
+    published.sort(() => Math.random() - 0.5);
     window.feedPublishedLoaded = published.length;
     if (data?.isAdmin === true) {
       document.body.classList.add('is-admin');
