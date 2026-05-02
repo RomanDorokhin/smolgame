@@ -1821,6 +1821,35 @@ body.tg-only-wall #toast {
   margin: 0 0 10px;
 }
 
+.author-details {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.author-top-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.author-name {
+  font-weight: 800;
+  font-size: 16px;
+  color: #fff;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
+  white-space: nowrap;
+}
+
+.author-role {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.7);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+}
+
 .tg-only-text {
   margin: 0;
   font-size: 14px;
@@ -2159,7 +2188,7 @@ body.feed-layout-vertical:not(.feed-game-focus) .slide.feed-slide--active .slide
 body.feed-layout-vertical #game-info {
   position: fixed;
   left: 16px;
-  bottom: 160px !important;
+  bottom: 130px !important;
   right: 90px;
   z-index: 120;
   display: flex;
