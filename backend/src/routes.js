@@ -101,7 +101,7 @@ async function firstSuccessfulFirst(db, sqlStrings, bindArgs = []) {
 
 async function publishedFeedGamesQuery(db, limit, offset, orderBy = 'g.created_at DESC') {
   const variants = PUBLISHED_FEED_SQL_VARIANTS.map(sql =>
-    sql.replace('ORDER BY g.created_at DESC', `ORDER BY ${orderBy}`)
+    sql.replace(/ORDER\s+BY\s+g\.created_at\s+DESC/i, `ORDER BY ${orderBy}`)
   );
   return firstSuccessfulAll(db, variants, [limit, offset]);
 }
