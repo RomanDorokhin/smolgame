@@ -1998,6 +1998,7 @@ body.feed-layout-vertical .slide-game {
   padding: 16px 16px 18px;
   pointer-events: auto;
   max-width: min(100%, 420px);
+  margin-bottom: 40px !important;
 }
 
 .slide-discovery-title {
