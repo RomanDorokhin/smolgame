@@ -2159,7 +2159,7 @@ body.feed-layout-vertical:not(.feed-game-focus) .slide.feed-slide--active .slide
 body.feed-layout-vertical #game-info {
   position: fixed;
   left: 16px;
-  bottom: calc(var(--bottom-nav-height, 64px) + 100px);
+  bottom: 160px !important;
   right: 90px;
   z-index: 120;
   display: flex;
@@ -2232,17 +2232,21 @@ body.feed-layout-vertical #game-info .author-row:active {
 }
 
 .follow-btn {
-  margin-left: 10px;
-  padding: 3px 10px;
-  background: rgba(255, 255, 255, 0.08) !important;
+  margin-left: 12px;
+  padding: 6px 14px;
+  background: transparent !important;
   color: #fff;
-  border-radius: 6px;
-  font-weight: 700;
-  font-size: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.5);
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 13px;
+  border: 1px solid rgba(255, 255, 255, 0.4);
   transition: all 0.2s ease;
   pointer-events: auto;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 32px;
 }
 
 .follow-btn:active {

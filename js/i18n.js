@@ -42,9 +42,9 @@
 
       author_role: 'Разработчик',
       author_you: 'Это вы',
-      follow_add: '+ Подписаться',
+      follow_add: 'Подписаться',
       follow_done: 'Вы подписаны',
-      follow_add_author: '+ Подписаться на автора',
+      follow_add_author: 'Подписаться на автора',
       reviews_drawer_title: 'Отзывы',
       close_aria: 'Закрыть',
       review_short_placeholder: 'Коротко об игре…',
@@ -442,9 +442,9 @@
 
       author_role: 'Developer',
       author_you: "It's you",
-      follow_add: '+ Follow',
+      follow_add: 'Follow',
       follow_done: 'Following',
-      follow_add_author: '+ Follow author',
+      follow_add_author: 'Follow author',
       reviews_drawer_title: 'Reviews',
       close_aria: 'Close',
       review_short_placeholder: 'Short note about the game…',
