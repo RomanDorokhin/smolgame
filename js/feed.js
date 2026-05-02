@@ -61,7 +61,7 @@ async function loadGames() {
   window.feedLoadFailed = false;
   window.lastFeedLoadError = '';
   try {
-    const data = await API.feed({ offset: 0, limit: FEED_PAGE_SIZE });
+    const data = await API.feed({ offset: 0, limit: FEED_PAGE_SIZE, shuffle: true });
     const published = Array.isArray(data?.games) ? data.games : [];
     window.feedPublishedLoaded = published.length;
     if (data?.isAdmin === true) {
@@ -114,7 +114,7 @@ async function loadMoreFeed() {
   if (!feedHasMore || feedLoadingMore || GAMES.length === 0) return;
   feedLoadingMore = true;
   try {
-    const data = await API.feed({ offset: feedPublishedLoaded, limit: FEED_PAGE_SIZE });
+    const data = await API.feed({ offset: feedPublishedLoaded, limit: FEED_PAGE_SIZE, shuffle: true });
     const batch = Array.isArray(data?.games) ? data.games : [];
     window.feedHasMore = typeof data?.hasMore === 'boolean'
       ? data.hasMore

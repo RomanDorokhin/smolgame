@@ -263,6 +263,7 @@ window.API = {
     const q = new URLSearchParams();
     if (params.offset != null) q.set('offset', String(params.offset));
     if (params.limit != null) q.set('limit', String(params.limit));
+    if (params.shuffle === true) q.set('shuffle', 'true');
     q.set('_t', String(Date.now()));
     return apiFetch(`/api/feed?${q.toString()}`);
   },

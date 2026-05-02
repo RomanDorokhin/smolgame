@@ -99,8 +99,11 @@ async function firstSuccessfulFirst(db, sqlStrings, bindArgs = []) {
   throw lastErr;
 }
 
-async function publishedFeedGamesQuery(db, limit, offset) {
-  return firstSuccessfulAll(db, PUBLISHED_FEED_SQL_VARIANTS, [limit, offset]);
+async function publishedFeedGamesQuery(db, limit, offset, orderBy = 'g.created_at DESC') {
+  const variants = PUBLISHED_FEED_SQL_VARIANTS.map(sql =>
+    sql.replace('ORDER BY g.created_at DESC', `ORDER BY ${orderBy}`)
+  );
+  return firstSuccessfulAll(db, variants, [limit, offset]);
 }
 
 /** Та же схема колонок, что и лента, но только pending — для админа в начале ленты. */
@@ -223,12 +226,14 @@ export async function getFeed(req, env) {
   const url = new URL(req.url);
   let offset = Number(url.searchParams.get('offset') || 0);
   if (!Number.isFinite(offset) || offset < 0) offset = 0;
+  let shuffle = url.searchParams.get('shuffle') === 'true';
   let limit = Number(url.searchParams.get('limit') || FEED_PAGE_DEFAULT);
   if (!Number.isFinite(limit) || limit < 1) limit = FEED_PAGE_DEFAULT;
   limit = Math.min(FEED_PAGE_MAX, Math.max(1, Math.floor(limit)));
 
-  // Только опубликованные, новые первыми. Пагинация: ?offset=&limit=
-  const { results } = await publishedFeedGamesQuery(env.DB, limit, offset);
+  // Только опубликованные. По умолчанию новые первыми (created_at DESC).
+  // Если shuffle=true — случайный порядок (RANDOM()).
+  const { results } = await publishedFeedGamesQuery(env.DB, limit, offset, shuffle ? 'RANDOM()' : 'g.created_at DESC');
 
   let likedSet = new Set();
   let followedSet = new Set();
