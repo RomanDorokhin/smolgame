@@ -222,17 +222,6 @@ function switchTab(tab) {
   };
   const titleText = keyMap[tab] ? t(keyMap[tab]) : '';
 
-  const chromeLabel = document.getElementById('app-tab-chrome-label');
-  if (chromeLabel) {
-    if (tab === 'feed') {
-      chromeLabel.textContent = 'SmolGame';
-      chromeLabel.classList.add('is-logo');
-    } else {
-      chromeLabel.textContent = titleText;
-      chromeLabel.classList.remove('is-logo');
-    }
-  }
-
   setBottomNavActive(tab);
   window._activeMainTab = tab;
   window.currentTab = tab;
