@@ -5683,7 +5683,7 @@ textarea.field-input {
 }
 
 .search-header {
-  padding: calc(var(--safe-top) + 26px) 16px 14px;
+  padding: 80px 16px 14px;
   border-bottom: 1px solid var(--border);
   background: rgba(0, 0, 0, 0.2);
 }
