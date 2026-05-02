@@ -5115,12 +5115,20 @@ textarea.field-input {
   flex: 1;
   display: flex !important;
   flex-direction: row !important;
-  justify-content: space-around;
-  align-items: center;
+  justify-content: space-around !important;
+  align-items: center !important;
   padding: 0;
   margin: 0;
   background: transparent;
   min-width: 0;
+}
+
+.theme-light .stat-num {
+  color: #000 !important;
+}
+
+.theme-light .stat-label {
+  color: #8e8e93 !important;
 }
 
 .stat-item {
