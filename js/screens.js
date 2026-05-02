@@ -303,10 +303,21 @@ function switchTab(tab) {
 
   setBottomNavActive(tab);
   window._activeMainTab = tab;
-  document.body.classList.toggle(
-    'app-main-chrome',
-    tab === 'feed' || tab === 'games' || tab === 'search' || tab === 'profile' || tab === 'upload'
-  );
+  // Обновляем центральный заголовок экрана
+  const titleEl = document.getElementById('screen-top-title');
+  if (titleEl) {
+    if (tab === 'feed') {
+      titleEl.textContent = '';
+    } else {
+      const keyMap = {
+        'games': 'nav_games',
+        'upload': 'nav_upload',
+        'search': 'nav_search',
+        'profile': 'nav_profile'
+      };
+      titleEl.textContent = keyMap[tab] ? t(keyMap[tab]) : '';
+    }
+  }
 }
 
 window.openUpload = openUpload;

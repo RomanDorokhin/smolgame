@@ -2123,6 +2123,48 @@ body.game-detail-open .app-tab-chrome {
   height: 100%;
 }
 
+.screen-top-title {
+  position: fixed;
+  top: calc(var(--safe-top, 0px) + 18px);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 2005;
+  font-weight: 700;
+  font-size: 16px;
+  color: #fff;
+  pointer-events: none;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  white-space: nowrap;
+  opacity: 1;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+}
+
+body.feed-open:not(.game-detail-active):not(.author-screen-active) .screen-top-title {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.theme-light .screen-top-title {
+  color: #000;
+  text-shadow: none;
+}
+
+.feed-exit-focus {
+  position: fixed;
+  top: calc(var(--safe-top, 0px) + 12px);
+  left: 16px;
+  z-index: 10000;
+  background: rgba(0, 0, 0, 0.6);
+  color: #fff;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-weight: 700;
+  font-size: 14px;
+  backdrop-filter: blur(4px);
+  display: none;
+}
+
 .app-tab-chrome-text {
   display: flex;
   align-items: center;
