@@ -190,7 +190,7 @@
 
       author_screen_title: 'Разработчик',
       author_back_aria: 'Назад',
-      author_screen_back: '← Назад',
+      author_screen_back: '← Лента',
       author_games_title: 'Игры автора',
       author_follow: 'Подписаться',
 
@@ -590,7 +590,7 @@
 
       author_screen_title: 'Developer',
       author_back_aria: 'Back',
-      author_screen_back: '← Back',
+      author_screen_back: '← Feed',
       author_games_title: "Author's games",
       author_follow: 'Follow',
 
