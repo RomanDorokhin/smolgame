@@ -752,12 +752,14 @@ Must work on a mobile phone.</pre>
 
 <!-- ══ ЭКРАН: АВТОР ══ -->
 <div id="author-screen">
-  <div class="profile-header">
-    <div class="screen-header screen-header--in-screen">
-      <button type="button" class="screen-back sg-btn sg-btn--ghost" data-action="close-author" data-i18n-aria="author_back_aria" aria-label="Назад" data-i18n="author_screen_back" style="padding: 6px 12px; font-size: 13px; border-radius: 8px; background: rgba(0,0,0,0.05); color: inherit; border: 1px solid rgba(0,0,0,0.05);">← Назад</button>
-    </div>
-    <div class="profile-header-main">
-      <div class="profile-avatar" id="authorProfileAvatar">?</div>
+  <div class="screen-header screen-header--profile">
+    <button type="button" class="screen-back sg-back-btn sg-btn sg-btn--ghost" data-action="close-author" data-i18n-aria="author_back_aria" aria-label="Назад" data-i18n="author_screen_back">← Лента</button>
+  </div>
+  <div class="profile-header-main">
+    <div class="profile-avatar-row">
+      <div class="profile-avatar-wrap">
+        <div class="profile-avatar" id="authorProfileAvatar">?</div>
+      </div>
       <div class="profile-stats-grid">
         <div class="stat-item">
           <div class="stat-num" id="authorStatGames">0</div>
@@ -773,9 +775,11 @@ Must work on a mobile phone.</pre>
         </div>
       </div>
     </div>
-    <div class="profile-name" id="authorProfileName">—</div>
-    <div class="profile-handle" id="authorProfileHandle">@—</div>
-    <p class="profile-bio" id="authorProfileBio" style="display:none"></p>
+    <div class="profile-info-block">
+      <div class="profile-name" id="authorProfileName">—</div>
+      <div class="profile-handle" id="authorProfileHandle">@—</div>
+      <p class="profile-bio" id="authorProfileBio" style="display:none"></p>
+    </div>
     <button class="author-follow-btn" id="authorFollowBtn" data-action="toggle-author-follow" data-i18n="author_follow">Подписаться</button>
   </div>
   <div class="profile-wall-section">
