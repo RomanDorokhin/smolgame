@@ -468,12 +468,7 @@ function updateOverlay() {
   const g = GAMES[window.currentIdx];
   if (!g) return;
 
-  const roleEl = document.getElementById('authorRole');
-  if (roleEl) {
-    const isSelf = Boolean(g.authorId && USER?.id && sameTelegramUserId(g.authorId, USER.id));
-    const tf = typeof t === 'function' ? t : () => '';
-    roleEl.textContent = isSelf ? tf('author_you') : tf('author_role');
-  }
+  // Role is hidden in the new horizontal design to save space and reduce redundancy.
 
   document.getElementById('authorName').textContent = g.authorName;
 

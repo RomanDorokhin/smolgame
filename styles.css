@@ -2008,11 +2008,11 @@ body.feed-game-focus .app-tab-chrome {
   align-items: center;
   gap: 12px;
   padding: var(--safe-top, 0px) 16px 0;
-  height: calc(var(--safe-top, 0px) + 56px);
+  height: calc(var(--safe-top, 0px) + 44px);
   pointer-events: auto;
   background: var(--surface);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
   border-bottom: 1px solid var(--border);
 }
 
@@ -2101,18 +2101,18 @@ html[lang="ru"] .i18n-en {
 }
 
 .sg-back-btn {
-  height: 36px !important;
-  padding: 0 16px !important;
-  border-radius: 12px !important;
-  font-size: 14px !important;
+  height: 32px !important;
+  padding: 0 12px !important;
+  border-radius: 8px !important;
+  font-size: 13px !important;
   font-weight: 700 !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
-  top: calc(var(--safe-top, 0px) + 10px) !important;
-  left: 16px !important;
+  top: calc(var(--safe-top, 0px) + 6px) !important;
+  left: 12px !important;
   position: fixed !important;
-  z-index: 2200 !important;
+  z-index: 2600 !important;
   transition: all 0.2s ease !important;
 }
 
@@ -2173,15 +2173,14 @@ body.feed-layout-vertical #game-info .author-row {
   pointer-events: auto;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   cursor: pointer;
-  padding: 8px 14px;
+  padding: 6px 12px 6px 6px;
   border-radius: 50px;
-  background: rgba(0, 0, 0, 0.4);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  background: rgba(0, 0, 0, 0.25);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -2191,8 +2190,8 @@ body.feed-layout-vertical #game-info .author-row:active {
 }
 
 .author-avatar {
-  width: 44px;
-  height: 44px;
+  width: 34px;
+  height: 34px;
   border-radius: 50%;
   background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
   display: flex;
@@ -2201,7 +2200,7 @@ body.feed-layout-vertical #game-info .author-row:active {
   font-weight: 800;
   color: #fff;
   flex-shrink: 0;
-  padding: 2px;
+  padding: 1.5px;
   overflow: hidden;
   position: relative;
 }
@@ -2218,37 +2217,33 @@ body.feed-layout-vertical #game-info .author-row:active {
 
 .author-block {
   display: flex;
-  flex-direction: column;
-  gap: 1px;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
 }
 
 .author-name {
   font-family: 'Syne', sans-serif;
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 800;
   color: #fff;
-  line-height: 1.2;
+  line-height: 1;
   letter-spacing: -0.01em;
 }
 
 .author-role {
-  font-family: 'Space Grotesk', sans-serif;
-  font-size: 11px;
-  color: rgba(255, 255, 255, 0.6);
-  font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
+  display: none;
 }
 
 .follow-btn {
-  margin-left: 12px;
-  padding: 6px 16px;
-  background: #000;
+  margin-left: 4px;
+  padding: 4px 12px;
+  background: rgba(255, 255, 255, 0.1);
   color: #fff;
-  border-radius: 8px;
+  border-radius: 6px;
   font-weight: 700;
-  font-size: 13px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  font-size: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
   transition: all 0.2s ease;
   pointer-events: auto;
 }
@@ -4818,8 +4813,8 @@ textarea.field-input {
   -webkit-overflow-scrolling: touch;
   overscroll-behavior-y: contain;
   touch-action: pan-y;
-  padding-top: calc(var(--safe-top, 0px) + 64px);
-  padding-bottom: 100px;
+  padding-top: calc(var(--safe-top, 0px) + 44px);
+  padding-bottom: 90px;
 }
 
 #profile-screen.open,
