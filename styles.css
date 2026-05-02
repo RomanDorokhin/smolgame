@@ -1956,6 +1956,14 @@ body.app-feed-hidden-under-sheet iframe:not(.upload-preview-iframe) {
   z-index: -100 !important;
 }
 
+body.app-feed-hidden-under-sheet {
+  background-color: var(--bg) !important;
+}
+
+body.app-feed-hidden-under-sheet::before {
+  display: none !important;
+}
+
 body.feed-layout-vertical #feed {
   touch-action: none;
 }
@@ -3904,8 +3912,7 @@ body.keyboard-open .app-tab-chrome {
 
 #games-library-screen.open {
   display: flex;
-  bottom: calc(var(--safe-bottom) + var(--nav-h));
-  z-index: 9999;
+  bottom: 0;
   padding-bottom: calc(var(--safe-bottom) + var(--nav-h) + 16px);
 }
 
@@ -3984,8 +3991,7 @@ body.keyboard-open .app-tab-chrome {
 #upload-screen.open {
   display: flex;
   /* Панель над нижним таббаром, не на весь экран */
-  bottom: calc(var(--safe-bottom) + var(--nav-h));
-  z-index: 9999;
+  bottom: 0;
   padding-bottom: calc(var(--safe-bottom) + var(--nav-h) + 20px);
 }
 
@@ -5835,8 +5841,7 @@ textarea.field-input {
 
 #search-screen.open {
   display: flex;
-  bottom: calc(var(--safe-bottom) + var(--nav-h));
-  z-index: 9999;
+  bottom: 0;
   padding-bottom: calc(var(--safe-bottom) + var(--nav-h) + 12px);
 }
 
