@@ -1,3 +1,7 @@
+:root {
+  --header-h: 56px;
+}
+
 html,
 body,
 #root,
@@ -2123,17 +2127,25 @@ body.feed-game-focus #dots {
   letter-spacing: 0.04em;
   padding: 4px 8px;
   border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.28);
-  background: rgba(0, 0, 0, 0.25);
-  color: rgba(255, 255, 255, 0.75);
+  border: 1px solid var(--border);
+  background: rgba(0, 0, 0, 0.05);
+  color: var(--text);
+  opacity: 0.6;
   cursor: pointer;
   line-height: 1;
+  transition: all 0.2s;
+}
+
+.theme-dark .lang-switch {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.2);
 }
 
 .lang-switch--active {
-  color: #fff;
-  border-color: rgba(255, 255, 255, 0.55);
-  background: rgba(255, 255, 255, 0.12);
+  opacity: 1;
+  background: var(--text) !important;
+  color: var(--bg) !important;
+  border-color: var(--text) !important;
 }
 
 html[lang="en"] .i18n-ru {
@@ -4119,6 +4131,7 @@ body.keyboard-open .app-tab-chrome {
   justify-content: center;
   padding: var(--safe-top, 0px) 16px 0;
   height: calc(var(--safe-top, 0px) + var(--header-h));
+  min-height: calc(var(--safe-top, 0px) + var(--header-h));
   background: var(--bg);
   z-index: 2100;
   border-bottom: 1px solid var(--border);
