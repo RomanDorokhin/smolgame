@@ -4837,10 +4837,13 @@ textarea.field-input {
 }
 
 .profile-avatar-row {
-  display: flex;
+  display: flex !important;
+  flex-direction: row !important;
   align-items: center;
-  gap: 24px;
-  margin-bottom: 12px;
+  justify-content: flex-start;
+  gap: 12px;
+  margin-bottom: 20px;
+  width: 100%;
 }
 
 .profile-avatar-wrap {
@@ -4938,18 +4941,23 @@ textarea.field-input {
 /* Stats Grid */
 .profile-stats-grid {
   flex: 1;
-  display: flex;
+  display: flex !important;
+  flex-direction: row !important;
   justify-content: space-around;
+  align-items: center;
   padding: 0;
   margin: 0;
   background: transparent;
+  min-width: 0;
 }
 
 .stat-item {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2px;
+  justify-content: center;
+  gap: 1px;
+  flex: 1;
 }
 
 .stat-num {
