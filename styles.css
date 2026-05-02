@@ -1968,10 +1968,7 @@ body.feed-layout-vertical #feed {
 
 .slide-inner {
   position: absolute;
-  top: calc(var(--safe-top, 0px) + var(--header-h));
-  bottom: 0;
-  left: 0;
-  right: 0;
+  inset: 0;
   display: flex;
   flex-direction: column;
 }
