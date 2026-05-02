@@ -71,19 +71,6 @@ function updateGithubUploadUi() {
   }
 }
 
-// ══ RADICAL DESIGN 3.0: TOGGLE UPLOAD GUIDE ══
-document.addEventListener('DOMContentLoaded', () => {
-  document.getElementById('toggleUploadGuide')?.addEventListener('click', function() {
-    const guide = document.getElementById('upload-guide-block');
-    if (!guide) return;
-    const isHidden = guide.style.display === 'none';
-    guide.style.display = isHidden ? 'block' : 'none';
-    if (isHidden) {
-      guide.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
-  });
-});
-
 async function selectMethod(m) {
   if (m === 'github' || m === 'premium') {
     await refreshUploadCapabilities();
