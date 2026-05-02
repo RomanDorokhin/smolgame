@@ -2774,10 +2774,15 @@ body.feed-layout-vertical #game-info .author-row:active {
 }
 
 /* Active Colors */
-.nav-item.active#nav-feed { color: #8a2be2; }
-.nav-item.active#nav-games { color: #ff2d55; }
-.nav-item.active#nav-search { color: #34c759; }
-.nav-item.active#nav-profile { color: #007aff; }
+.nav-item.active#nav-feed .nav-icon { color: #3b82f6; }
+.nav-item.active#nav-games .nav-icon { color: #ef4444; }
+.nav-item.active#nav-search .nav-icon { color: #22c55e; }
+.nav-item.active#nav-profile .nav-icon { color: #a855f7; }
+
+.nav-item.active .nav-label {
+  color: #3b82f6;
+  opacity: 1;
+}
 
 /* Inactive but distinct colors? No, keep muted */
 .nav-item#nav-feed:not(.active) { color: rgba(138, 43, 226, 0.4); }
@@ -3689,14 +3694,9 @@ body.keyboard-open .app-tab-chrome {
   text-transform: none;
 }
 
-.nav-item.active .nav-label {
-  color: var(--nav-active);
-}
-
 .nav-item.active .nav-icon {
   opacity: 1;
   transform: translateY(-0.5px);
-  color: #fff;
 }
 
 /* Центральная кнопка: марка smolgame + плюс (как в TikTok) */
