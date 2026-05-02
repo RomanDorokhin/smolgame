@@ -1007,6 +1007,40 @@ body.theme-light .nav-item.active .nav-icon {
 .sg-genre--other .sg-gi-a {
   color: #9aa4b8;
 }
+.profile-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 100px;
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.badge--dev {
+  background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+  color: #92400e;
+  border: 1px solid #fde68a;
+}
+
+.badge--premium {
+  background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%);
+  color: #9a3412;
+  border: 1px solid #fed7aa;
+}
+
+body.theme-light .badge--dev {
+  background: linear-gradient(135deg, #fff9db 0%, #fff3bf 100%);
+  border-color: #ffe066;
+}
+
+body.theme-light .badge--premium {
+  background: linear-gradient(135deg, #fff4e6 0%, #ffe8cc 100%);
+  border-color: #ffd8a8;
+}
 
 .sg-genre--other .sg-gi-b {
   color: #8a9ab0;
@@ -5065,24 +5099,39 @@ textarea.field-input {
   padding: 14px 0;
   background: transparent;
   border: none;
-  color: var(--muted);
+  color: rgba(255, 255, 255, 0.4);
   cursor: pointer;
   position: relative;
   transition: all 0.2s ease;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+body.theme-light .profile-tab-btn {
+  color: #8e8e93;
 }
 
 .profile-tab-btn.active {
   color: #fff;
 }
 
+body.theme-light .profile-tab-btn.active {
+  color: #000;
+}
+
 .profile-tab-btn.active::after {
   content: '';
   position: absolute;
   bottom: 0;
-  left: 0;
-  right: 0;
+  left: 20%;
+  right: 20%;
   height: 2px;
   background: #fff;
+  border-radius: 2px;
+}
+
+body.theme-light .profile-tab-btn.active::after {
+  background: #000;
 }
 
 .profile-tab-btn-icon {
