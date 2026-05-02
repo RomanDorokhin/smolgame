@@ -1883,10 +1883,11 @@ body.tg-only-wall #toast {
 }
 
 .author-name {
-  font-weight: 800;
-  font-size: 16px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
+  font-weight: 700;
+  font-size: 15px;
   color: #fff;
-  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
   white-space: nowrap;
 }
 
@@ -2325,11 +2326,12 @@ body.feed-layout-vertical #game-info .author-row:active {
 
 .follow-btn {
   margin-left: 12px;
-  padding: 6px 14px;
-  background: transparent !important;
+  padding: 0 12px;
+  background: rgba(255, 255, 255, 0.1) !important;
   color: #fff;
   border-radius: 8px;
-  font-weight: 600;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
+  font-weight: 700;
   font-size: 13px;
   border: 1px solid rgba(255, 255, 255, 0.4);
   transition: all 0.2s ease;
@@ -2338,7 +2340,7 @@ body.feed-layout-vertical #game-info .author-row:active {
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 32px;
+  height: 28px;
 }
 
 .follow-btn:active {
