@@ -2231,7 +2231,7 @@ body.feed-layout-vertical:not(.feed-game-focus) .slide.feed-slide--active .slide
 body.feed-layout-vertical #game-info {
   position: fixed;
   left: 16px;
-  bottom: 90px !important;
+  bottom: 75px !important;
   right: 90px;
   z-index: 120;
   display: flex;
