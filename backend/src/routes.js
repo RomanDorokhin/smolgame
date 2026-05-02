@@ -1078,10 +1078,21 @@ export async function postGameReview(req, env, gameId) {
 
   const id = newId();
   try {
-    await env.DB.prepare(
+    const res = await env.DB.prepare(
       `INSERT INTO game_reviews (id, game_id, user_id, parent_id, body, created_at)
        VALUES (?, ?, ?, ?, ?, unixepoch())`
     ).bind(id, gameId, user.id, body.parentId || null, ok.text).run();
+
+    if (res.meta.changes > 0) {
+      if (body.parentId) {
+        // Reply: notify parent review author
+        const parent = await env.DB.prepare(`SELECT user_id FROM game_reviews WHERE id = ?`).bind(body.parentId).first();
+        if (parent) await addActivity(env.DB, { userId: parent.user_id, actorId: user.id, type: 'reply', gameId, review_id: id });
+      } else {
+        // New review: notify game author
+        await addActivity(env.DB, { userId: g.authorId, actorId: user.id, type: 'review', gameId, review_id: id });
+      }
+    }
   } catch (e) {
     if (isMissingTableError(e)) {
       return error('Отзывы пока недоступны — админ должен выполнить миграцию БД (game_reviews).', 503);
@@ -1326,6 +1337,8 @@ export async function toggleLike(req, env, gameId, method) {
   ).bind(user.id, gameId).run();
   if (res.meta.changes > 0) {
     await env.DB.prepare(`UPDATE games SET likes = likes + 1 WHERE id = ?`).bind(gameId).run();
+    const g = await gameByIdRow(env.DB, gameId);
+    if (g) await addActivity(env.DB, { userId: g.authorId, actorId: user.id, type: 'like', gameId });
   }
   return json({ ok: true, liked: true });
 }
@@ -1341,9 +1354,12 @@ export async function toggleFollow(req, env, authorId, method) {
     ).bind(user.id, authorId).run();
     return json({ ok: true, following: false });
   }
-  await env.DB.prepare(
+  const res = await env.DB.prepare(
     `INSERT OR IGNORE INTO follows (user_id, author_id) VALUES (?, ?)`
   ).bind(user.id, authorId).run();
+  if (res.meta.changes > 0) {
+    await addActivity(env.DB, { userId: authorId, actorId: user.id, type: 'follow' });
+  }
   return json({ ok: true, following: true });
 }
 
@@ -1553,4 +1569,52 @@ function publicUser(user) {
     bio: user.bio != null ? String(user.bio) : '',
     avatar,
   };
+}
+
+export async function logRepost(req, env, gameId) {
+  const user = await authenticate(req, env);
+  if (!user) return error('unauthorized', 401);
+  const g = await gameByIdRow(env.DB, gameId);
+  if (!g) return error('not found', 404);
+  await addActivity(env.DB, { userId: g.authorId, actorId: user.id, type: 'repost', gameId });
+  return json({ ok: true });
+}
+
+export async function getActivity(req, env) {
+  const user = await authenticate(req, env);
+  if (!user) return error('unauthorized', 401);
+  
+  const results = await env.DB.prepare(`
+    SELECT a.*, 
+           u.first_name AS actorFirst, u.last_name AS actorLast, u.photo_url AS actorPhoto, u.site_handle AS actorHandle,
+           g.title AS gameTitle
+      FROM activity a
+      LEFT JOIN users u ON u.id = a.actor_id
+      LEFT JOIN games g ON g.id = a.game_id
+     WHERE a.user_id = ?
+     ORDER BY a.created_at DESC
+     LIMIT 30
+  `).bind(user.id).all();
+  
+  return json({ activities: results.results || [] });
+}
+
+export async function markActivityRead(req, env) {
+  const user = await authenticate(req, env);
+  if (!user) return error('unauthorized', 401);
+  await env.DB.prepare(`UPDATE activity SET is_read = 1 WHERE user_id = ?`).bind(user.id).run();
+  return json({ ok: true });
+}
+
+async function addActivity(db, { userId, actorId, type, gameId, reviewId, postId }) {
+  if (userId === actorId) return;
+  const id = newId();
+  try {
+    await db.prepare(`
+      INSERT INTO activity (id, user_id, actor_id, type, game_id, review_id, post_id, created_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'))
+    `).bind(id, userId, actorId, type, gameId || null, reviewId || null, postId || null).run();
+  } catch (e) {
+    console.error('[Activity] Error adding activity:', e);
+  }
 }

@@ -117,6 +117,9 @@ async function shareGame() {
     author: author ? ` by ${author}` : ''
   });
 
+  // Log repost on backend
+  if (typeof API.logRepost === 'function') API.logRepost(g.id).catch(() => {});
+
   // 1) Лучший путь в Telegram: нативный share-sheet в чат.
   try {
     const shareUrl = 'https://t.me/share/url?url=' + encodeURIComponent(url) +

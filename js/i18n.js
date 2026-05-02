@@ -216,6 +216,15 @@
       share_text:
         '{title}{author} — мини-игра в SmolGame (лента в Telegram, без обязательной рекламы перед игрой). Запусти по ссылке:',
 
+      activity_title: 'События',
+      activity_empty: 'Здесь будут уведомления о лайках и отзывах.',
+      act_like: 'оценил игру «{game}»',
+      act_review: 'оставил отзыв к «{game}»',
+      act_reply: 'ответил на твой отзыв к «{game}»',
+      act_follow: 'подписался на тебя',
+      act_repost: 'поделился игрой «{game}»',
+      profile_tab_wall: 'Стена',
+
       search_empty_title: 'Поиск по играм',
       search_empty_sub: 'Введи название или ник. Жанр — полоска выше.',
       search_no_results: 'Ничего не нашли',
@@ -615,6 +624,15 @@
       subscribed: 'Subscribed',
       share_text:
         '{title}{author} — a mini-game on SmolGame (Telegram feed, no forced ad before play). Open via link:',
+
+      activity_title: 'Activity',
+      activity_empty: 'Notifications about likes and reviews will appear here.',
+      act_like: 'liked your game "{game}"',
+      act_review: 'reviewed your game "{game}"',
+      act_reply: 'replied to your review of "{game}"',
+      act_follow: 'started following you',
+      act_repost: 'shared your game "{game}"',
+      profile_tab_wall: 'Wall',
 
       search_empty_title: 'Search games',
       search_empty_sub: 'Enter a title or handle. Genre — chips above.',

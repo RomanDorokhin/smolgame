@@ -52,7 +52,13 @@ const CLICK_ACTIONS = {
   'toggle-follow':  (_el, ev) => { ev.stopPropagation(); toggleFollow(); },
   'toggle-author-follow': (el, ev) => { ev.stopPropagation(); toggleAuthorFollow(el); },
 
-  'switch-tab':     (el) => switchTab(el.dataset.tab),
+  'switch-tab': (el) => {
+    const tab = el.dataset.tab;
+    switchTab(tab);
+    if (tab === 'profile' && typeof window.refreshActivity === 'function') {
+      window.refreshActivity();
+    }
+  },
   'set-lang-ru':    () => { if (typeof setLang === 'function') setLang('ru'); },
   'set-lang-en':    () => { if (typeof setLang === 'function') setLang('en'); },
   'select-method':  (el) => selectMethod(el.dataset.method),
@@ -159,6 +165,15 @@ const CLICK_ACTIONS = {
     const tab = el.dataset.tab;
     document.querySelectorAll('.profile-tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
     document.querySelectorAll('.profile-tab-content').forEach(c => c.classList.toggle('active', c.id === 'profile-tab-' + tab));
+    if (tab === 'activity' && typeof window.markNotificationsRead === 'function') {
+      window.markNotificationsRead();
+    }
+  },
+  'open-activity': (el) => {
+    const gameId = el.dataset.gameId;
+    if (gameId && typeof openGameDetail === 'function') {
+      openGameDetail(gameId);
+    }
   },
   'profile-retry-me': () => {
     if (typeof renderProfile === 'function') renderProfile();

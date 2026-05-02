@@ -316,4 +316,7 @@ window.API = {
     reject:     (gameId)   => apiFetch(`/api/admin/reject/${encodeURIComponent(gameId)}`,  { method: 'POST' }),
     delete:     (gameId)   => apiFetch(`/api/games/${encodeURIComponent(gameId)}`, { method: 'DELETE' }),
   },
+  getActivity: () => apiFetch(`/api/me/activity?_t=${Date.now()}`),
+  markActivityRead: () => apiFetch('/api/me/activity/read', { method: 'POST' }),
+  logRepost: (gameId) => apiFetch(`/api/games/${encodeURIComponent(gameId)}/repost`, { method: 'POST' }),
 };

@@ -5,6 +5,7 @@ import {
   toggleLike, toggleFollow, toggleBookmark, getUserProfile, getUserGames, play,
   adminPending, adminApprove, adminReject,
   listUserPosts, createUserPost, deleteUserPost,
+  getActivity, markActivityRead, logRepost
 } from './routes.js';
 import { githubOAuthStart, githubOAuthCallback } from './github-oauth.js';
 import { githubOAuthDonePage } from './github-oauth-done.js';
@@ -89,6 +90,8 @@ async function route(req, env, pathname) {
   if (pathname === '/api/me/played-games' && m === 'GET') return getPlayedGames(req, env);
   if (pathname === '/api/me/games-library' && m === 'GET') return getMyGamesLibraryBatch(req, env);
   if (pathname === '/api/me/registered' && m === 'GET') return checkRegistered(req, env);
+  if (pathname === '/api/me/activity' && m === 'GET') return getActivity(req, env);
+  if (pathname === '/api/me/activity/read' && m === 'POST') return markActivityRead(req, env);
   if (pathname === '/api/telegram/webhook' && m === 'POST') return telegramWebhook(req, env);
   if (pathname === '/api/register' && m === 'POST') return register(req, env);
   if (pathname === '/api/submit' && m === 'POST') return submitGame(req, env);
@@ -114,6 +117,9 @@ async function route(req, env, pathname) {
   }
   if ((match = pathname.match(/^\/api\/games\/([^/]+)\/play$/))) {
     if (m === 'POST') return play(req, env, match[1]);
+  }
+  if ((match = pathname.match(/^\/api\/games\/([^/]+)\/repost$/))) {
+    if (m === 'POST') return logRepost(req, env, match[1]);
   }
   if ((match = pathname.match(/^\/api\/games\/([^/]+)\/reviews$/))) {
     if (m === 'GET') return listGameReviews(req, env, match[1]);
