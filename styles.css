@@ -2107,7 +2107,8 @@ body.app-main-chrome .app-tab-chrome {
   display: flex !important;
 }
 
-body.game-detail-open .app-tab-chrome {
+body.game-detail-open .app-tab-chrome,
+body.author-screen-active .app-tab-chrome {
   display: none !important;
 }
 
