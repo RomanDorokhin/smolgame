@@ -2844,7 +2844,7 @@ body.feed-layout-vertical #game-info .author-row:active {
   display: flex;
   align-items: center;
   justify-content: space-around;
-  z-index: 1950;
+  z-index: 10001;
 }
 
 .nav-item {
@@ -3728,8 +3728,7 @@ body.game-detail-open .game-detail-screen {
   bottom: 0;
   left: 0;
   right: 0;
-  /* Выше шитов (1800), подсказок ленты и сплэша — иначе «табы не жмутся» при наложении */
-  z-index: 1950;
+  z-index: 10001;
   height: calc(var(--safe-bottom) + var(--nav-h));
   background: var(--tg-glass-bg);
   border-top: 1px solid var(--tg-glass-border);
