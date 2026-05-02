@@ -1946,8 +1946,14 @@ body.app-feed-hidden-under-sheet #feed,
 body.app-feed-hidden-under-sheet #empty-state,
 body.app-feed-hidden-under-sheet #side-actions,
 body.app-feed-hidden-under-sheet #game-info,
-body.app-feed-hidden-under-sheet #dots {
+body.app-feed-hidden-under-sheet #dots,
+body.app-feed-hidden-under-sheet .feed-ui-layer,
+body.app-feed-hidden-under-sheet iframe:not(.upload-preview-iframe) {
   display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  z-index: -100 !important;
 }
 
 body.feed-layout-vertical #feed {
@@ -3879,7 +3885,7 @@ body.keyboard-open .app-tab-chrome {
 #games-library-screen {
   position: fixed;
   inset: 0;
-  z-index: 2000;
+  z-index: 9999;
   background: var(--bg);
   display: none;
   flex-direction: column;
@@ -3899,7 +3905,7 @@ body.keyboard-open .app-tab-chrome {
 #games-library-screen.open {
   display: flex;
   bottom: calc(var(--safe-bottom) + var(--nav-h));
-  z-index: 2000;
+  z-index: 9999;
   padding-bottom: calc(var(--safe-bottom) + var(--nav-h) + 16px);
 }
 
@@ -3957,7 +3963,7 @@ body.keyboard-open .app-tab-chrome {
 #upload-screen {
   position: fixed;
   inset: 0;
-  z-index: 2000;
+  z-index: 9999;
   background: var(--bg);
   display: none;
   flex-direction: column;
@@ -3979,7 +3985,7 @@ body.keyboard-open .app-tab-chrome {
   display: flex;
   /* Панель над нижним таббаром, не на весь экран */
   bottom: calc(var(--safe-bottom) + var(--nav-h));
-  z-index: 2000;
+  z-index: 9999;
   padding-bottom: calc(var(--safe-bottom) + var(--nav-h) + 20px);
 }
 
@@ -4924,7 +4930,7 @@ textarea.field-input {
 #upload-screen {
   position: fixed;
   inset: 0;
-  z-index: 2000;
+  z-index: 9999;
   background: var(--bg);
   display: none;
   flex-direction: column;
@@ -4940,7 +4946,7 @@ textarea.field-input {
 #profile-screen.open,
 #author-screen.open {
   display: flex;
-  z-index: 2000;
+  z-index: 9999;
 }
 
 .profile-header-main {
@@ -5810,7 +5816,7 @@ textarea.field-input {
 #search-screen {
   position: fixed;
   inset: 0;
-  z-index: 2000;
+  z-index: 9999;
   background: var(--bg);
   display: none;
   flex-direction: column;
@@ -5830,7 +5836,7 @@ textarea.field-input {
 #search-screen.open {
   display: flex;
   bottom: calc(var(--safe-bottom) + var(--nav-h));
-  z-index: 2000;
+  z-index: 9999;
   padding-bottom: calc(var(--safe-bottom) + var(--nav-h) + 12px);
 }
 
@@ -6329,7 +6335,7 @@ textarea.field-input {
   gap: 16px;
   text-align: center;
   padding: 40px;
-  z-index: 2000;
+  z-index: 9999;
   isolation: isolate;
 }
 

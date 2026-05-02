@@ -5,13 +5,19 @@ function setBottomNavActive(tab) {
 
 /** Скрыть ленту/iframe под шитами: в части WebView (Telegram) iframe композится поверх div. */
 function syncBodyFeedHiddenUnderSheet() {
-  const feedHidden = Boolean(
-    document.getElementById('profile-screen')?.classList.contains('open') ||
-      document.getElementById('search-screen')?.classList.contains('open') ||
-      document.getElementById('games-library-screen')?.classList.contains('open') ||
-      document.getElementById('upload-screen')?.classList.contains('open') ||
-      document.getElementById('author-screen')?.classList.contains('open')
-  );
+  const screens = [
+    'profile-screen',
+    'search-screen',
+    'games-library-screen',
+    'upload-screen',
+    'author-screen',
+    'game-detail-screen'
+  ];
+  const feedHidden = screens.some(id => {
+    const el = document.getElementById(id);
+    return el && (el.classList.contains('open') || !el.hidden || el.style.display === 'flex');
+  });
+  
   document.body.classList.toggle('app-feed-hidden-under-sheet', feedHidden);
 }
 
