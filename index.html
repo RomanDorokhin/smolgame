@@ -682,6 +682,15 @@ Must work on a mobile phone.</pre>
       </div>
       <button type="button" class="submit-btn profile-save-btn" data-action="save-profile" data-i18n="profile_save_main">Сохранить профиль</button>
     </div>
+
+    <!-- Блок для админа: очередь модерации -->
+    <div class="admin-only" style="padding: 0 16px 20px;">
+      <div class="profile-wall-header" style="margin-bottom: 12px;">
+        <h3 class="profile-wall-title">На модерации</h3>
+      </div>
+      <div id="adminPendingList"></div>
+    </div>
+
     <div class="profile-tabs-segment">
       <button type="button" class="profile-tab-btn active" data-action="set-profile-tab" data-tab="games">
         <span class="profile-tab-btn-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg></span>
