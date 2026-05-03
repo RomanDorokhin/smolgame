@@ -23,6 +23,18 @@ function truncateDesc(text, maxLen) {
 function enterGameFocusMode() {
   document.body.classList.add('feed-game-focus');
   document.getElementById('feed-exit-focus')?.removeAttribute('hidden');
+  
+  // Даем фокус текущему iframe, чтобы управление работало сразу
+  setTimeout(() => {
+    const currentIframe = document.getElementById('iframe-' + window.currentIdx);
+    if (currentIframe) {
+      currentIframe.focus();
+      // На некоторых устройствах нужно "пнуть" фокус еще раз через окно iframe
+      try {
+        currentIframe.contentWindow?.focus();
+      } catch (e) {}
+    }
+  }, 100);
 }
 
 function exitGameFocusMode() {
@@ -224,10 +236,12 @@ function appendSlides(startIndex, gamesSlice) {
     iframe.className = 'slide-game';
     iframe.id = 'iframe-' + i;
     iframe.setAttribute('sandbox', 'allow-scripts allow-forms allow-popups allow-same-origin');
-    iframe.setAttribute('allow', 'autoplay');
+    iframe.setAttribute('allow', 'autoplay; fullscreen');
     iframe.setAttribute('referrerpolicy', 'no-referrer');
     iframe.setAttribute('loading', 'lazy');
+    iframe.tabIndex = 0;
     iframe.style.opacity = '0';
+    iframe.style.pointerEvents = 'auto';
     iframe.style.transition = 'opacity 0.3s';
 
     iframe.onload = () => {
