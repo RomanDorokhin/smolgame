@@ -279,7 +279,7 @@ function appendSlides(startIndex, gamesSlice) {
     }
 
     if (Math.abs(i - window.currentIdx) <= 1) {
-      iframe.src = safeUrl;
+      iframe.src = safeUrl + (safeUrl.includes('?') ? '&' : '?') + 'v=' + Date.now();
     }
     iframe.dataset.src = safeUrl;
 
