@@ -226,7 +226,7 @@ window.debugClearCache = function() {
     url.searchParams.set('_tg', String(Date.now()));
     window.location.replace(url.toString());
   } catch (e) {
-    alert('Reset failed: ' + e.message);
+    if (typeof showToast === 'function') showToast('⚠️ Reset failed: ' + e.message);
   }
 };
 

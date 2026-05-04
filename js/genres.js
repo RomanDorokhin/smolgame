@@ -17,10 +17,10 @@ function renderGenrePills(containerId, stateKey) {
     const pill = document.createElement('div');
     pill.className = 'genre-pill' + (selectedGenres[stateKey] === g.label ? ' selected' : '');
     pill.innerHTML = genrePillHtml(g);
-    pill.onclick = () => {
+    pill.addEventListener('click', () => {
       selectedGenres[stateKey] = selectedGenres[stateKey] === g.label ? '' : g.label;
       renderGenrePills(containerId, stateKey);
-    };
+    });
     el.appendChild(pill);
   });
 }
@@ -49,7 +49,7 @@ function renderGenreFilter() {
     tag.innerHTML =
       (typeof genreIconSvg === 'function' ? genreIconSvg(iconKey, 'sg-genre-ic--sm') : '') +
       `<span class="genre-tag-txt">${esc(g.labelDisplay)}</span>`;
-    tag.onclick = () => {
+    tag.addEventListener('click', () => {
       if (g.value === GENRE_FILTER_ALL_VALUE) {
         window.selectedGenre = '';
       } else {
@@ -57,7 +57,7 @@ function renderGenreFilter() {
       }
       renderGenreFilter();
       onSearch(document.getElementById('searchInput').value);
-    };
+    });
     el.appendChild(tag);
   });
 }

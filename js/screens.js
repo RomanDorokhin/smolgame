@@ -134,7 +134,6 @@ function toggleAuthorFollow(btn) {
     loadAuthorProfile(authorId);
     showToast(typeof userFacingError === 'function' ? userFacingError(err) : t('try_again'));
     if (typeof hapticWarning === 'function') hapticWarning();
-    console.warn('author follow failed', err);
   });
 }
 
@@ -170,7 +169,6 @@ async function loadAuthorProfile(authorId) {
         USER.bio = user.bio || USER.bio;
         // Сохраняем в localStorage для надежности (state.js подхватит при следующем запуске)
         try { localStorage.setItem('smolgame:persisted_id:v1', USER.id); } catch(e) {}
-        console.log('[Author-Sync] Synced author data to USER', { ...USER });
     }
 
     setAvatar(document.getElementById('authorProfileAvatar'), user.avatar || '?');

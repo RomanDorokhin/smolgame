@@ -99,7 +99,6 @@ async function loadGames() {
     saveSet(STORAGE_KEYS.followed, followedSet);
     saveSet(STORAGE_KEYS.bookmarked, bookmarkedSet);
   } catch (e) {
-    console.error('feed load failed', e);
     window.GAMES = [];
     window.feedHasMore = false;
     window.feedLoadFailed = true;
@@ -147,7 +146,7 @@ async function loadMoreFeed() {
     GAMES.push(...fresh);
     appendSlides(start, fresh);
   } catch (e) {
-    console.warn('feed load more failed', e);
+    // Тихо игнорируем — попытка будет при следующем скролле
   } finally {
     feedLoadingMore = false;
   }

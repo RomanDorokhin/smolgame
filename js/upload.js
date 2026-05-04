@@ -8,7 +8,7 @@ async function refreshUploadCapabilities() {
       USER.isPremium = Boolean(me.user.isPremium);
     }
   } catch (e) {
-    console.warn('refreshUploadCapabilities', e);
+    // Тихо игнорируем — обновимся при следующем открытии
   }
   updateGithubUploadUi();
 }
@@ -644,7 +644,6 @@ async function submitGame(method) {
     closeUpload();
   } catch (e) {
     const m = e?.message || tf('err_submit_fail');
-    console.error('submitGame failed', e);
     showToast('⚠️ ' + m);
   }
 }

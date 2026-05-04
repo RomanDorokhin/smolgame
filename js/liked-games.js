@@ -48,16 +48,13 @@ async function loadGamesLibrary() {
     if (typeof API.gamesLibrary === 'function') {
       try {
         const batch = await API.gamesLibrary();
-        console.log('[GamesLib] batch success:', { liked: batch?.likedGames?.length, played: batch?.playedGames?.length });
         liked = Array.isArray(batch?.likedGames) ? batch.likedGames : [];
         played = Array.isArray(batch?.playedGames) ? batch.playedGames : [];
       } catch (e) {
-        console.warn('[GamesLib] batch failed, trying fallback', e);
         const [likedData, playedData] = await Promise.all([
           API.likedGames(),
           API.playedGames().catch(() => ({ games: [] })),
         ]);
-        console.log('[GamesLib] fallback success:', { liked: likedData?.games?.length, played: playedData?.games?.length });
         liked = Array.isArray(likedData?.games) ? likedData.games : [];
         played = Array.isArray(playedData?.games) ? playedData.games : [];
       }

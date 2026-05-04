@@ -10,11 +10,7 @@ function closestOverlayScreen(el) {
   );
 }
 
-function isOverlayOpen() {
-  return Boolean(document.querySelector(
-    '#profile-screen.open, #author-screen.open, #search-screen.open, #games-library-screen.open, #upload-screen.open'
-  ));
-}
+// isOverlayOpen() определена в feed.js (подключается раньше)
 
 function closeOverlayScreen(screen) {
   if (!screen) return;

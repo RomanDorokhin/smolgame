@@ -7,25 +7,15 @@ function tf() {
   return typeof window.t === 'function' ? window.t : k => k;
 }
 
-function hasTelegramInitData() {
-  try {
-    const o = window.__smolgameInitDataOverride;
-    if (o && String(o).includes('hash=')) return true;
-    const d = Telegram?.WebApp?.initData;
-    return Boolean(d && String(d).includes('hash='));
-  } catch (e) {
-    return false;
-  }
-}
+// hasTelegramInitData() определена в tg-gate.js (подключается раньше)
 
 async function checkOnboarding() {
-  if (!hasTelegramInitData()) return false;
+  if (typeof hasTelegramInitData === 'function' && !hasTelegramInitData()) return false;
   try {
     const data = await API.checkRegistered();
     if (data?.user?.siteHandle) USER.siteHandle = data.user.siteHandle;
     return !data?.registered;
   } catch (e) {
-    console.warn('registration check failed', e);
     return false;
   }
 }

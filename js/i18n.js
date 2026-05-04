@@ -415,6 +415,14 @@
       genre_api_other: 'Прочее',
 
       report_to_admin: '⚑ Жалоба: напиши админу бота',
+
+      delete_post_confirm: 'Удалить пост?',
+      review_reply: 'Ответить',
+      review_edit: 'Изм.',
+      review_delete: 'Удалить',
+      review_cancel: 'Отмена',
+      review_replying_to: 'Ответ {name}',
+      review_editing: 'Редактирование',
     },
     en: {
       nav_feed: 'Feed',
@@ -824,6 +832,14 @@
       genre_api_other: 'Прочее',
 
       report_to_admin: '⚑ Report: message the bot admin',
+
+      delete_post_confirm: 'Delete post?',
+      review_reply: 'Reply',
+      review_edit: 'Edit',
+      review_delete: 'Del.',
+      review_cancel: 'Cancel',
+      review_replying_to: 'Replying to {name}',
+      review_editing: 'Editing review',
     },
   };
 

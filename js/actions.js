@@ -56,7 +56,6 @@ function toggleLike() {
       updateOverlay();
       showToast(typeof userFacingError === 'function' ? userFacingError(err) : t('try_again'));
       if (typeof hapticWarning === 'function') hapticWarning();
-      console.warn('like/bookmark failed', err);
     })
     .finally(() => { _pendingLike = false; });
 }
@@ -90,7 +89,6 @@ function toggleFollow() {
       updateOverlay();
       showToast(typeof userFacingError === 'function' ? userFacingError(err) : t('try_again'));
       if (typeof hapticWarning === 'function') hapticWarning();
-      console.warn('follow failed', err);
     })
     .finally(() => { _pendingFollow = false; });
 }
@@ -155,7 +153,7 @@ function reportGame() {
 
 function trackPlay(gameId) {
   if (!API.play) return;
-  API.play(gameId).catch(e => console.warn('play track failed', e));
+  API.play(gameId).catch(() => {}); // Тихо игнорируем — ошибка трекинга не критична
 }
 
 function openAuthorProfile() {

@@ -1,14 +1,5 @@
 /** Сброс кэша БЕЗ подтверждения (confirm может блокироваться в WebView) */
-function debugClearCache() {
-  try {
-    sessionStorage.clear();
-    localStorage.clear();
-    location.reload();
-  } catch (e) {
-    alert('Err: ' + e.message);
-  }
-}
-window.debugClearCache = debugClearCache;
+// debugClearCache уже определён в utils.js
 
 var tf = typeof window.t === 'function' ? window.t : k => k;
 var genreOtherApi = () => tf('genre_api_other');
@@ -70,7 +61,6 @@ function setProfileMeBannerVisible(show, message) {
 
 /** Применить ответ GET /api/me к USER и DOM профиля (отдельно от списка игр). */
 function applyMeToProfileUi(me, { bioRead, handleRead, premBadge, setStatGames, setStatFollowers, setStatLikes }) {
-  console.log('[Profile] applyMeToProfileUi', { me, USER_before: { ...USER } });
   const st = parseProfileStats(me);
   if (st.games != null) setStatGames(String(st.games));
   if (st.likes != null) setStatLikes(fmtNum(st.likes));
@@ -110,8 +100,6 @@ function applyMeToProfileUi(me, { bioRead, handleRead, premBadge, setStatGames, 
     }
   }
 
-  console.log('[Profile] USER_after', { ...USER });
-
   // Обновляем текст в любом случае (даже если me.user пустой, покажем что есть в USER)
   const nameEl = document.getElementById('profileName');
   if (nameEl) nameEl.textContent = USER.name || USER.id || tf('guest');
@@ -138,7 +126,6 @@ function applyMeToProfileUi(me, { bioRead, handleRead, premBadge, setStatGames, 
 
 async function renderProfile() {
   try {
-    console.log('[Profile] renderProfile start. USER.id:', USER.id);
     const bioRead = document.getElementById('profileBio');
     const handleRead = document.getElementById('profileSiteHandleRead');
 
@@ -174,11 +161,9 @@ async function renderProfile() {
 
     try {
       me = await API.me();
-      console.log('[Profile] API.me success:', Boolean(me?.user));
 
       // FALLBACK: Если API.me вернул Гостя (user: null), но у нас есть хоть какой-то USER.id
       if ((!me || !me.user) && USER.id) {
-        console.log('[Profile] API.me returned Guest, trying fallback to API.userProfile for ID:', USER.id);
         try {
           const pub = await API.userProfile(USER.id);
           if (pub && pub.user) {
@@ -187,15 +172,13 @@ async function renderProfile() {
               user: { ...pub.user, isAdmin: document.body.classList.contains('is-admin') },
               stats: pub.stats
             };
-            console.log('[Profile] Fallback success', me);
           }
         } catch (e2) {
-          console.warn('[Profile] Fallback failed', e2);
+          // Fallback не удался — продолжаем с тем что есть
         }
       }
       applyMeToProfileUi(me, { bioRead, handleRead, premBadge, setStatGames, setStatFollowers, setStatLikes });
     } catch (err) {
-      console.error('[Profile] API.me failed', err);
       setProfileMeBannerVisible(true, err.message || tf('profile_me_failed'));
     }
 
@@ -204,7 +187,6 @@ async function renderProfile() {
       const myGamesRes = await API.myGames();
       myGames = Array.isArray(myGamesRes?.games) ? myGamesRes.games : [];
     } catch (e) {
-      console.warn('[Profile] API.myGames failed', e);
       myGames = Array.isArray(window.GAMES) ? window.GAMES.filter(g => sameTelegramUserId(g.authorId, USER.id)) : [];
     }
 
@@ -221,10 +203,7 @@ async function renderProfile() {
     }
 
     const grid = document.getElementById('myGamesGrid');
-    if (!grid) {
-      console.warn('renderProfile: #myGamesGrid missing');
-      return;
-    }
+    if (!grid) return;
 
     if (myGames.length === 0) {
       grid.innerHTML =
@@ -303,7 +282,7 @@ async function renderProfile() {
       });
     }
   } catch (fatal) {
-    console.error('[Profile] FATAL renderProfile error', fatal);
+    showToast(typeof userFacingError === 'function' ? userFacingError(fatal) : tf('err_load'));
   }
 }
 function setProfileAvatar(avatar) {
@@ -536,13 +515,16 @@ async function loadUserPosts(userId, containerId) {
         <div class="profile-post-body">${esc(p.body)}</div>
         <div class="profile-post-footer">
           <span class="profile-post-date">${esc(formatGameDate(p.createdAt))}</span>
-          ${(isMy || isAdmin) ? `<button type="button" class="profile-post-delete" onclick="deleteProfilePost('${p.id}', '${userId}', '${containerId}')">Удалить</button>` : ''}
+          ${(isMy || isAdmin) ? `<button type="button" class="profile-post-delete"
+            data-action="delete-profile-post"
+            data-post-id="${esc(String(p.id))}"
+            data-user-id="${esc(String(userId))}"
+            data-container-id="${esc(String(containerId))}">Удалить</button>` : ''}
         </div>
       </div>
     `).join('');
   } catch (e) {
-    console.error('[Wall] Load error', e);
-    container.innerHTML = '<div class="feed-reviews-empty">Не удалось загрузить стену</div>';
+    container.innerHTML = `<div class="feed-reviews-empty">${esc(tf('err_load'))}</div>`;
   }
 }
 
@@ -564,12 +546,19 @@ async function submitProfilePost() {
 }
 
 async function deleteProfilePost(postId, userId, containerId) {
-  if (!confirm('Удалить пост?')) return;
+  const confirmed = await new Promise(resolve => {
+    if (window.Telegram?.WebApp?.showConfirm) {
+      window.Telegram.WebApp.showConfirm(tf('delete_post_confirm'), (ok) => resolve(ok));
+    } else {
+      resolve(confirm(tf('delete_post_confirm')));
+    }
+  });
+  if (!confirmed) return;
   try {
     await API.deletePost(postId);
     await loadUserPosts(userId, containerId);
   } catch (e) {
-    showToast('Ошибка удаления');
+    showToast(tf('err_error'));
   }
 }
 

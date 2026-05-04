@@ -123,6 +123,27 @@ const CLICK_ACTIONS = {
   'submit-feed-review': () => {
     if (typeof submitFeedReview === 'function') submitFeedReview();
   },
+  'cancel-review-action': () => {
+    if (typeof cancelReviewAction === 'function') cancelReviewAction();
+  },
+  'review-reply': (el) => {
+    if (typeof setReviewReply === 'function') {
+      setReviewReply(el.dataset.reviewId, el.dataset.reviewAuthor || '');
+    }
+  },
+  'review-edit': (el) => {
+    if (typeof setReviewEdit === 'function') {
+      setReviewEdit(el.dataset.reviewId, el.dataset.reviewBody || '');
+    }
+  },
+  'review-delete': (el) => {
+    if (typeof deleteFeedReview === 'function') deleteFeedReview(el.dataset.reviewId);
+  },
+  'delete-profile-post': (el) => {
+    if (typeof deleteProfilePost === 'function') {
+      deleteProfilePost(el.dataset.postId, el.dataset.userId, el.dataset.containerId);
+    }
+  },
   'feed-enter-focus': () => {
     if (typeof enterGameFocusMode === 'function') enterGameFocusMode();
     document.getElementById('feed-exit-focus')?.removeAttribute('hidden');

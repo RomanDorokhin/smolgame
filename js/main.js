@@ -15,7 +15,6 @@ async function bootstrap() {
     window.setAppTheme(window.CURRENT_THEME || 'dark');
   }
 
-  console.log('[Main] Bootstrap: Telegram data ready. USER.id:', USER.id, 'HasInitData:', typeof hasTelegramInitData === 'function' ? hasTelegramInitData() : 'unknown');
   if (typeof hideTelegramOnlyWall === 'function') hideTelegramOnlyWall();
   if (typeof showBootSplash === 'function') showBootSplash();
 
@@ -24,8 +23,7 @@ async function bootstrap() {
     const onboardingP =
       typeof checkOnboarding === 'function'
         ? checkOnboarding().catch(e => {
-            console.warn('onboarding check failed', e);
-            return false;
+                    return false;
           })
         : Promise.resolve(false);
 
@@ -56,7 +54,6 @@ async function bootstrap() {
       setTimeout(() => window.syncUSERFromTelegramInit && window.syncUSERFromTelegramInit(), 1200);
     }
   } catch (e) {
-    console.error('bootstrap failed', e);
     if (typeof showToast === 'function') {
       const m =
         typeof userFacingError === 'function'
@@ -108,7 +105,6 @@ async function jumpToStartParamGame() {
     : startParam;
   
   if (typeof openGameDetail === 'function') {
-    console.log('[Main] Deep link detected, opening game:', gameId);
     openGameDetail(gameId);
   }
 }

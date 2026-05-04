@@ -69,8 +69,6 @@ window.syncThemeWithTelegram = function() {
   
   // Telegram.WebApp.colorScheme возвращает 'light' или 'dark'
   const colorScheme = tg.colorScheme || 'dark';
-  console.log('[Theme] Syncing with Telegram:', colorScheme);
-  
   if (typeof window.setAppTheme === 'function') {
     window.setAppTheme(colorScheme);
   }
@@ -81,6 +79,5 @@ window.syncThemeWithTelegram();
 
 // И вешаем слушатель на изменения темы внутри самого Telegram
 window.Telegram?.WebApp?.onEvent('themeChanged', () => {
-  console.log('[Theme] Telegram theme changed event');
   window.syncThemeWithTelegram();
 });

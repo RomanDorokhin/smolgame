@@ -18,29 +18,7 @@
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <!-- ?v=8230 сбрасывает кэш WebView Telegram после правок JS/CSS (меняй при каждом релизе фронта; при крупных фиксах — у всех script/link сразу). -->
 <link rel="stylesheet" href="styles.css?v=8230">
-<script>
-  /** WATCHDOG: Форсируем имя и аватар, если система его "забыла" */
-  (function() {
-    setInterval(() => {
-      const nameEl = document.getElementById('profileName');
-      const avatarEl = document.getElementById('profileAvatar');
-      const userId = window.USER?.id;
-      if (userId && nameEl) {
-        const curName = nameEl.textContent;
-        if (curName === 'Гость' || curName === 'Guest' || !curName || curName === '...') {
-          nameEl.textContent = window.USER.name || userId;
-        }
-      }
-      if (userId && avatarEl && (avatarEl.textContent === '?' || !avatarEl.innerHTML)) {
-        if (window.USER.avatar && window.USER.avatar.startsWith('http')) {
-          avatarEl.innerHTML = `<img src="${window.USER.avatar}" alt="" referrerpolicy="no-referrer">`;
-        } else {
-          avatarEl.textContent = window.USER.avatar || '?';
-        }
-      }
-    }, 1000);
-  })();
-</script>
+<!-- Обновление имени/аватара теперь реактивно через syncUSERFromTelegramInit() в telegram-initdata.js -->
 </head>
 <body class="feed-open">
 <div id="screen-top-title" class="screen-top-title"></div>
@@ -166,7 +144,7 @@
   <div class="feed-reviews-drawer-compose">
     <div id="feedReviewActionBar" class="feed-reviews-action-bar" hidden>
       <span id="feedReviewActionText"></span>
-      <button type="button" class="feed-reviews-action-cancel" onclick="cancelReviewAction()">×</button>
+      <button type="button" class="feed-reviews-action-cancel" data-action="cancel-review-action" aria-label="Отмена">×</button>
     </div>
     <div class="feed-reviews-compose-row">
       <textarea id="feedReviewInput" class="feed-reviews-input" maxlength="500" data-i18n-placeholder="review_short_placeholder" placeholder="Твой отзыв..."></textarea>
@@ -902,7 +880,8 @@ Must work on a mobile phone.</pre>
 </script>
 
 <script src="js/liked-games.js?v=8230"></script>
-<script src="js/game-reviews-fix.js?v=8230"></script>
+<!-- game-reviews-fix.js устарел: логика перенесена в game-detail.js -->
+<script src="js/game-detail.js?v=8231"></script>
 <script src="js/game-editor.js?v=8230"></script>
 <script src="js/activity.js?v=8230"></script>
 <script src="js/profile_new.js?v=8230"></script>

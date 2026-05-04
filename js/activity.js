@@ -21,7 +21,7 @@
 
       list.innerHTML = activities.map(a => renderActivityItem(a)).join('');
     } catch (e) {
-      console.warn('refreshActivity failed', e);
+      // Тихо игнорируем — активность обновляется поллингом
     }
   };
 
