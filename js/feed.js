@@ -240,7 +240,6 @@ function appendSlides(startIndex, gamesSlice) {
     iframe.setAttribute('loading', 'lazy');
     iframe.tabIndex = 0;
     iframe.style.opacity = '0';
-    iframe.style.pointerEvents = 'auto';
     iframe.style.transition = 'opacity 0.3s';
 
     iframe.onload = () => {
