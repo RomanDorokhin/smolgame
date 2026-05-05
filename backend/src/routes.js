@@ -17,10 +17,12 @@ import {
 const FEED_PAGE_DEFAULT = 15;
 const FEED_PAGE_MAX = 40;
 
-/** Старые D1 без части колонок в users/games — перебираем запросы, пока не сработает. */
-const PUBLISHED_FEED_SQL_VARIANTS = [
-  // Полная схема
-  `SELECT g.id, g.title, g.description, g.genre, g.genre_emoji AS genreEmoji,
+/**
+ * Основной SQL-запрос для ленты игр.
+ * Мы отказались от перебора вариантов SQL (антипаттерн), предполагая, что БД мигрирована.
+ */
+const PUBLISHED_FEED_SQL = `
+  SELECT g.id, g.title, g.description, g.genre, g.genre_emoji AS genreEmoji,
           g.url, g.image_url AS imageUrl, g.likes, g.plays, g.author_id AS authorId,
           g.created_at AS createdAt, g.updated_at AS updatedAt,
           u.site_handle AS authorHandle, u.first_name AS authorFirst, u.last_name AS authorLast,
@@ -30,96 +32,34 @@ const PUBLISHED_FEED_SQL_VARIANTS = [
      LEFT JOIN users u ON u.id = g.author_id
     WHERE g.status = 'published'
     ORDER BY g.created_at DESC
-    LIMIT ?1 OFFSET ?2`,
-  // Старые games без genre_emoji / image_url; полные users
-  `SELECT g.id, g.title, g.description, g.genre, CAST(NULL AS TEXT) AS genreEmoji,
-          g.url, CAST(NULL AS TEXT) AS imageUrl, g.likes, g.plays, g.author_id AS authorId,
-          g.created_at AS createdAt, g.updated_at AS updatedAt,
-          u.site_handle AS authorHandle, u.first_name AS authorFirst, u.last_name AS authorLast,
-          u.display_name AS authorDisplayName,
-          COALESCE(NULLIF(TRIM(u.avatar_override_url), ''), u.photo_url) AS authorPhoto
-     FROM games g
-     LEFT JOIN users u ON u.id = g.author_id
-    WHERE g.status = 'published'
-    ORDER BY g.created_at DESC
-    LIMIT ?1 OFFSET ?2`,
-  // Полные games; users только «старые» поля (без site_handle / display_name / avatar_override)
-  `SELECT g.id, g.title, g.description, g.genre, g.genre_emoji AS genreEmoji,
-          g.url, g.image_url AS imageUrl, g.likes, g.plays, g.author_id AS authorId,
-          g.created_at AS createdAt, g.updated_at AS updatedAt,
-          COALESCE(NULLIF(TRIM(u.username), ''), u.id) AS authorHandle,
-          u.first_name AS authorFirst, u.last_name AS authorLast,
-          CAST(NULL AS TEXT) AS authorDisplayName,
-          u.photo_url AS authorPhoto
-     FROM games g
-     LEFT JOIN users u ON u.id = g.author_id
-    WHERE g.status = 'published'
-    ORDER BY g.created_at DESC
-    LIMIT ?1 OFFSET ?2`,
-  // Минимум и games, и users
-  `SELECT g.id, g.title, g.description, g.genre, CAST(NULL AS TEXT) AS genreEmoji,
-          g.url, CAST(NULL AS TEXT) AS imageUrl, g.likes, g.plays, g.author_id AS authorId,
-          g.created_at AS createdAt, g.updated_at AS updatedAt,
-          COALESCE(NULLIF(TRIM(u.username), ''), u.id) AS authorHandle,
-          u.first_name AS authorFirst, u.last_name AS authorLast,
-          CAST(NULL AS TEXT) AS authorDisplayName,
-          u.photo_url AS authorPhoto
-     FROM games g
-     LEFT JOIN users u ON u.id = g.author_id
-    WHERE g.status = 'published'
-    ORDER BY g.created_at DESC
-    LIMIT ?1 OFFSET ?2`,
-];
+    LIMIT ?1 OFFSET ?2`;
 
+async function publishedFeedGamesQuery(db, limit, offset, orderBy = 'g.created_at DESC') {
+  const sql = PUBLISHED_FEED_SQL.replace(/ORDER\s+BY\s+g\.created_at\s+DESC/i, `ORDER BY ${orderBy}`);
+  return db.prepare(sql).bind(limit, offset).all();
+}
+
+// Вспомогательные функции для совместимости, теперь просто выполняют первый запрос
 async function firstSuccessfulAll(db, sqlStrings, bindArgs = []) {
-  let lastErr;
-  for (const sql of sqlStrings) {
-    try {
-      const stmt = db.prepare(sql);
-      return bindArgs.length ? await stmt.bind(...bindArgs).all() : await stmt.all();
-    } catch (e) {
-      lastErr = e;
-      if (!isMissingColumnError(e)) throw e;
-    }
-  }
-  throw lastErr;
+  return bindArgs.length ? await db.prepare(sqlStrings[0]).bind(...bindArgs).all() : await db.prepare(sqlStrings[0]).all();
 }
 
 async function firstSuccessfulFirst(db, sqlStrings, bindArgs = []) {
-  let lastErr = new Error('No SQL variants succeeded');
-  for (const sql of sqlStrings) {
-    try {
-      const stmt = db.prepare(sql);
-      return bindArgs.length ? await stmt.bind(...bindArgs).first() : await stmt.first();
-    } catch (e) {
-      lastErr = e;
-      if (!isMissingColumnError(e)) throw e;
-    }
-  }
-  throw lastErr;
-}
-
-async function publishedFeedGamesQuery(db, limit, offset, orderBy = 'g.created_at DESC') {
-  const variants = PUBLISHED_FEED_SQL_VARIANTS.map(sql =>
-    sql.replace(/ORDER\s+BY\s+g\.created_at\s+DESC/i, `ORDER BY ${orderBy}`)
-  );
-  return firstSuccessfulAll(db, variants, [limit, offset]);
+  return bindArgs.length ? await db.prepare(sqlStrings[0]).bind(...bindArgs).first() : await db.prepare(sqlStrings[0]).first();
 }
 
 /** Та же схема колонок, что и лента, но только pending — для админа в начале ленты. */
-const PENDING_QUEUE_SQL_VARIANTS = PUBLISHED_FEED_SQL_VARIANTS.map(sql =>
-  sql
+const PENDING_QUEUE_SQL = PUBLISHED_FEED_SQL
     .replace("WHERE g.status = 'published'", "WHERE g.status = 'pending'")
-    .replace('ORDER BY g.created_at DESC', 'ORDER BY g.created_at ASC')
-);
+    .replace('ORDER BY g.created_at DESC', 'ORDER BY g.created_at ASC');
 
 async function pendingQueueGamesQuery(db, cap = 100) {
-  return firstSuccessfulAll(db, PENDING_QUEUE_SQL_VARIANTS, [cap, 0]);
+  return db.prepare(PENDING_QUEUE_SQL).bind(cap, 0).all();
 }
 
-/** Очередь модерации без JOIN users — надёжно, если схема users отличается. */
-const PENDING_QUEUE_GAMES_ONLY_VARIANTS = [
-  `SELECT g.id, g.title, g.description, g.genre, g.genre_emoji AS genreEmoji,
+/** Очередь модерации без JOIN users. */
+const PENDING_QUEUE_GAMES_ONLY_SQL = `
+  SELECT g.id, g.title, g.description, g.genre, g.genre_emoji AS genreEmoji,
           g.url, g.image_url AS imageUrl, g.likes, g.plays, g.author_id AS authorId,
           CAST(NULL AS TEXT) AS authorHandle,
           CAST(NULL AS TEXT) AS authorFirst,
@@ -129,22 +69,10 @@ const PENDING_QUEUE_GAMES_ONLY_VARIANTS = [
      FROM games g
     WHERE g.status = 'pending'
     ORDER BY g.created_at ASC
-    LIMIT ?1 OFFSET ?2`,
-  `SELECT g.id, g.title, g.description, g.genre, CAST(NULL AS TEXT) AS genreEmoji,
-          g.url, CAST(NULL AS TEXT) AS imageUrl, g.likes, g.plays, g.author_id AS authorId,
-          CAST(NULL AS TEXT) AS authorHandle,
-          CAST(NULL AS TEXT) AS authorFirst,
-          CAST(NULL AS TEXT) AS authorLast,
-          CAST(NULL AS TEXT) AS authorDisplayName,
-          CAST(NULL AS TEXT) AS authorPhoto
-     FROM games g
-    WHERE g.status = 'pending'
-    ORDER BY g.created_at ASC
-    LIMIT ?1 OFFSET ?2`,
-];
+    LIMIT ?1 OFFSET ?2`;
 
 async function pendingQueueGamesOnlyQuery(db, cap = 100) {
-  return firstSuccessfulAll(db, PENDING_QUEUE_GAMES_ONLY_VARIANTS, [cap, 0]);
+  return db.prepare(PENDING_QUEUE_GAMES_ONLY_SQL).bind(cap, 0).all();
 }
 
 function mapFeedGameRow(g, likedSet, followedSet, bookmarkedSet, extra = {}) {
@@ -174,8 +102,8 @@ function mapFeedGameRow(g, likedSet, followedSet, bookmarkedSet, extra = {}) {
   };
 }
 
-const GAME_BY_ID_SQL_VARIANTS = [
-  `SELECT g.id, g.title, g.description, g.genre, g.genre_emoji AS genreEmoji,
+const GAME_BY_ID_SQL = `
+  SELECT g.id, g.title, g.description, g.genre, g.genre_emoji AS genreEmoji,
           g.url, g.image_url AS imageUrl, g.likes, g.plays, g.author_id AS authorId,
           g.status, g.created_at AS createdAt, g.updated_at AS updatedAt,
           u.site_handle AS authorHandle, u.first_name AS authorFirst, u.last_name AS authorLast,
@@ -183,40 +111,10 @@ const GAME_BY_ID_SQL_VARIANTS = [
           COALESCE(NULLIF(TRIM(u.avatar_override_url), ''), u.photo_url) AS authorPhoto
      FROM games g
      LEFT JOIN users u ON u.id = g.author_id
-    WHERE g.id = ?`,
-  `SELECT g.id, g.title, g.description, g.genre, CAST(NULL AS TEXT) AS genreEmoji,
-          g.url, CAST(NULL AS TEXT) AS imageUrl, g.likes, g.plays, g.author_id AS authorId,
-          g.status, g.created_at AS createdAt, g.updated_at AS updatedAt,
-          u.site_handle AS authorHandle, u.first_name AS authorFirst, u.last_name AS authorLast,
-          u.display_name AS authorDisplayName,
-          COALESCE(NULLIF(TRIM(u.avatar_override_url), ''), u.photo_url) AS authorPhoto
-     FROM games g
-     LEFT JOIN users u ON u.id = g.author_id
-    WHERE g.id = ?`,
-  `SELECT g.id, g.title, g.description, g.genre, g.genre_emoji AS genreEmoji,
-          g.url, g.image_url AS imageUrl, g.likes, g.plays, g.author_id AS authorId,
-          g.status, g.created_at AS createdAt, g.updated_at AS updatedAt,
-          COALESCE(NULLIF(TRIM(u.username), ''), u.id) AS authorHandle,
-          u.first_name AS authorFirst, u.last_name AS authorLast,
-          CAST(NULL AS TEXT) AS authorDisplayName,
-          u.photo_url AS authorPhoto
-     FROM games g
-     LEFT JOIN users u ON u.id = g.author_id
-    WHERE g.id = ?`,
-  `SELECT g.id, g.title, g.description, g.genre, CAST(NULL AS TEXT) AS genreEmoji,
-          g.url, CAST(NULL AS TEXT) AS imageUrl, g.likes, g.plays, g.author_id AS authorId,
-          g.status, g.created_at AS createdAt, g.updated_at AS updatedAt,
-          COALESCE(NULLIF(TRIM(u.username), ''), u.id) AS authorHandle,
-          u.first_name AS authorFirst, u.last_name AS authorLast,
-          CAST(NULL AS TEXT) AS authorDisplayName,
-          u.photo_url AS authorPhoto
-     FROM games g
-     LEFT JOIN users u ON u.id = g.author_id
-    WHERE g.id = ?`,
-];
+    WHERE g.id = ?`;
 
 async function gameByIdRow(db, gameId) {
-  return firstSuccessfulFirst(db, GAME_BY_ID_SQL_VARIANTS, [gameId]);
+  return db.prepare(GAME_BY_ID_SQL).bind(gameId).first();
 }
 
 export async function getFeed(req, env) {
@@ -234,6 +132,12 @@ export async function getFeed(req, env) {
   // Только опубликованные. По умолчанию новые первыми (created_at DESC).
   // Если shuffle=true — случайный порядок (RANDOM()).
   const { results } = await publishedFeedGamesQuery(env.DB, limit, offset, shuffle ? 'RANDOM()' : 'g.created_at DESC');
+
+  const headers = {};
+  // Кэшируем ленту на уровне CDN на 1 минуту, если это не случайный порядок
+  if (!shuffle) {
+    headers['Cache-Control'] = 'public, max-age=60';
+  }
 
   let likedSet = new Set();
   let followedSet = new Set();
@@ -296,7 +200,7 @@ export async function getFeed(req, env) {
     isAdmin: user?.isAdmin === true,
     pendingQueue,
     pendingCount,
-  });
+  }, 200, headers);
 }
 
 const GET_ME_SQL_VARIANTS = [
@@ -553,7 +457,9 @@ export async function deleteAccount(req, env) {
     }
   }
 
-  // 3. Удаляем всё из БД пачкой (batch)
+  // 3. Удаляем всё из БД. Благодаря ON DELETE CASCADE в схеме,
+  // достаточно удалить пользователя. Но для совместимости со старыми базами
+  // (где CASCADE может не быть) оставляем явное удаление связанных данных.
   await env.DB.batch([
     env.DB.prepare(`DELETE FROM likes WHERE user_id = ?`).bind(uid),
     env.DB.prepare(`DELETE FROM bookmarks WHERE user_id = ?`).bind(uid),
@@ -562,6 +468,7 @@ export async function deleteAccount(req, env) {
     env.DB.prepare(`DELETE FROM user_game_plays WHERE user_id = ?`).bind(uid),
     env.DB.prepare(`DELETE FROM oauth_states WHERE user_id = ?`).bind(uid),
     env.DB.prepare(`DELETE FROM follows WHERE user_id = ? OR author_id = ?`).bind(uid, uid),
+    env.DB.prepare(`DELETE FROM activity WHERE user_id = ? OR actor_id = ?`).bind(uid, uid),
     env.DB.prepare(`DELETE FROM games WHERE author_id = ?`).bind(uid),
     env.DB.prepare(`DELETE FROM users WHERE id = ?`).bind(uid),
   ]);
@@ -1084,14 +991,15 @@ export async function postGameReview(req, env, gameId) {
     ).bind(id, gameId, user.id, body.parentId || null, ok.text).run();
 
     if (res.meta.changes > 0) {
-      if (body.parentId) {
-        // Reply: notify parent review author
-        const parent = await env.DB.prepare(`SELECT user_id FROM game_reviews WHERE id = ?`).bind(body.parentId).first();
-        if (parent) await addActivity(env.DB, { userId: parent.user_id, actorId: user.id, type: 'reply', gameId, review_id: id });
-      } else {
-        // New review: notify game author
-        await addActivity(env.DB, { userId: g.authorId, actorId: user.id, type: 'review', gameId, review_id: id });
-      }
+      const activityPromise = (async () => {
+        if (body.parentId) {
+          const parent = await env.DB.prepare(`SELECT user_id FROM game_reviews WHERE id = ?`).bind(body.parentId).first();
+          if (parent) await addActivity(env.DB, { userId: parent.user_id, actorId: user.id, type: 'reply', gameId, review_id: id });
+        } else {
+          await addActivity(env.DB, { userId: g.authorId, actorId: user.id, type: 'review', gameId, review_id: id });
+        }
+      })();
+      if (req.ctx?.waitUntil) req.ctx.waitUntil(activityPromise);
     }
   } catch (e) {
     if (isMissingTableError(e)) {
@@ -1133,10 +1041,14 @@ export async function deleteGameReview(req, env, reviewId) {
   const isAdmin = typeof env.ADMIN_TG_IDS === 'string' && env.ADMIN_TG_IDS.split(',').includes(String(user.id));
   if (row.user_id !== user.id && !isAdmin) return error('forbidden', 403);
 
-  // При удалении комментария также удаляем (или "зачищаем") ответы? 
-  // В TikTok обычно ответы остаются или удаляются каскадно. Сделаем каскадно для чистоты.
-  await env.DB.prepare(`DELETE FROM game_reviews WHERE id = ? OR parent_id = ?`)
-    .bind(reviewId, reviewId).run();
+  // Рекурсивное удаление всех вложенных ответов.
+  // В SQLite с включенным FOREIGN KEY + ON DELETE CASCADE это произойдет автоматически,
+  // если parent_id ссылается на id той же таблицы.
+  // Для надежности на старых схемах делаем ручной каскад (хотя бы для одного уровня).
+  await env.DB.batch([
+    env.DB.prepare(`DELETE FROM activity WHERE review_id = ?`).bind(reviewId),
+    env.DB.prepare(`DELETE FROM game_reviews WHERE id = ? OR parent_id = ?`).bind(reviewId, reviewId),
+  ]);
 
   return json({ ok: true });
 }
@@ -1337,8 +1249,11 @@ export async function toggleLike(req, env, gameId, method) {
   ).bind(user.id, gameId).run();
   if (res.meta.changes > 0) {
     await env.DB.prepare(`UPDATE games SET likes = likes + 1 WHERE id = ?`).bind(gameId).run();
-    const g = await gameByIdRow(env.DB, gameId);
-    if (g) await addActivity(env.DB, { userId: g.authorId, actorId: user.id, type: 'like', gameId });
+    const activityPromise = (async () => {
+      const g = await gameByIdRow(env.DB, gameId);
+      if (g) await addActivity(env.DB, { userId: g.authorId, actorId: user.id, type: 'like', gameId });
+    })();
+    if (req.ctx?.waitUntil) req.ctx.waitUntil(activityPromise);
   }
   return json({ ok: true, liked: true });
 }
@@ -1380,39 +1295,12 @@ export async function toggleBookmark(req, env, gameId, method) {
   return json({ ok: true, bookmarked: true });
 }
 
-const GET_USER_PROFILE_SQL_VARIANTS = [
-  `SELECT id, site_handle AS siteHandle, first_name AS firstName,
+const GET_USER_PROFILE_SQL = `
+  SELECT id, site_handle AS siteHandle, first_name AS firstName,
           last_name AS lastName, photo_url AS photoUrl,
           display_name AS displayName, bio AS bio,
           COALESCE(NULLIF(TRIM(avatar_override_url), ''), photo_url) AS avatarUrl
-     FROM users WHERE id = ?`,
-  /* Нет колонки bio — не читаем bio, остальное как в полной схеме */
-  `SELECT id, site_handle AS siteHandle, first_name AS firstName,
-          last_name AS lastName, photo_url AS photoUrl,
-          display_name AS displayName, CAST(NULL AS TEXT) AS bio,
-          COALESCE(NULLIF(TRIM(avatar_override_url), ''), photo_url) AS avatarUrl
-     FROM users WHERE id = ?`,
-  `SELECT id, site_handle AS siteHandle, first_name AS firstName,
-          last_name AS lastName, photo_url AS photoUrl,
-          display_name AS displayName, CAST(NULL AS TEXT) AS bio,
-          photo_url AS avatarUrl
-     FROM users WHERE id = ?`,
-  `SELECT id, site_handle AS siteHandle, first_name AS firstName,
-          last_name AS lastName, photo_url AS photoUrl,
-          CAST(NULL AS TEXT) AS displayName, CAST(NULL AS TEXT) AS bio,
-          COALESCE(NULLIF(TRIM(avatar_override_url), ''), photo_url) AS avatarUrl
-     FROM users WHERE id = ?`,
-  `SELECT id, site_handle AS siteHandle, first_name AS firstName,
-          last_name AS lastName, photo_url AS photoUrl,
-          CAST(NULL AS TEXT) AS displayName, CAST(NULL AS TEXT) AS bio,
-          photo_url AS avatarUrl
-     FROM users WHERE id = ?`,
-  `SELECT id, COALESCE(NULLIF(TRIM(username), ''), id) AS siteHandle, first_name AS firstName,
-          last_name AS lastName, photo_url AS photoUrl,
-          CAST(NULL AS TEXT) AS displayName, CAST(NULL AS TEXT) AS bio,
-          photo_url AS avatarUrl
-     FROM users WHERE id = ?`,
-];
+     FROM users WHERE id = ?`;
 
 export async function getUserProfile(req, env, userId) {
   const viewer = await authenticate(req, env);
@@ -1426,7 +1314,7 @@ export async function getUserProfile(req, env, userId) {
     .bind(userId);
 
   const [user, stats, followRow] = await Promise.all([
-    firstSuccessfulFirst(env.DB, GET_USER_PROFILE_SQL_VARIANTS, [userId]),
+    env.DB.prepare(GET_USER_PROFILE_SQL).bind(userId).first(),
     statsSql.first(),
     viewer
       ? env.DB
@@ -1444,7 +1332,7 @@ export async function getUserProfile(req, env, userId) {
     stats: stats || { games: 0, likes: 0, followers: 0 },
     isSelf: viewer?.id === userId,
     isFollowing,
-  });
+  }, 200, { 'Cache-Control': 'public, max-age=30' });
 }
 
 export async function getUserGames(req, env, userId) {

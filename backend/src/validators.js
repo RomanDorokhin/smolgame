@@ -3,11 +3,16 @@ const GENRES = new Set([
   'Стратегия', 'Гонки', 'Платформер', 'Прочее',
 ]);
 
+const DISALLOWED_HOSTS = new Set(['localhost', '127.0.0.1', '0.0.0.0']);
+
 export function safeHttpsUrl(raw) {
   try {
     const u = new URL(String(raw || '').trim());
     if (u.protocol !== 'https:') return null;
-    if (!u.hostname) return null;
+    if (!u.hostname || u.hostname.split('.').length < 2) return null;
+    if (DISALLOWED_HOSTS.has(u.hostname.toLowerCase())) return null;
+    // Базовая защита от SSRF: не разрешаем IP-адреса в hostname
+    if (/^\d{1,3}(\.\d{1,3}){3}$/.test(u.hostname)) return null;
     return u.toString();
   } catch (e) {
     return null;

@@ -215,7 +215,7 @@ function appendSlides(startIndex, gamesSlice) {
     const placeholder = document.createElement('div');
     placeholder.className = 'slide-placeholder';
     const thumbHtml = g.imageUrl
-      ? `<img src="${esc(g.imageUrl)}" class="slide-cover" alt="">`
+      ? `<img src="${esc(g.imageUrl)}" class="slide-cover" alt="" loading="lazy">`
       : `<div class="placeholder-icon sg-placeholder-genre">${typeof genreIconForGame === 'function' ? genreIconForGame(g) : ''}</div>`;
     const tf = typeof t === 'function' ? t : () => '';
     const statusBanner = g.status === 'pending'
@@ -395,10 +395,22 @@ function renderFeed() {
 
 function lazyLoadAround(idx) {
   GAMES.forEach((g, i) => {
-    if (Math.abs(i - idx) <= 1) {
-      const iframe = document.getElementById('iframe-' + i);
-      if (iframe && !iframe.src && iframe.dataset.src) {
+    const iframe = document.getElementById('iframe-' + i);
+    if (!iframe) return;
+
+    const distance = Math.abs(i - idx);
+    if (distance <= 1) {
+      // Загружаем iframe, если он близко
+      if (!iframe.src && iframe.dataset.src) {
         iframe.src = iframe.dataset.src;
+      }
+    } else if (distance > 2) {
+      // Виртуализация: выгружаем iframe, если он далеко (> 2 слайдов), для экономии памяти
+      if (iframe.src) {
+        iframe.src = '';
+        const placeholder = iframe.parentElement?.querySelector('.slide-placeholder');
+        if (placeholder) placeholder.classList.remove('hidden');
+        iframe.style.opacity = '0';
       }
     }
   });

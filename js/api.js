@@ -196,29 +196,19 @@ async function apiFetch(path, { method = 'GET', body, _did401Retry = false, _for
     const raw = data?.error;
     let msg = (typeof raw === 'string' && raw.trim()) || resp.statusText || 'request failed';
 
-    if (
-      resp.status === 401 &&
-      !_did401Retry &&
-      _needsTelegramAuth(path, method) &&
-      initRaw &&
-      _looksLikeInitData(initRaw)
-    ) {
-      if (typeof ensureSmolgameInitDataFromUrl === 'function') ensureSmolgameInitDataFromUrl();
-      if (typeof window.syncUSERFromTelegramInit === 'function') window.syncUSERFromTelegramInit();
-      await new Promise(r => setTimeout(r, 80));
-      return apiFetch(path, { method, body, _did401Retry: true, _forceQueryAuth: true });
-    }
-
-    if (
-      resp.status === 401 &&
-      !_did401Retry &&
-      _needsTelegramAuth(path, method) &&
-      typeof ensureSmolgameInitDataFromUrl === 'function'
-    ) {
-      ensureSmolgameInitDataFromUrl();
-      if (typeof window.syncUSERFromTelegramInit === 'function') window.syncUSERFromTelegramInit();
-      await new Promise(r => setTimeout(r, 120));
-      return apiFetch(path, { method, body, _did401Retry: true });
+    if (resp.status === 401 && !_did401Retry && _needsTelegramAuth(path, method)) {
+      if (initRaw && _looksLikeInitData(initRaw)) {
+        if (typeof ensureSmolgameInitDataFromUrl === 'function') ensureSmolgameInitDataFromUrl();
+        if (typeof window.syncUSERFromTelegramInit === 'function') window.syncUSERFromTelegramInit();
+        await new Promise(r => setTimeout(r, 80));
+        return apiFetch(path, { method, body, _did401Retry: true, _forceQueryAuth: true });
+      }
+      if (typeof ensureSmolgameInitDataFromUrl === 'function') {
+        ensureSmolgameInitDataFromUrl();
+        if (typeof window.syncUSERFromTelegramInit === 'function') window.syncUSERFromTelegramInit();
+        await new Promise(r => setTimeout(r, 120));
+        return apiFetch(path, { method, body, _did401Retry: true });
+      }
     }
 
     if (resp.status === 401) {
@@ -256,15 +246,39 @@ async function apiFetch(path, { method = 'GET', body, _did401Retry = false, _for
 window.API = {
   base: API_BASE,
 
-  feed:         (params = {}) => {
+  feed:         async (params = {}) => {
     const q = new URLSearchParams();
     if (params.offset != null) q.set('offset', String(params.offset));
     if (params.limit != null) q.set('limit', String(params.limit));
     if (params.shuffle === true) q.set('shuffle', 'true');
+    
+    const cacheKey = `cache:feed:${q.toString()}`;
+    if (!params.shuffle) {
+      const cached = sessionStorage.getItem(cacheKey);
+      if (cached) {
+        const { data, time } = JSON.parse(cached);
+        if (Date.now() - time < 60000) return data; // 1 min cache for feed
+      }
+    }
+    
     q.set('_t', String(Date.now()));
-    return apiFetch(`/api/feed?${q.toString()}`);
+    const data = await apiFetch(`/api/feed?${q.toString()}`);
+    if (!params.shuffle) {
+      sessionStorage.setItem(cacheKey, JSON.stringify({ data, time: Date.now() }));
+    }
+    return data;
   },
-  me:           ()         => apiFetch(`/api/me?_t=${Date.now()}`),
+  me:           async () => {
+    const cacheKey = 'cache:me';
+    const cached = sessionStorage.getItem(cacheKey);
+    if (cached) {
+      const { data, time } = JSON.parse(cached);
+      if (Date.now() - time < 30000) return data; // 30 sec cache for profile
+    }
+    const data = await apiFetch(`/api/me?_t=${Date.now()}`);
+    sessionStorage.setItem(cacheKey, JSON.stringify({ data, time: Date.now() }));
+    return data;
+  },
   updateMe:      (body)           => apiFetch('/api/me', { method: 'PATCH', body }),
   deleteAccount: ()               => apiFetch('/api/me', { method: 'DELETE' }),
   myGames:      ()         => apiFetch(`/api/me/games?_t=${Date.now()}`),

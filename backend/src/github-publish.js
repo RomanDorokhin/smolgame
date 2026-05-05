@@ -103,20 +103,26 @@ export async function publishGameToGithub(req, env) {
     const content = f?.content != null ? String(f.content) : '';
     if (!path || path.includes('..')) return error('Некорректный путь файла: ' + path);
     if (!/^[a-zA-Z0-9._/-]+$/.test(path)) return error('Путь только латиница, цифры, /, ., _ : ' + path);
+    let fileSize = 0;
     if (enc === 'base64') {
       const pad = content.length % 4 === 0 ? 0 : 4 - (content.length % 4);
       const b64clean = content.replace(/\s/g, '') + '='.repeat(pad);
       try {
         const bin = atob(b64clean);
-        total += bin.length;
+        fileSize = bin.length;
       } catch (e) {
         return error('Некорректный base64 для файла: ' + path);
       }
     } else {
-      total += new TextEncoder().encode(content).length;
+      fileSize = new TextEncoder().encode(content).length;
     }
+
+    if (fileSize > 1_500_000) {
+      return error(`Файл ${path} слишком большой (макс. 1.5 МБ для одного файла)`);
+    }
+    total += fileSize;
   }
-  if (total > 2_500_000) return error('Суммарный размер файлов слишком большой (макс ~2.5 MB)');
+  if (total > 5_000_000) return error('Суммарный размер файлов слишком большой (макс 5 MB)');
 
   const owner = String(row.login);
 

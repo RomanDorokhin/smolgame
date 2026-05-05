@@ -14,10 +14,13 @@ import { publishGameToGithub } from './github-publish.js';
 import { telegramWebhook } from './telegram-webhook.js';
 
 export default {
-  async fetch(req, env) {
+  async fetch(req, env, ctx) {
     const origin = resolveCorsOrigin(req, env);
 
     if (req.method === 'OPTIONS') return preflight(origin);
+
+    // Добавляем ctx в объект запроса, чтобы он был доступен в маршрутах
+    req.ctx = ctx;
 
     const url = new URL(req.url);
     const { pathname } = url;
