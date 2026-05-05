@@ -283,8 +283,15 @@ function appendSlides(startIndex, gamesSlice) {
 
     const stack = document.createElement('div');
     stack.className = 'slide-stack';
+    
+    // Блокировщик тачей: пока не нажали «Играть», iframe не должен ловить события,
+    // чтобы свайп ленты работал надёжно по всей площади.
+    const blocker = document.createElement('div');
+    blocker.className = 'slide-game-blocker';
+    
     stack.appendChild(placeholder);
     stack.appendChild(iframe);
+    stack.appendChild(blocker);
     slideInner.appendChild(stack);
 
     if (FEED_VERTICAL) {

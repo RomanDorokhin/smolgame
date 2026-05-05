@@ -2409,6 +2409,20 @@ body.feed-layout-vertical #game-info .author-row:active {
   background: #000;
 }
 
+.slide-game-blocker {
+  position: absolute;
+  inset: 0;
+  z-index: 25;
+  pointer-events: auto;
+  background: transparent;
+}
+
+body.feed-game-focus .slide.feed-slide--active .slide-game-blocker {
+  display: none;
+  pointer-events: none;
+}
+
+
 .slide-placeholder {
   position: absolute;
   top: var(--game-top);
