@@ -295,6 +295,7 @@ function switchTab(tab) {
       // Inject CSS
       const link = document.createElement('link');
       link.rel = 'stylesheet';
+      link.crossOrigin = 'anonymous';
       link.href = '/smolgame/agent-dist/assets/index.css?v=10004';
       document.head.appendChild(link);
 
@@ -307,6 +308,7 @@ function switchTab(tab) {
       // Inject JS module
       const script = document.createElement('script');
       script.type = 'module';
+      script.crossOrigin = 'anonymous';
       script.src = '/smolgame/agent-dist/assets/index.js?v=10004';
       
       script.onload = () => {

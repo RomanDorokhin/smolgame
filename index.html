@@ -560,7 +560,23 @@
 <div id="toast"></div>
 
 <!-- ══ SCRIPTS ══ -->
-<!-- Порядок важен: config/utils/telegram → state → api → модули логики → события → main. -->
+<script>
+  // Глобальный перехватчик ошибок для Telegram отладки
+  window.onerror = function(msg, url, lineNo, columnNo, error) {
+    var message = [
+      'Message: ' + msg,
+      'URL: ' + url,
+      'Line: ' + lineNo,
+      'Column: ' + columnNo,
+      'Error object: ' + JSON.stringify(error)
+    ].join('\n');
+    // Показываем ошибку только если она относится к агенту
+    if (url.indexOf('agent') !== -1 || url.indexOf('blob') !== -1) {
+      alert('AGENT ERROR:\n' + message);
+    }
+    return false;
+  };
+</script>
 <script src="js/config.js?v=10004"></script>
 <script src="js/genre-icons.js?v=10004"></script>
 <script src="js/utils.js?v=10004"></script>

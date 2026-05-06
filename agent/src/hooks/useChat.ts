@@ -160,6 +160,7 @@ export function useChat() {
   const [settings, setSettings] = useState<ChatSettings>(loadSettings);
   const [usage, setUsage] = useState<UsageStats>(loadUsage);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isPipelineRunning, setIsPipelineRunning] = useState(false);
   const [generationStep, setGenerationStep] = useState("");
   const [modelProgress] = useState<ModelProgress>({
     progress: 100,
@@ -347,6 +348,7 @@ export function useChat() {
           const htmlCode = htmlCodeMatch ? htmlCodeMatch[1] : fullContent;
 
           try {
+            setIsPipelineRunning(true);
             setGenerationStep("Quality assurance in progress...");
             const result = await runGamePipeline(gameId, htmlCode, {
               onProgress: (msg) => {
@@ -380,6 +382,7 @@ export function useChat() {
           } catch (pipelineError) {
             console.error("Pipeline failed:", pipelineError);
           } finally {
+            setIsPipelineRunning(false);
             setGenerationStep("");
           }
         }
@@ -494,7 +497,8 @@ export function useChat() {
     activeSessionId,
     currentSession,
     modelProgress,
-    isGenerating,
+    isGenerating: isGenerating || isPipelineRunning,
+    isPipelineRunning,
     settings,
     updateSettings,
     sendMessage,
