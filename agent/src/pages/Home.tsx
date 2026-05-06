@@ -5,7 +5,7 @@ import { ChatInput } from "@/components/ChatInput";
 import { ChatSidebar } from "@/components/ChatSidebar";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Menu, Sparkles, ShieldCheck } from "lucide-react";
+import { Menu, Sparkles, ShieldCheck, Copy, Check } from "lucide-react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Component, type ReactNode } from "react";
 
@@ -87,14 +87,37 @@ export default function Home() {
 
         {/* Minimal Header Controls */}
         <div className="flex items-center justify-between px-4 py-3 z-30 shrink-0">
-            <Button
-                variant="ghost"
-                size="sm"
-                className="h-9 w-9 p-0 bg-[#13141a] border border-white/5 rounded-xl md:hidden"
-                onClick={() => setSidebarOpen(true)}
-            >
-                <Menu size={18} className="text-[#a3b8d4]" />
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-9 w-9 p-0 bg-[#13141a] border border-white/5 rounded-xl md:hidden"
+                  onClick={() => setSidebarOpen(true)}
+              >
+                  <Menu size={18} className="text-[#a3b8d4]" />
+              </Button>
+              
+              {currentSession.messages.length > 0 && (
+                <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-9 px-3 bg-[#13141a] border border-white/5 rounded-xl text-[9px] font-black uppercase tracking-widest text-[#a3b8d4] hover:text-white transition-all group"
+                    onClick={(e) => {
+                      const chatLog = currentSession.messages
+                        .map(m => `${m.role === 'user' ? 'ПОЛЬЗОВАТЕЛЬ' : 'SMOL AGENT'}:\n${m.content}`)
+                        .join('\n\n');
+                      navigator.clipboard.writeText(chatLog);
+                      const btn = e.currentTarget;
+                      const originalText = btn.innerHTML;
+                      btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-check mr-2"><polyline points="20 6 9 17 4 12"></polyline></svg>Скопировано';
+                      setTimeout(() => { btn.innerHTML = originalText; }, 2000);
+                    }}
+                >
+                    <Copy size={14} className="mr-2 group-hover:scale-110 transition-transform" />
+                    Скопировать лог
+                </Button>
+              )}
+            </div>
 
             {isAuthenticated && user && (
               <div className="flex items-center gap-2.5 px-3 py-1.5 rounded-xl bg-[#13141a] border border-white/5 shadow-lg">

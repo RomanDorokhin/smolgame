@@ -131,7 +131,7 @@ export function ChatSidebar({
           </Button>
         </div>
 
-        <ScrollArea className="flex-1 px-3 bg-[#0d0e12]">
+        <div className="flex-1 px-3 bg-[#0d0e12] overflow-y-auto pb-6">
           {showSettings ? (
             <div className="space-y-4 py-2 pb-10">
               <div className="p-3 bg-white/5 border border-white/10 rounded-xl space-y-3">
@@ -359,11 +359,10 @@ export function ChatSidebar({
             </div>
           )}
           
-          {/* Version badge inside ScrollArea so it scrolls away */}
           <div className="mt-8 mb-6 px-1 text-[8px] text-center font-black uppercase tracking-[0.3em] opacity-20 text-white">
             Engine: Hybrid v2.6.4
           </div>
-        </ScrollArea>
+        </div>
       </aside>
     </>
   );
