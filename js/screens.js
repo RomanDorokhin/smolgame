@@ -284,6 +284,41 @@ function switchTab(tab) {
       selectMethod(window.selectedUploadMethod || 'url');
     }
     if (typeof maybeShowWelcomeOnUploadOpen === 'function') maybeShowWelcomeOnUploadOpen();
+
+    // ── Lazy-load React agent on first open ─────────────────────────────
+    // The screen is display:none until here → React would mount into a
+    // zero-size container and render blank.  We inject the script AFTER
+    // the screen becomes display:flex so layout is correct.
+    if (!window._agentScriptLoaded) {
+      window._agentScriptLoaded = true;
+
+      // Inject CSS
+      const link = document.createElement('link');
+      link.rel = 'stylesheet';
+      link.href = 'agent-dist/assets/index.css?v=10003';
+      document.head.appendChild(link);
+
+      // Show loading indicator in agent-root while script loads
+      const agentRoot = document.getElementById('agent-root');
+      if (agentRoot && !agentRoot.hasChildNodes()) {
+        agentRoot.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--muted,#888);font-size:14px;gap:8px;"><span style="width:18px;height:18px;border:2px solid currentColor;border-top-color:transparent;border-radius:50%;animation:spin 0.7s linear infinite;display:inline-block;"></span>Загрузка агента…</div><style>@keyframes spin{to{transform:rotate(360deg)}}</style>';
+      }
+
+      // Inject JS module
+      const script = document.createElement('script');
+      script.type = 'module';
+      script.src = 'agent-dist/assets/index.js?v=10003';
+      script.onerror = () => {
+        const r = document.getElementById('agent-root');
+        if (r) r.innerHTML = '<div style="padding:20px;color:#f87171;text-align:center;">❌ Не удалось загрузить агент.<br>Проверь консоль DevTools.</div>';
+        console.error('[Agent] Failed to load agent-dist/assets/index.js');
+      };
+      document.body.appendChild(script);
+    } else {
+      // On subsequent opens, just trigger resize so React recalculates layout
+      requestAnimationFrame(() => window.dispatchEvent(new Event('resize')));
+    }
+    // ───────────────────────────────────────────────────────────────────
   }
 
   syncBodyFeedHiddenUnderSheet();
