@@ -193,6 +193,17 @@ export function useChat() {
         const missingFields = requiredFields.filter(f => !(currentAnswers as any)[f]);
         const nextField = missingFields[0];
 
+        const FIELD_NAMES: Record<string, string> = {
+          genre: "Жанр (аркада, платформер, головоломка и т.д.)",
+          mechanics: "Главная механика (как именно управлять и что делать)",
+          visuals: "Визуальный стиль (цветовая гамма, атмосфера)",
+          audience: "Целевая аудитория (для кого игра)",
+          story: "Сюжет или смысл (метафора игры)",
+          progression: "Прогрессия (что открывается или улучшается)",
+          special_features: "Уникальные фишки (что делает игру особенной)"
+        };
+        const nextFieldRu = nextField ? FIELD_NAMES[nextField] : "";
+
         const SMART_SYSTEM_PROMPT = `Ты — Элитный Геймдизайнер и Архитектор SmolGame.
 Твоя цель — создать хитовую мини-игру. Игры для SmolGame должны строго соответствовать 35 правилам (Touch управление, только Portrait ориентация, Demo-режим, без alert/prompt, сохранение рекордов).
 
@@ -206,19 +217,19 @@ ${JSON.stringify(currentAnswers, null, 2)}
 Игра должна быть полностью играбельной и соответствовать всем требованиям SmolGame. Не пиши ничего, кроме блока с кодом.
 ` : `
 ЭТАП ИНТЕРВЬЮ (Собрано ${progress.filled}/7 параметров)
-Текущие данные:
+Уже собрано:
 ${JSON.stringify(currentAnswers, null, 2)}
 
 ТВОЯ ЗАДАЧА СЕЙЧАС:
-Узнать у пользователя параметр: "${nextField}".
+Узнать у пользователя недостающий параметр: "${nextFieldRu}".
 
 СТРОГИЕ ПРАВИЛА:
-1. Думай вслух внутри тегов <thought>...</thought> перед ответом.
-2. Задай РОВНО ОДИН короткий вопрос только про параметр "${nextField}".
-3. КАТЕГОРИЧЕСКИ ЗАПРЕЩЕНО выводить списки вопросов (1, 2, 3...).
+1. Обязательно думай вслух внутри тегов <thought>...</thought> перед тем как ответить пользователю.
+2. После раздумий, задай РОВНО ОДИН короткий вопрос только про параметр "${nextFieldRu}".
+3. КАТЕГОРИЧЕСКИ ЗАПРЕЩЕНО выводить списки вопросов. Спрашивай только про один аспект!
 4. КАТЕГОРИЧЕСКИ ЗАПРЕЩЕНО писать код игры на этом этапе.
-5. Если в последнем сообщении пользователя есть ответ на предыдущий вопрос, выведи обновленный параметр в формате JSON внутри тега <game_spec>.
-Пример: <game_spec>{"genre": "Платформер"}</game_spec>
+5. Если в последнем сообщении пользователя есть ответ, который подходит для параметра "${nextField}", ты ОБЯЗАН вывести этот ответ в формате JSON внутри тега <game_spec>.
+Пример: <game_spec>{"${nextField}": "твой анализ ответа пользователя"}</game_spec>
 `}
 `;
 
@@ -246,6 +257,11 @@ ${JSON.stringify(currentAnswers, null, 2)}
         for await (const chunk of stream) {
           fullContent += chunk;
           
+          // STRICT RUNTIME INTERCEPTOR: Prevent rogue code generation during interview
+          if (!isComplete && fullContent.includes("<game_prototype>")) {
+            fullContent = fullContent.replace(/<game_prototype>[\s\S]*?(?:<\/game_prototype>|$)/g, "\n[СИСТЕМА: Попытка сгенерировать код заблокирована. Сначала нужно завершить интервью.]\n");
+          }
+
           // Dynamic status updates based on what the LLM is currently outputting
           if (fullContent.includes("<thought>") && !fullContent.includes("</thought>")) {
             setGenerationStep("Анализирую недостающие параметры...");
