@@ -270,6 +270,20 @@ function switchTab(tab) {
     const upload = document.getElementById('upload-screen');
     upload?.classList.add('open');
     upload.scrollTop = 0;
+    
+    // Dynamically set iframe source with initData for auth persistence
+    const iframe = document.getElementById('agent-iframe');
+    if (iframe) {
+      const initData = sessionStorage.getItem('smolgame:tgInitData:v1') || '';
+      const baseUrl = 'https://romandorokhin.github.io/OpenSmolGame/index.html';
+      const finalUrl = initData ? `${baseUrl}?tgWebAppData=${encodeURIComponent(initData)}` : baseUrl;
+      
+      // Only reload if src changed or is empty
+      if (iframe.src !== finalUrl) {
+        iframe.src = finalUrl;
+      }
+    }
+
     if (typeof resetGhCodeWizard === 'function') resetGhCodeWizard();
     if (typeof renderGenrePills === 'function') {
       renderGenrePills('genrePillsGhCode', 'ghCode');
