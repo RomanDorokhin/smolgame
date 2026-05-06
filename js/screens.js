@@ -301,8 +301,12 @@ function switchTab(tab) {
 
       // Show loading indicator in agent-root while script loads
       const agentRoot = document.getElementById('agent-root');
-      if (agentRoot && !agentRoot.hasChildNodes()) {
-        agentRoot.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--muted,#888);font-size:14px;gap:8px;"><span style="width:18px;height:18px;border:2px solid currentColor;border-top-color:transparent;border-radius:50%;animation:spin 0.7s linear infinite;display:inline-block;"></span>Загрузка агента…</div><style>@keyframes spin{to{transform:rotate(360deg)}}</style>';
+      console.log('[Agent] agent-root found:', !!agentRoot);
+      if (agentRoot) {
+        console.log('[Agent] agent-root visible:', agentRoot.offsetWidth > 0);
+        if (!agentRoot.hasChildNodes()) {
+          agentRoot.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--muted,#888);font-size:14px;gap:8px;"><span style="width:18px;height:18px;border:2px solid currentColor;border-top-color:transparent;border-radius:50%;animation:spin 0.7s linear infinite;display:inline-block;"></span>Загрузка архитектора…</div><style>@keyframes spin{to{transform:rotate(360deg)}}</style>';
+        }
       }
 
       // Inject JS module
