@@ -299,6 +299,12 @@ function switchTab(tab) {
       link.href = '/smolgame/agent-dist/assets/index.css?v=10031';
       document.head.appendChild(link);
 
+      const agentRoot = document.getElementById('agent-root');
+      if (!agentRoot) {
+        console.error('[Agent] FATAL: #agent-root not found in DOM!');
+        return;
+      }
+
       // Verbose logging to on-screen debug div
       const debugDiv = document.createElement('div');
       debugDiv.id = 'agent-debug-console';
