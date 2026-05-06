@@ -275,7 +275,7 @@ function switchTab(tab) {
     const iframe = document.getElementById('agent-iframe');
     if (iframe) {
       const initData = sessionStorage.getItem('smolgame:tgInitData:v1') || '';
-      const baseUrl = 'https://romandorokhin.github.io/OpenSmolGame/index.html';
+      const baseUrl = 'https://romandorokhin.github.io/OpenSmolGame/';
       const finalUrl = initData ? `${baseUrl}?tgWebAppData=${encodeURIComponent(initData)}` : baseUrl;
       
       // Only reload if src changed or is empty
