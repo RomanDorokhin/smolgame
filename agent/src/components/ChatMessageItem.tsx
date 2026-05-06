@@ -10,9 +10,18 @@ import { SmolGameAPI } from "@/lib/smolgame-api";
 interface ChatMessageItemProps {
   message: ChatMessage;
   onRetry?: () => void;
+  onSend?: (content: string) => void;
+  isLast?: boolean;
 }
 
-export function ChatMessageItem({ message, onRetry }: ChatMessageItemProps) {
+const extractTextFromNode = (node: any): string => {
+  if (!node) return "";
+  if (node.type === "text") return node.value || "";
+  if (node.children) return node.children.map(extractTextFromNode).join("");
+  return "";
+};
+
+export function ChatMessageItem({ message, onRetry, onSend, isLast }: ChatMessageItemProps) {
   const [copied, setCopied] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
   const [isDeploying, setIsDeploying] = useState(false);
@@ -106,7 +115,36 @@ export function ChatMessageItem({ message, onRetry }: ChatMessageItemProps) {
           ) : (
             <div className="markdown-content text-white/90">
               {message.content ? (
-                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                <ReactMarkdown 
+                  remarkPlugins={[remarkGfm]}
+                  components={{
+                    ul: ({node, children, ...props}) => {
+                      if (isLast && message.role === 'assistant' && onSend) {
+                        return <ul className="m-0 p-0 mt-4 mb-2 space-y-2 flex flex-col items-start w-full" {...props}>{children}</ul>;
+                      }
+                      return <ul className="list-disc pl-4 mt-2 mb-4 space-y-1 text-white/80" {...props}>{children}</ul>;
+                    },
+                    li: ({node, children, ...props}) => {
+                      if (isLast && message.role === 'assistant' && onSend) {
+                        const text = extractTextFromNode(node).trim();
+                        return (
+                          <li className="list-none w-full" {...props}>
+                            <button
+                              onClick={() => onSend(text)}
+                              className="text-left w-full px-4 py-3 bg-[#13141a] hover:bg-[#a3b8d4]/10 border border-white/5 hover:border-[#a3b8d4]/30 rounded-xl text-sm transition-all text-white/80 hover:text-white font-medium group flex items-center justify-between"
+                            >
+                              <span>{children}</span>
+                              <span className="opacity-0 group-hover:opacity-100 shrink-0 text-[#a3b8d4] text-[10px] uppercase font-black tracking-widest ml-4 transition-opacity">
+                                Выбрать
+                              </span>
+                            </button>
+                          </li>
+                        );
+                      }
+                      return <li className="mb-1" {...props}>{children}</li>;
+                    }
+                  }}
+                >
                   {message.role === 'assistant' 
                     ? message.content
                         .replace(/<game_prototype>[\s\S]*?(?:<\/game_prototype>|$)/g, '')

@@ -179,10 +179,12 @@ export default function Home() {
                 </div>
               ) : (
                 <div className="space-y-6">
-                  {currentSession.messages.filter(m => !m.isHidden).map((message) => (
+                  {currentSession.messages.filter(m => !m.isHidden).map((message, i, arr) => (
                     <ChatMessageItem
                       key={message.id}
                       message={message}
+                      isLast={i === arr.length - 1}
+                      onSend={sendMessage}
                       onRetry={message.role === "assistant" ? retryLastMessage : undefined}
                     />
                   ))}
