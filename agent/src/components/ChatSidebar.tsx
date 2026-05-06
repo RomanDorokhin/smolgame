@@ -8,16 +8,15 @@ import {
   Trash2,
   X,
   Settings,
-  AlertTriangle,
-  ExternalLink,
-  ShieldCheck,
   RotateCcw,
   Github,
   LogOut,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import { useAuth } from "@/_core/hooks/useAuth";
-import type { ChatSession } from "@/types/chat";
-import type { APIProvider } from "@/lib/llm-api";
+import type { ChatSession, ChatSettings, UsageStats, APIProvider } from "@/types/chat";
+import { QuotaDashboard } from "./QuotaDashboard";
 
 interface ChatSidebarProps {
   sessions: ChatSession[];
@@ -28,17 +27,10 @@ interface ChatSidebarProps {
   onClearAll: () => void;
   isOpen: boolean;
   onClose: () => void;
-  settings: {
-    provider: APIProvider;
-    apiKey: string;
-    model: string;
-  };
-  onUpdateSettings: (settings: any) => void;
+  settings: ChatSettings;
+  onUpdateSettings: (settings: Partial<ChatSettings>) => void;
   onFactoryReset: () => void;
-  usage: {
-    requests: number;
-    lastReset: number;
-  };
+  usage: UsageStats;
 }
 
 export function ChatSidebar({
@@ -58,7 +50,10 @@ export function ChatSidebar({
   const [confirmClear, setConfirmClear] = useState(false);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [showSettings, setShowSettings] = useState(false);
+  const [expandedProvider, setExpandedProvider] = useState<APIProvider | null>("groq");
   const { user, isAuthenticated, login, logout } = useAuth();
+
+  const providers: APIProvider[] = ["groq", "gemini", "deepseek", "mistral", "openrouter"];
 
   const handleClear = () => {
     if (confirmClear) {
@@ -85,14 +80,14 @@ export function ChatSidebar({
           isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
         }`}
       >
-        <div className="flex items-center justify-between p-4 border-b border-sidebar-border">
+        <div className="flex items-center justify-between p-4 border-b border-sidebar-border shrink-0">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-              <ShieldCheck className="w-5 h-5 text-primary-foreground" />
+               <Settings className="w-5 h-5 text-primary-foreground" />
             </div>
             <div>
-              <h2 className="font-bold text-sm text-sidebar-foreground leading-none">Smol-agent</h2>
-              <p className="text-[10px] text-sidebar-foreground/50 mt-1 uppercase tracking-wider font-semibold">AI First</p>
+              <h2 className="font-bold text-sm text-sidebar-foreground leading-none">Architect</h2>
+              <p className="text-[10px] text-sidebar-foreground/50 mt-1 uppercase tracking-wider font-semibold">Orchestrator v3</p>
             </div>
           </div>
           <Button
@@ -105,87 +100,108 @@ export function ChatSidebar({
           </Button>
         </div>
 
-        <div className="p-3 space-y-2">
+        <div className="p-3 space-y-2 shrink-0">
           <Button
             onClick={() => {
               onCreateNewChat();
               onClose();
             }}
-            className="w-full justify-start gap-2 shadow-sm"
+            className="w-full justify-start gap-2 shadow-sm font-bold uppercase tracking-tighter text-xs"
             variant="default"
           >
             <Plus size={16} />
-            New Chat
+            New Project
           </Button>
           
           <Button
             onClick={() => setShowSettings(!showSettings)}
             variant="outline"
-            className="w-full justify-start gap-2 text-xs h-9"
+            className={`w-full justify-start gap-2 text-xs h-9 transition-all ${showSettings ? 'bg-primary/10 border-primary/30' : ''}`}
           >
             <Settings size={14} />
-            {showSettings ? "Back to Chats" : "API Settings"}
+            {showSettings ? "Back to Projects" : "API Orchestrator"}
           </Button>
         </div>
 
         <ScrollArea className="flex-1 px-3">
           {showSettings ? (
-            <div className="space-y-4 py-2">
-              <div className="space-y-2">
-                <label className="text-[11px] font-bold uppercase text-sidebar-foreground/50 ml-1">Provider</label>
-                <select
-                  value={settings.provider}
-                  onChange={(e) => onUpdateSettings({ provider: e.target.value as APIProvider })}
-                  className="w-full bg-background border border-border rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-primary outline-none transition-all"
-                >
-                  <option value="openrouter">OpenRouter (DeepSeek)</option>
-                  <option value="groq">Groq</option>
-                  <option value="gemini">Gemini</option>
-                </select>
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-[11px] font-bold uppercase text-sidebar-foreground/50 ml-1">API Key</label>
-                <Input
-                  type="password"
-                  placeholder="Enter your API key"
-                  value={settings.apiKey}
-                  onChange={(e) => onUpdateSettings({ apiKey: e.target.value })}
-                  className="bg-background"
-                />
-                <p className="text-[10px] text-sidebar-foreground/40 px-1">
-                  Stored locally in your browser. 
-                  <a href="https://openrouter.ai/keys" target="_blank" className="text-primary hover:underline ml-1 inline-flex items-center gap-0.5">
-                    Get key <ExternalLink size={8} />
-                  </a>
+            <div className="space-y-4 py-2 pb-10">
+              <div className="p-2 bg-primary/5 border border-primary/10 rounded-xl space-y-2">
+                <div className="flex items-center justify-between px-1">
+                  <label className="text-[10px] font-black uppercase text-primary/70">Auto-Failover</label>
+                  <input 
+                    type="checkbox" 
+                    checked={settings.autoFailover}
+                    onChange={(e) => onUpdateSettings({ autoFailover: e.target.checked })}
+                    className="w-4 h-4 rounded border-sidebar-border bg-background"
+                  />
+                </div>
+                <p className="text-[9px] text-sidebar-foreground/40 leading-tight px-1">
+                  If primary provider fails, automatically switch to the next one in the tiered order.
                 </p>
               </div>
 
-              <div className="space-y-2">
-                <label className="text-[11px] font-bold uppercase text-sidebar-foreground/50 ml-1">Model</label>
-                <Input
-                  placeholder="deepseek/deepseek-chat"
-                  value={settings.model}
-                  onChange={(e) => onUpdateSettings({ model: e.target.value })}
-                  className="bg-background"
-                />
+              <div className="space-y-1">
+                <label className="text-[10px] font-black uppercase text-sidebar-foreground/40 ml-1">Providers & Keys</label>
+                {providers.map((p) => (
+                  <div key={p} className="border border-sidebar-border/50 rounded-xl overflow-hidden bg-sidebar-accent/10">
+                    <button 
+                      onClick={() => setExpandedProvider(expandedProvider === p ? null : p)}
+                      className="w-full flex items-center justify-between p-2 hover:bg-sidebar-accent/30 transition-all"
+                    >
+                      <div className="flex items-center gap-2">
+                        <div className={`w-1.5 h-1.5 rounded-full ${settings.keys[p] ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.5)]' : 'bg-sidebar-border'}`} />
+                        <span className={`text-[11px] font-bold uppercase tracking-tighter ${settings.primaryProvider === p ? 'text-primary' : 'text-sidebar-foreground/70'}`}>
+                          {p} {settings.primaryProvider === p && "(Primary)"}
+                        </span>
+                      </div>
+                      {expandedProvider === p ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+                    </button>
+                    
+                    {expandedProvider === p && (
+                      <div className="p-2 pt-0 space-y-2 bg-sidebar-accent/5">
+                        <Input
+                          type="password"
+                          placeholder={`${p} API key`}
+                          value={settings.keys[p] || ""}
+                          onChange={(e) => {
+                            const newKeys = { ...settings.keys, [p]: e.target.value };
+                            onUpdateSettings({ keys: newKeys });
+                          }}
+                          className="h-8 text-xs bg-background border-sidebar-border"
+                        />
+                        <div className="flex gap-1">
+                          <Button 
+                            variant="secondary" 
+                            size="sm" 
+                            className="flex-1 h-6 text-[9px] font-bold uppercase tracking-tighter"
+                            onClick={() => onUpdateSettings({ primaryProvider: p })}
+                            disabled={settings.primaryProvider === p}
+                          >
+                            Set as Primary
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ))}
               </div>
 
               <div className="pt-2 border-t border-sidebar-border mt-4">
-                <label className="text-[11px] font-bold uppercase text-sidebar-foreground/50 ml-1">GitHub Account</label>
+                <label className="text-[10px] font-black uppercase text-sidebar-foreground/40 ml-1">Account</label>
                 {isAuthenticated && user ? (
                   <div className="flex flex-col gap-2 mt-2 px-1">
                     <div className="flex items-center gap-2">
                       {user.photo_url && (
-                        <img src={user.photo_url} alt={user.githubUsername || user.username} className="w-6 h-6 rounded-full" />
+                        <img src={user.photo_url} alt="avatar" className="w-6 h-6 rounded-full border border-sidebar-border" />
                       )}
-                      <span className="text-xs font-medium">{user.githubUsername || user.username}</span>
+                      <span className="text-xs font-bold truncate">@{user.githubUsername || user.username}</span>
                     </div>
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={logout}
-                      className="w-full justify-start gap-2 text-[10px] h-8"
+                      className="w-full justify-start gap-2 text-[10px] h-8 font-bold uppercase tracking-tighter"
                     >
                       <LogOut size={12} />
                       Logout
@@ -197,16 +213,13 @@ export function ChatSidebar({
                       variant="secondary"
                       size="sm"
                       onClick={login}
-                      className="w-full justify-start gap-2 text-[10px] h-8 bg-black hover:bg-black/80 text-white"
+                      className="w-full justify-start gap-2 text-[10px] h-8 bg-[#24292f] hover:bg-[#24292f]/80 text-white font-bold uppercase tracking-tighter"
                     >
                       <Github size={12} />
                       Login with GitHub
                     </Button>
                   </div>
                 )}
-                <p className="text-[9px] text-sidebar-foreground/40 px-1 mt-1">
-                  Connect to GitHub for instant game deployment.
-                </p>
               </div>
 
               <div className="pt-4 border-t border-sidebar-border mt-4">
@@ -214,22 +227,20 @@ export function ChatSidebar({
                   variant="ghost"
                   size="sm"
                   onClick={onFactoryReset}
-                  className="w-full justify-start gap-2 text-[11px] text-destructive hover:text-destructive hover:bg-destructive/10 h-8"
+                  className="w-full justify-start gap-2 text-[11px] text-destructive hover:text-destructive hover:bg-destructive/10 h-8 font-bold uppercase tracking-tighter"
                 >
                   <RotateCcw size={14} />
-                  Reset App Cache (Hard)
+                  Factory Reset
                 </Button>
-                <p className="text-[9px] text-sidebar-foreground/30 mt-2 px-1 leading-tight">
-                  This will delete ALL chats, history and API keys permanently.
-                </p>
               </div>
             </div>
           ) : (
-            <div className="space-y-1">
+            <div className="space-y-1 py-2">
               {sessions.length === 0 ? (
-                <p className="text-sm text-sidebar-foreground/50 text-center py-8">
-                  No chats yet.
-                </p>
+                <div className="flex flex-col items-center justify-center py-10 opacity-20">
+                   <MessageSquare size={32} />
+                   <p className="text-xs mt-2 font-bold uppercase">Empty Workspace</p>
+                </div>
               ) : (
                 sessions.map((session) => (
                   <button
@@ -240,18 +251,23 @@ export function ChatSidebar({
                     }}
                     onMouseEnter={() => setHoveredId(session.id)}
                     onMouseLeave={() => setHoveredId(null)}
-                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-colors group ${
+                    className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl text-left transition-all group relative overflow-hidden ${
                       activeSessionId === session.id
-                        ? "bg-sidebar-accent text-sidebar-accent-foreground shadow-sm"
-                        : "hover:bg-sidebar-accent/50 text-sidebar-foreground/80"
+                        ? "bg-primary/10 text-primary border border-primary/20 shadow-sm"
+                        : "hover:bg-sidebar-accent/50 text-sidebar-foreground/80 border border-transparent"
                     }`}
                   >
-                    <MessageSquare size={16} className="flex-shrink-0 opacity-60" />
+                    <MessageSquare size={16} className={`flex-shrink-0 ${activeSessionId === session.id ? 'text-primary' : 'opacity-40'}`} />
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium truncate">{session.title}</p>
-                      <p className="text-[10px] text-sidebar-foreground/40">
-                        {new Date(session.updatedAt).toLocaleDateString()}
-                      </p>
+                      <p className="text-sm font-bold truncate leading-none mb-1">{session.title}</p>
+                      <div className="flex items-center gap-2">
+                         <span className="text-[9px] opacity-40 font-bold uppercase tracking-tighter">
+                            {new Date(session.updatedAt).toLocaleDateString()}
+                         </span>
+                         {session.retryCount && (
+                           <span className="text-[8px] px-1 bg-yellow-500/20 text-yellow-500 rounded font-black">FAILOVER: {session.retryCount}</span>
+                         )}
+                      </div>
                     </div>
                     {(hoveredId === session.id || activeSessionId === session.id) && (
                       <Button
@@ -263,7 +279,7 @@ export function ChatSidebar({
                           onDeleteSession(session.id);
                         }}
                       >
-                        <Trash2 size={14} className="text-sidebar-foreground/40 hover:text-destructive" />
+                        <Trash2 size={14} className="text-destructive opacity-40 hover:opacity-100" />
                       </Button>
                     )}
                   </button>
@@ -273,40 +289,25 @@ export function ChatSidebar({
           )}
         </ScrollArea>
 
-        <div className="p-3 border-t border-sidebar-border space-y-3">
-          <div className="flex items-center justify-between px-2">
+        <div className="p-3 border-t border-sidebar-border bg-sidebar-accent/5 shrink-0">
+          <div className="mb-2 px-1 flex items-center justify-between">
+            <span className="text-[10px] font-black uppercase tracking-widest text-sidebar-foreground/40">Quota Stats</span>
             <Button
               variant="ghost"
               size="sm"
               onClick={handleClear}
-              className={`h-7 text-[11px] ${
-                confirmClear
-                  ? "text-destructive hover:text-destructive bg-destructive/10"
-                  : "text-sidebar-foreground/50 hover:bg-sidebar-accent"
+              className={`h-5 px-2 text-[8px] font-black uppercase tracking-tighter ${
+                confirmClear ? "text-destructive" : "text-sidebar-foreground/20 hover:text-sidebar-foreground"
               }`}
             >
-              {confirmClear ? (
-                <>
-                  <AlertTriangle size={12} className="mr-1" />
-                  Confirm Clear
-                </>
-              ) : (
-                <>
-                  <Trash2 size={12} className="mr-1" />
-                  Clear History
-                </>
-              )}
+              {confirmClear ? "Clear All History?" : "Clear history"}
             </Button>
           </div>
-
-          <div className="px-3 py-2 bg-sidebar-accent/30 rounded-lg border border-sidebar-border/50">
-            <div className="flex items-center justify-between gap-2 text-[11px] text-sidebar-foreground/60">
-              <div className="flex items-center gap-2 min-w-0">
-                <div className={`w-1.5 h-1.5 rounded-full ${settings.apiKey ? 'bg-green-500' : 'bg-yellow-500'}`} />
-                <span className="font-medium truncate">{settings.provider}: {settings.model}</span>
-              </div>
-              <span className="shrink-0 opacity-80">{usage.requests}/50</span>
-            </div>
+          
+          <QuotaDashboard usage={usage} keys={settings.keys} />
+          
+          <div className="mt-3 px-1 text-[8px] text-center font-black uppercase tracking-[0.3em] opacity-20">
+            Engine: Hybrid v2.6.4
           </div>
         </div>
       </aside>

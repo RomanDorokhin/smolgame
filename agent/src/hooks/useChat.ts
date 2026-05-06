@@ -4,16 +4,18 @@ import type {
   ChatMessage, 
   ChatSettings, 
   UsageStats, 
-  ModelProgress 
+  ModelProgress,
+  APIProvider
 } from "../types/chat";
 import { runGamePipeline } from "../lib/core/gameGenerationPipelinePro";
 import { GameFlowOrchestratorV2 } from "../lib/core/gameFlowOrchestratorV2";
 import type { GameSpec } from "../lib/core/types";
+import { generateStream, pool } from "../lib/llm-api";
 
-const SESSIONS_KEY = "smol_chat_sessions_v2";
-const ACTIVE_SESSION_KEY = "smol_active_session_id_v2";
-const SETTINGS_KEY = "smol_chat_settings_v2";
-const USAGE_KEY = "smol_chat_usage_v2";
+const SESSIONS_KEY = "smol_chat_sessions_v3";
+const ACTIVE_SESSION_KEY = "smol_active_session_id_v3";
+const SETTINGS_KEY = "smol_chat_settings_v3";
+const USAGE_KEY = "smol_chat_usage_v3";
 
 const SYSTEM_PROMPT_CONTENT = "Ты — Старший Геймдизайнер и Архитектор SmolGame. Твоя задача: помочь пользователю создать идеальную игру через интервью.\n\n" +
 "1. МЫШЛЕНИЕ: Анализируй в <thought>.\n" +
@@ -21,6 +23,8 @@ const SYSTEM_PROMPT_CONTENT = "Ты — Старший Геймдизайнер 
 "3. ИНТЕРВЬЮ: Заполняй 7 полей (Жанр, Механика, Визуал, Аудитория, Сюжет, Прогрессия, Фишки).\n" +
 "4. ГЕНЕРАЦИЯ: Когда готов — выдавай <game_prototype>. Не спрашивай разрешения.\n" +
 "5. ЯЗЫК: Русский.";
+
+const FALLBACK_ORDER: APIProvider[] = ["groq", "gemini", "deepseek", "mistral", "openrouter"];
 
 function generateId() {
   return Math.random().toString(36).substring(2, 15);
@@ -42,21 +46,33 @@ function saveSessions(sessions: ChatSession[]) {
 
 function loadSettings(): ChatSettings {
   const saved = localStorage.getItem(SETTINGS_KEY);
-  if (!saved) return { provider: "openrouter", apiKey: "", model: "deepseek/deepseek-chat" };
+  if (!saved) return { 
+    primaryProvider: "openrouter", 
+    keys: {}, 
+    models: {},
+    autoFailover: true,
+    maxRetries: 3
+  };
   try {
     return JSON.parse(saved);
   } catch {
-    return { provider: "openrouter", apiKey: "", model: "deepseek/deepseek-chat" };
+    return { 
+      primaryProvider: "openrouter", 
+      keys: {}, 
+      models: {},
+      autoFailover: true,
+      maxRetries: 3
+    };
   }
 }
 
 function loadUsage(): UsageStats {
   const saved = localStorage.getItem(USAGE_KEY);
-  if (!saved) return { requests: 0, lastReset: Date.now() };
+  if (!saved) return { requests: {}, lastReset: Date.now() };
   try {
     return JSON.parse(saved);
   } catch {
-    return { requests: 0, lastReset: Date.now() };
+    return { requests: {}, lastReset: Date.now() };
   }
 }
 
@@ -67,7 +83,7 @@ function createDefaultSession(): ChatSession {
     messages: [],
     createdAt: Date.now(),
     updatedAt: Date.now(),
-    modelName: "deepseek/deepseek-chat"
+    modelName: "auto"
   };
 }
 
@@ -75,13 +91,13 @@ export function useChat() {
   const [sessions, setSessions] = useState<ChatSession[]>([]);
   const [activeSessionId, setActiveSessionId] = useState<string>("");
   const [settings, setSettings] = useState<ChatSettings>(loadSettings);
-  const [usage] = useState<UsageStats>(loadUsage);
+  const [usage, setUsage] = useState<UsageStats>(loadUsage);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isPipelineRunning, setIsPipelineRunning] = useState(false);
   const [generationStep, setGenerationStep] = useState("");
   const [modelProgress] = useState<ModelProgress>({
     progress: 100,
-    text: "API Ready",
+    text: "Orchestrator Ready",
     status: "ready",
   });
 
@@ -91,7 +107,6 @@ export function useChat() {
   useEffect(() => {
     const loaded = loadSessions();
     const activeId = localStorage.getItem(ACTIVE_SESSION_KEY);
-    
     if (loaded.length > 0) {
       setSessions(loaded);
       if (activeId && loaded.find(s => s.id === activeId)) {
@@ -125,7 +140,6 @@ export function useChat() {
 
   const sendMessage = useCallback(async (content: string, isHidden: boolean = false) => {
     if (isGenerating && !isHidden) return;
-    if (!settings.apiKey && !isHidden) return;
 
     const userMsg: ChatMessage = { id: generateId(), role: "user", content, timestamp: Date.now(), isHidden };
     const assistantMsg: ChatMessage = { id: generateId(), role: "assistant", content: "", timestamp: Date.now(), isStreaming: true };
@@ -140,97 +154,111 @@ export function useChat() {
     setIsGenerating(true);
     abortControllerRef.current = new AbortController();
 
-    try {
-      const messagesForAI = [
-        { role: "system", content: SYSTEM_PROMPT_CONTENT },
-        ...currentSession.messages.map(m => ({ role: m.role, content: m.content })),
-        { role: "user", content }
-      ];
+    // Orchestrator Logic: Try providers in order
+    let success = false;
+    let lastError = "";
+    
+    const providersToTry = settings.autoFailover 
+      ? [settings.primaryProvider, ...FALLBACK_ORDER.filter(p => p !== settings.primaryProvider)]
+      : [settings.primaryProvider];
 
-      const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${settings.apiKey}`,
-        },
-        body: JSON.stringify({
-          model: settings.model,
-          messages: messagesForAI,
-          stream: true
-        }),
-        signal: abortControllerRef.current.signal
-      });
+    for (const provider of providersToTry) {
+      if (success) break;
+      
+      const apiKey = settings.keys[provider];
+      if (!apiKey) continue;
 
-      const reader = response.body?.getReader();
-      const decoder = new TextDecoder();
-      let fullContent = "";
+      const status = pool.getStatus(provider);
+      if (status.state === "OPEN") continue;
 
-      if (reader) {
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          const chunk = decoder.decode(value);
-          const lines = chunk.split("\n").filter(line => line.trim() !== "");
-          for (const line of lines) {
-            if (line.includes("data: [DONE]")) break;
-            if (line.startsWith("data: ")) {
-              try {
-                const data = JSON.parse(line.slice(6));
-                const text = data.choices[0]?.delta?.content || "";
-                fullContent += text;
-                setSessions(prev => prev.map(s => s.id === activeSessionId ? {
-                  ...s,
-                  messages: s.messages.map(m => m.id === assistantMsg.id ? { ...m, content: fullContent } : m)
-                } : s));
-              } catch (e) {}
-            }
+      try {
+        console.log(`[Orchestrator] Attempting with ${provider}...`);
+        const messagesForAI = [
+          { role: "system" as const, content: SYSTEM_PROMPT_CONTENT },
+          ...currentSession.messages.map(m => ({ role: m.role as "user" | "assistant" | "system", content: m.content })),
+          { role: "user" as const, content }
+        ];
+
+        const stream = generateStream(messagesForAI, {
+          provider,
+          apiKey,
+          model: settings.models[provider] || ""
+        }, abortControllerRef.current.signal);
+
+        let fullContent = "";
+        for await (const chunk of stream) {
+          fullContent += chunk;
+          setSessions(prev => prev.map(s => s.id === activeSessionId ? {
+            ...s,
+            messages: s.messages.map(m => m.id === assistantMsg.id ? { ...m, content: fullContent } : m)
+          } : s));
+        }
+
+        // Update Usage
+        setUsage(prev => ({
+          ...prev,
+          requests: { ...prev.requests, [provider]: (prev.requests[provider] || 0) + 1 }
+        }));
+
+        success = true;
+
+        // Process Tags
+        if (fullContent.includes("<game_spec>")) {
+          const specMatch = fullContent.match(/<game_spec>([\s\S]*?)<\/game_spec>/);
+          if (specMatch) {
+            try {
+              const spec = JSON.parse(specMatch[1]);
+              Object.entries(spec).forEach(([k, v]) => {
+                orchestratorRef.current?.updateInterviewAnswer(k as keyof GameSpec, String(v));
+              });
+            } catch {}
           }
         }
-      }
 
+        if (fullContent.includes("<game_prototype>")) {
+          const codeMatch = fullContent.match(/<game_prototype>([\s\S]*?)<\/game_prototype>/);
+          if (codeMatch) {
+            setIsPipelineRunning(true);
+            setGenerationStep(`Validating (via ${provider})...`);
+            const result = await runGamePipeline(activeSessionId, codeMatch[1]);
+            setSessions(prev => prev.map(s => s.id === activeSessionId ? {
+              ...s,
+              messages: s.messages.map(m => m.id === assistantMsg.id ? { ...m, pipelineResult: result, status: "Ready" } : m)
+            } : s));
+            setIsPipelineRunning(false);
+            setGenerationStep("");
+          }
+        }
+
+      } catch (e: any) {
+        if (e.name === 'AbortError') throw e;
+        console.error(`[Orchestrator] ${provider} failed:`, e.message);
+        lastError = e.message;
+        // Continue to next provider
+      }
+    }
+
+    if (!success) {
+      setSessions(prev => prev.map(s => s.id === activeSessionId ? {
+        ...s,
+        messages: s.messages.map(m => m.id === assistantMsg.id ? { 
+          ...m, 
+          content: `❌ Ошибка: Все провайдеры недоступны.\nПоследняя ошибка: ${lastError}`,
+          isStreaming: false 
+        } : m)
+      } : s));
+    } else {
       setSessions(prev => prev.map(s => s.id === activeSessionId ? {
         ...s,
         messages: s.messages.map(m => m.id === assistantMsg.id ? { ...m, isStreaming: false } : m)
       } : s));
-
-      // Check for tags
-      if (fullContent.includes("<game_spec>")) {
-        const specMatch = fullContent.match(/<game_spec>([\s\S]*?)<\/game_spec>/);
-        if (specMatch) {
-          try {
-            const spec = JSON.parse(specMatch[1]);
-            Object.entries(spec).forEach(([k, v]) => {
-              orchestratorRef.current?.updateInterviewAnswer(k as keyof GameSpec, String(v));
-            });
-          } catch {}
-        }
-      }
-
-      if (fullContent.includes("<game_prototype>")) {
-        const codeMatch = fullContent.match(/<game_prototype>([\s\S]*?)<\/game_prototype>/);
-        if (codeMatch) {
-          setIsPipelineRunning(true);
-          setGenerationStep("Validating...");
-          const result = await runGamePipeline(activeSessionId, codeMatch[1]);
-          setSessions(prev => prev.map(s => s.id === activeSessionId ? {
-            ...s,
-            messages: s.messages.map(m => m.id === assistantMsg.id ? { ...m, pipelineResult: result, status: "Ready" } : m)
-          } : s));
-          setIsPipelineRunning(false);
-          setGenerationStep("");
-        }
-      }
-
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setIsGenerating(false);
-      abortControllerRef.current = null;
     }
+
+    setIsGenerating(false);
+    abortControllerRef.current = null;
   }, [activeSessionId, currentSession, settings, isGenerating]);
 
   const deployToGitHub = useCallback(async () => {
-    // This is now "Send for moderation" logic
     sendMessage("Пользователь отправил игру на модерацию.", true);
     alert("Игра отправлена на модерацию! Мы проверим её и опубликуем.");
   }, [sendMessage]);

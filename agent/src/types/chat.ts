@@ -11,6 +11,29 @@ export interface ChatMessage {
   isHidden?: boolean;
 }
 
+export interface ModelProgress {
+  progress: number;
+  text: string;
+  status: "idle" | "downloading" | "loading" | "ready" | "error";
+}
+
+export type APIProvider = "openrouter" | "groq" | "gemini" | "deepseek" | "huggingface" | "mistral";
+
+export interface ChatSettings {
+  primaryProvider: APIProvider;
+  keys: Partial<Record<APIProvider, string>>;
+  models: Partial<Record<APIProvider, string>>;
+  autoFailover: boolean;
+  maxRetries: number;
+}
+
+export interface UsageStats {
+  requests: Record<string, number>; // provider: count
+  lastReset: number;
+}
+
+export type ThemeMode = "dark" | "light";
+
 export interface ChatSession {
   id: string;
   title: string;
@@ -18,27 +41,5 @@ export interface ChatSession {
   createdAt: number;
   updatedAt: number;
   modelName: string;
+  retryCount?: number;
 }
-
-export interface ModelProgress {
-  progress: number;
-  text: string;
-  status: "idle" | "downloading" | "loading" | "ready" | "error";
-}
-
-import type { APIProvider } from "../lib/llm-api";
-
-export { type APIProvider };
-
-export interface ChatSettings {
-  provider: APIProvider;
-  apiKey: string;
-  model: string;
-}
-
-export interface UsageStats {
-  requests: number;
-  lastReset: number;
-}
-
-export type ThemeMode = "dark" | "light";

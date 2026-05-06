@@ -1,5 +1,4 @@
-
-export type APIProvider = "openrouter" | "groq" | "gemini" | "deepseek" | "huggingface";
+export type APIProvider = "openrouter" | "groq" | "gemini" | "deepseek" | "huggingface" | "mistral";
 
 export interface LLMConfig {
   provider: APIProvider;
@@ -12,45 +11,95 @@ export interface ChatMessage {
   content: string;
 }
 
+// Circuit Breaker State
+interface ProviderStatus {
+  state: "CLOSED" | "OPEN" | "HALF_OPEN";
+  nextRetryAt: number;
+  failureCount: number;
+}
+
+const CIRCUIT_BREAKER_COOLDOWN = 60 * 1000; // 1 minute
+const MAX_FAILURES = 2;
+
+class ProviderPool {
+  private statuses: Record<string, ProviderStatus> = {};
+
+  getStatus(provider: string): ProviderStatus {
+    if (!this.statuses[provider]) {
+      this.statuses[provider] = { state: "CLOSED", nextRetryAt: 0, failureCount: 0 };
+    }
+    const status = this.statuses[provider];
+    if (status.state === "OPEN" && Date.now() >= status.nextRetryAt) {
+      status.state = "HALF_OPEN";
+    }
+    return status;
+  }
+
+  reportSuccess(provider: string) {
+    const status = this.getStatus(provider);
+    status.state = "CLOSED";
+    status.failureCount = 0;
+  }
+
+  reportFailure(provider: string, isRateLimit: boolean) {
+    const status = this.getStatus(provider);
+    status.failureCount++;
+    if (isRateLimit || status.failureCount >= MAX_FAILURES) {
+      status.state = "OPEN";
+      status.nextRetryAt = Date.now() + CIRCUIT_BREAKER_COOLDOWN;
+      console.warn(`[Orchestrator] Provider ${provider} is now OPEN (Rate limited or failed)`);
+    }
+  }
+}
+
+export const pool = new ProviderPool();
+
+const PROVIDER_URLS: Record<string, string> = {
+  openrouter: "https://openrouter.ai/api/v1/chat/completions",
+  groq: "https://api.groq.com/openai/v1/chat/completions",
+  gemini: "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
+  mistral: "https://api.mistral.ai/v1/chat/completions",
+  deepseek: "https://api.deepseek.com/v1/chat/completions",
+};
+
+const DEFAULT_MODELS: Record<string, string> = {
+  openrouter: "deepseek/deepseek-chat",
+  groq: "llama-3.3-70b-versatile",
+  gemini: "gemini-2.0-flash",
+  mistral: "codestral-latest",
+  deepseek: "deepseek-chat",
+};
+
 export async function* generateStream(
   messages: ChatMessage[],
   config: LLMConfig,
   signal?: AbortSignal
-) {
-  if (!config.apiKey) {
-    throw new Error("API Key is required to use this provider. Please check your settings.");
+): AsyncGenerator<string> {
+  const status = pool.getStatus(config.provider);
+  if (status.state === "OPEN") {
+    throw new Error(`Provider ${config.provider} is temporarily disabled due to rate limits.`);
   }
-  let url = "";
-  let headers: Record<string, string> = {
+
+  if (!config.apiKey) {
+    throw new Error(`API Key for ${config.provider} is missing.`);
+  }
+
+  const url = PROVIDER_URLS[config.provider] || PROVIDER_URLS.openrouter;
+  const headers: Record<string, string> = {
     "Content-Type": "application/json",
     "Authorization": `Bearer ${config.apiKey}`,
   };
-  let body: any = {
+
+  if (config.provider === "openrouter") {
+    headers["HTTP-Referer"] = window.location.origin;
+    headers["X-Title"] = "Smol Architect";
+  }
+
+  const body = {
     messages,
     stream: true,
+    model: config.model || DEFAULT_MODELS[config.provider],
   };
-
-  switch (config.provider) {
-    case "openrouter":
-      url = "https://openrouter.ai/api/v1/chat/completions";
-      headers["HTTP-Referer"] = window.location.origin;
-      headers["X-Title"] = "HybridAI 2.0";
-      body.model = config.model || "deepseek/deepseek-chat";
-      break;
-    case "groq":
-      url = "https://api.groq.com/openai/v1/chat/completions";
-      body.model = config.model || "llama3-70b-8192";
-      break;
-    case "gemini":
-      // Gemini API has a different structure, but many tools use OpenAI-compatible proxies
-      // or we can implement the native one. Let's stick to OpenAI compatible for now
-      // or implement native if needed. OpenRouter covers many.
-      // For now, let's treat Gemini as OpenAI compatible if using a proxy, 
-      // or implement native if config.provider === 'gemini'.
-      url = `https://generativelanguage.googleapis.com/v1beta/openai/chat/completions`;
-      body.model = config.model || "gemini-2.0-flash";
-      break;
-  }
 
   const response = await fetch(url, {
     method: "POST",
@@ -60,9 +109,14 @@ export async function* generateStream(
   });
 
   if (!response.ok) {
+    const isRateLimit = response.status === 429;
+    pool.reportFailure(config.provider, isRateLimit);
+    
     const error = await response.json().catch(() => ({}));
-    throw new Error(error.error?.message || `API error: ${response.statusText}`);
+    throw new Error(error.error?.message || `API error (${response.status}): ${response.statusText}`);
   }
+
+  pool.reportSuccess(config.provider);
 
   const reader = response.body?.getReader();
   if (!reader) throw new Error("Response body is null");
@@ -88,7 +142,7 @@ export async function* generateStream(
           const content = json.choices[0]?.delta?.content || "";
           if (content) yield content;
         } catch (e) {
-          console.error("Error parsing stream chunk", e);
+          // Ignore parsing errors for empty chunks
         }
       }
     }

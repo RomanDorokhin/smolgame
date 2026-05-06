@@ -120,27 +120,6 @@ export default function Home() {
           <ScrollArea className="h-full">
             <div className="max-w-2xl mx-auto px-4 pb-10">
               
-              {/* API Key Box - Integrated into the flow, not blocking */}
-              {!settings.apiKey && (
-                <div className="mb-8 p-5 bg-[#13141a] border border-white/5 rounded-2xl animate-in fade-in slide-in-from-top-4 duration-500">
-                  <div className="flex items-center gap-3 mb-4">
-                    <ShieldCheck size={18} className="text-[#a3b8d4]" />
-                    <span className="text-xs font-bold uppercase tracking-widest text-[#a3b8d4]">Активация</span>
-                  </div>
-                  <input 
-                    type="password"
-                    placeholder="Введите OpenRouter API ключ..."
-                    className="w-full bg-[#0a0b0e] border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#a3b8d4]/50 transition-all text-white"
-                    value={settings.apiKey}
-                    onChange={(e) => updateSettings({ apiKey: e.target.value })}
-                  />
-                  <div className="mt-3 flex items-center justify-between">
-                    <a href="https://openrouter.ai/keys" target="_blank" className="text-[10px] text-[#a3b8d4] hover:underline font-medium">Получить ключ →</a>
-                    <span className="text-[9px] text-white/20">Ключ хранится только у вас</span>
-                  </div>
-                </div>
-              )}
-
               {currentSession.messages.length === 0 ? (
                 <div className="py-10 text-center">
                   <div className="w-16 h-16 rounded-2xl bg-[#13141a] border border-white/5 flex items-center justify-center mx-auto mb-6">
@@ -233,8 +212,8 @@ export default function Home() {
               onSend={sendMessage}
               onStop={stopGeneration}
               isGenerating={isGenerating}
-              disabled={!settings.apiKey}
-              placeholder={!settings.apiKey ? "Нужен API ключ ↑" : "Опишите игру..."}
+              disabled={!settings.keys[settings.primaryProvider]}
+              placeholder={!settings.keys[settings.primaryProvider] ? "Введите API ключи в настройках" : "Опишите игру..."}
             />
             <div className="mt-3 text-[9px] text-center text-white/10 uppercase tracking-[0.2em] font-black">
               Agent 3.0 • Entirely in browser
