@@ -299,31 +299,45 @@ function switchTab(tab) {
       link.href = '/smolgame/agent-dist/assets/index.css?v=10031';
       document.head.appendChild(link);
 
-      // Show loading indicator in agent-root while script loads
-      const agentRoot = document.getElementById('agent-root');
-      console.log('[Agent] agent-root check:', {
-        found: !!agentRoot,
-        width: agentRoot?.offsetWidth,
-        height: agentRoot?.offsetHeight,
-        display: agentRoot ? getComputedStyle(agentRoot).display : 'none',
-        zIndex: agentRoot ? getComputedStyle(agentRoot).zIndex : 'none'
+      // Verbose logging to on-screen debug div
+      const debugDiv = document.createElement('div');
+      debugDiv.id = 'agent-debug-console';
+      debugDiv.style.cssText = 'position:absolute;top:0;left:0;right:0;background:rgba(0,0,0,0.8);color:#0f0;font-family:monospace;font-size:10px;padding:10px;z-index:30001;max-height:150px;overflow:auto;pointer-events:none;';
+      debugDiv.innerHTML = '<b>Agent Debug Log:</b><br>';
+      agentRoot.parentNode.insertBefore(debugDiv, agentRoot);
+
+      const logToScreen = (msg) => {
+        debugDiv.innerHTML += `> ${msg}<br>`;
+        debugDiv.scrollTop = debugDiv.scrollHeight;
+        console.log(msg);
+      };
+
+      window.addEventListener('error', (e) => {
+        logToScreen(`ERR: ${e.message} at ${e.filename}:${e.lineno}`);
+        alert(`Runtime Error: ${e.message}\nAt: ${e.filename}:${e.lineno}`);
       });
 
+      logToScreen(`Agent Root Check: w=${agentRoot.offsetWidth} h=${agentRoot.offsetHeight}`);
+      
       if (agentRoot) {
-        // Add a temporary debug border to see if the container is actually visible
-        agentRoot.style.border = '2px solid red';
-        agentRoot.style.minHeight = '100px'; 
+        agentRoot.style.border = '4px solid red'; // Thicker border
         
         if (!agentRoot.hasChildNodes()) {
-          agentRoot.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--muted,#888);font-size:14px;gap:8px;"><span style="width:18px;height:18px;border:2px solid currentColor;border-top-color:transparent;border-radius:50%;animation:spin 0.7s linear infinite;display:inline-block;"></span>Загрузка архитектора v10031…</div><style>@keyframes spin{to{transform:rotate(360deg)}}</style>';
+          agentRoot.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#888;font-size:14px;">Загрузка скрипта...</div>';
         }
       }
 
       // Inject JS module
+      logToScreen('Injecting script v10031...');
       const script = document.createElement('script');
       script.type = 'module';
       script.crossOrigin = 'anonymous';
       script.src = '/smolgame/agent-dist/assets/index.js?v=10031';
+      
+      script.onload = () => logToScreen('Script loaded OK');
+      script.onerror = (e) => logToScreen('Script LOAD ERROR');
+      
+      document.head.appendChild(script);
       
       script.onload = () => {
         console.log('[Agent] Script loaded successfully');
