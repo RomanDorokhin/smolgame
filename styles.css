@@ -3979,7 +3979,7 @@ body.keyboard-open .app-tab-chrome {
 #upload-screen {
   position: fixed;
   inset: 0;
-  z-index: 9999;
+  z-index: 30000;
   background: var(--bg);
   display: none;
   flex-direction: column;

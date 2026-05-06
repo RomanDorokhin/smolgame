@@ -301,11 +301,21 @@ function switchTab(tab) {
 
       // Show loading indicator in agent-root while script loads
       const agentRoot = document.getElementById('agent-root');
-      console.log('[Agent] agent-root found:', !!agentRoot);
+      console.log('[Agent] agent-root check:', {
+        found: !!agentRoot,
+        width: agentRoot?.offsetWidth,
+        height: agentRoot?.offsetHeight,
+        display: agentRoot ? getComputedStyle(agentRoot).display : 'none',
+        zIndex: agentRoot ? getComputedStyle(agentRoot).zIndex : 'none'
+      });
+
       if (agentRoot) {
-        console.log('[Agent] agent-root visible:', agentRoot.offsetWidth > 0);
+        // Add a temporary debug border to see if the container is actually visible
+        agentRoot.style.border = '2px solid red';
+        agentRoot.style.minHeight = '100px'; 
+        
         if (!agentRoot.hasChildNodes()) {
-          agentRoot.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--muted,#888);font-size:14px;gap:8px;"><span style="width:18px;height:18px;border:2px solid currentColor;border-top-color:transparent;border-radius:50%;animation:spin 0.7s linear infinite;display:inline-block;"></span>Загрузка архитектора…</div><style>@keyframes spin{to{transform:rotate(360deg)}}</style>';
+          agentRoot.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--muted,#888);font-size:14px;gap:8px;"><span style="width:18px;height:18px;border:2px solid currentColor;border-top-color:transparent;border-radius:50%;animation:spin 0.7s linear infinite;display:inline-block;"></span>Загрузка архитектора v10031…</div><style>@keyframes spin{to{transform:rotate(360deg)}}</style>';
         }
       }
 
