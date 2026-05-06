@@ -1,14 +1,10 @@
-console.log('Agent Initializing...');
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
-import { HashRouter } from 'react-router'
 import './index.css'
-import App from './App.tsx'
+import Home from './pages/Home'
 
 createRoot(document.getElementById('agent-root')!).render(
   <StrictMode>
-    <HashRouter>
-      <App />
-    </HashRouter>
+    <Home />
   </StrictMode>,
 )
