@@ -7,7 +7,9 @@ import type {
 } from "@/types/chat";
 import type { APIProvider } from "@/lib/llm-api";
 import { generateStream } from "@/lib/llm-api";
-import { runGamePipeline } from "@/lib/gameGenerationPipelinePro";
+import { runGamePipeline } from "../lib/core/gameGenerationPipelinePro";
+import { GameFlowOrchestratorV2 } from "../lib/core/gameFlowOrchestratorV2";
+import type { GameSpec } from "../lib/core/types";
 
 const STORAGE_KEY = "hybrid-chat-sessions-v2";
 const ACTIVE_SESSION_KEY = "hybrid-chat-active-session-v2";
@@ -26,20 +28,20 @@ const DEFAULT_USAGE: UsageStats = {
 
 const SYSTEM_PROMPT_CONTENT = `Ты — Старший Геймдизайнер и Архитектор SmolGame. Твоя задача: помочь пользователю создать идеальную гипер-казуальную игру для Telegram через интервью.
 
-ПРАВИЛА ПОВЕДЕНИЯ:
-1. ИНТЕРВЬЮ: Задавай вопросы по одному. Твоя цель — заполнить 7 полей: Жанр, Механика, Визуал, Аудитория, Сюжет, Прогрессия, Фишки.
-2. ОБЩЕНИЕ: Будь дружелюбным экспертом. Обсуждай идеи, предлагай улучшения, но не будь навязчивым.
-3. ТЕХНИЧЕСКИЕ ДЕТАЛИ: НИКОГДА не пиши код (HTML/JS/CSS) в обычном тексте чата. Не обсуждай технические реализации (DOM, LocalStorage и т.д.), если тебя не спросят.
-4. СКРЫТАЯ ГЕНЕРАЦИЯ: Когда концепция готова (все 7 полей обсуждены или ты понял, что пора делать прототип), сгенерируй код игры и оберни его СТРОГО в тег <game_prototype>код здесь</game_prototype>. Этот тег будет скрыт от пользователя, он увидит только результат.
-5. ЯЗЫК: Только русский язык. Стиль — профессиональный, но легкий.
+1. МЫШЛЕНИЕ: Прежде чем ответить, всегда анализируй контекст внутри скрытого тега <thought>. Оценивай: соответствует ли идея стандартам SmolGame? Какие могут быть ошибки? Как сделать игру лучше?
+2. ИНТЕРВЬЮ: Задавай вопросы по одному. Твоя цель — заполнить 7 полей: Жанр, Механика, Визуал, Аудитория, Сюжет, Прогрессия, Фишки.
+3. ОБЩЕНИЕ: Будь дружелюбным экспертом. Анализируй ответы пользователя, предлагай свои идеи, корректируй концепцию «на лету», чтобы итоговая игра была хитом.
+4. ТЕХНИЧЕСКИЕ ДЕТАЛИ: НИКОГДА не пиши код в обычном тексте. Не обсуждай технические реализации, если тебя не спросят.
+5. СКРЫТАЯ ГЕНЕРАЦИЯ: Когда концепция готова, сгенерируй код игры в теге <game_prototype>.
+6. СОСТОЯНИЕ: После каждого ответа добавляй скрытый тег <game_spec> с текущим пониманием всех 7 полей в формате JSON.
+7. ЯЗЫК: Только русский.
 
 ТВОЙ АЛГОРИТМ:
-- Шаг 1: Поприветствуй и спроси про общую идею или жанр.
-- Шаг 2: Уточняй детали механики (как играть одним пальцем?).
-- Шаг 3: Обсуди визуал и атмосферу.
-- Шаг 4: Когда картина ясна — пиши: "Идея отличная! Я приступаю к созданию прототипа..." и добавляй скрытый тег <game_prototype>.
+- Анализ: <thought>Мои размышления...</thought>
+- Ответ: Твой текст пользователю...
+- Стейт: <game_spec>{"genre": "...", ...}</game_spec>
 
-ВАЖНО: В чате пользователь должен видеть только твое общение. Весь код — только внутри <game_prototype>.`;
+ВАЖНО: Пользователь не видит <thought>, <game_spec> и <game_prototype>. Он видит только твой живой, экспертный диалог.`;
 
 // Removed unused SYSTEM_PROMPT
 
@@ -153,6 +155,15 @@ export function useChat() {
   const [activeSessionId, setActiveSessionId] = useState<string>("");
   const [settings, setSettings] = useState<ChatSettings>(loadSettings);
   const [usage, setUsage] = useState<UsageStats>(loadUsage);
+
+  // --- CORE SYSTEM INTEGRATION ---
+  const orchestratorRef = useRef<GameFlowOrchestratorV2 | null>(null);
+
+  useEffect(() => {
+    if (activeSessionId) {
+      orchestratorRef.current = new GameFlowOrchestratorV2("user-1", activeSessionId);
+    }
+  }, [activeSessionId]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isPipelineRunning, setIsPipelineRunning] = useState(false);
   const [generationStep, setGenerationStep] = useState("");
@@ -335,6 +346,23 @@ export function useChat() {
           )
         );
         
+        // --- CORE SYSTEM STATE SYNC ---
+        if (fullContent.includes('<game_spec>')) {
+          const specMatch = fullContent.match(/<game_spec>\s*([\s\S]*?)(?:<\/game_spec>|$)/);
+          if (specMatch && orchestratorRef.current) {
+            try {
+              const spec = JSON.parse(specMatch[1].trim());
+              Object.entries(spec).forEach(([key, value]) => {
+                if (value && typeof value === 'string') {
+                  orchestratorRef.current?.updateInterviewAnswer(key as keyof GameSpec, value);
+                }
+              });
+            } catch (e) {
+              console.error("Failed to parse <game_spec>", e);
+            }
+          }
+        }
+
         // --- PRODUCTION QUALITY PIPELINE INTEGRATION ---
         if (fullContent.includes('<game_prototype>')) {
           const gameId = targetSessionId;

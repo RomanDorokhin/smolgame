@@ -28,7 +28,11 @@ export function ChatMessageItem({ message, onRetry }: ChatMessageItemProps) {
 
   const handleCopy = async () => {
     try {
-      const cleanContent = message.content.replace(/<game_prototype>[\s\S]*?(?:<\/game_prototype>|$)/g, '').trim();
+      const cleanContent = message.content
+        .replace(/<game_prototype>[\s\S]*?(?:<\/game_prototype>|$)/g, '')
+        .replace(/<game_spec>[\s\S]*?(?:<\/game_spec>|$)/g, '')
+        .replace(/<thought>[\s\S]*?(?:<\/thought>|$)/g, '')
+        .trim();
       await navigator.clipboard.writeText(htmlCode || cleanContent);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
@@ -104,7 +108,11 @@ export function ChatMessageItem({ message, onRetry }: ChatMessageItemProps) {
               {message.content ? (
                 <ReactMarkdown remarkPlugins={[remarkGfm]}>
                   {message.role === 'assistant' 
-                    ? message.content.replace(/<game_prototype>[\s\S]*?(?:<\/game_prototype>|$)/g, '').trim() 
+                    ? message.content
+                        .replace(/<game_prototype>[\s\S]*?(?:<\/game_prototype>|$)/g, '')
+                        .replace(/<game_spec>[\s\S]*?(?:<\/game_spec>|$)/g, '')
+                        .replace(/<thought>[\s\S]*?(?:<\/thought>|$)/g, '')
+                        .trim() 
                     : message.content}
                 </ReactMarkdown>
               ) : isStreaming ? (
