@@ -136,7 +136,12 @@ export function useChat() {
   useEffect(() => { localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); }, [settings]);
   useEffect(() => { localStorage.setItem(USAGE_KEY, JSON.stringify(usage)); }, [usage]);
 
-  const currentSession = sessions.find((s) => s.id === activeSessionId) || sessions[0];
+  const currentSession = sessions.find((s) => s.id === activeSessionId) || sessions[0] || {
+    id: "default",
+    title: "New Project",
+    messages: [],
+    updatedAt: Date.now()
+  };
 
   const sendMessage = useCallback(async (content: string, isHidden: boolean = false) => {
     if (isGenerating && !isHidden) return;
