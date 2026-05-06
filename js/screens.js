@@ -295,7 +295,7 @@ function switchTab(tab) {
       // Inject CSS
       const link = document.createElement('link');
       link.rel = 'stylesheet';
-      link.href = 'agent-dist/assets/index.css?v=10003';
+      link.href = '/smolgame/agent-dist/assets/index.css?v=10004';
       document.head.appendChild(link);
 
       // Show loading indicator in agent-root while script loads
@@ -307,11 +307,11 @@ function switchTab(tab) {
       // Inject JS module
       const script = document.createElement('script');
       script.type = 'module';
-      script.src = 'agent-dist/assets/index.js?v=10003';
+      script.src = '/smolgame/agent-dist/assets/index.js?v=10004';
       script.onerror = () => {
         const r = document.getElementById('agent-root');
         if (r) r.innerHTML = '<div style="padding:20px;color:#f87171;text-align:center;">❌ Не удалось загрузить агент.<br>Проверь консоль DevTools.</div>';
-        console.error('[Agent] Failed to load agent-dist/assets/index.js');
+        console.error('[Agent] Failed to load /smolgame/agent-dist/assets/index.js');
       };
       document.body.appendChild(script);
     } else {
