@@ -4,7 +4,7 @@ import { defineConfig } from "vite"
 
 // https://vite.dev/config/
 export default defineConfig({
-  base: './agent-dist/',
+  base: '/smolgame/agent-dist/',
   plugins: [react()],
   build: {
     outDir: '../agent-dist',
