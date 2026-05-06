@@ -224,12 +224,12 @@ export function ChatMessageItem({ message, onRetry }: ChatMessageItemProps) {
               </div>
             )}
 
-            {htmlCode && !message.pipelineResult && (
-              <div className="p-5 bg-[#a3b8d4]/5 border border-[#a3b8d4]/20 rounded-2xl">
+            {htmlCode && (
+              <div className="p-5 bg-[#a3b8d4]/5 border border-[#a3b8d4]/20 rounded-2xl mt-4">
                 <div className="flex items-center justify-between gap-4">
                   <div>
-                    <h4 className="text-xs font-black text-[#a3b8d4] uppercase tracking-widest">Прототип готов</h4>
-                    <p className="text-[10px] text-white/30 mt-1">Проверь механику перед деплоем</p>
+                    <h4 className="text-xs font-black text-[#a3b8d4] uppercase tracking-widest">Локальный тест</h4>
+                    <p className="text-[10px] text-white/30 mt-1">Проверь игру перед публикацией</p>
                   </div>
                   <Button
                     variant="default"
