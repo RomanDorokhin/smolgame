@@ -12,9 +12,17 @@ export function useAuth() {
       setUser(userData);
       setIsAuthenticated(true);
     } catch (error) {
-      console.warn("User not authenticated via SmolGame Worker", error);
-      setUser(null);
-      setIsAuthenticated(false);
+      console.warn("User not authenticated via SmolGame Worker. Enabling Guest Mode.", error);
+      
+      // Guest Mode: Allow access even without GitHub login for preview/testing
+      // In a real app, you might want to check if window.Telegram is present to be more strict
+      setUser({
+        id: 'guest',
+        username: 'Guest',
+        first_name: 'Guest',
+        isGithubConnected: false
+      });
+      setIsAuthenticated(true);
     } finally {
       setIsLoading(false);
     }

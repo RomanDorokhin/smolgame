@@ -224,6 +224,24 @@ export function useChat() {
     async (content: string) => {
       if (isGenerating) return;
 
+      if (!settings.apiKey) {
+        console.warn("API Key is missing. Prompting user to configure it.");
+        const errorMsg: ChatMessage = {
+          id: generateId(),
+          role: "assistant",
+          content: "⚠️ **API-ключ не найден.**\n\nПожалуйста, перейдите в **Настройки** (иконка шестеренки внизу слева) и введите ваш API-ключ (OpenRouter или DeepSeek), чтобы начать создание игр.",
+          timestamp: Date.now(),
+        };
+        setSessions((prev) =>
+          prev.map((s) =>
+            s.id === activeSessionId
+              ? { ...s, messages: [...s.messages, { id: generateId(), role: "user", content, timestamp: Date.now() }, errorMsg], updatedAt: Date.now() }
+              : s
+          )
+        );
+        return;
+      }
+
       const userMessage: ChatMessage = {
         id: generateId(),
         role: "user",

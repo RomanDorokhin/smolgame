@@ -17,6 +17,9 @@ export async function* generateStream(
   config: LLMConfig,
   signal?: AbortSignal
 ) {
+  if (!config.apiKey) {
+    throw new Error("API Key is required to use this provider. Please check your settings.");
+  }
   let url = "";
   let headers: Record<string, string> = {
     "Content-Type": "application/json",

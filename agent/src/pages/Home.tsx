@@ -7,6 +7,27 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Menu, Sparkles, ShieldCheck, Cpu, Download, Github } from "lucide-react";
 import { useAuth } from "@/_core/hooks/useAuth";
+import { Component, type ReactNode } from "react";
+
+class ErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean; error: any }> {
+  constructor(props: any) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+  static getDerivedStateFromError(error: any) { return { hasError: true, error }; }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="flex flex-col items-center justify-center h-screen p-6 text-center bg-background">
+          <h2 className="text-2xl font-bold mb-4">Something went wrong</h2>
+          <p className="text-muted-foreground mb-6 max-w-md">{this.state.error?.message || "Unknown error"}</p>
+          <Button onClick={() => window.location.reload()}>Reload Page</Button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 export default function Home() {
   const {
@@ -69,7 +90,8 @@ export default function Home() {
   };
 
   return (
-    <div className="flex h-screen bg-background overflow-hidden">
+    <ErrorBoundary>
+      <div className="flex h-screen bg-background overflow-hidden">
       <ChatSidebar
         sessions={sessions}
         activeSessionId={activeSessionId}
@@ -253,6 +275,7 @@ export default function Home() {
         />
       </main>
     </div>
+    </ErrorBoundary>
   );
 }
 
