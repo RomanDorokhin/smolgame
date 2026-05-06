@@ -159,7 +159,12 @@ export function useChat() {
     setIsGenerating(true);
     abortControllerRef.current = new AbortController();
 
-    // Orchestrator Logic: Try providers in order
+    // Ensure orchestrator exists
+    if (!orchestratorRef.current) {
+        orchestratorRef.current = new GameFlowOrchestratorV2("user-1", activeSessionId);
+    }
+    const orchestrator = orchestratorRef.current;
+
     let success = false;
     let lastError = "";
     
@@ -178,8 +183,35 @@ export function useChat() {
 
       try {
         console.log(`[Orchestrator] Attempting with ${provider}...`);
+        
+        // Dynamically build the smart prompt based on the current interview state
+        const currentAnswers = orchestrator.getSession().answers || {};
+        const isComplete = orchestrator.isInterviewComplete();
+        const progress = orchestrator.getInterviewProgress();
+
+        const SMART_SYSTEM_PROMPT = `Ты — Элитный Геймдизайнер и Архитектор SmolGame.
+Твоя цель — создать хитовую мини-игру. Игры для SmolGame должны строго соответствовать 35 правилам (Touch управление, только Portrait ориентация, Demo-режим, без alert/prompt, сохранение рекордов).
+
+ПРОЦЕСС СОЗДАНИЯ ИДЕТ СТРОГО ПО ЭТАПАМ:
+
+ЭТАП 1: ИНТЕРВЬЮ (Сбор 7 параметров)
+Ты должен собрать: Жанр, Механику, Визуал, Аудиторию, Сюжет, Прогрессию, Фишки.
+ТЕКУЩИЙ СТАТУС СБОРА (${progress.filled}/${progress.total}):
+${JSON.stringify(currentAnswers, null, 2)}
+
+ПРАВИЛА ИНТЕРВЬЮ:
+1. Сначала ВСЕГДА проводи самоанализ в тегах <thought>...</thought>. Подумай, чего не хватает, и сформулируй 1 (ОДИН) точный вопрос.
+2. Задавай ТОЛЬКО ОДИН вопрос за раз. Никаких списков.
+3. Общайся супер-кратко и по делу. Без воды.
+4. ВАЖНО: Как только ты получаешь ответ на какой-либо параметр, ты ОБЯЗАН вывести обновленный статус в виде JSON внутри тега <game_spec>.
+Пример: <game_spec>{"genre": "Платформер"}</game_spec>
+
+ЭТАП 2: ГЕНЕРАЦИЯ КОДА
+Когда все 7 параметров собраны (${isComplete ? 'ДА, СОБРАНЫ' : 'НЕТ, ЕЩЕ ИДЕТ ИНТЕРВЬЮ'}), ты должен выдать полный рабочий код игры внутри тегов <game_prototype>...</game_prototype>.
+До генерации писать код КАТЕГОРИЧЕСКИ ЗАПРЕЩЕНО.`;
+
         const messagesForAI = [
-          { role: "system" as const, content: SYSTEM_PROMPT_CONTENT },
+          { role: "system" as const, content: SMART_SYSTEM_PROMPT },
           ...currentSession.messages.map(m => ({ role: m.role as "user" | "assistant" | "system", content: m.content })),
           { role: "user" as const, content }
         ];
@@ -200,7 +232,6 @@ export function useChat() {
           } : s));
         }
 
-        // Update Usage
         setUsage(prev => ({
           ...prev,
           requests: { ...prev.requests, [provider]: (prev.requests[provider] || 0) + 1 }
@@ -208,14 +239,17 @@ export function useChat() {
 
         success = true;
 
-        // Process Tags
+        // Auto-extract answers if the agent didn't use <game_spec> explicit tags, by passing the conversation to the orchestrator implicitly, 
+        // OR rely on the agent to output them. Actually, let's inject a fast LLM call or just ask the agent to output <game_spec> when it updates parameters.
+        // For robustness, let's also prompt it to output <game_spec> JSON.
+        
         if (fullContent.includes("<game_spec>")) {
           const specMatch = fullContent.match(/<game_spec>([\s\S]*?)<\/game_spec>/);
           if (specMatch) {
             try {
               const spec = JSON.parse(specMatch[1]);
               Object.entries(spec).forEach(([k, v]) => {
-                orchestratorRef.current?.updateInterviewAnswer(k as keyof GameSpec, String(v));
+                orchestrator.updateInterviewAnswer(k as keyof GameSpec, String(v));
               });
             } catch {}
           }
@@ -226,11 +260,15 @@ export function useChat() {
           if (codeMatch) {
             setIsPipelineRunning(true);
             setGenerationStep(`Validating (via ${provider})...`);
+            
+            // Run through the robust validation pipeline
             const result = await runGamePipeline(activeSessionId, codeMatch[1]);
+            
             setSessions(prev => prev.map(s => s.id === activeSessionId ? {
               ...s,
               messages: s.messages.map(m => m.id === assistantMsg.id ? { ...m, pipelineResult: result, status: "Ready" } : m)
             } : s));
+            
             setIsPipelineRunning(false);
             setGenerationStep("");
           }
@@ -240,7 +278,6 @@ export function useChat() {
         if (e.name === 'AbortError') throw e;
         console.error(`[Orchestrator] ${provider} failed:`, e.message);
         lastError = e.message;
-        // Continue to next provider
       }
     }
 

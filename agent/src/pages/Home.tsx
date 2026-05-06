@@ -162,42 +162,7 @@ export default function Home() {
                     </div>
                   )}
 
-                  {/* Deploy/Test Buttons */}
-                  {currentSession.messages.length > 0 && 
-                   currentSession.messages[currentSession.messages.length - 1].pipelineResult?.isPublishable && 
-                   !isGenerating && (
-                    <div className="mt-4 p-4 rounded-2xl bg-[#13141a] border border-[#a3b8d4]/30 flex flex-col gap-3 animate-in fade-in zoom-in duration-500">
-                       <div className="flex items-center gap-3">
-                        <ShieldCheck className="text-[#a3b8d4]" size={24} />
-                        <div className="flex-1">
-                            <h3 className="text-xs font-black uppercase tracking-widest text-white">Игра готова к тесту!</h3>
-                            <p className="text-[9px] text-[#a3b8d4] font-medium">Качество: 100/100 • Без ошибок</p>
-                        </div>
-                       </div>
 
-                       <div className="flex gap-2">
-                         <Button 
-                          onClick={() => {
-                            const code = currentSession.messages[currentSession.messages.length - 1].pipelineResult.generatedCode;
-                            const blob = new Blob([code], { type: 'text/html' });
-                            const url = URL.createObjectURL(blob);
-                            window.open(url, '_blank');
-                          }}
-                          className="flex-1 bg-white/5 hover:bg-white/10 text-white border border-white/10 font-bold uppercase tracking-tighter text-[10px] rounded-xl py-4 h-auto"
-                         >
-                           Тестировать
-                         </Button>
-
-                         <Button 
-                          onClick={deployToGitHub}
-                          disabled={isPipelineRunning}
-                          className="flex-1 bg-[#a3b8d4] hover:bg-[#8da3c1] text-[#0a0b0e] font-black uppercase tracking-tighter text-[10px] rounded-xl py-4 h-auto shadow-[0_0_20px_rgba(163,184,212,0.2)]"
-                         >
-                           {isPipelineRunning ? 'Отправка...' : 'На модерацию'}
-                         </Button>
-                       </div>
-                    </div>
-                  )}
                   <div ref={bottomRef} />
                 </div>
               )}

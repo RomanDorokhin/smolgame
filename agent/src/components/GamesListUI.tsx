@@ -3,10 +3,10 @@
  * Shows all games for user with delete/archive options
  */
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/_core/hooks/useAuth';
 import { useLocation } from 'wouter';
-import { getUserGamesForUI } from '@/lib/gameFlowOrchestratorV2';
+import { getUserGamesForUI } from '@/lib/gameFlowOrchestrator';
 import {
   deleteGameWithConfirmation,
   archiveGame,
@@ -194,10 +194,12 @@ export function GamesListUI() {
   const [, setLocation] = useLocation();
   const [games, setGames] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [deletingGameId, setDeletingGameId] = useState<string | null>(null);
+  const [archivingGameId, setArchivingGameId] = useState<string | null>(null);
 
   useEffect(() => {
     if (user?.id) {
-      const gamesList = getUserGamesForUI(user.id.toString());
+      const gamesList = getUserGamesForUI(user.id);
       setGames(gamesList.games);
       setIsLoading(false);
     }
@@ -206,11 +208,13 @@ export function GamesListUI() {
   const handleDelete = async (gameId: string) => {
     if (!user?.id) return;
 
-    await deleteGameWithConfirmation(user.id.toString(), gameId, 'Game', {
+    setDeletingGameId(gameId);
+
+    const success = await deleteGameWithConfirmation(user.id, gameId, 'Game', {
       onSuccess: (message) => {
         console.log(message);
         // Refresh games list
-        const gamesList = getUserGamesForUI(user.id.toString());
+        const gamesList = getUserGamesForUI(user.id);
         setGames(gamesList.games);
       },
       onError: (error) => {
@@ -218,16 +222,20 @@ export function GamesListUI() {
         alert(`Failed to delete game: ${error}`);
       },
     });
+
+    setDeletingGameId(null);
   };
 
   const handleArchive = async (gameId: string) => {
     if (!user?.id) return;
 
-    await archiveGame(user.id.toString(), gameId, {
+    setArchivingGameId(gameId);
+
+    const success = await archiveGame(user.id, gameId, {
       onSuccess: (message) => {
         console.log(message);
         // Refresh games list
-        const gamesList = getUserGamesForUI(user.id.toString());
+        const gamesList = getUserGamesForUI(user.id);
         setGames(gamesList.games);
       },
       onError: (error) => {
@@ -235,12 +243,14 @@ export function GamesListUI() {
         alert(`Failed to archive game: ${error}`);
       },
     });
+
+    setArchivingGameId(null);
   };
 
   const handleExport = async (gameId: string) => {
     if (!user?.id) return;
 
-    const result = await exportGameBeforeDeletion(user.id.toString(), gameId);
+    const result = await exportGameBeforeDeletion(user.id, gameId);
 
     if (result.success) {
       alert('Game exported successfully! Check your downloads.');

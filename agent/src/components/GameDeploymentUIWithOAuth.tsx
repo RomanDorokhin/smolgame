@@ -3,13 +3,13 @@
  * Handles deployment using OAuth-authenticated GitHub access
  */
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   quickDeployGameOAuth,
-  type DeploymentResult,
-  type GameMetadata,
+  DeploymentResult,
+  GameMetadata,
 } from '@/lib/githubGameDeployerOAuth';
-import { GitHubOAuthClient, type GitHubUser } from '@/lib/githubOAuthClient';
+import { GitHubOAuthClient, GitHubUser } from '@/lib/githubOAuthClient';
 import GitHubLoginButton from './GitHubLoginButton';
 import './GameDeploymentUI.css';
 
