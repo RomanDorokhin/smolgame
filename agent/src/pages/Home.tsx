@@ -18,7 +18,7 @@ class ErrorBoundary extends Component<{ children: ReactNode }, { hasError: boole
   render() {
     if (this.state.hasError) {
       return (
-        <div className="flex flex-col items-center justify-center h-screen p-6 text-center bg-background">
+        <div className="flex flex-col items-center justify-center h-full p-6 text-center bg-background">
           <h2 className="text-2xl font-bold mb-4">Something went wrong</h2>
           <p className="text-muted-foreground mb-6 max-w-md">{this.state.error?.message || "Unknown error"}</p>
           <Button onClick={() => window.location.reload()}>Reload Page</Button>
@@ -91,7 +91,7 @@ export default function Home() {
 
   return (
     <ErrorBoundary>
-      <div className="flex h-screen bg-background overflow-hidden">
+      <div className="flex h-full bg-background overflow-hidden">
       <ChatSidebar
         sessions={sessions}
         activeSessionId={activeSessionId}
