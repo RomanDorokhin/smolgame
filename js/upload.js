@@ -1,5 +1,8 @@
 // SmolGame Upload/Create Screen Logic (Replaced with Agent Integration)
 
+// Initialize global state expected by other scripts (e.g. Profile)
+window.selectedGenres = window.selectedGenres || {};
+
 async function refreshUploadCapabilities() {
   // Agent handles its own auth and capabilities
 }
