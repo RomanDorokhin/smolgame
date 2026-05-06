@@ -24,7 +24,7 @@ const SYSTEM_PROMPT_CONTENT = "Ты — Старший Геймдизайнер 
 "4. ГЕНЕРАЦИЯ: Когда концепт ясен — сразу выдавай <game_prototype>.\n" +
 "5. ЯЗЫК: Русский.";
 
-const FALLBACK_ORDER: APIProvider[] = ["groq", "gemini", "deepseek", "mistral", "openrouter"];
+const FALLBACK_ORDER: APIProvider[] = ["groq", "gemini", "deepseek", "mistral", "openrouter", "custom"];
 
 function generateId() {
   return Math.random().toString(36).substring(2, 15);
@@ -187,7 +187,8 @@ export function useChat() {
         const stream = generateStream(messagesForAI, {
           provider,
           apiKey,
-          model: settings.models[provider] || ""
+          model: settings.models[provider] || "",
+          baseUrl: settings.customBaseUrl
         }, abortControllerRef.current.signal);
 
         let fullContent = "";

@@ -1,9 +1,10 @@
-export type APIProvider = "openrouter" | "groq" | "gemini" | "deepseek" | "huggingface" | "mistral";
+export type APIProvider = "openrouter" | "groq" | "gemini" | "deepseek" | "huggingface" | "mistral" | "custom";
 
 export interface LLMConfig {
   provider: APIProvider;
   apiKey: string;
   model: string;
+  baseUrl?: string;
 }
 
 export interface ChatMessage {
@@ -68,6 +69,7 @@ const DEFAULT_MODELS: Record<string, string> = {
   gemini: "gemini-2.0-flash",
   mistral: "codestral-latest",
   deepseek: "deepseek-chat",
+  custom: "gpt-3.5-turbo",
 };
 
 export async function* generateStream(
@@ -84,7 +86,11 @@ export async function* generateStream(
     throw new Error(`API Key for ${config.provider} is missing.`);
   }
 
-  const url = PROVIDER_URLS[config.provider] || PROVIDER_URLS.openrouter;
+  let url = PROVIDER_URLS[config.provider] || PROVIDER_URLS.openrouter;
+  if (config.provider === "custom" && config.baseUrl) {
+    url = config.baseUrl;
+  }
+
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
     "Authorization": `Bearer ${config.apiKey}`,
@@ -98,7 +104,7 @@ export async function* generateStream(
   const body = {
     messages,
     stream: true,
-    model: config.model || DEFAULT_MODELS[config.provider],
+    model: config.model || DEFAULT_MODELS[config.provider] || "gpt-3.5-turbo",
   };
 
   const response = await fetch(url, {

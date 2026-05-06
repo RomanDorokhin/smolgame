@@ -17,12 +17,13 @@ export interface ModelProgress {
   status: "idle" | "downloading" | "loading" | "ready" | "error";
 }
 
-export type APIProvider = "openrouter" | "groq" | "gemini" | "deepseek" | "huggingface" | "mistral";
+export type APIProvider = "openrouter" | "groq" | "gemini" | "deepseek" | "huggingface" | "mistral" | "custom";
 
 export interface ChatSettings {
   primaryProvider: APIProvider;
   keys: Partial<Record<APIProvider, string>>;
   models: Partial<Record<APIProvider, string>>;
+  customBaseUrl?: string;
   autoFailover: boolean;
   maxRetries: number;
 }

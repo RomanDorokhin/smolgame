@@ -53,7 +53,6 @@ export function ChatSidebar({
   const [expandedProvider, setExpandedProvider] = useState<APIProvider | null>("groq");
   const { user, isAuthenticated, login, logout } = useAuth();
 
-  const providers: APIProvider[] = ["groq", "gemini", "deepseek", "mistral", "openrouter"];
 
   const handleClear = () => {
     if (confirmClear) {
@@ -143,14 +142,14 @@ export function ChatSidebar({
 
               <div className="space-y-2">
                 <label className="text-[10px] font-black uppercase text-white/30 ml-1">Providers & Keys</label>
-                {providers.map((p) => (
+                {["groq", "gemini", "deepseek", "mistral", "openrouter", "custom"].map((p) => (
                   <div key={p} className="border border-white/10 rounded-xl overflow-hidden bg-white/[0.03]">
                     <button 
-                      onClick={() => setExpandedProvider(expandedProvider === p ? null : p)}
+                      onClick={() => setExpandedProvider(expandedProvider === p ? null : p as APIProvider)}
                       className={`w-full flex items-center justify-between p-3 hover:bg-white/[0.05] transition-all ${expandedProvider === p ? 'bg-white/[0.05]' : ''}`}
                     >
                       <div className="flex items-center gap-3">
-                        <div className={`w-2 h-2 rounded-full ${settings.keys[p] ? 'bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.6)]' : 'bg-white/10'}`} />
+                        <div className={`w-2 h-2 rounded-full ${settings.keys[p as APIProvider] ? 'bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.6)]' : 'bg-white/10'}`} />
                         <span className={`text-[11px] font-bold uppercase tracking-tighter ${settings.primaryProvider === p ? 'text-primary' : 'text-white/80'}`}>
                           {p} {settings.primaryProvider === p && "(Primary)"}
                         </span>
@@ -160,22 +159,36 @@ export function ChatSidebar({
                     
                     {expandedProvider === p && (
                       <div className="p-3 pt-0 space-y-3 bg-white/[0.02]">
-                        <Input
-                          type="password"
-                          placeholder={`${p} API key`}
-                          value={settings.keys[p] || ""}
-                          onChange={(e) => {
-                            const newKeys = { ...settings.keys, [p]: e.target.value };
-                            onUpdateSettings({ keys: newKeys });
-                          }}
-                          className="h-9 text-xs bg-black/40 border-white/10 text-white placeholder:text-white/20 focus:border-primary/50"
-                        />
+                        {p === "custom" && (
+                          <div className="space-y-1">
+                            <label className="text-[8px] font-black uppercase text-white/30 ml-1">Base URL (OpenAI compatible)</label>
+                            <Input
+                              placeholder="https://api.example.com/v1"
+                              value={settings.customBaseUrl || ""}
+                              onChange={(e) => onUpdateSettings({ customBaseUrl: e.target.value })}
+                              className="h-8 text-[10px] bg-black/40 border-white/10 text-white"
+                            />
+                          </div>
+                        )}
+                        <div className="space-y-1">
+                          <label className="text-[8px] font-black uppercase text-white/30 ml-1">API Key</label>
+                          <Input
+                            type="password"
+                            placeholder={`${p} API key`}
+                            value={settings.keys[p as APIProvider] || ""}
+                            onChange={(e) => {
+                              const newKeys = { ...settings.keys, [p]: e.target.value };
+                              onUpdateSettings({ keys: newKeys });
+                            }}
+                            className="h-9 text-xs bg-black/40 border-white/10 text-white placeholder:text-white/20 focus:border-primary/50"
+                          />
+                        </div>
                         <div className="flex gap-1">
                           <Button 
                             variant="secondary" 
                             size="sm" 
                             className="flex-1 h-7 text-[9px] font-bold uppercase tracking-tighter bg-white/10 hover:bg-white/20 text-white"
-                            onClick={() => onUpdateSettings({ primaryProvider: p })}
+                            onClick={() => onUpdateSettings({ primaryProvider: p as APIProvider })}
                             disabled={settings.primaryProvider === p}
                           >
                             Set as Primary
