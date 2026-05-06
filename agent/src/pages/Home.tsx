@@ -138,12 +138,24 @@ export default function Home() {
           </div>
 
           <div className="flex items-center gap-2">
-            {isAuthenticated && user && (
-              <div className="hidden sm:flex items-center gap-2 mr-2">
-                {user.photo_url && (
-                  <img src={user.photo_url} alt={user.githubUsername || user.username} className="w-6 h-6 rounded-full border border-primary/20" />
+            {isAuthenticated && user ? (
+              <div className="flex items-center gap-2 px-2 py-1 rounded-lg bg-green-500/10 border border-green-500/20">
+                {user.isGithubConnected ? (
+                  <>
+                    <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+                    <span className="text-[10px] font-bold text-green-500">GITHUB: @{user.githubUsername || user.username}</span>
+                  </>
+                ) : (
+                  <>
+                    <div className="w-1.5 h-1.5 rounded-full bg-yellow-500" />
+                    <span className="text-[10px] font-bold text-yellow-500">TG: @{user.username} (Git required for deploy)</span>
+                  </>
                 )}
-                <span className="text-xs font-medium text-muted-foreground">{user.githubUsername || user.username}</span>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2 px-2 py-1 rounded-lg bg-red-500/10 border border-red-500/20">
+                <div className="w-1.5 h-1.5 rounded-full bg-red-500" />
+                <span className="text-[10px] font-bold text-red-500">GUEST MODE</span>
               </div>
             )}
             
