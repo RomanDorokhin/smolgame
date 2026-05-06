@@ -271,18 +271,13 @@ function switchTab(tab) {
     upload?.classList.add('open');
     upload.scrollTop = 0;
     
-    // Dynamically set iframe source with initData for auth persistence
+    // Dynamically set iframe source
     const iframe = document.getElementById('agent-iframe');
     if (iframe) {
-      setTimeout(() => {
-        const initData = sessionStorage.getItem('smolgame:tgInitData:v1') || '';
-        const baseUrl = 'https://romandorokhin.github.io/OpenSmolGame/';
-        const finalUrl = initData ? `${baseUrl}?tgWebAppData=${encodeURIComponent(initData)}` : baseUrl;
-        
-        if (iframe.src !== finalUrl) {
-          iframe.src = finalUrl;
-        }
-      }, 50);
+      const baseUrl = 'https://romandorokhin.github.io/OpenSmolGame/';
+      if (iframe.src !== baseUrl) {
+        iframe.src = baseUrl;
+      }
     }
 
     if (typeof resetGhCodeWizard === 'function') resetGhCodeWizard();

@@ -4005,8 +4005,10 @@ body.keyboard-open .app-tab-chrome {
   width: 100%;
   display: flex;
   flex-direction: column;
-  background: var(--bg);
+  background: transparent;
   overflow: hidden;
+  position: relative;
+  z-index: 100000;
 }
 
 #agent-iframe {
@@ -4014,7 +4016,7 @@ body.keyboard-open .app-tab-chrome {
   width: 100%;
   height: 100%;
   border: none;
-  background: var(--bg);
+  background: transparent;
 }
 
 #agent-iframe {
