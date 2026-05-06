@@ -240,19 +240,19 @@ export default function Home() {
         </div>
 
         {/* Input area - Non-fixed for better flow in Telegram */}
-        <div className="p-4 bg-background/50 backdrop-blur-sm border-t border-border/40 shrink-0">
+        <div className="p-4 md:p-8 bg-transparent shrink-0">
           <div className="max-w-3xl mx-auto">
             <ChatInput
               onSend={sendMessage}
               onStop={stopGeneration}
               isGenerating={isGenerating}
               disabled={!settings.apiKey}
-              placeholder={!settings.apiKey ? "Сначала активируйте ключ ↑" : "Опишите вашу игру..."}
+              placeholder={!settings.apiKey ? "Сначала активируйте ключ выше ↑" : "Опишите вашу игру..."}
             />
             <div className="mt-4 flex items-center justify-center gap-4 opacity-10">
-               <div className="h-[1px] flex-1 bg-gradient-to-r from-transparent to-border" />
-               <p className="text-[8px] uppercase tracking-[0.4em] font-black">OpenSmolGame Agent 3.0</p>
-               <div className="h-[1px] flex-1 bg-gradient-to-l from-transparent to-border" />
+               <div className="h-[1px] flex-1 bg-gradient-to-r from-transparent to-primary/40" />
+               <p className="text-[8px] uppercase tracking-[0.4em] font-black text-primary">OpenSmolGame Agent 3.0</p>
+               <div className="h-[1px] flex-1 bg-gradient-to-l from-transparent to-primary/40" />
             </div>
           </div>
         </div>
