@@ -1,5 +1,5 @@
 
-export type APIProvider = "openrouter" | "groq" | "gemini";
+export type APIProvider = "openrouter" | "groq" | "gemini" | "deepseek" | "huggingface";
 
 export interface LLMConfig {
   provider: APIProvider;

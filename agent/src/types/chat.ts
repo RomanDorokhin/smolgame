@@ -26,4 +26,19 @@ export interface ModelProgress {
   status: "idle" | "downloading" | "loading" | "ready" | "error";
 }
 
+import type { APIProvider } from "../lib/llm-api";
+
+export { type APIProvider };
+
+export interface ChatSettings {
+  provider: APIProvider;
+  apiKey: string;
+  model: string;
+}
+
+export interface UsageStats {
+  requests: number;
+  lastReset: number;
+}
+
 export type ThemeMode = "dark" | "light";
