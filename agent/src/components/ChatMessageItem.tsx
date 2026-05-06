@@ -22,12 +22,14 @@ export function ChatMessageItem({ message, onRetry }: ChatMessageItemProps) {
   const isStreaming = message.isStreaming;
   const { isAuthenticated, login } = useAuth();
 
-  const htmlCode = message.content.match(/```html\s*([\s\S]*?)```/)?.[1] || 
+  const htmlCode = message.content.match(/<game_prototype>\s*([\s\S]*?)(?:<\/game_prototype>|$)/)?.[1] ||
+                   message.content.match(/```html\s*([\s\S]*?)```/)?.[1] || 
                    (message.content.includes('<html>') ? message.content : null);
 
   const handleCopy = async () => {
     try {
-      await navigator.clipboard.writeText(message.content);
+      const cleanContent = message.content.replace(/<game_prototype>[\s\S]*?(?:<\/game_prototype>|$)/g, '').trim();
+      await navigator.clipboard.writeText(htmlCode || cleanContent);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
@@ -101,7 +103,9 @@ export function ChatMessageItem({ message, onRetry }: ChatMessageItemProps) {
             <div className="markdown-content text-white/90">
               {message.content ? (
                 <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                  {message.content}
+                  {message.role === 'assistant' 
+                    ? message.content.replace(/<game_prototype>[\s\S]*?(?:<\/game_prototype>|$)/g, '').trim() 
+                    : message.content}
                 </ReactMarkdown>
               ) : isStreaming ? (
                 <div className="flex items-center gap-1.5 text-[#a3b8d4]">
