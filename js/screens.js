@@ -308,10 +308,27 @@ function switchTab(tab) {
       const script = document.createElement('script');
       script.type = 'module';
       script.src = '/smolgame/agent-dist/assets/index.js?v=10004';
-      script.onerror = () => {
+      
+      script.onload = () => {
+        console.log('[Agent] Script loaded successfully');
+      };
+
+      script.onerror = (err) => {
         const r = document.getElementById('agent-root');
-        if (r) r.innerHTML = '<div style="padding:20px;color:#f87171;text-align:center;">❌ Не удалось загрузить агент.<br>Проверь консоль DevTools.</div>';
-        console.error('[Agent] Failed to load /smolgame/agent-dist/assets/index.js');
+        if (r) {
+          r.innerHTML = `
+            <div style="padding:40px 20px;color:#f87171;text-align:center;font-family:sans-serif;">
+              <div style="font-size:40px;margin-bottom:20px;">⚠️</div>
+              <div style="font-weight:bold;margin-bottom:10px;">Ошибка загрузки агента</div>
+              <div style="font-size:12px;opacity:0.8;background:rgba(0,0,0,0.1);padding:10px;border-radius:8px;word-break:break-all;">
+                URL: /smolgame/agent-dist/assets/index.js?v=10004<br>
+                Тип ошибки: Script Error
+              </div>
+              <button onclick="location.reload()" style="margin-top:20px;padding:10px 20px;background:#f87171;color:white;border:none;border-radius:8px;font-weight:bold;">Перезагрузить</button>
+            </div>
+          `;
+        }
+        console.error('[Agent] Failed to load script:', err);
       };
       document.body.appendChild(script);
     } else {
