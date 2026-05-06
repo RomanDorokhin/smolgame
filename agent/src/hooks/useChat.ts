@@ -161,7 +161,12 @@ export function useChat() {
 
   useEffect(() => {
     if (activeSessionId) {
-      orchestratorRef.current = new GameFlowOrchestratorV2("user-1", activeSessionId);
+      try {
+        console.log('[Agent] Initializing Orchestrator for session:', activeSessionId);
+        orchestratorRef.current = new GameFlowOrchestratorV2("user-1", activeSessionId);
+      } catch (e) {
+        console.error('[Agent] Failed to init orchestrator:', e);
+      }
     }
   }, [activeSessionId]);
   const [isGenerating, setIsGenerating] = useState(false);
