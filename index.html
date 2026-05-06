@@ -18,6 +18,7 @@
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <!-- ?v=10001 сбрасывает кэш WebView Telegram после правок JS/CSS (меняй при каждом релизе фронта; при крупных фиксах — у всех script/link сразу). -->
 <link rel="stylesheet" href="styles.css?v=10001">
+<link rel="stylesheet" href="agent-dist/assets/index.css?v=10001">
 <!-- Обновление имени/аватара теперь реактивно через syncUSERFromTelegramInit() в telegram-initdata.js -->
 </head>
 <body class="feed-open">
@@ -302,7 +303,7 @@
   </div>
 
   <div class="agent-container" style="flex: 1; height: 100%; overflow: hidden;">
-    <iframe id="agent-iframe" src="about:blank" referrerpolicy="no-referrer" style="width: 100%; height: 100%; border: none; background: var(--bg);"></iframe>
+    <div id="agent-root" style="width: 100%; height: 100%;"></div>
   </div>
 </div>
 
@@ -614,5 +615,6 @@
 <script src="js/events.js?v=10001"></script>
 <script src="js/overlay-pull-close.js?v=10001"></script>
 <script src="js/main.js?v=10001"></script>
+<script type="module" src="agent-dist/assets/index.js?v=10001"></script>
 </body>
 </html>
