@@ -8,6 +8,7 @@ export interface ChatMessage {
   isStreaming?: boolean;
   pipelineResult?: any;
   status?: string;
+  isHidden?: boolean;
 }
 
 export interface ChatSession {

@@ -166,7 +166,7 @@ export default function Home() {
                 </div>
               ) : (
                 <div className="space-y-6">
-                  {currentSession.messages.map((message) => (
+                  {currentSession.messages.filter(m => !m.isHidden).map((message) => (
                     <ChatMessageItem
                       key={message.id}
                       message={message}

@@ -232,8 +232,8 @@ export function useChat() {
   }, []);
 
   const sendMessage = useCallback(
-    async (content: string) => {
-      if (isGenerating) return;
+    async (content: string, isHidden: boolean = false) => {
+      if (isGenerating && !isHidden) return;
 
       if (!settings.apiKey) {
         console.warn("API Key is missing. Prompting user to configure it.");
@@ -258,6 +258,7 @@ export function useChat() {
         role: "user",
         content,
         timestamp: Date.now(),
+        isHidden,
       };
 
       const assistantMessage: ChatMessage = {
@@ -393,6 +394,22 @@ export function useChat() {
                 );
               }
             });
+
+            setGenerationStep("");
+            setIsPipelineRunning(false);
+
+            // --- AUTO-FEEDBACK LOGIC ---
+            if (!result.isPublishable) {
+              const errorSummary = result.errors.map(e => `- ${e}`).join('\n');
+              const feedbackPrompt = `К сожалению, игра не прошла проверку качества (Оценка: ${result.finalScore}/100). 
+Ошибки:
+${errorSummary}
+
+Пожалуйста, проанализируй эти ошибки внутри <thought>, объясни пользователю, что пошло не так, и предложи исправить код. Если ты готов исправить прямо сейчас — сгенерируй новый <game_prototype> с исправлениями.`;
+              
+              // Automatically trigger a follow-up from the agent
+              sendMessage(feedbackPrompt, true); // true = system/hidden message
+            }
 
             setSessions((prev) =>
               prev.map((s) =>
