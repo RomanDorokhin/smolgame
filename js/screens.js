@@ -276,6 +276,7 @@ function switchTab(tab) {
     if (iframe) {
       setTimeout(() => {
         const initData = sessionStorage.getItem('smolgame:tgInitData:v1') || '';
+        console.log("Passing initData to agent iframe:", initData ? "YES (length " + initData.length + ")" : "NO (empty)");
         const baseUrl = 'https://romandorokhin.github.io/OpenSmolGame/';
         const finalUrl = initData ? `${baseUrl}?tgWebAppData=${encodeURIComponent(initData)}` : baseUrl;
         
