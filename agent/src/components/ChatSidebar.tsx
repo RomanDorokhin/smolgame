@@ -53,6 +53,15 @@ export function ChatSidebar({
   const [expandedProvider, setExpandedProvider] = useState<APIProvider | null>("groq");
   const { user, isAuthenticated, login, logout } = useAuth();
 
+  const PROVIDER_INFO: Record<string, { url: string, name: string, desc: string }> = {
+    openrouter: { url: "https://openrouter.ai/keys", name: "OpenRouter", desc: "1. Регистрация\n2. Нажать 'Create Key'\n💡 Один ключ для 100+ моделей (есть бесплатные)" },
+    groq: { url: "https://console.groq.com/keys", name: "Groq", desc: "1. Войти\n2. API Keys -> Create Key\n⚡ Сверхбыстрые Llama модели (бесплатно)" },
+    gemini: { url: "https://aistudio.google.com/app/apikey", name: "Google Gemini", desc: "1. Войти через Google\n2. Create API key\n🧠 Мощные модели с бесплатным лимитом" },
+    deepseek: { url: "https://platform.deepseek.com/api_keys", name: "DeepSeek", desc: "1. Регистрация\n2. Пополнить баланс\n3. Create Key\n🎯 Отличная логика и код" },
+    mistral: { url: "https://console.mistral.ai/api-keys/", name: "Mistral", desc: "1. Регистрация\n2. Привязать карту\n3. Create Key" },
+    custom: { url: "https://github.com/cheahjs/free-llm-api-resources", name: "Custom API", desc: "1. Найти бесплатный API по ссылке\n2. Вставить Base URL и любой ключ ниже" }
+  };
+
 
   const handleClear = () => {
     if (confirmClear) {
@@ -159,6 +168,19 @@ export function ChatSidebar({
                     
                     {expandedProvider === p && (
                       <div className="p-3 pt-0 space-y-3 bg-white/[0.02]">
+                        {PROVIDER_INFO[p] && (
+                          <div className="bg-white/5 p-2 rounded-lg border border-white/10 mb-2">
+                            <div className="flex items-center justify-between mb-1">
+                              <span className="text-[10px] font-bold text-white/70">Где взять ключ?</span>
+                              <a href={PROVIDER_INFO[p].url} target="_blank" rel="noopener noreferrer" className="text-[9px] bg-primary/20 text-primary px-2 py-0.5 rounded hover:bg-primary hover:text-white transition-colors">
+                                {p === 'custom' ? 'Открыть список' : 'Перейти на сайт'}
+                              </a>
+                            </div>
+                            <div className="text-[9px] text-white/50 leading-relaxed whitespace-pre-line font-medium">
+                              {PROVIDER_INFO[p].desc}
+                            </div>
+                          </div>
+                        )}
                         {p === "custom" && (
                           <div className="space-y-1">
                             <label className="text-[8px] font-black uppercase text-white/30 ml-1">Base URL (OpenAI compatible)</label>
@@ -246,9 +268,27 @@ export function ChatSidebar({
                   Factory Reset
                 </Button>
               </div>
+
+              {/* Quota Stats moved here for settings tab */}
+              <div className="pt-4 border-t border-sidebar-border mt-4">
+                <div className="mb-2 px-1 flex items-center justify-between">
+                  <span className="text-[10px] font-black uppercase tracking-widest text-white/40">Quota Stats</span>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleClear}
+                    className={`h-5 px-2 text-[8px] font-black uppercase tracking-tighter ${
+                      confirmClear ? "text-destructive" : "text-white/20 hover:text-white"
+                    }`}
+                  >
+                    {confirmClear ? "Clear All History?" : "Clear history"}
+                  </Button>
+                </div>
+                <QuotaDashboard usage={usage} keys={settings.keys} />
+              </div>
             </div>
           ) : (
-            <div className="space-y-1 py-2">
+            <div className="space-y-1 py-2 pb-10">
               {sessions.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-10 opacity-20">
                    <MessageSquare size={32} />
@@ -266,15 +306,15 @@ export function ChatSidebar({
                     onMouseLeave={() => setHoveredId(null)}
                     className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl text-left transition-all group relative overflow-hidden ${
                       activeSessionId === session.id
-                        ? "bg-primary/10 text-primary border border-primary/20 shadow-sm"
-                        : "hover:bg-sidebar-accent/50 text-sidebar-foreground/80 border border-transparent"
+                         ? "bg-primary/20 text-primary border border-primary/30 shadow-sm"
+                        : "hover:bg-white/[0.05] text-white/80 border border-transparent"
                     }`}
                   >
                     <MessageSquare size={16} className={`flex-shrink-0 ${activeSessionId === session.id ? 'text-primary' : 'opacity-40'}`} />
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-bold truncate leading-none mb-1">{session.title}</p>
+                      <p className="text-sm font-bold truncate leading-none mb-1 text-white">{session.title}</p>
                       <div className="flex items-center gap-2">
-                         <span className="text-[9px] opacity-40 font-bold uppercase tracking-tighter">
+                         <span className="text-[9px] opacity-40 font-bold uppercase tracking-tighter text-white">
                             {new Date(session.updatedAt).toLocaleDateString()}
                          </span>
                          {session.retryCount && (
@@ -298,31 +338,32 @@ export function ChatSidebar({
                   </button>
                 ))
               )}
+              
+              {/* Quota Stats moved here for sessions tab */}
+              <div className="pt-6 border-t border-sidebar-border mt-6">
+                <div className="mb-2 px-1 flex items-center justify-between">
+                  <span className="text-[10px] font-black uppercase tracking-widest text-white/40">Quota Stats</span>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleClear}
+                    className={`h-5 px-2 text-[8px] font-black uppercase tracking-tighter ${
+                      confirmClear ? "text-destructive" : "text-white/20 hover:text-white"
+                    }`}
+                  >
+                    {confirmClear ? "Clear All History?" : "Clear history"}
+                  </Button>
+                </div>
+                <QuotaDashboard usage={usage} keys={settings.keys} />
+              </div>
             </div>
           )}
-        </ScrollArea>
-
-        <div className="p-3 border-t border-sidebar-border bg-sidebar-accent/5 shrink-0">
-          <div className="mb-2 px-1 flex items-center justify-between">
-            <span className="text-[10px] font-black uppercase tracking-widest text-sidebar-foreground/40">Quota Stats</span>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleClear}
-              className={`h-5 px-2 text-[8px] font-black uppercase tracking-tighter ${
-                confirmClear ? "text-destructive" : "text-sidebar-foreground/20 hover:text-sidebar-foreground"
-              }`}
-            >
-              {confirmClear ? "Clear All History?" : "Clear history"}
-            </Button>
-          </div>
           
-          <QuotaDashboard usage={usage} keys={settings.keys} />
-          
-          <div className="mt-3 px-1 text-[8px] text-center font-black uppercase tracking-[0.3em] opacity-20">
+          {/* Version badge inside ScrollArea so it scrolls away */}
+          <div className="mt-8 mb-6 px-1 text-[8px] text-center font-black uppercase tracking-[0.3em] opacity-20 text-white">
             Engine: Hybrid v2.6.4
           </div>
-        </div>
+        </ScrollArea>
       </aside>
     </>
   );
