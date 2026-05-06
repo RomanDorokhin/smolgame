@@ -5,7 +5,7 @@ import { ChatInput } from "@/components/ChatInput";
 import { ChatSidebar } from "@/components/ChatSidebar";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Menu, Sparkles, ShieldCheck, Cpu, Download, Github } from "lucide-react";
+import { Menu, Sparkles, ShieldCheck, Cpu, Download } from "lucide-react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Component, type ReactNode } from "react";
 
@@ -18,7 +18,7 @@ class ErrorBoundary extends Component<{ children: ReactNode }, { hasError: boole
   render() {
     if (this.state.hasError) {
       return (
-        <div className="flex flex-col items-center justify-center h-full p-6 text-center bg-background">
+        <div className="flex flex-col items-center justify-center h-screen p-6 text-center bg-background">
           <h2 className="text-2xl font-bold mb-4">Something went wrong</h2>
           <p className="text-muted-foreground mb-6 max-w-md">{this.state.error?.message || "Unknown error"}</p>
           <Button onClick={() => window.location.reload()}>Reload Page</Button>
@@ -49,7 +49,7 @@ export default function Home() {
     generationStep,
   } = useChat();
 
-  const { user, isAuthenticated, login } = useAuth();
+  const { user, isAuthenticated, isLoading: authLoading } = useAuth();
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -91,7 +91,7 @@ export default function Home() {
 
   return (
     <ErrorBoundary>
-      <div className="flex h-full bg-background overflow-hidden">
+      <div className="flex h-screen bg-background overflow-hidden">
       <ChatSidebar
         sessions={sessions}
         activeSessionId={activeSessionId}
@@ -108,29 +108,13 @@ export default function Home() {
       />
 
       <main className="flex-1 flex flex-col min-w-0 relative">
-        {!isAuthenticated && (
-          <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-background/80 backdrop-blur-md p-6 text-center">
-            <div className="w-20 h-20 rounded-3xl bg-primary/10 flex items-center justify-center mb-8 shadow-inner animate-pulse">
-              <Github className="w-10 h-10 text-primary" />
+        {/* Auth loading state - prevent flash of GitHub overlay */}
+        {authLoading && (
+          <div className="absolute inset-0 z-50 flex items-center justify-center bg-background">
+            <div className="flex flex-col items-center gap-3">
+              <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+              <p className="text-sm text-muted-foreground">Loading...</p>
             </div>
-            <h2 className="text-3xl font-black text-foreground mb-3 tracking-tight">
-              GitHub Required
-            </h2>
-            <p className="text-muted-foreground text-center max-w-md mb-8 leading-relaxed">
-              Please connect your GitHub account to start a dialogue and create games. 
-              This is required for instant deployment and repository management.
-            </p>
-            <Button 
-              size="lg" 
-              onClick={login}
-              className="gap-3 h-14 px-8 text-lg font-bold bg-black hover:bg-black/80 text-white shadow-2xl transition-all hover:scale-105"
-            >
-              <Github size={20} />
-              Login with GitHub
-            </Button>
-            <p className="text-[10px] text-muted-foreground/40 mt-12 uppercase tracking-widest font-bold">
-              Secure OAuth Authentication
-            </p>
           </div>
         )}
 
@@ -271,7 +255,7 @@ export default function Home() {
           onSend={sendMessage}
           onStop={stopGeneration}
           isGenerating={isGenerating}
-          disabled={!settings.apiKey || !isAuthenticated}
+          disabled={!settings.apiKey}
         />
       </main>
     </div>

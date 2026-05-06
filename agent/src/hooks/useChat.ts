@@ -459,13 +459,12 @@ export function useChat() {
   }, []);
 
   const factoryReset = useCallback(() => {
-    if (confirm("Вы уверены, что хотите полностью сбросить кэш? Это удалит все чаты и настройки API.")) {
-      localStorage.removeItem(STORAGE_KEY);
-      localStorage.removeItem(ACTIVE_SESSION_KEY);
-      localStorage.removeItem(SETTINGS_KEY);
-      localStorage.removeItem(USAGE_KEY);
-      window.location.reload();
-    }
+    // Don't use confirm() — it's blocked in Telegram WebView
+    localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem(ACTIVE_SESSION_KEY);
+    localStorage.removeItem(SETTINGS_KEY);
+    localStorage.removeItem(USAGE_KEY);
+    window.location.reload();
   }, []);
 
   const retryLastMessage = useCallback(() => {

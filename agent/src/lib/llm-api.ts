@@ -48,7 +48,7 @@ export async function* generateStream(
       // For now, let's treat Gemini as OpenAI compatible if using a proxy, 
       // or implement native if config.provider === 'gemini'.
       url = `https://generativelanguage.googleapis.com/v1beta/openai/chat/completions`;
-      body.model = config.model || "gpt-3.5-turbo"; // Placeholder
+      body.model = config.model || "gemini-2.0-flash";
       break;
   }
 

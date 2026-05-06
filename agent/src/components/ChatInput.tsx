@@ -46,7 +46,7 @@ export function ChatInput({ onSend, onStop, isGenerating, disabled }: ChatInputP
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder={disabled ? "Loading model..." : "Message OpenSmolGame Agent..."}
+            placeholder={disabled ? "Настройте API-ключ в боковом меню →" : "Опиши свою игру..."}
             disabled={disabled || isGenerating}
             className="min-h-[44px] max-h-[200px] bg-transparent border-0 resize-none focus-visible:ring-0 focus-visible:ring-offset-0 px-3 py-2.5 text-sm"
             rows={1}
