@@ -76,37 +76,37 @@ export function ChatSidebar({
       )}
 
       <aside
-        className={`fixed md:static inset-y-0 left-0 z-50 w-72 bg-sidebar border-r border-sidebar-border flex flex-col transition-transform duration-200 ease-in-out ${
+        className={`fixed md:static inset-y-0 left-0 z-50 w-72 bg-[#0d0e12] border-r border-sidebar-border flex flex-col transition-transform duration-200 ease-in-out shadow-2xl ${
           isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
         }`}
       >
-        <div className="flex items-center justify-between p-4 border-b border-sidebar-border shrink-0">
+        <div className="flex items-center justify-between p-4 border-b border-sidebar-border shrink-0 bg-[#0d0e12]">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
                <Settings className="w-5 h-5 text-primary-foreground" />
             </div>
             <div>
-              <h2 className="font-bold text-sm text-sidebar-foreground leading-none">Architect</h2>
-              <p className="text-[10px] text-sidebar-foreground/50 mt-1 uppercase tracking-wider font-semibold">Orchestrator v3</p>
+              <h2 className="font-bold text-sm text-white leading-none">Architect</h2>
+              <p className="text-[10px] text-white/50 mt-1 uppercase tracking-wider font-semibold">Orchestrator v3</p>
             </div>
           </div>
           <Button
             variant="ghost"
             size="sm"
-            className="h-8 w-8 p-0 md:hidden"
+            className="h-8 w-8 p-0 md:hidden text-white/70 hover:text-white"
             onClick={onClose}
           >
             <X size={16} />
           </Button>
         </div>
 
-        <div className="p-3 space-y-2 shrink-0">
+        <div className="p-3 space-y-2 shrink-0 bg-[#0d0e12]">
           <Button
             onClick={() => {
               onCreateNewChat();
               onClose();
             }}
-            className="w-full justify-start gap-2 shadow-sm font-bold uppercase tracking-tighter text-xs"
+            className="w-full justify-start gap-2 shadow-md font-bold uppercase tracking-tighter text-xs"
             variant="default"
           >
             <Plus size={16} />
@@ -116,50 +116,50 @@ export function ChatSidebar({
           <Button
             onClick={() => setShowSettings(!showSettings)}
             variant="outline"
-            className={`w-full justify-start gap-2 text-xs h-9 transition-all ${showSettings ? 'bg-primary/10 border-primary/30' : ''}`}
+            className={`w-full justify-start gap-2 text-xs h-9 transition-all border-white/10 ${showSettings ? 'bg-primary/20 border-primary/40 text-white' : 'text-white/60'}`}
           >
             <Settings size={14} />
             {showSettings ? "Back to Projects" : "API Orchestrator"}
           </Button>
         </div>
 
-        <ScrollArea className="flex-1 px-3">
+        <ScrollArea className="flex-1 px-3 bg-[#0d0e12]">
           {showSettings ? (
             <div className="space-y-4 py-2 pb-10">
-              <div className="p-2 bg-primary/5 border border-primary/10 rounded-xl space-y-2">
-                <div className="flex items-center justify-between px-1">
-                  <label className="text-[10px] font-black uppercase text-primary/70">Auto-Failover</label>
+              <div className="p-3 bg-white/5 border border-white/10 rounded-xl space-y-3">
+                <div className="flex items-center justify-between">
+                  <label className="text-[10px] font-black uppercase text-primary">Auto-Failover</label>
                   <input 
                     type="checkbox" 
                     checked={settings.autoFailover}
                     onChange={(e) => onUpdateSettings({ autoFailover: e.target.checked })}
-                    className="w-4 h-4 rounded border-sidebar-border bg-background"
+                    className="w-4 h-4 rounded border-white/20 bg-black/50 accent-primary"
                   />
                 </div>
-                <p className="text-[9px] text-sidebar-foreground/40 leading-tight px-1">
+                <p className="text-[9px] text-white/40 leading-tight">
                   If primary provider fails, automatically switch to the next one in the tiered order.
                 </p>
               </div>
 
-              <div className="space-y-1">
-                <label className="text-[10px] font-black uppercase text-sidebar-foreground/40 ml-1">Providers & Keys</label>
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase text-white/30 ml-1">Providers & Keys</label>
                 {providers.map((p) => (
-                  <div key={p} className="border border-sidebar-border/50 rounded-xl overflow-hidden bg-sidebar-accent/10">
+                  <div key={p} className="border border-white/10 rounded-xl overflow-hidden bg-white/[0.03]">
                     <button 
                       onClick={() => setExpandedProvider(expandedProvider === p ? null : p)}
-                      className="w-full flex items-center justify-between p-2 hover:bg-sidebar-accent/30 transition-all"
+                      className={`w-full flex items-center justify-between p-3 hover:bg-white/[0.05] transition-all ${expandedProvider === p ? 'bg-white/[0.05]' : ''}`}
                     >
-                      <div className="flex items-center gap-2">
-                        <div className={`w-1.5 h-1.5 rounded-full ${settings.keys[p] ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.5)]' : 'bg-sidebar-border'}`} />
-                        <span className={`text-[11px] font-bold uppercase tracking-tighter ${settings.primaryProvider === p ? 'text-primary' : 'text-sidebar-foreground/70'}`}>
+                      <div className="flex items-center gap-3">
+                        <div className={`w-2 h-2 rounded-full ${settings.keys[p] ? 'bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.6)]' : 'bg-white/10'}`} />
+                        <span className={`text-[11px] font-bold uppercase tracking-tighter ${settings.primaryProvider === p ? 'text-primary' : 'text-white/80'}`}>
                           {p} {settings.primaryProvider === p && "(Primary)"}
                         </span>
                       </div>
-                      {expandedProvider === p ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+                      {expandedProvider === p ? <ChevronUp size={14} className="text-white/40" /> : <ChevronDown size={14} className="text-white/40" />}
                     </button>
                     
                     {expandedProvider === p && (
-                      <div className="p-2 pt-0 space-y-2 bg-sidebar-accent/5">
+                      <div className="p-3 pt-0 space-y-3 bg-white/[0.02]">
                         <Input
                           type="password"
                           placeholder={`${p} API key`}
@@ -168,13 +168,13 @@ export function ChatSidebar({
                             const newKeys = { ...settings.keys, [p]: e.target.value };
                             onUpdateSettings({ keys: newKeys });
                           }}
-                          className="h-8 text-xs bg-background border-sidebar-border"
+                          className="h-9 text-xs bg-black/40 border-white/10 text-white placeholder:text-white/20 focus:border-primary/50"
                         />
                         <div className="flex gap-1">
                           <Button 
                             variant="secondary" 
                             size="sm" 
-                            className="flex-1 h-6 text-[9px] font-bold uppercase tracking-tighter"
+                            className="flex-1 h-7 text-[9px] font-bold uppercase tracking-tighter bg-white/10 hover:bg-white/20 text-white"
                             onClick={() => onUpdateSettings({ primaryProvider: p })}
                             disabled={settings.primaryProvider === p}
                           >
