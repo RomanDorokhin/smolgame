@@ -27,7 +27,7 @@ const PUBLISHED_FEED_SQL = `
           g.created_at AS createdAt, g.updated_at AS updatedAt,
           u.site_handle AS authorHandle, u.first_name AS authorFirst, u.last_name AS authorLast,
           u.display_name AS authorDisplayName,
-          COALESCE(NULLIF(TRIM(u.avatar_override_url), ''), u.photo_url) AS authorPhoto
+          COALESCE(u.photo_url, '') AS authorPhoto
      FROM games g
      LEFT JOIN users u ON u.id = g.author_id
     WHERE g.status = 'published'
@@ -210,7 +210,7 @@ const GET_ME_SQL_VARIANTS = [
           github_login AS githubLogin,
           github_user_id AS githubUserId,
           github_access_token_enc AS githubAccessTokenEnc,
-          COALESCE(NULLIF(TRIM(avatar_override_url), ''), photo_url) AS avatarUrl
+          photo_url AS avatarUrl
      FROM users WHERE id = ?`,
   `SELECT site_handle AS siteHandle,
           display_name AS displayName,
@@ -225,7 +225,7 @@ const GET_ME_SQL_VARIANTS = [
           bio AS bio,
           github_login AS githubLogin,
           github_user_id AS githubUserId,
-          COALESCE(NULLIF(TRIM(avatar_override_url), ''), photo_url) AS avatarUrl
+          photo_url AS avatarUrl
      FROM users WHERE id = ?`,
   `SELECT site_handle AS siteHandle,
           display_name AS displayName,
@@ -252,7 +252,7 @@ const GET_ME_SQL_VARIANTS = [
   `SELECT site_handle AS siteHandle,
           display_name AS displayName,
           bio AS bio,
-          COALESCE(NULLIF(TRIM(avatar_override_url), ''), photo_url) AS avatarUrl
+          photo_url AS avatarUrl
      FROM users WHERE id = ?`,
   `SELECT site_handle AS siteHandle,
           display_name AS displayName,
@@ -525,7 +525,7 @@ const LIKED_GAMES_SQL_VARIANTS = [
           g.url, g.image_url AS imageUrl, g.likes, g.plays, g.author_id AS authorId,
           u.site_handle AS authorHandle, u.first_name AS authorFirst, u.last_name AS authorLast,
           u.display_name AS authorDisplayName,
-          COALESCE(NULLIF(TRIM(u.avatar_override_url), ''), u.photo_url) AS authorPhoto
+          u.photo_url AS authorPhoto
      FROM likes l
      JOIN games g ON g.id = l.game_id AND g.status = 'published'
      LEFT JOIN users u ON u.id = g.author_id
@@ -535,7 +535,7 @@ const LIKED_GAMES_SQL_VARIANTS = [
           g.url, CAST(NULL AS TEXT) AS imageUrl, g.likes, g.plays, g.author_id AS authorId,
           u.site_handle AS authorHandle, u.first_name AS authorFirst, u.last_name AS authorLast,
           u.display_name AS authorDisplayName,
-          COALESCE(NULLIF(TRIM(u.avatar_override_url), ''), u.photo_url) AS authorPhoto
+          u.photo_url AS authorPhoto
      FROM likes l
      JOIN games g ON g.id = l.game_id AND g.status = 'published'
      LEFT JOIN users u ON u.id = g.author_id
@@ -590,7 +590,7 @@ const PLAYED_GAMES_SQL_VARIANTS = [
           g.url, g.image_url AS imageUrl, g.likes, g.plays, g.author_id AS authorId,
           u.site_handle AS authorHandle, u.first_name AS authorFirst, u.last_name AS authorLast,
           u.display_name AS authorDisplayName,
-          COALESCE(NULLIF(TRIM(u.avatar_override_url), ''), u.photo_url) AS authorPhoto
+          u.photo_url AS authorPhoto
      FROM user_game_plays p
      JOIN games g ON g.id = p.game_id AND g.status = 'published'
      LEFT JOIN users u ON u.id = g.author_id
@@ -600,7 +600,7 @@ const PLAYED_GAMES_SQL_VARIANTS = [
           g.url, CAST(NULL AS TEXT) AS imageUrl, g.likes, g.plays, g.author_id AS authorId,
           u.site_handle AS authorHandle, u.first_name AS authorFirst, u.last_name AS authorLast,
           u.display_name AS authorDisplayName,
-          COALESCE(NULLIF(TRIM(u.avatar_override_url), ''), u.photo_url) AS authorPhoto
+          u.photo_url AS authorPhoto
      FROM user_game_plays p
      JOIN games g ON g.id = p.game_id AND g.status = 'published'
      LEFT JOIN users u ON u.id = g.author_id
@@ -1299,7 +1299,7 @@ const GET_USER_PROFILE_SQL = `
   SELECT id, site_handle AS siteHandle, first_name AS firstName,
           last_name AS lastName, photo_url AS photoUrl,
           display_name AS displayName, bio AS bio,
-          COALESCE(NULLIF(TRIM(avatar_override_url), ''), photo_url) AS avatarUrl
+          photo_url AS avatarUrl
      FROM users WHERE id = ?`;
 
 export async function getUserProfile(req, env, userId) {

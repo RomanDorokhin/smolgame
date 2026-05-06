@@ -3983,12 +3983,10 @@ body.keyboard-open .app-tab-chrome {
   background: var(--bg);
   display: none;
   flex-direction: column;
-  overflow-y: auto;
-  overflow-x: hidden;
+  overflow: hidden; /* Agent handles its own scroll */
   -webkit-overflow-scrolling: touch;
   overscroll-behavior-y: contain;
-  touch-action: pan-y;
-  padding: 0 20px calc(var(--safe-bottom) + 20px);
+  padding: 0;
   isolation: isolate;
 }
 
@@ -3999,9 +3997,23 @@ body.keyboard-open .app-tab-chrome {
 
 #upload-screen.open {
   display: flex;
-  /* Панель над нижним таббаром, не на весь экран */
   bottom: 0;
-  padding-bottom: calc(var(--safe-bottom) + var(--nav-h) + 20px);
+  padding-bottom: calc(var(--safe-bottom) + var(--nav-h));
+}
+
+.agent-container {
+  flex: 1;
+  width: 100%;
+  height: 100%;
+  position: relative;
+  background: var(--bg);
+}
+
+#agent-iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+  display: block;
 }
 
 .upload-welcome-block {

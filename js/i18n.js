@@ -10,7 +10,7 @@
     ru: {
       nav_feed: 'Лента',
       nav_games: 'Игры',
-      nav_upload: 'Загрузить',
+      nav_upload: 'Создать',
       nav_search: 'Поиск',
       nav_profile: 'Профиль',
       lang_ru: 'RU',
@@ -35,7 +35,7 @@
       empty_feed_title: 'Пока без игр',
       empty_feed_sub:
         'Как короткие ролики, только это мини-игры в Telegram: листаешь — смотришь превью, понравилось — «Играть», зашёл за автором — «Подписаться», не зашла — свайп дальше. Без обязательных «посмотри рекламу, чтобы поиграть» — так задумано сейчас. Свою игру — снизу «Загрузить».',
-      empty_feed_cta: 'Загрузить игру',
+      empty_feed_cta: 'Создать игру',
       empty_err_title: 'Лента не загрузилась',
       empty_err_sub: 'Проверь интернет и попробуй снова.',
       empty_retry: 'Повторить',
@@ -77,7 +77,7 @@
         'Листай как в TikTok: превью → «Играть», понравился автор — подписка, не зашло — свайп дальше. Сейчас без принудительной рекламы перед игрой. Свою игру выложи через «Загрузить».',
       feed_onboard_cta: 'Начать',
 
-      upload_title: 'Загрузить игру',
+      upload_title: 'Создать игру',
       upload_back_aria: 'Назад к ленте',
       method_url_title: 'По ссылке',
       method_url_desc: 'Уже есть HTTPS URL',
@@ -427,7 +427,7 @@
     en: {
       nav_feed: 'Feed',
       nav_games: 'Games',
-      nav_upload: 'Upload',
+      nav_upload: 'Create',
       nav_search: 'Search',
       nav_profile: 'Profile',
       lang_ru: 'RU',
@@ -452,7 +452,7 @@
       empty_feed_title: 'No games yet',
       empty_feed_sub:
         'Like short videos, but mini-games in Telegram: swipe previews, tap Play, follow authors you like, swipe away the rest. No forced “watch an ad to play” for now. Add yours via Upload below.',
-      empty_feed_cta: 'Upload a game',
+      empty_feed_cta: 'Create a game',
       empty_err_title: 'Feed failed to load',
       empty_err_sub: 'Check your connection and try again.',
       empty_retry: 'Retry',
@@ -494,7 +494,7 @@
         'Swipe like TikTok: preview → Play, follow authors you like, swipe on if not. No forced ads before play. Upload your game via Upload.',
       feed_onboard_cta: 'Start',
 
-      upload_title: 'Upload game',
+      upload_title: 'Create game',
       upload_back_aria: 'Back to feed',
       method_url_title: 'By link',
       method_url_desc: 'HTTPS URL ready',
