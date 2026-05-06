@@ -5,7 +5,7 @@ import { ChatInput } from "@/components/ChatInput";
 import { ChatSidebar } from "@/components/ChatSidebar";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Menu, Sparkles, ShieldCheck, Copy, Check } from "lucide-react";
+import { Menu, Sparkles, ShieldCheck, Copy, Check, Github } from "lucide-react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Component, type ReactNode } from "react";
 
@@ -49,7 +49,7 @@ export default function Home() {
     isPipelineRunning
   } = useChat();
 
-  const { user, isAuthenticated, isLoading: authLoading } = useAuth();
+  const { user, isAuthenticated, isLoading: authLoading, login } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
 
@@ -119,22 +119,31 @@ export default function Home() {
               )}
             </div>
 
-            {isAuthenticated && user && (
-              <div className="flex items-center gap-2.5 px-3 py-1.5 rounded-xl bg-[#13141a] border border-white/5 shadow-lg">
-                {user.photo_url ? (
-                  <img src={user.photo_url} alt="avatar" className="w-5 h-5 rounded-full border border-white/10" />
-                ) : (
-                  <div className={`w-1.5 h-1.5 rounded-full ${user.isGithubConnected ? 'bg-[#a3b8d4]' : 'bg-yellow-500'}`} />
+            {isAuthenticated && user ? (
+              <div className="flex items-center gap-2.5 px-3 py-1.5 rounded-xl bg-green-500/10 border border-green-500/20 text-green-500 shadow-lg">
+                <Github size={14} />
+                {user.photo_url && (
+                  <img src={user.photo_url} alt="avatar" className="w-5 h-5 rounded-full border border-green-500/30" />
                 )}
                 <div className="flex flex-col">
-                  <span className="text-[9px] font-black uppercase tracking-widest text-[#a3b8d4]">
-                    {user.isGithubConnected ? 'GitHub Connected' : 'Guest Mode'}
+                  <span className="text-[9px] font-black uppercase tracking-widest text-green-500/80">
+                    GitHub Connected
                   </span>
-                  <span className="text-[10px] font-bold text-white/70 leading-tight">
+                  <span className="text-[10px] font-bold leading-tight truncate max-w-[80px] sm:max-w-[120px]">
                      @{user.githubUsername || user.username}
                   </span>
                 </div>
               </div>
+            ) : (
+              <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-9 px-3 bg-[#13141a] border border-white/5 rounded-xl text-[9px] font-black uppercase tracking-widest text-[#a3b8d4] hover:text-white transition-all group"
+                  onClick={login}
+              >
+                  <Github size={14} className="mr-2" />
+                  Войти
+              </Button>
             )}
         </div>
 
