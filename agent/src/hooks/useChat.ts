@@ -188,27 +188,39 @@ export function useChat() {
         const currentAnswers = orchestrator.getSession().answers || {};
         const isComplete = orchestrator.isInterviewComplete();
         const progress = orchestrator.getInterviewProgress();
+        
+        const requiredFields = ['genre', 'mechanics', 'visuals', 'audience', 'story', 'progression', 'special_features'];
+        const missingFields = requiredFields.filter(f => !(currentAnswers as any)[f]);
+        const nextField = missingFields[0];
 
         const SMART_SYSTEM_PROMPT = `Ты — Элитный Геймдизайнер и Архитектор SmolGame.
 Твоя цель — создать хитовую мини-игру. Игры для SmolGame должны строго соответствовать 35 правилам (Touch управление, только Portrait ориентация, Demo-режим, без alert/prompt, сохранение рекордов).
 
-ПРОЦЕСС СОЗДАНИЯ ИДЕТ СТРОГО ПО ЭТАПАМ:
-
-ЭТАП 1: ИНТЕРВЬЮ (Сбор 7 параметров)
-Ты должен собрать: Жанр, Механику, Визуал, Аудиторию, Сюжет, Прогрессию, Фишки.
-ТЕКУЩИЙ СТАТУС СБОРА (${progress.filled}/${progress.total}):
+${isComplete ? `
+ИНТЕРВЬЮ ЗАВЕРШЕНО (7/7 собрано).
+Спецификация игры:
 ${JSON.stringify(currentAnswers, null, 2)}
 
-ПРАВИЛА ИНТЕРВЬЮ:
-1. Сначала ВСЕГДА проводи самоанализ в тегах <thought>...</thought>. Подумай, чего не хватает, и сформулируй 1 (ОДИН) точный вопрос.
-2. Задавай ТОЛЬКО ОДИН вопрос за раз. Никаких списков.
-3. Общайся супер-кратко и по делу. Без воды.
-4. ВАЖНО: Как только ты получаешь ответ на какой-либо параметр, ты ОБЯЗАН вывести обновленный статус в виде JSON внутри тега <game_spec>.
-Пример: <game_spec>{"genre": "Платформер"}</game_spec>
+ТВОЯ ЕДИНСТВЕННАЯ ЗАДАЧА:
+Выдай полный, рабочий код игры (HTML+JS+CSS в одном файле) внутри тегов <game_prototype>...</game_prototype>.
+Игра должна быть полностью играбельной и соответствовать всем требованиям SmolGame. Не пиши ничего, кроме блока с кодом.
+` : `
+ЭТАП ИНТЕРВЬЮ (Собрано ${progress.filled}/7 параметров)
+Текущие данные:
+${JSON.stringify(currentAnswers, null, 2)}
 
-ЭТАП 2: ГЕНЕРАЦИЯ КОДА
-Когда все 7 параметров собраны (${isComplete ? 'ДА, СОБРАНЫ' : 'НЕТ, ЕЩЕ ИДЕТ ИНТЕРВЬЮ'}), ты должен выдать полный рабочий код игры внутри тегов <game_prototype>...</game_prototype>.
-До генерации писать код КАТЕГОРИЧЕСКИ ЗАПРЕЩЕНО.`;
+ТВОЯ ЗАДАЧА СЕЙЧАС:
+Узнать у пользователя параметр: "${nextField}".
+
+СТРОГИЕ ПРАВИЛА:
+1. Думай вслух внутри тегов <thought>...</thought> перед ответом.
+2. Задай РОВНО ОДИН короткий вопрос только про параметр "${nextField}".
+3. КАТЕГОРИЧЕСКИ ЗАПРЕЩЕНО выводить списки вопросов (1, 2, 3...).
+4. КАТЕГОРИЧЕСКИ ЗАПРЕЩЕНО писать код игры на этом этапе.
+5. Если в последнем сообщении пользователя есть ответ на предыдущий вопрос, выведи обновленный параметр в формате JSON внутри тега <game_spec>.
+Пример: <game_spec>{"genre": "Платформер"}</game_spec>
+`}
+`;
 
         const messagesForAI = [
           { role: "system" as const, content: SMART_SYSTEM_PROMPT },
@@ -224,8 +236,25 @@ ${JSON.stringify(currentAnswers, null, 2)}
         }, abortControllerRef.current.signal);
 
         let fullContent = "";
+        
+        if (isComplete) {
+          setGenerationStep("Подготовка к сборке...");
+        } else {
+          setGenerationStep("Анализирую ответ...");
+        }
+
         for await (const chunk of stream) {
           fullContent += chunk;
+          
+          // Dynamic status updates based on what the LLM is currently outputting
+          if (fullContent.includes("<thought>") && !fullContent.includes("</thought>")) {
+            setGenerationStep("Анализирую недостающие параметры...");
+          } else if (fullContent.includes("<game_prototype>") && !fullContent.includes("</game_prototype>")) {
+            setGenerationStep("Пишу код (HTML, JS, CSS)...");
+          } else if (fullContent.includes("</thought>")) {
+            setGenerationStep(isComplete ? "Формирую структуру..." : "Формулирую вопрос...");
+          }
+
           setSessions(prev => prev.map(s => s.id === activeSessionId ? {
             ...s,
             messages: s.messages.map(m => m.id === assistantMsg.id ? { ...m, content: fullContent } : m)
@@ -239,10 +268,6 @@ ${JSON.stringify(currentAnswers, null, 2)}
 
         success = true;
 
-        // Auto-extract answers if the agent didn't use <game_spec> explicit tags, by passing the conversation to the orchestrator implicitly, 
-        // OR rely on the agent to output them. Actually, let's inject a fast LLM call or just ask the agent to output <game_spec> when it updates parameters.
-        // For robustness, let's also prompt it to output <game_spec> JSON.
-        
         if (fullContent.includes("<game_spec>")) {
           const specMatch = fullContent.match(/<game_spec>([\s\S]*?)<\/game_spec>/);
           if (specMatch) {
@@ -259,14 +284,13 @@ ${JSON.stringify(currentAnswers, null, 2)}
           const codeMatch = fullContent.match(/<game_prototype>([\s\S]*?)<\/game_prototype>/);
           if (codeMatch) {
             setIsPipelineRunning(true);
-            setGenerationStep(`Validating (via ${provider})...`);
+            setGenerationStep(`Проверка качества (via ${provider})...`);
             
-            // Run through the robust validation pipeline
             const result = await runGamePipeline(activeSessionId, codeMatch[1]);
             
             setSessions(prev => prev.map(s => s.id === activeSessionId ? {
               ...s,
-              messages: s.messages.map(m => m.id === assistantMsg.id ? { ...m, pipelineResult: result, status: "Ready" } : m)
+              messages: s.messages.map(m => m.id === assistantMsg.id ? { ...m, pipelineResult: result, status: "Готово" } : m)
             } : s));
             
             setIsPipelineRunning(false);

@@ -24,7 +24,7 @@ export function ChatMessageItem({ message, onRetry }: ChatMessageItemProps) {
 
   const htmlCode = message.content.match(/<game_prototype>\s*([\s\S]*?)(?:<\/game_prototype>|$)/)?.[1] ||
                    message.content.match(/```html\s*([\s\S]*?)```/)?.[1] || 
-                   (message.content.includes('<html>') ? message.content : null);
+                   message.content.match(/(<html[\s\S]*<\/html>)/i)?.[1] || null;
 
   const handleCopy = async () => {
     try {
