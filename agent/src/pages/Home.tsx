@@ -5,7 +5,7 @@ import { ChatInput } from "@/components/ChatInput";
 import { ChatSidebar } from "@/components/ChatSidebar";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Menu, Sparkles, ShieldCheck, Cpu, Download } from "lucide-react";
+import { Menu, Sparkles, ShieldCheck } from "lucide-react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Component, type ReactNode } from "react";
 
@@ -69,26 +69,6 @@ export default function Home() {
     }
   }, [currentSession.messages, isGenerating]);
 
-  const exportChat = () => {
-    if (!currentSession.messages.length) return;
-    
-    const content = currentSession.messages.map(m => {
-      const time = new Date(m.timestamp).toLocaleTimeString();
-      const role = m.role === 'user' ? 'ВЫ' : 'SMOL-AGENT';
-      return `[${time}] ${role}:\n${m.content}\n${'-'.repeat(40)}`;
-    }).join('\n\n');
-
-    const blob = new Blob([content], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `chat-${currentSession.title || 'export'}-${new Date().toISOString().slice(0, 10)}.txt`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  };
-
   return (
     <ErrorBoundary>
       <div className="flex h-screen bg-background overflow-hidden">
@@ -108,7 +88,7 @@ export default function Home() {
       />
 
       <main className="flex-1 flex flex-col min-w-0 relative">
-        {/* Auth loading state - prevent flash of GitHub overlay */}
+        {/* Auth loading state */}
         {authLoading && (
           <div className="absolute inset-0 z-50 flex items-center justify-center bg-background">
             <div className="flex flex-col items-center gap-3">
@@ -118,126 +98,112 @@ export default function Home() {
           </div>
         )}
 
-        {/* Header */}
-        <header className="flex items-center gap-3 px-4 py-3 border-b border-border bg-background/80 backdrop-blur-sm">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-8 w-8 p-0 md:hidden"
-            onClick={() => setSidebarOpen(true)}
-          >
-            <Menu size={18} />
-          </Button>
-          <div className="flex items-center gap-2 flex-1">
-            <ShieldCheck className="w-5 h-5 text-primary" />
-            <h1 className="font-semibold text-foreground truncate">{currentSession.title || 'Smol-agent'}</h1>
-            <span className="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-primary/10 text-primary text-[10px] font-bold uppercase tracking-wider">
-              <Cpu size={10} />
-              API First
-            </span>
-          </div>
-
-          <div className="flex items-center gap-2">
+        {/* Floating Auth Badge (Minimal) */}
+        <div className="absolute top-4 right-4 z-30 flex items-center gap-2">
             {isAuthenticated && user ? (
-              <div className="flex items-center gap-2 px-2 py-1 rounded-lg bg-green-500/10 border border-green-500/20">
-                {user.isGithubConnected ? (
-                  <>
-                    <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-                    <span className="text-[10px] font-bold text-green-500">GITHUB: @{user.githubUsername || user.username}</span>
-                  </>
-                ) : (
-                  <>
-                    <div className="w-1.5 h-1.5 rounded-full bg-yellow-500" />
-                    <span className="text-[10px] font-bold text-yellow-500">TG: @{user.username} (Git required for deploy)</span>
-                  </>
-                )}
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-background/50 border border-border backdrop-blur-md">
+                <div className={`w-1.5 h-1.5 rounded-full ${user.isGithubConnected ? 'bg-green-500 animate-pulse' : 'bg-yellow-500'}`} />
+                <span className="text-[10px] font-black uppercase tracking-wider text-foreground/70">
+                   {user.isGithubConnected ? `GitHub: @${user.githubUsername}` : 'Git Required'}
+                </span>
               </div>
-            ) : (
-              <div className="flex items-center gap-2 px-2 py-1 rounded-lg bg-red-500/10 border border-red-500/20">
-                <div className="w-1.5 h-1.5 rounded-full bg-red-500" />
-                <span className="text-[10px] font-bold text-red-500">GUEST MODE</span>
-              </div>
-            )}
+            ) : null}
             
-            {currentSession.messages.length > 0 && (
-              <Button
+            <Button
                 variant="ghost"
                 size="sm"
-                onClick={exportChat}
-                className="h-8 gap-2 text-xs text-muted-foreground hover:text-foreground"
-                title="Скачать диалог"
-              >
-                <Download size={14} />
-                <span className="hidden sm:inline">Скачать</span>
-              </Button>
-            )}
-
-            {!settings.apiKey && (
-              <div className="hidden md:flex items-center gap-2 px-3 py-1 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
-                <span className="text-[10px] text-yellow-600 font-medium italic">API Key Required in Settings</span>
-              </div>
-            )}
-          </div>
-        </header>
+                className="h-8 w-8 p-0 md:hidden bg-background/50 backdrop-blur-md rounded-full border border-border"
+                onClick={() => setSidebarOpen(true)}
+            >
+                <Menu size={16} />
+            </Button>
+        </div>
 
         {/* Messages */}
         <div className="flex-1 overflow-hidden relative">
           <ScrollArea className="h-full" ref={scrollRef}>
             <div className="max-w-3xl mx-auto">
               {currentSession.messages.length === 0 ? (
-                <div className="flex flex-col items-center justify-center h-full min-h-[400px] px-4">
-                  <div className="w-20 h-20 rounded-3xl bg-primary/10 flex items-center justify-center mb-8 shadow-inner">
-                    <Sparkles className="w-10 h-10 text-primary" />
+                <div className="flex flex-col items-center justify-center h-full min-h-[500px] px-4 py-20">
+                  <div className="w-24 h-24 rounded-[40px] bg-primary/10 flex items-center justify-center mb-10 shadow-inner group transition-transform hover:rotate-6 duration-500">
+                    <Sparkles className="w-12 h-12 text-primary group-hover:scale-110 transition-transform" />
                   </div>
-                  <span className="text-xs font-bold text-foreground">Smol-agent</span>
-                  <h2 className="text-3xl font-black text-foreground mb-3 tracking-tight">
-                    Smol-agent
-                  </h2>
-                  <p className="text-muted-foreground text-center max-w-md mb-6 leading-relaxed">
-                    High-performance AI for game coding, protocol design, and architecture.
-                  </p>
+                  
+                  <div className="text-center mb-12">
+                    <h2 className="text-4xl font-black text-foreground mb-4 tracking-tighter">
+                      Smol-agent <span className="text-primary">AI</span>
+                    </h2>
+                    <p className="text-muted-foreground text-sm max-w-sm mx-auto leading-relaxed opacity-60">
+                      Создавай полноценные игры за минуты. Опиши идею — агент сделает остальное.
+                    </p>
+                  </div>
 
-                  <div className="w-full max-w-lg bg-primary/5 border border-primary/10 rounded-2xl p-6 mb-10 text-left">
-                    <h3 className="text-xs font-bold text-primary uppercase tracking-widest mb-4 flex items-center gap-2">
-                      <Sparkles size={14} />
-                      Как создать крутую игру?
-                    </h3>
-                    <div className="space-y-3">
+                  {/* Inline API Key Activation */}
+                  {!settings.apiKey && (
+                    <div className="w-full max-w-md mb-12 animate-in fade-in slide-in-from-bottom-6 duration-1000">
+                      <div className="bg-primary/5 border border-primary/20 rounded-[32px] p-8 backdrop-blur-xl relative overflow-hidden group shadow-2xl shadow-primary/5">
+                        <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+                          <ShieldCheck size={80} />
+                        </div>
+                        <h4 className="text-xs font-black text-primary uppercase tracking-[0.2em] mb-6 flex items-center gap-2">
+                          <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+                          Активация системы
+                        </h4>
+                        <div className="space-y-4">
+                          <div className="relative">
+                            <input 
+                              type="password"
+                              placeholder="Ваш API-ключ (OpenRouter)..."
+                              className="w-full bg-background/80 border border-primary/10 rounded-2xl px-5 py-4 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 transition-all placeholder:opacity-30"
+                              value={settings.apiKey}
+                              onChange={(e) => updateSettings({ apiKey: e.target.value })}
+                            />
+                          </div>
+                          <p className="text-[10px] text-muted-foreground/60 leading-relaxed px-1">
+                            Мы рекомендуем <b>OpenRouter</b> (модель Gemini 2.0 Flash) для мгновенной генерации. Ключ хранится локально в вашем браузере.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="w-full max-w-md bg-secondary/20 border border-border/40 rounded-[32px] p-8 mb-12">
+                    <h3 className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] mb-8">План действий</h3>
+                    <div className="space-y-6">
                       {[
-                        "1. Опиши идею игры (жанр, сеттинг)",
-                        "2. Ответь на 7 уточняющих вопросов бота",
-                        "3. Обсуди механику «фишки» игры",
-                        "4. Утверди архитектуру данных",
-                        "5. Спроектируй протокол событий",
-                        "6. Попроси «протестировать» механику",
-                        "7. Нажми «Создать игру» для Unity"
-                      ].map((step, i) => (
-                        <div key={i} className="flex gap-3 text-sm text-foreground/70">
-                          <span className="font-mono text-primary/40 font-bold">{i+1}.</span>
-                          <span>{step}</span>
+                        "Опиши идею игры и сеттинг",
+                        "Обсуди механику «фишки» с ботом",
+                        "Утверди архитектуру и протоколы",
+                        "Нажми «Создать игру»",
+                      ].map((text, i) => (
+                        <div key={i} className="flex gap-5 items-center group">
+                          <div className="w-8 h-8 rounded-2xl bg-primary/10 flex items-center justify-center text-xs font-black text-primary group-hover:bg-primary group-hover:text-white transition-all duration-500">
+                            {i + 1}
+                          </div>
+                          <span className="text-sm text-foreground/80 font-semibold group-hover:text-foreground transition-colors">{text}</span>
                         </div>
                       ))}
                     </div>
                   </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full max-w-lg">
+
+                  <div className="grid grid-cols-1 gap-3 w-full max-w-md">
                     {[
-                      "🚀 Придумай идею для моей первой игры",
-                      "🐱 Сделай игру про кота-путешественника",
-                      "🛡️ Хочу создать простую RPG",
-                      "🎮 Расскажи, с чего начать создание игры",
-                    ].map((example) => (
+                      { icon: "🚀", text: "Придумай идею для моей первой игры" },
+                      { icon: "🐱", text: "Сделай игру про кота-путешественника" },
+                    ].map((item, i) => (
                       <button
-                        key={example}
-                        onClick={() => sendMessage(example)}
-                        className="p-4 text-sm text-left bg-card hover:bg-accent border border-border rounded-xl transition-all hover:scale-[1.02] shadow-sm text-foreground/80"
+                        key={i}
+                        onClick={() => sendMessage(item.text)}
+                        className="flex items-center gap-5 p-6 rounded-[24px] bg-background border border-border/50 hover:border-primary/40 hover:bg-secondary/20 transition-all text-left group shadow-sm"
                       >
-                        {example}
+                        <span className="text-2xl group-hover:scale-125 transition-transform duration-500">{item.icon}</span>
+                        <span className="text-sm font-bold text-foreground/70 group-hover:text-foreground">{item.text}</span>
                       </button>
                     ))}
                   </div>
                 </div>
               ) : (
-                <div className="pb-8 pt-4">
+                <div className="pb-32 pt-16">
                   {currentSession.messages.map((message) => (
                     <ChatMessageItem
                       key={message.id}
@@ -250,8 +216,8 @@ export default function Home() {
                     />
                   ))}
                   {isGenerating && generationStep && (
-                    <div className="flex items-center gap-3 px-4 py-2 ml-4 text-[10px] text-muted-foreground animate-pulse">
-                      <div className="w-1.5 h-1.5 rounded-full bg-primary animate-bounce" />
+                    <div className="flex items-center gap-3 px-6 py-4 mx-6 mb-8 bg-primary/5 border border-primary/10 rounded-[20px] text-[11px] font-black text-primary uppercase tracking-wider animate-in fade-in slide-in-from-left-4">
+                      <div className="w-2 h-2 rounded-full bg-primary animate-ping" />
                       <span>{generationStep}</span>
                     </div>
                   )}
@@ -262,16 +228,25 @@ export default function Home() {
           </ScrollArea>
         </div>
 
-        {/* Input */}
-        <ChatInput
-          onSend={sendMessage}
-          onStop={stopGeneration}
-          isGenerating={isGenerating}
-          disabled={!settings.apiKey}
-        />
+        {/* Input area */}
+        <div className="fixed bottom-0 left-0 right-0 p-4 md:p-8 bg-gradient-to-t from-background via-background/95 to-transparent backdrop-blur-sm z-20">
+          <div className="max-w-3xl mx-auto">
+            <ChatInput
+              onSend={sendMessage}
+              onStop={stopGeneration}
+              isGenerating={isGenerating}
+              disabled={!settings.apiKey}
+              placeholder={!settings.apiKey ? "Активируйте систему выше ↑" : "Опишите вашу игру..."}
+            />
+            <div className="mt-6 flex items-center justify-center gap-4 opacity-20">
+               <div className="h-[1px] flex-1 bg-gradient-to-r from-transparent to-border" />
+               <p className="text-[8px] uppercase tracking-[0.4em] font-black">OpenSmolGame Agent 3.0</p>
+               <div className="h-[1px] flex-1 bg-gradient-to-l from-transparent to-border" />
+            </div>
+          </div>
+        </div>
       </main>
     </div>
     </ErrorBoundary>
   );
 }
-

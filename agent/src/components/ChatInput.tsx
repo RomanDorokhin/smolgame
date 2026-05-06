@@ -8,9 +8,10 @@ interface ChatInputProps {
   onStop: () => void;
   isGenerating: boolean;
   disabled?: boolean;
+  placeholder?: string;
 }
 
-export function ChatInput({ onSend, onStop, isGenerating, disabled }: ChatInputProps) {
+export function ChatInput({ onSend, onStop, isGenerating, disabled, placeholder }: ChatInputProps) {
   const [input, setInput] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -38,47 +39,42 @@ export function ChatInput({ onSend, onStop, isGenerating, disabled }: ChatInputP
   };
 
   return (
-    <div className="border-t border-border bg-background p-4">
-      <div className="max-w-3xl mx-auto">
-        <div className="relative flex items-end gap-2 bg-secondary/50 rounded-xl border border-border p-2 focus-within:ring-1 focus-within:ring-primary/50 focus-within:border-primary/50 transition-all">
-          <Textarea
-            ref={textareaRef}
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder={disabled ? "Настройте API-ключ в боковом меню →" : "Опиши свою игру..."}
-            disabled={disabled || isGenerating}
-            className="min-h-[44px] max-h-[200px] bg-transparent border-0 resize-none focus-visible:ring-0 focus-visible:ring-offset-0 px-3 py-2.5 text-sm"
-            rows={1}
-          />
-          {isGenerating ? (
-            <Button
-              variant="destructive"
-              size="sm"
-              onClick={onStop}
-              className="h-9 w-9 p-0 flex-shrink-0 rounded-lg"
-            >
-              <Square size={14} />
-            </Button>
-          ) : (
-            <Button
-              variant="default"
-              size="sm"
-              onClick={handleSubmit}
-              disabled={!input.trim() || disabled}
-              className="h-9 w-9 p-0 flex-shrink-0 rounded-lg"
-            >
-              {disabled ? (
-                <Loader2 size={14} className="animate-spin" />
-              ) : (
-                <Send size={14} />
-              )}
-            </Button>
-          )}
-        </div>
-        <p className="text-xs text-muted-foreground text-center mt-2">
-          OpenSmolGame Agent runs entirely in your browser. Your messages never leave this device.
-        </p>
+    <div className="max-w-3xl mx-auto">
+      <div className="relative flex items-end gap-2 bg-secondary/30 rounded-[20px] border border-border/50 focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary/40 transition-all p-1.5 backdrop-blur-sm">
+        <Textarea
+          ref={textareaRef}
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          onKeyDown={handleKeyDown}
+          placeholder={placeholder || (disabled ? "Активируйте ключ выше..." : "Опиши свою игру...")}
+          disabled={disabled || isGenerating}
+          className="min-h-[44px] max-h-[200px] bg-transparent border-0 resize-none focus-visible:ring-0 focus-visible:ring-offset-0 px-4 py-3 text-sm placeholder:opacity-40"
+          rows={1}
+        />
+        {isGenerating ? (
+          <Button
+            variant="destructive"
+            size="sm"
+            onClick={onStop}
+            className="h-10 w-10 p-0 flex-shrink-0 rounded-[14px] shadow-lg shadow-destructive/20"
+          >
+            <Square size={16} />
+          </Button>
+        ) : (
+          <Button
+            variant="default"
+            size="sm"
+            onClick={handleSubmit}
+            disabled={!input.trim() || disabled}
+            className="h-10 w-10 p-0 flex-shrink-0 rounded-[14px] shadow-lg shadow-primary/20 transition-transform active:scale-90"
+          >
+            {disabled ? (
+              <Loader2 size={16} className="animate-spin opacity-50" />
+            ) : (
+              <Send size={16} />
+            )}
+          </Button>
+        )}
       </div>
     </div>
   );
