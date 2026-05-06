@@ -84,7 +84,7 @@ export default function Home() {
         )}
 
         {/* Minimal Header Controls */}
-        <div className="flex items-center justify-between px-4 py-3 z-30">
+        <div className="flex items-center justify-between px-4 py-3 z-30 shrink-0">
             <Button
                 variant="ghost"
                 size="sm"
@@ -95,11 +95,20 @@ export default function Home() {
             </Button>
 
             {isAuthenticated && user && (
-              <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[#13141a] border border-white/5">
-                <div className={`w-1.5 h-1.5 rounded-full ${user.isGithubConnected ? 'bg-[#a3b8d4]' : 'bg-yellow-500/50'}`} />
-                <span className="text-[10px] font-bold text-white/50 tracking-wider">
-                   {user.githubUsername || user.username}
-                </span>
+              <div className="flex items-center gap-2.5 px-3 py-1.5 rounded-xl bg-[#13141a] border border-white/5 shadow-lg">
+                {user.photo_url ? (
+                  <img src={user.photo_url} alt="avatar" className="w-5 h-5 rounded-full border border-white/10" />
+                ) : (
+                  <div className={`w-1.5 h-1.5 rounded-full ${user.isGithubConnected ? 'bg-[#a3b8d4]' : 'bg-yellow-500'}`} />
+                )}
+                <div className="flex flex-col">
+                  <span className="text-[9px] font-black uppercase tracking-widest text-[#a3b8d4]">
+                    {user.isGithubConnected ? 'GitHub Connected' : 'Guest Mode'}
+                  </span>
+                  <span className="text-[10px] font-bold text-white/70 leading-tight">
+                     @{user.githubUsername || user.username}
+                  </span>
+                </div>
               </div>
             )}
         </div>
