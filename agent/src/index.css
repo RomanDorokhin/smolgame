@@ -34,13 +34,18 @@
     --sidebar-ring: 220 70% 55%;
   }
 
-  body {
+  body, html, #root {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
     @apply bg-background text-foreground antialiased;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   }
 
   * {
     @apply border-border;
+    -webkit-tap-highlight-color: transparent;
   }
 
   /* Custom scrollbar */

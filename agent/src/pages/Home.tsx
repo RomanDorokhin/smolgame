@@ -69,9 +69,17 @@ export default function Home() {
     }
   }, [currentSession.messages, isGenerating]);
 
+  // Auto-clean old "API Key not found" messages if user has now seen the UI
+  useEffect(() => {
+    if (currentSession.messages.some(m => m.content.includes("API-ключ не найден"))) {
+       // Optional: we could auto-clear, but it might be intrusive. 
+       // For now, let's just make sure the activation card is visible.
+    }
+  }, [currentSession.messages]);
+
   return (
     <ErrorBoundary>
-      <div className="flex h-screen bg-background overflow-hidden">
+      <div className="flex h-full bg-background overflow-hidden">
       <ChatSidebar
         sessions={sessions}
         activeSessionId={activeSessionId}
@@ -87,7 +95,7 @@ export default function Home() {
         onClose={() => setSidebarOpen(false)}
       />
 
-      <main className="flex-1 flex flex-col min-w-0 relative">
+      <main className="flex-1 flex flex-col min-w-0 relative h-full">
         {/* Auth loading state */}
         {authLoading && (
           <div className="absolute inset-0 z-50 flex items-center justify-center bg-background">
@@ -101,10 +109,10 @@ export default function Home() {
         {/* Floating Auth Badge (Minimal) */}
         <div className="absolute top-4 right-4 z-30 flex items-center gap-2">
             {isAuthenticated && user ? (
-              <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-background/50 border border-border backdrop-blur-md">
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-background/80 border border-border backdrop-blur-md shadow-lg">
                 <div className={`w-1.5 h-1.5 rounded-full ${user.isGithubConnected ? 'bg-green-500 animate-pulse' : 'bg-yellow-500'}`} />
-                <span className="text-[10px] font-black uppercase tracking-wider text-foreground/70">
-                   {user.isGithubConnected ? `GitHub: @${user.githubUsername}` : 'Git Required'}
+                <span className="text-[9px] font-black uppercase tracking-wider text-foreground/70">
+                   {user.isGithubConnected ? `@${user.githubUsername}` : 'Git Required'}
                 </span>
               </div>
             ) : null}
@@ -112,19 +120,19 @@ export default function Home() {
             <Button
                 variant="ghost"
                 size="sm"
-                className="h-8 w-8 p-0 md:hidden bg-background/50 backdrop-blur-md rounded-full border border-border"
+                className="h-8 w-8 p-0 md:hidden bg-background/80 backdrop-blur-md rounded-full border border-border shadow-lg"
                 onClick={() => setSidebarOpen(true)}
             >
                 <Menu size={16} />
             </Button>
         </div>
 
-        {/* Messages */}
-        <div className="flex-1 overflow-hidden relative">
-          <ScrollArea className="h-full" ref={scrollRef}>
-            <div className="max-w-3xl mx-auto">
+        {/* Messages Container */}
+        <div className="flex-1 overflow-hidden relative flex flex-col">
+          <ScrollArea className="flex-1" ref={scrollRef}>
+            <div className="max-w-3xl mx-auto min-h-full flex flex-col">
               {currentSession.messages.length === 0 ? (
-                <div className="flex flex-col items-center justify-center h-full min-h-[500px] px-4 py-20">
+                <div className="flex flex-col items-center justify-center flex-1 px-4 py-20">
                   <div className="w-24 h-24 rounded-[40px] bg-primary/10 flex items-center justify-center mb-10 shadow-inner group transition-transform hover:rotate-6 duration-500">
                     <Sparkles className="w-12 h-12 text-primary group-hover:scale-110 transition-transform" />
                   </div>
@@ -137,35 +145,6 @@ export default function Home() {
                       Создавай полноценные игры за минуты. Опиши идею — агент сделает остальное.
                     </p>
                   </div>
-
-                  {/* Inline API Key Activation */}
-                  {!settings.apiKey && (
-                    <div className="w-full max-w-md mb-12 animate-in fade-in slide-in-from-bottom-6 duration-1000">
-                      <div className="bg-primary/5 border border-primary/20 rounded-[32px] p-8 backdrop-blur-xl relative overflow-hidden group shadow-2xl shadow-primary/5">
-                        <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
-                          <ShieldCheck size={80} />
-                        </div>
-                        <h4 className="text-xs font-black text-primary uppercase tracking-[0.2em] mb-6 flex items-center gap-2">
-                          <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-                          Активация системы
-                        </h4>
-                        <div className="space-y-4">
-                          <div className="relative">
-                            <input 
-                              type="password"
-                              placeholder="Ваш API-ключ (OpenRouter)..."
-                              className="w-full bg-background/80 border border-primary/10 rounded-2xl px-5 py-4 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 transition-all placeholder:opacity-30"
-                              value={settings.apiKey}
-                              onChange={(e) => updateSettings({ apiKey: e.target.value })}
-                            />
-                          </div>
-                          <p className="text-[10px] text-muted-foreground/60 leading-relaxed px-1">
-                            Мы рекомендуем <b>OpenRouter</b> (модель Gemini 2.0 Flash) для мгновенной генерации. Ключ хранится локально в вашем браузере.
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  )}
 
                   <div className="w-full max-w-md bg-secondary/20 border border-border/40 rounded-[32px] p-8 mb-12">
                     <h3 className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] mb-8">План действий</h3>
@@ -203,7 +182,7 @@ export default function Home() {
                   </div>
                 </div>
               ) : (
-                <div className="pb-32 pt-16">
+                <div className="pb-12 pt-16">
                   {currentSession.messages.map((message) => (
                     <ChatMessageItem
                       key={message.id}
@@ -226,19 +205,51 @@ export default function Home() {
               )}
             </div>
           </ScrollArea>
+
+          {/* Persistent API Key Activation Overlay */}
+          {!settings.apiKey && (
+            <div className="absolute inset-x-0 bottom-[120px] px-4 z-40 pointer-events-none">
+              <div className="max-w-md mx-auto pointer-events-auto animate-in fade-in slide-in-from-bottom-10 duration-700">
+                <div className="bg-primary/10 border border-primary/30 rounded-[32px] p-6 backdrop-blur-2xl shadow-2xl ring-1 ring-white/10">
+                  <div className="flex items-center gap-4 mb-5">
+                    <div className="w-10 h-10 rounded-2xl bg-primary flex items-center justify-center text-white shadow-lg shadow-primary/30">
+                      <ShieldCheck size={20} />
+                    </div>
+                    <div>
+                      <h4 className="text-xs font-black text-primary uppercase tracking-widest">Активация системы</h4>
+                      <p className="text-[10px] text-muted-foreground mt-0.5">Требуется API-ключ для работы</p>
+                    </div>
+                  </div>
+                  <div className="space-y-4">
+                    <input 
+                      type="password"
+                      placeholder="OpenRouter Key (sk-or-v1-...)"
+                      className="w-full bg-background/80 border border-primary/20 rounded-[18px] px-5 py-4 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 transition-all placeholder:opacity-30"
+                      value={settings.apiKey}
+                      onChange={(e) => updateSettings({ apiKey: e.target.value })}
+                    />
+                    <div className="flex items-center justify-between px-1">
+                       <a href="https://openrouter.ai/keys" target="_blank" className="text-[9px] text-primary hover:underline font-bold">Получить ключ</a>
+                       <p className="text-[9px] text-muted-foreground/60 italic">Ключ не покидает ваш телефон</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
-        {/* Input area */}
-        <div className="fixed bottom-0 left-0 right-0 p-4 md:p-8 bg-gradient-to-t from-background via-background/95 to-transparent backdrop-blur-sm z-20">
+        {/* Input area - Non-fixed for better flow in Telegram */}
+        <div className="p-4 bg-background/50 backdrop-blur-sm border-t border-border/40 shrink-0">
           <div className="max-w-3xl mx-auto">
             <ChatInput
               onSend={sendMessage}
               onStop={stopGeneration}
               isGenerating={isGenerating}
               disabled={!settings.apiKey}
-              placeholder={!settings.apiKey ? "Активируйте систему выше ↑" : "Опишите вашу игру..."}
+              placeholder={!settings.apiKey ? "Сначала активируйте ключ ↑" : "Опишите вашу игру..."}
             />
-            <div className="mt-6 flex items-center justify-center gap-4 opacity-20">
+            <div className="mt-4 flex items-center justify-center gap-4 opacity-10">
                <div className="h-[1px] flex-1 bg-gradient-to-r from-transparent to-border" />
                <p className="text-[8px] uppercase tracking-[0.4em] font-black">OpenSmolGame Agent 3.0</p>
                <div className="h-[1px] flex-1 bg-gradient-to-l from-transparent to-border" />
