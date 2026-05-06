@@ -18,7 +18,7 @@
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <!-- ?v=10001 сбрасывает кэш WebView Telegram после правок JS/CSS (меняй при каждом релизе фронта; при крупных фиксах — у всех script/link сразу). -->
 <link rel="stylesheet" href="styles.css?v=10001">
-<link rel="stylesheet" href="/smolgame/agent-dist/assets/index.css?v=10002">
+<link rel="stylesheet" href="agent-dist/assets/index.css?v=10003">
 <!-- Обновление имени/аватара теперь реактивно через syncUSERFromTelegramInit() в telegram-initdata.js -->
 </head>
 <body class="feed-open">
@@ -304,6 +304,17 @@
 
   <div class="agent-container" style="flex: 1; height: 100%; overflow: hidden;">
     <div id="agent-root" style="width: 100%; height: 100%;"></div>
+    <!-- Debug UI (Hidden by default, shown via console or if needed) -->
+    <div id="agent-debug" style="display:none; position: absolute; bottom: 80px; left: 50%; transform: translateX(-50%); z-index: 9999; background: rgba(0,0,0,0.8); padding: 10px; border-radius: 8px; color: white; font-size: 10px; pointer-events: auto;">
+      <button onclick="alert('Agent root content: ' + document.getElementById('agent-root').innerHTML)">Check Root</button>
+      <button onclick="console.log(window.React, window.ReactDOM)">Log React</button>
+    </div>
+    <script>
+      // Show debug button if explicitly requested or after timeout
+      if (window.location.search.includes('debug=1')) {
+        document.getElementById('agent-debug').style.display = 'block';
+      }
+    </script>
   </div>
 </div>
 
@@ -615,6 +626,6 @@
 <script src="js/events.js?v=10001"></script>
 <script src="js/overlay-pull-close.js?v=10001"></script>
 <script src="js/main.js?v=10001"></script>
-<script type="module" src="/smolgame/agent-dist/assets/index.js?v=10002"></script>
+<script type="module" src="agent-dist/assets/index.js?v=10003" onerror="alert('Agent script failed to load! Path: ' + this.src)"></script>
 </body>
 </html>
