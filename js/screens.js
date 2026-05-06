@@ -338,7 +338,7 @@ function switchTab(tab) {
       const script = document.createElement('script');
       script.type = 'module';
       script.crossOrigin = 'anonymous';
-      script.src = '/smolgame/agent-dist/assets/index.js?v=10032';
+      script.src = '/smolgame/agent-dist/assets/index.js?v=10033';
       
       script.onload = () => logToScreen('Script loaded OK');
       script.onerror = (e) => logToScreen('Script LOAD ERROR');
