@@ -296,7 +296,7 @@ function switchTab(tab) {
       const link = document.createElement('link');
       link.rel = 'stylesheet';
       link.crossOrigin = 'anonymous';
-      link.href = '/smolgame/agent-dist/assets/index.css?v=10009';
+      link.href = '/smolgame/agent-dist/assets/index.css?v=10010';
       document.head.appendChild(link);
 
       // Show loading indicator in agent-root while script loads
@@ -309,7 +309,7 @@ function switchTab(tab) {
       const script = document.createElement('script');
       script.type = 'module';
       script.crossOrigin = 'anonymous';
-      script.src = '/smolgame/agent-dist/assets/index.js?v=10009';
+      script.src = '/smolgame/agent-dist/assets/index.js?v=10010';
       
       script.onload = () => {
         console.log('[Agent] Script loaded successfully');
