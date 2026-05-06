@@ -77,6 +77,10 @@ window.syncThemeWithTelegram = function() {
 // Вызываем при запуске
 window.syncThemeWithTelegram();
 
+// Global State for UI (Genres selection and Upload methods)
+window.selectedGenres = window.selectedGenres || {};
+window.selectedUploadMethod = window.selectedUploadMethod || 'agent';
+
 // И вешаем слушатель на изменения темы внутри самого Telegram
 window.Telegram?.WebApp?.onEvent('themeChanged', () => {
   window.syncThemeWithTelegram();
