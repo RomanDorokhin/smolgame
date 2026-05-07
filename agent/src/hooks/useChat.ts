@@ -154,7 +154,6 @@ export function useChat() {
   };
 
   const sendMessage = useCallback(async (content: string, isHidden: boolean = false) => {
-    if (typeof window !== 'undefined') alert("1. sendMessage started");
     if (isGenerating && !isHidden) return;
 
     const userMsg: ChatMessage = { id: generateId(), role: "user", content, timestamp: Date.now(), isHidden };
@@ -215,6 +214,21 @@ export function useChat() {
     const providersToTry = currentSettings.autoFailover 
       ? [currentSettings.primaryProvider, ...FALLBACK_ORDER.filter(p => p !== currentSettings.primaryProvider)]
       : [currentSettings.primaryProvider];
+
+    const hasAnyKey = Object.values(currentSettings.keys).some(k => !!k);
+    if (!hasAnyKey) {
+      setSessions(prev => prev.map(s => s.id === sessionId ? {
+        ...s,
+        messages: [...s.messages, {
+          id: generateId(),
+          role: "assistant",
+          content: "❌ **Ошибка: Ключи API не найдены.**\n\nПожалуйста, открой настройки (иконка ⚙️ слева) и введи хотя бы один ключ (Groq, Gemini или OpenRouter), чтобы я мог начать работу. Если ты открыл сайт в новом браузере, ключи нужно ввести заново.",
+          timestamp: Date.now()
+        }]
+      } : s));
+      setIsGenerating(false);
+      return;
+    }
 
     console.log('[useChat] providers to try:', providersToTry);
 
