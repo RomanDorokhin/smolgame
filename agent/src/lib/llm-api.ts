@@ -139,17 +139,18 @@ export async function* generateStream(
   });
 
   if (!response.ok) {
+    const errorText = await response.text().catch(() => "Unknown error");
     const isRateLimit = response.status === 429;
-    const error = await response.json().catch(() => ({}));
-    const errorMsg = error.error?.message || `API error (${response.status}): ${response.statusText}`;
-    pool.reportFailure(config.provider, isRateLimit, errorMsg);
-    throw new Error(errorMsg);
+    pool.reportFailure(config.provider, isRateLimit, errorText);
+    throw new Error(`API Error ${response.status}: ${errorText}`);
+  }
+
+  const reader = response.body?.getReader();
+  if (!reader) {
+    throw new Error("API returned an empty body (No Stream Reader)");
   }
 
   pool.reportSuccess(config.provider);
-
-  const reader = response.body?.getReader();
-  if (!reader) throw new Error("Response body is null");
 
   const decoder = new TextDecoder();
   let buffer = "";

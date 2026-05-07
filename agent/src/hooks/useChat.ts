@@ -332,6 +332,7 @@ ${selfCorrectionContext}
         }
 
         for await (const chunk of stream) {
+          if (controller.signal.aborted) break;
           fullContent += chunk;
           
           if (!isComplete && fullContent.includes("<game_prototype>")) {
