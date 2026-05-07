@@ -124,6 +124,12 @@ export function ChatMessageItem({ message, onRetry, onSend, isLast }: ChatMessag
                       }
                       return <ul className="list-disc pl-4 mt-2 mb-4 space-y-1 text-white/80" {...props}>{children}</ul>;
                     },
+                    ol: ({node, children, ...props}) => {
+                      if (isLast && message.role === 'assistant' && onSend) {
+                        return <ol className="m-0 p-0 mt-4 mb-2 space-y-2 flex flex-col items-start w-full" {...props}>{children}</ol>;
+                      }
+                      return <ol className="list-decimal pl-4 mt-2 mb-4 space-y-1 text-white/80" {...props}>{children}</ol>;
+                    },
                     li: ({node, children, ...props}) => {
                       if (isLast && message.role === 'assistant' && onSend) {
                         const text = extractTextFromNode(node).trim();
