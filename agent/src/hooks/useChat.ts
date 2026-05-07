@@ -290,12 +290,78 @@ export function useChat() {
       }
 
       if (finalRawCode) {
-        setGenerationStep(`Оптимизация и проверка...`);
-        const result = await runGamePipeline(sessionId, finalRawCode);
+        setGenerationStep(`Валидация кода...`);
+        let result = await runGamePipeline(sessionId, finalRawCode);
+        let bestCode = finalRawCode;
+        let bestScore = result.finalScore;
+
+        // 🔁 Iterative self-improvement loop (up to 3 passes)
+        const MAX_IMPROVEMENT_PASSES = 3;
+        for (let pass = 1; pass <= MAX_IMPROVEMENT_PASSES; pass++) {
+          if (result.finalScore >= 90) break; // Already great!
+
+          const failures = result.nextSteps
+            .filter(s => !s.includes('✅') && !s.includes('60+') && !s.includes('70+'))
+            .join('\n');
+          if (!failures) break;
+
+          setGenerationStep(`🔧 Улучшение кода (попытка ${pass}/${MAX_IMPROVEMENT_PASSES})... Текущий счёт: ${result.finalScore}/100`);
+          setSessions(prev => prev.map(s => s.id === sessionId ? {
+            ...s, messages: s.messages.map(m => m.id === assistantMsgId ? {
+              ...m, content: cleanTechnicalContent(currentContent) + `\n\n🔧 **Инженер улучшает код** (попытка ${pass}/3, счёт: ${result.finalScore}/100)...`
+            } : m)
+          } : s));
+
+          // Pick best provider
+          const improveProvider = (providersWithKeys[0] as APIProvider) || currentProvider;
+          const improveKey = currentSettings.keys[improveProvider] || "";
+          const improveModel = currentSettings.models[improveProvider] || (Array.isArray(DEFAULT_MODELS[improveProvider]) ? DEFAULT_MODELS[improveProvider][0] : DEFAULT_MODELS[improveProvider]);
+
+          if (!improveKey) break;
+
+          const fixPrompt = `You are a game developer. Fix the following issues in this HTML game:
+
+ISSUES TO FIX:
+${failures}
+
+CURRENT CODE:
+${bestCode}
+
+Return ONLY the complete corrected HTML file. No explanations. Start with <!DOCTYPE html>.`;
+
+          try {
+            const fixStream = generateStream(
+              [{ role: "user", content: fixPrompt }],
+              { provider: improveProvider, model: improveModel, apiKey: improveKey.trim() },
+              new AbortController().signal
+            );
+
+            let fixedCode = "";
+            for await (const chunk of fixStream) {
+              fixedCode += chunk;
+            }
+
+            const htmlMatch = fixedCode.match(/<!DOCTYPE html[\s\S]*/i);
+            if (htmlMatch) {
+              const candidateCode = htmlMatch[0].replace(/```[\w]*\n?$/gm, '').trim();
+              const newResult = await runGamePipeline(sessionId, candidateCode);
+              if (newResult.finalScore >= bestScore) {
+                bestCode = candidateCode;
+                bestScore = newResult.finalScore;
+                result = newResult;
+              }
+            }
+          } catch (e) {
+            console.warn(`[Improvement pass ${pass}] failed:`, e);
+            break;
+          }
+        }
+
+        finalRawCode = bestCode;
         
         setSessions(prev => prev.map(s => s.id === sessionId ? {
           ...s, messages: s.messages.map(m => m.id === assistantMsgId ? { 
-            ...m, content: cleanTechnicalContent(currentContent) + "\n\n✅ **Игра готова!**", pipelineResult: result 
+            ...m, content: cleanTechnicalContent(currentContent) + `\n\n✅ **Игра готова!** Качество: ${result.finalScore}/100`, pipelineResult: result 
           } : m)
         } : s));
 
