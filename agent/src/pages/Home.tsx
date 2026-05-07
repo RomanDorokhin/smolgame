@@ -104,21 +104,6 @@ export default function Home() {
               Войти через GitHub
             </Button>
             
-            {/* Browser Bypass */}
-            {!window.Telegram?.WebApp?.initData && (
-              <button 
-                onClick={() => {
-                  // Temporary bypass for browser testing
-                  const guestUser = { id: 'guest', isGithubConnected: true, username: 'Guest Tester' };
-                  // We manipulate the local state via a custom event or just trust the next re-render
-                  window.dispatchEvent(new CustomEvent('smolgame:auth_bypass'));
-                }}
-                className="mt-6 text-sm text-white/30 hover:text-white/60 transition-colors underline underline-offset-4"
-              >
-                Продолжить без GitHub (только тест в браузере)
-              </button>
-            )}
-
             {loginError && (
               <p className="mt-4 text-[11px] text-red-400 font-medium max-w-[240px] leading-relaxed text-center">{loginError}</p>
             )}

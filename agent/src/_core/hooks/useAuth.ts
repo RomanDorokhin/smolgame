@@ -67,37 +67,29 @@ export function useAuth() {
 
   const login = async () => {
     setLoginError(null);
+    const webId = SmolGameAPI.getWebId();
+    const API_BASE = 'https://smolgame.dorokhin731.workers.dev';
+    
+    // Direct redirect for browser - skips the fetch 401 issue
+    const oauthUrl = `${API_BASE}/api/github/oauth-start?web_id=${webId}&smol_bypass=1`;
+
     try {
-      const { url } = await SmolGameAPI.githubOAuthStart();
-      if (!url) {
-        setLoginError('Сервер не вернул URL для входа. Попробуй ещё раз.');
-        return;
-      }
-      // Use Telegram WebApp native method if available (required in Telegram Mini App)
+      // Use Telegram WebApp native method if available
       const tg = (window as any).Telegram?.WebApp;
-      if (tg?.openLink) {
-        tg.openLink(url);
-      } else {
-        // Fallback for browser testing
-        window.open(url, '_blank');
+      if (tg?.openLink && tg?.initData) {
+        // If in TG, we still try the fetch way first as it's cleaner
+        const { url } = await SmolGameAPI.githubOAuthStart();
+        if (url) {
+          tg.openLink(url);
+          return;
+        }
       }
+      
+      // Fallback/Browser: Direct navigation
+      window.location.href = oauthUrl;
     } catch (err: any) {
-      console.error("[useAuth] Failed to start GitHub OAuth", err);
-      const msg: string = err?.message || '';
-      // Map raw server/network errors to user-friendly messages
-      if (
-        msg === 'unauthorized' ||
-        msg.includes('401') ||
-        msg.includes('initData')
-      ) {
-        setLoginError('Сессия не найдена. Попробуй обновить страницу или войти через Telegram.');
-      } else if (msg === 'Load failed' || msg.includes('network') || msg.includes('fetch')) {
-        setLoginError('Нет связи с сервером. Проверь интернет и повтори попытку.');
-      } else if (msg.includes('503') || msg.includes('GITHUB_CLIENT')) {
-        setLoginError('GitHub OAuth не настроен на сервере. Напиши админу.');
-      } else {
-        setLoginError(msg || 'Не удалось запустить вход через GitHub.');
-      }
+      console.error("[useAuth] Login failed, trying direct redirect", err);
+      window.location.href = oauthUrl;
     }
   };
 
