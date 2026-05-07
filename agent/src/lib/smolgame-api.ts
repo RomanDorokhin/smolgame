@@ -142,6 +142,31 @@ export class SmolGameAPI {
   }
 
   /**
+   * Delegate heavy-duty generation to OpenGame API
+   */
+  static async generateWithOpenGame(payload: {
+    prompt: string;
+    apiKey: string;
+    model?: string;
+    provider?: string;
+  }): Promise<{ success: boolean; code: string; gameId: string }> {
+    // Note: In production this would be a real URL, for now we use localhost
+    const OPENGAME_API = 'http://localhost:3001';
+    const response = await fetch(`${OPENGAME_API}/api/generate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.error || 'OpenGame generation failed');
+    }
+
+    return response.json();
+  }
+
+  /**
    * Publish game to GitHub
    */
   static async publishGame(payload: {

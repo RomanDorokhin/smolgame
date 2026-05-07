@@ -20,9 +20,9 @@ interface ProviderStatus {
   lastError?: string;
 }
 
-const CIRCUIT_BREAKER_COOLDOWN_ERROR = 60 * 1000;       // 1 min for generic errors
-const CIRCUIT_BREAKER_COOLDOWN_RATE_LIMIT = 5 * 60 * 1000; // 5 min for 429
-const MAX_FAILURES = 2;
+const CIRCUIT_BREAKER_COOLDOWN_ERROR = 30 * 1000;       // 30s for generic errors
+const CIRCUIT_BREAKER_COOLDOWN_RATE_LIMIT = 30 * 1000; // 30s for 429
+const MAX_FAILURES = 3;
 
 class ProviderPool {
   private statuses: Record<string, ProviderStatus> = {};
@@ -59,6 +59,13 @@ class ProviderPool {
     }
   }
 
+  reset(provider: string) {
+    const status = this.getStatus(provider);
+    status.state = "CLOSED";
+    status.failureCount = 0;
+    status.nextRetryAt = 0;
+  }
+
   /** Returns a human-readable status string for all providers */
   getSummary(providers: string[]): string {
     return providers.map(p => {
@@ -90,16 +97,16 @@ const MODELS_LIST_URLS: Record<string, string> = {
   together: "https://api.together.xyz/v1/models",
 };
 
-const DEFAULT_MODELS: Record<string, string> = {
-  openrouter: "google/gemini-2.0-flash-exp",
-  groq: "llama-3.3-70b-versatile",
-  gemini: "gemini-2.0-flash",
-  together: "meta-llama/Llama-3.3-70B-Instruct-Turbo",
-  sambanova: "Meta-Llama-3.1-70B-Instruct",
-  glhf: "hf:meta-llama/Llama-3.1-405B-Instruct",
-  huggingface: "meta-llama/Llama-3.2-11B-Vision-Instruct",
-  deepseek: "deepseek-chat",
-  custom: "gpt-3.5-turbo",
+export const DEFAULT_MODELS: Record<string, string[]> = {
+  openrouter: ["google/gemini-2.0-flash-exp", "meta-llama/llama-3.3-70b-instruct", "google/gemini-flash-1.5"],
+  groq: ["llama-3.3-70b-versatile", "llama-3.1-70b-versatile", "mixtral-8x7b-32768"],
+  gemini: ["gemini-2.0-flash", "gemini-1.5-flash", "gemini-1.5-pro"],
+  together: ["meta-llama/Llama-3.3-70B-Instruct-Turbo", "meta-llama/Llama-3.1-70B-Instruct-Turbo", "mistralai/Mixtral-8x7B-Instruct-v0.1"],
+  sambanova: ["Meta-Llama-3.1-70B-Instruct", "Meta-Llama-3.1-405B-Instruct"],
+  glhf: ["hf:meta-llama/Llama-3.1-405B-Instruct", "hf:meta-llama/Llama-3.1-70B-Instruct"],
+  huggingface: ["meta-llama/Llama-3.2-11B-Vision-Instruct", "Qwen/Qwen2.5-72B-Instruct"],
+  deepseek: ["deepseek-chat"],
+  custom: ["gpt-3.5-turbo"],
 };
 
 export interface ModelInfo {

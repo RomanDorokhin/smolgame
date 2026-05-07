@@ -9,8 +9,7 @@ import type {
 } from "../types/chat";
 import { runGamePipeline } from "../lib/core/gameGenerationPipelinePro";
 import { GameFlowOrchestratorV2 } from "../lib/core/gameFlowOrchestratorV2";
-import type { GameSpec } from "../lib/core/types";
-import { generateStream, pool, fetchAvailableModels } from "../lib/llm-api";
+import { generateStream, pool, DEFAULT_MODELS, fetchAvailableModels } from "../lib/llm-api";
 import { SmolGameAPI } from "../lib/smolgame-api";
 import type { PipelineResult } from "../lib/core/gameGenerationPipelinePro";
 
@@ -87,6 +86,7 @@ export function useChat() {
   const [activeSessionId, setActiveSessionId] = useState<string>("");
   const [settings, setSettings] = useState<ChatSettings>(loadSettings);
   const [usage, setUsage] = useState<UsageStats>(loadUsage);
+  const [lastProviderIndex, setLastProviderIndex] = useState(0);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isPipelineRunning, setIsPipelineRunning] = useState(false);
   const [generationStep, setGenerationStep] = useState("");
@@ -99,7 +99,6 @@ export function useChat() {
 
   const orchestratorRef = useRef<GameFlowOrchestratorV2 | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
-  const lastFailedPipelineRef = useRef<PipelineResult | null>(null);
 
   useEffect(() => {
     const loaded = loadSessions();
@@ -136,11 +135,50 @@ export function useChat() {
   const sessionsRef = useRef(sessions);
   useEffect(() => { sessionsRef.current = sessions; }, [sessions]);
 
-  const currentSession = sessions.find((s) => s.id === activeSessionId) || sessions[0] || {
-    id: "default",
-    title: "New Project",
-    messages: [],
-    updatedAt: Date.now()
+  const currentSession = sessions.find((s) => s.id === activeSessionId) || sessions[0] || createDefaultSession();
+
+  const handleOpenGameFlow = async (sessionId: string, assistantMsgId: string, prompt: string, apiKey: string, model: string, provider: string, currentContent: string) => {
+    setGenerationStep(`OpenGame запускает движок...`);
+    try {
+      const genResult = await SmolGameAPI.generateWithOpenGame({ prompt, apiKey, model, provider });
+      if (genResult.success && genResult.code) {
+        setGenerationStep(`Проверка качества...`);
+        const result = await runGamePipeline(sessionId, genResult.code);
+        
+        setSessions(prev => prev.map(s => s.id === sessionId ? {
+          ...s, messages: s.messages.map(m => m.id === assistantMsgId ? { 
+            ...m, content: currentContent + "\n\n✅ **Игра готова!**", pipelineResult: result 
+          } : m)
+        } : s));
+
+        if (result.isPublishable) {
+          const gameTitle = genResult.code.match(/<title>([^<]{1,60})<\/title>/i)?.[1]?.trim() || "Smol Game";
+          if ((window as any).__smolAuthUser?.isGithubConnected) {
+            setIsAutoDeploying(true);
+            try {
+              const deployResult = await SmolGameAPI.publishGame({ 
+                gameTitle, 
+                files: [{ path: "index.html", content: result.generatedCode }], 
+                gameDescription: "AI Generated via OpenGame" 
+              });
+              if (deployResult.ok) {
+                setSessions(prev => prev.map(s => s.id === sessionId ? {
+                  ...s, messages: s.messages.map(m => m.id === assistantMsgId ? {
+                    ...m, pipelineResult: { ...result, autoDeployed: true },
+                    deployResult: { pagesUrl: deployResult.pagesUrl, repoUrl: `https://github.com/${deployResult.repo}`, pagesReady: deployResult.pagesReady }
+                  } : m)
+                } : s));
+              }
+            } catch {} finally { setIsAutoDeploying(false); }
+          } else { SmolGameAPI.savePendingGame({ htmlCode: result.generatedCode, title: gameTitle }); }
+        }
+      }
+    } catch (e: any) {
+      console.error("OpenGame Error:", e);
+      setSessions(prev => prev.map(s => s.id === sessionId ? {
+        ...s, messages: s.messages.map(m => m.id === assistantMsgId ? { ...m, content: currentContent + `\n\n❌ Ошибка движка: ${e.message}` } : m)
+      } : s));
+    }
   };
 
   const sendMessage = useCallback(async (content: string, isHidden: boolean = false) => {
@@ -164,122 +202,135 @@ export function useChat() {
       } : s));
     }
 
-    const historyBefore = sessionsRef.current.find(s => s.id === sessionId)?.messages || [];
-    const messageHistory = [...historyBefore, userMsg];
+    const messageHistory = [...(sessionsRef.current.find(s => s.id === sessionId)?.messages || []), userMsg];
+
+    // Reset pool status for manual retries
+    FALLBACK_ORDER.forEach(p => pool.reset(p));
 
     setIsGenerating(true);
     const controller = new AbortController();
     abortControllerRef.current = controller;
-    const timeoutId = setTimeout(() => controller.abort(), 60000);
-    const currentSettings = settings;
+    const timeoutId = setTimeout(() => controller.abort(), 90000);
 
     try {
-      if (!orchestratorRef.current) {
-        try { orchestratorRef.current = new GameFlowOrchestratorV2("user-1", sessionId); } 
-        catch (e) { orchestratorRef.current = new GameFlowOrchestratorV2("user-1", undefined); }
-      }
+      if (!orchestratorRef.current) orchestratorRef.current = new GameFlowOrchestratorV2("user-1", sessionId);
       const orchestrator = orchestratorRef.current;
-      let success = false;
-      let lastError = "";
+      const currentAnswers = orchestrator.getSession().answers || {};
+      const isComplete = orchestrator.isInterviewComplete();
       
-      const providersToTry = currentSettings.autoFailover 
-        ? [currentSettings.primaryProvider, ...FALLBACK_ORDER.filter(p => p !== currentSettings.primaryProvider)]
-        : [currentSettings.primaryProvider];
-      
-      const hasAnyKey = Object.values(currentSettings.keys).some(k => !!k);
-      if (!hasAnyKey) {
+      const FIELD_NAMES: Record<string, string> = { genre: "Жанр", mechanics: "Механика", visuals: "Визуал", audience: "Аудитория", story: "Сюжет", progression: "Прогрессия", special_features: "Фишки" };
+      const missingFields = ['genre', 'mechanics', 'visuals', 'audience', 'story', 'progression', 'special_features'].filter(f => !(currentAnswers as any)[f]);
+      const nextField = missingFields[0];
+
+      const QUALITY_CRITERIA = `
+1. TECHNICAL: Single HTML file, no backend, works in iframe, touch-first, portrait only, no system dialogs.
+2. GAMEPLAY: Instant action, honest game over, balanced, no bugs, replayability.
+3. UX: Tap zones 44px+, font 16px+, sound after tap, smooth performance.
+4. VISUAL: Own style, Russian/Visual-only, no violence.
+5. DEMO: Mandatory ?demo=1, real gameplay, loopable.`;
+
+      const SMART_SYSTEM_PROMPT = `Ты — Элитный Геймдизайнер SmolGame. Твоя цель — собрать ТЗ.\n\nПРАВИЛА:\n1. Задавай ОДИН вопрос.\n2. Когда всё ясно — выводи <opengame_prompt>.\n3. ВНУТРИ <opengame_prompt> ОБЯЗАТЕЛЬНО ВКЛЮЧИ: ${QUALITY_CRITERIA}\n\n${isComplete ? `ЗАДАЧА: Сформируй <opengame_prompt>.` : `ВОПРОС ПРО ${FIELD_NAMES[nextField || 'genre']}.`}\n\nОТВЕТ НА РУССКОМ. ТЗ ВНУТРИ ТЕГА — НА АНГЛИЙСКОМ.`;
+
+      // 1. Prepare providers with keys and rotate start point
+      const providersWithKeys = FALLBACK_ORDER.filter(p => !!settings.keys[p]);
+      if (providersWithKeys.length === 0) {
         setSessions(prev => prev.map(s => s.id === sessionId ? {
-          ...s, messages: [...s.messages, { id: generateId(), role: "assistant", content: "❌ **Ошибка: Ключи API не найдены.**", timestamp: Date.now() }]
+          ...s, messages: [...s.messages, { id: generateId(), role: "assistant", content: "❌ **Ошибка: Ключи API не найдены.** Пожалуйста, добавь ключи (Gemini, Groq, и т.д.) в настройках.", timestamp: Date.now() }]
         } : s));
         setIsGenerating(false);
         return;
       }
 
-      for (const provider of providersToTry) {
-        if (success) break;
-        const apiKey = currentSettings.keys[provider];
+      // Rotate starting index for Round-Robin
+      const startIndex = (lastProviderIndex + 1) % providersWithKeys.length;
+      setLastProviderIndex(startIndex);
+
+      // Re-order providers to start from the rotated index
+      const rotatedProviders = [
+        ...providersWithKeys.slice(startIndex),
+        ...providersWithKeys.slice(0, startIndex)
+      ];
+
+      let success = false;
+      let failureLog: string[] = [];
+
+      for (const provider of rotatedProviders) {
+        if (success || controller.signal.aborted) break;
+        const apiKey = settings.keys[provider];
         if (!apiKey) continue;
 
-        const modelsToTry = [currentSettings.models[provider] || ""];
+        const primaryModel = settings.models[provider] || (DEFAULT_MODELS[provider] ? DEFAULT_MODELS[provider][0] : "");
+        const fallbackModels = DEFAULT_MODELS[provider] || [];
+        const modelsToTry = Array.from(new Set([primaryModel, ...fallbackModels])).filter(m => !!m);
+
         if (provider === "openrouter") {
           try {
-            const freshModels = await fetchAvailableModels("openrouter", apiKey);
-            const freeModels = freshModels.filter(m => m.isFree).map(m => m.id);
-            modelsToTry.push(...freeModels.filter(id => id !== modelsToTry[0]));
-          } catch (e) { console.warn("[useChat] Failed to fetch models", e); }
+            const fresh = await fetchAvailableModels("openrouter", apiKey);
+            modelsToTry.push(...fresh.filter(m => m.isFree).map(m => m.id));
+          } catch {}
         }
 
         for (const modelId of modelsToTry) {
-          if (success) break;
-          if (!modelId && provider !== "openrouter" && provider !== "gemini") continue;
+          if (success || controller.signal.aborted) break;
+          
+          let retries = 0;
+          const maxRetries = 2;
 
-          try {
-            const currentAnswers = orchestrator.getSession().answers || {};
-            const isComplete = orchestrator.isInterviewComplete();
-            const requiredFields = ['genre', 'mechanics', 'visuals', 'audience', 'story', 'progression', 'special_features'];
-            const missingFields = requiredFields.filter(f => !(currentAnswers as any)[f]);
-            const nextField = missingFields[0];
-            const FIELD_NAMES: Record<string, string> = { genre: "Жанр", mechanics: "Механика", visuals: "Визуал", audience: "Аудитория", story: "Сюжет", progression: "Прогрессия", special_features: "Фишки" };
+          while (retries <= maxRetries && !success && !controller.signal.aborted) {
+            setGenerationStep(`Пробую ${provider}: ${modelId.split('/').pop()}... ${retries > 0 ? `(повтор ${retries})` : ''}`);
 
-            const SMART_SYSTEM_PROMPT = `Ты — Элитный Геймдизайнер и Frontend-разработчик SmolGame. Твоя цель — создать хитовую веб-игру.\n\nПРАВИЛА ОБЩЕНИЯ:\n1. Если интервью в процессе, задавай ОДИН четкий вопрос.\n2. ЕСЛИ ПОЛЬЗОВАТЕЛЬ ГОВОРИТ "делай игру", "хватит вопросов", "сделай сам" — НЕ СПРАШИВАЙ БОЛЬШЕ НИЧЕГО.\n3. В этом случае САМ додумай детали, обнови спецификацию через <game_spec> и СРАЗУ выдай код в <game_prototype>.\n4. НЕ ИГРАЙ в игру текстом! Пиши КОД.\n\n${isComplete ? `ИНТЕРВЬЮ ЗАВЕРШЕНО. Спецификация: ${JSON.stringify(currentAnswers)}. ЗАДАЧА: Выдай <game_prototype>.` : `ИНТЕРВЬЮ В ПРОЦЕССЕ. Твоя задача: либо вопрос про ${FIELD_NAMES[nextField || '']}, либо <game_prototype>, если просят начать.`}\n\nОБЯЗАТЕЛЬНО:\n- Код в ОДНОМ файле внутри <game_prototype>.\n- Ответ на РУССКОМ. Используй Markdown.\n- Обновляй спецификацию через <game_spec>...</game_spec> (JSON).`;
+            try {
+              const stream = generateStream([{ role: "system", content: SMART_SYSTEM_PROMPT }, ...messageHistory.map(m => ({ role: m.role as any, content: m.content })), { role: "user", content }], {
+                provider, apiKey, model: modelId, baseUrl: settings.customBaseUrl
+              }, controller.signal);
 
-            const stream = generateStream([{ role: "system", content: SMART_SYSTEM_PROMPT }, ...messageHistory.map(m => ({ role: m.role as any, content: m.content })), { role: "user", content }], {
-              provider, apiKey, model: modelId || currentSettings.models[provider] || "", baseUrl: currentSettings.customBaseUrl
-            }, controller.signal);
+              let fullContent = "";
+              let isFirst = true;
 
-            let fullContent = "";
-            setGenerationStep(isComplete ? "Подготовка к сборке..." : "Анализирую...");
-
-            for await (const chunk of stream) {
-              if (controller.signal.aborted) break;
-              fullContent += chunk;
-              setSessions(prev => prev.map(s => s.id === sessionId ? {
-                ...s, messages: s.messages.map(m => m.id === assistantMsg.id ? { ...m, content: fullContent } : m)
-              } : s));
-            }
-
-            if (!fullContent.trim()) throw new Error("Пустой ответ.");
-            setUsage(prev => ({ ...prev, requests: { ...prev.requests, [provider]: (prev.requests[provider] || 0) + 1 } }));
-            success = true;
-
-            if (fullContent.includes("<game_spec>")) {
-              const specMatch = fullContent.match(/<game_spec>([\s\S]*?)<\/game_spec>/);
-              if (specMatch) { try { const spec = JSON.parse(specMatch[1]); Object.entries(spec).forEach(([k, v]) => { orchestrator.updateInterviewAnswer(k as any, String(v)); }); } catch {} }
-            }
-
-            if (fullContent.includes("<game_prototype>")) {
-              const codeMatch = fullContent.match(/<game_prototype>([\s\S]*?)<\/game_prototype>/);
-              if (codeMatch) {
-                setIsPipelineRunning(true);
-                setGenerationStep(`Проверка качества...`);
-                const result = await runGamePipeline(sessionId, codeMatch[1]);
-                setSessions(prev => prev.map(s => s.id === sessionId ? { ...s, messages: s.messages.map(m => m.id === assistantMsg.id ? { ...m, pipelineResult: result } : m) } : s));
-                setIsPipelineRunning(false);
-                setGenerationStep("");
-                if (result.finalScore >= 70) lastFailedPipelineRef.current = null; else lastFailedPipelineRef.current = result;
-                if (result.isPublishable) {
-                  const gameTitle = codeMatch[1].match(/<title>([^<]{1,60})<\/title>/i)?.[1]?.trim() || "Smol Game";
-                  if ((window as any).__smolAuthUser?.isGithubConnected) {
-                    setIsAutoDeploying(true);
-                    try {
-                      const deployResult = await SmolGameAPI.publishGame({ gameTitle, files: [{ path: "index.html", content: result.generatedCode }], gameDescription: "AI Generated" });
-                      if (deployResult.ok) {
-                        setSessions(prev => prev.map(s => s.id === sessionId ? {
-                          ...s, messages: s.messages.map(m => m.id === assistantMsg.id ? { ...m, pipelineResult: { ...result, autoDeployed: true }, deployResult: { pagesUrl: deployResult.pagesUrl, repoUrl: `https://github.com/${deployResult.repo}`, pagesReady: deployResult.pagesReady } } : m)
-                        } : s));
-                      }
-                    } catch {} finally { setIsAutoDeploying(false); }
-                  } else { SmolGameAPI.savePendingGame({ htmlCode: result.generatedCode, title: gameTitle }); }
+              for await (const chunk of stream) {
+                if (isFirst) { 
+                  success = true; 
+                  isFirst = false; 
+                  setGenerationStep(isComplete ? "Сборка ТЗ..." : "Анализ..."); 
                 }
+                fullContent += chunk;
+                setSessions(prev => prev.map(s => s.id === sessionId ? {
+                  ...s, messages: s.messages.map(m => m.id === assistantMsg.id ? { ...m, content: fullContent } : m)
+                } : s));
               }
+
+              if (success) {
+                setUsage(prev => ({ ...prev, requests: { ...prev.requests, [provider]: (prev.requests[provider] || 0) + 1 } }));
+                const promptMatch = fullContent.match(/<opengame_prompt>([\s\S]*?)<\/opengame_prompt>/);
+                if (promptMatch) {
+                  await handleOpenGameFlow(sessionId, assistantMsg.id, promptMatch[1], apiKey, modelId, provider, fullContent);
+                }
+                break;
+              }
+            } catch (e: any) {
+              const isRateLimit = e.message.includes("429");
+              console.warn(`[useChat] Provider ${provider} model ${modelId} failed:`, e.message);
+              
+              if (isRateLimit && retries < maxRetries) {
+                retries++;
+                setGenerationStep(`Лимит ${provider}. Жду 2 сек...`);
+                await new Promise(r => setTimeout(r, 2000));
+                continue;
+              }
+
+              let cleanError = e.message;
+              try { if (cleanError.includes('{')) { const json = JSON.parse(cleanError.split(': ').slice(1).join(': ')); cleanError = json.error?.message || cleanError; } } catch {}
+              failureLog.push(`❌ **${provider} (${modelId.split('/').pop()})**: ${cleanError.slice(0, 80)}...`);
+              break; // Move to next model
             }
-          } catch (e: any) { console.error(`[useChat] Attempt failed:`, e.message); lastError = `[${provider}] ${e.message}`; }
+          }
         }
       }
 
       if (!success) {
+        const errorContent = `❌ **Не удалось получить ответ ни от одного провайдера.**\n\n**Лог попыток:**\n${failureLog.map(log => `- ${log}`).join("\n")}\n\n*Попробуй еще раз через минуту или добавь другие ключи в настройках.*`;
         setSessions(prev => prev.map(s => s.id === sessionId ? {
-          ...s, messages: s.messages.map(m => m.id === assistantMsg.id ? { ...m, content: `❌ Не удалось получить ответ. Последняя ошибка: ${lastError}`, isStreaming: false } : m)
+          ...s, messages: s.messages.map(m => m.id === assistantMsg.id ? { ...m, content: errorContent, isStreaming: false } : m)
         } : s));
       } else {
         setSessions(prev => prev.map(s => s.id === sessionId ? { ...s, messages: s.messages.map(m => m.id === assistantMsg.id ? { ...m, isStreaming: false } : m) } : s));
@@ -287,17 +338,13 @@ export function useChat() {
     } finally {
       clearTimeout(timeoutId);
       setIsGenerating(false);
-      abortControllerRef.current = null;
-      setSessions(prev => prev.map(s => s.id === sessionId ? { ...s, messages: s.messages.map(m => m.id === assistantMsg.id ? { ...m, isStreaming: false } : m) } : s));
+      setGenerationStep("");
     }
   }, [activeSessionId, sessions, settings, isGenerating]);
 
-  const stopGeneration = useCallback(() => { if (abortControllerRef.current) { abortControllerRef.current.abort(); setIsGenerating(false); } }, []);
-
   return {
     sessions, activeSessionId, currentSession, modelProgress, isGenerating, isPipelineRunning, isAutoDeploying, settings, generationStep, usage,
-    sendMessage, deployToGitHub: () => sendMessage("Пользователь отправил игру на модерацию.", true),
-    stopGeneration,
+    sendMessage, stopGeneration: () => abortControllerRef.current?.abort(),
     updateSettings: (s: Partial<ChatSettings>) => setSettings(prev => ({ ...prev, ...s })),
     createNewChat: () => { const s = createDefaultSession(); setSessions([s, ...sessions]); setActiveSessionId(s.id); },
     switchSession: (id: string) => setActiveSessionId(id),
@@ -308,6 +355,14 @@ export function useChat() {
     },
     clearAllSessions: () => { const s = createDefaultSession(); setSessions([s]); setActiveSessionId(s.id); },
     factoryReset: () => { localStorage.clear(); window.location.reload(); },
-    retryLastMessage: () => {}
+    retryLastMessage: () => {
+      const lastUser = [...currentSession.messages].reverse().find(m => m.role === "user");
+      if (lastUser) {
+        setSessions(prev => prev.map(s => s.id === activeSessionId ? {
+          ...s, messages: s.messages.filter(m => m.id !== lastUser.id && !m.isStreaming)
+        } : s));
+        sendMessage(lastUser.content);
+      }
+    }
   };
 }
