@@ -96,9 +96,9 @@ export class SmolGameAPI {
     const initData = this.getInitData();
     const webId = this.getWebId();
     
-    // Add bypass params for non-Telegram browsers
+    // Add web_id for identification
     const separator = path.includes('?') ? '&' : '?';
-    const finalPath = `${path}${separator}smol_bypass=1&web_id=${webId}`;
+    const finalPath = `${path}${separator}web_id=${webId}`;
 
     const headers: Record<string, string> = {
       ...(options.headers as Record<string, string>),
