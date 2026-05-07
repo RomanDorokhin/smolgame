@@ -290,78 +290,51 @@ export function useChat() {
       }
 
       if (finalRawCode) {
-        setGenerationStep(`Валидация кода...`);
+        setGenerationStep(`Оптимизация и проверка...`);
         let result = await runGamePipeline(sessionId, finalRawCode);
-        let bestCode = finalRawCode;
-        let bestScore = result.finalScore;
-
-        // 🔁 Iterative self-improvement loop (up to 3 passes)
-        const MAX_IMPROVEMENT_PASSES = 3;
-        for (let pass = 1; pass <= MAX_IMPROVEMENT_PASSES; pass++) {
-          if (result.finalScore >= 90) break; // Already great!
-
-          const failures = result.nextSteps
-            .filter(s => !s.includes('✅') && !s.includes('60+') && !s.includes('70+'))
+        
+        // --- SELF-CORRECTION LOOP ---
+        if (result.score < 90) {
+          const feedback = result.checks
+            .filter(c => c.status === 'fail')
+            .map(c => `- ${c.requirement}: ${c.feedback}`)
             .join('\n');
-          if (!failures) break;
+          
+          setGenerationStep(`Самокоррекция (тек. балл: ${result.score})...`);
+          
+          const correctionPrompt = `Твой предыдущий код получил ${result.score}/100 баллов. Нужно исправить следующие ошибки, чтобы достичь 100/100:
+${feedback}
 
-          setGenerationStep(`🔧 Улучшение кода (попытка ${pass}/${MAX_IMPROVEMENT_PASSES})... Текущий счёт: ${result.finalScore}/100`);
-          setSessions(prev => prev.map(s => s.id === sessionId ? {
-            ...s, messages: s.messages.map(m => m.id === assistantMsgId ? {
-              ...m, content: cleanTechnicalContent(currentContent) + `\n\n🔧 **Инженер улучшает код** (попытка ${pass}/3, счёт: ${result.finalScore}/100)...`
-            } : m)
-          } : s));
-
-          // Pick best provider
-          const improveProvider = (providersWithKeys[0] as APIProvider) || currentProvider;
-          const improveKey = currentSettings.keys[improveProvider] || "";
-          const improveModel = currentSettings.models[improveProvider] || (Array.isArray(DEFAULT_MODELS[improveProvider]) ? DEFAULT_MODELS[improveProvider][0] : DEFAULT_MODELS[improveProvider]);
-
-          if (!improveKey) break;
-
-          const fixPrompt = `You are a game developer. Fix the following issues in this HTML game:
-
-ISSUES TO FIX:
-${failures}
-
-CURRENT CODE:
-${bestCode}
-
-Return ONLY the complete corrected HTML file. No explanations. Start with <!DOCTYPE html>.`;
+Верни ПОЛНЫЙ, ИСПРАВЛЕННЫЙ код игры.`;
 
           try {
-            const fixStream = generateStream(
-              [{ role: "user", content: fixPrompt }],
-              { provider: improveProvider, model: improveModel, apiKey: improveKey.trim() },
+            // Try to fix using the same provider
+            const key = currentSettings.keys[currentProvider] || localStorage.getItem("smol_settings") ? JSON.parse(localStorage.getItem("smol_settings")!).keys[currentProvider] : "";
+            const stream = generateStream(
+              [{ role: "user", content: generationPrompt }, { role: "assistant", content: finalRawCode }, { role: "user", content: correctionPrompt }],
+              { provider: currentProvider, model: currentSettings.models[currentProvider] || (Array.isArray(DEFAULT_MODELS[currentProvider]) ? DEFAULT_MODELS[currentProvider][0] : DEFAULT_MODELS[currentProvider]), apiKey: key },
               new AbortController().signal
             );
 
             let fixedCode = "";
-            for await (const chunk of fixStream) {
+            for await (const chunk of stream) {
               fixedCode += chunk;
             }
 
-            const htmlMatch = fixedCode.match(/<!DOCTYPE html[\s\S]*/i);
-            if (htmlMatch) {
-              const candidateCode = htmlMatch[0].replace(/```[\w]*\n?$/gm, '').trim();
-              const newResult = await runGamePipeline(sessionId, candidateCode);
-              if (newResult.finalScore >= bestScore) {
-                bestCode = candidateCode;
-                bestScore = newResult.finalScore;
-                result = newResult;
-              }
+            const codeMatch = fixedCode.match(/<html[\s\S]*<\/html>/i);
+            if (codeMatch) {
+              finalRawCode = codeMatch[0];
+              result = await runGamePipeline(sessionId, finalRawCode);
             }
           } catch (e) {
-            console.warn(`[Improvement pass ${pass}] failed:`, e);
-            break;
+            console.warn("Self-correction pass failed, using original code", e);
           }
         }
+        // --- END SELF-CORRECTION ---
 
-        finalRawCode = bestCode;
-        
         setSessions(prev => prev.map(s => s.id === sessionId ? {
           ...s, messages: s.messages.map(m => m.id === assistantMsgId ? { 
-            ...m, content: cleanTechnicalContent(currentContent) + `\n\n✅ **Игра готова!** Качество: ${result.finalScore}/100`, pipelineResult: result 
+            ...m, content: cleanTechnicalContent(currentContent) + `\n\n✅ **Игра готова! (Качество: ${result.score}/100)**`, pipelineResult: result 
           } : m)
         } : s));
 
