@@ -23,6 +23,7 @@ export function ChatInput({ onSend, onStop, isGenerating, disabled, placeholder 
   }, [input]);
 
   const handleSubmit = () => {
+    if (typeof window !== 'undefined') alert("0. handleSubmit clicked");
     if (!input.trim() || disabled) return;
     onSend(input.trim());
     setInput("");

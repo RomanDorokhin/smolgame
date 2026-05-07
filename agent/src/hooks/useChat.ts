@@ -154,6 +154,7 @@ export function useChat() {
   };
 
   const sendMessage = useCallback(async (content: string, isHidden: boolean = false) => {
+    if (typeof window !== 'undefined') alert("1. sendMessage started");
     if (isGenerating && !isHidden) return;
 
     const userMsg: ChatMessage = { id: generateId(), role: "user", content, timestamp: Date.now(), isHidden };
