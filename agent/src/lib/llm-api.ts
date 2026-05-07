@@ -98,9 +98,9 @@ const MODELS_LIST_URLS: Record<string, string> = {
 };
 
 export const DEFAULT_MODELS: Record<string, string[]> = {
-  openrouter: ["google/gemini-2.0-flash-exp", "meta-llama/llama-3.3-70b-instruct", "google/gemini-flash-1.5"],
+  openrouter: ["google/gemini-2.0-flash-001", "google/gemini-flash-1.5", "meta-llama/llama-3.3-70b-instruct"],
   groq: ["llama-3.3-70b-versatile", "llama-3.1-70b-versatile", "mixtral-8x7b-32768"],
-  gemini: ["gemini-2.0-flash", "gemini-1.5-flash", "gemini-1.5-pro"],
+  gemini: ["gemini-2.0-flash", "gemini-1.5-flash", "gemini-1.5-flash-8b"],
   together: ["meta-llama/Llama-3.3-70B-Instruct-Turbo", "meta-llama/Llama-3.1-70B-Instruct-Turbo", "mistralai/Mixtral-8x7B-Instruct-v0.1"],
   sambanova: ["Meta-Llama-3.1-70B-Instruct", "Meta-Llama-3.1-405B-Instruct"],
   glhf: ["hf:meta-llama/Llama-3.1-405B-Instruct", "hf:meta-llama/Llama-3.1-70B-Instruct"],
