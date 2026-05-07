@@ -172,6 +172,17 @@ export async function* generateStream(
         } catch (e) {
           // Ignore parsing errors for empty chunks
         }
+      } else if (trimmedLine.startsWith("{") && trimmedLine.includes('"error"')) {
+        try {
+          const json = JSON.parse(trimmedLine);
+          if (json.error) {
+            throw new Error(json.error.message || JSON.stringify(json.error));
+          }
+        } catch (e) {
+          if (e instanceof Error && e.message !== "Unexpected end of JSON input" && !e.message.includes("Unexpected token")) {
+            throw e;
+          }
+        }
       }
     }
   }

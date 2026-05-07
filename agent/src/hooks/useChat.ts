@@ -310,6 +310,10 @@ ${JSON.stringify(currentAnswers, null, 2)}
           } : s));
         }
 
+        if (!fullContent.trim()) {
+          throw new Error("Провайдер вернул пустой ответ (ошибка API или перегрузка сети).");
+        }
+
         setUsage(prev => ({
           ...prev,
           requests: { ...prev.requests, [provider]: (prev.requests[provider] || 0) + 1 }
