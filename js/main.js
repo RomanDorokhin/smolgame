@@ -4,11 +4,13 @@ async function bootstrap() {
   if (typeof waitForTelegramInitData === 'function') {
     await waitForTelegramInitData({ timeoutMs: 6000, stepMs: 50 });
   }
+  /* 🔓 Browser Access Enabled: allowing non-telegram environment 
   if (typeof hasTelegramInitData === 'function' && !hasTelegramInitData()) {
     if (typeof hideBootSplash === 'function') hideBootSplash();
     if (typeof showTelegramOnlyWall === 'function') showTelegramOnlyWall();
     return;
   }
+  */
   if (typeof window.syncUSERFromTelegramInit === 'function') window.syncUSERFromTelegramInit();
   
   if (typeof window.setAppTheme === 'function') {
