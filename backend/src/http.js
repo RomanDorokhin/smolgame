@@ -25,7 +25,7 @@ export function withCors(resp, origin) {
     h.set('access-control-allow-credentials', 'true');
   }
   h.set('access-control-allow-methods', 'GET,POST,DELETE,OPTIONS,PATCH');
-  h.set('access-control-allow-headers', 'content-type, x-telegram-init-data');
+  h.set('access-control-allow-headers', 'content-type, x-telegram-init-data, x-web-id');
   h.set('vary', 'origin');
   return new Response(resp.body, { status: resp.status, headers: h });
 }
