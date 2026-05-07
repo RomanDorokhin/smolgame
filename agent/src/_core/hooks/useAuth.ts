@@ -5,25 +5,35 @@ export function useAuth() {
   const [user, setUser] = useState<SmolGameUser | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [loginError, setLoginError] = useState<string | null>(null);
 
   const checkAuth = async () => {
     try {
-      const userData = await SmolGameAPI.getMe();
-      if (userData && userData.id !== 'guest') {
-        setUser(userData);
+      const resp = await SmolGameAPI.getMe();
+      // Backend returns { user: {...}, stats: {...} } OR a flat SmolGameUser object
+      const userData: SmolGameUser = (resp as any).user ?? resp;
+      if (userData && userData.id && userData.id !== 'guest') {
+        setUser({
+          id: userData.id,
+          username: (userData as any).siteHandle || (userData as any).username,
+          first_name: (userData as any).name || (userData as any).first_name || '',
+          photo_url: (userData as any).avatar || (userData as any).photo_url,
+          isGithubConnected: Boolean((userData as any).isGithubConnected),
+          githubUsername: (userData as any).githubUsername || null,
+        });
         setIsAuthenticated(true);
       } else {
-        throw new Error("Backend returned guest user");
+        throw new Error("No valid user in response");
       }
     } catch (error) {
-      console.warn("User not authenticated via SmolGame Worker. Enabling Guest Mode.", error);
+      console.warn("[useAuth] Not authenticated via SmolGame Worker — Guest Mode.", error);
       setUser({
         id: 'guest',
         username: 'Guest',
         first_name: 'Guest',
         isGithubConnected: false
       });
-      setIsAuthenticated(false); // Not authenticated with GitHub/Worker
+      setIsAuthenticated(false);
     } finally {
       setIsLoading(false);
     }
@@ -32,11 +42,8 @@ export function useAuth() {
   useEffect(() => {
     checkAuth();
 
-    // Check on focus or periodic
     const handleFocus = () => checkAuth();
     window.addEventListener('focus', handleFocus);
-    
-    // Poll every 30s to keep sync with backend
     const interval = setInterval(checkAuth, 30000);
 
     return () => {
@@ -46,16 +53,26 @@ export function useAuth() {
   }, []);
 
   const login = async () => {
+    setLoginError(null);
     try {
       const { url } = await SmolGameAPI.githubOAuthStart();
       if (url) {
         window.location.href = url;
+      } else {
+        setLoginError('Сервер не вернул URL для входа. Попробуй ещё раз.');
       }
-    } catch (error) {
-      console.error("Failed to start GitHub OAuth", error);
-      alert("Не удалось запустить вход через GitHub. Убедись, что ты открыл приложение из Telegram.");
+    } catch (err: any) {
+      console.error("[useAuth] Failed to start GitHub OAuth", err);
+      // No alert() — surface error via state so UI can render it inline
+      setLoginError(
+        err?.message?.includes('401') || err?.message?.includes('Telegram')
+          ? 'Открой приложение через бота в Telegram — вход доступен только там.'
+          : err?.message || 'Не удалось запустить вход через GitHub.'
+      );
     }
   };
+
+  const clearLoginError = () => setLoginError(null);
 
   const logout = async () => {
     try {
@@ -63,7 +80,7 @@ export function useAuth() {
       setUser(null);
       setIsAuthenticated(false);
     } catch (error) {
-      console.error("Failed to unlink GitHub", error);
+      console.error("[useAuth] Failed to unlink GitHub", error);
     }
   };
 
@@ -71,6 +88,8 @@ export function useAuth() {
     user,
     isAuthenticated,
     isLoading,
+    loginError,
+    clearLoginError,
     login,
     logout,
     refresh: checkAuth,

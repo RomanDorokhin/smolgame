@@ -5,7 +5,7 @@ import { ChatInput } from "@/components/ChatInput";
 import { ChatSidebar } from "@/components/ChatSidebar";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Menu, Sparkles, ShieldCheck, Copy, Check, Github } from "lucide-react";
+import { Menu, Sparkles, Copy, Github, X, AlertCircle } from "lucide-react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Component, type ReactNode } from "react";
 
@@ -49,7 +49,7 @@ export default function Home() {
     isPipelineRunning
   } = useChat();
 
-  const { user, isAuthenticated, isLoading: authLoading, login } = useAuth();
+  const { user, isAuthenticated, isLoading: authLoading, login, loginError, clearLoginError } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
 
@@ -82,6 +82,21 @@ export default function Home() {
         {authLoading && (
           <div className="absolute inset-0 z-50 flex items-center justify-center bg-[#0a0b0e]">
              <div className="w-6 h-6 border-2 border-[#a3b8d4] border-t-transparent rounded-full animate-spin" />
+          </div>
+        )}
+
+        {/* Login Error Banner — replaces alert() for GitHub OAuth failures */}
+        {loginError && (
+          <div className="mx-4 mt-2 mb-0 flex items-start gap-3 p-3 bg-red-500/10 border border-red-500/20 rounded-xl animate-in slide-in-from-top duration-200">
+            <AlertCircle size={15} className="text-red-400 shrink-0 mt-0.5" />
+            <p className="text-[11px] text-red-300 font-medium flex-1 leading-relaxed">{loginError}</p>
+            <button
+              onClick={clearLoginError}
+              className="text-red-400/60 hover:text-red-300 shrink-0 transition-colors"
+              aria-label="Закрыть"
+            >
+              <X size={14} />
+            </button>
           </div>
         )}
 
