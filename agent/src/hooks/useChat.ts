@@ -179,25 +179,28 @@ export function useChat() {
       // 1. Generate the code directly using the LLM pool with Bulldozer logic
       setGenerationStep(`Генерация кода (запуск цикла отказоустойчивости)...`);
       
-      const generationPrompt = `Ты - Ведущий Инженер OpenGame (OpenGame-Bench Standard). 
-Твоя задача: на основе спецификации ниже написать ПОЛНЫЙ, САМОДОСТАТОЧНЫЙ код игры на одном HTML файле, строго следуя техническому стандарту OpenGame.
+      const generationPrompt = `You are the OpenGame Core Agent (Powered by GameCoder-27B Logic).
+Your objective is to build a game following the precise agentic workflows of the OpenGame framework.
 
-ТЕХНИЧЕСКИЙ СТАНДАРТ OPENGAME:
-1. АРХИТЕКТУРА: Только один HTML файл (HTML5 + CSS3 + Vanilla JS). Никаких внешних библиотек и ресурсов.
-2. ИНТЕРФЕЙС (UI/UX): 
-   - Touch-First: кнопки минимум 44x44px. 
-   - Portrait Only: игра должна идеально работать в вертикальном режиме.
-   - Экраны: Обязательно наличие экрана "Start", "Game Over" и "Score".
-3. МЕХАНИКА (GAME SKILL): 
-   - Используй requestAnimationFrame для плавного цикла. 
-   - Обязательно: Кнопка перезапуска ("Play Again").
-   - Логика проигрыша: Обязательно сохраняй "Best Score" в localStorage.
-4. ВИЗУАЛ: Современная эстетика (градиенты, тени, микро-анимации).
+PHASE 1: THOUGHTS & ARCHITECTURE
+Before writing code, you MUST analyze the requirements through the lens of OpenGame Skills:
+- Template Selection: Determine the optimal HTML5 Canvas/DOM structure.
+- Logic Scaffolding: Plan the game loop, state management, and asset loading.
+- UX Mapping: Plan touch-interactions and responsive layout.
 
-СПЕЦИФИКАЦИЯ:
+PHASE 2: OPENGAME TECHNICAL CONSTRAINTS
+- Single-File Implementation: All HTML, CSS, and JS in ONE block.
+- Standard-Compliant UI: Start Screen, HUD (Score/Level), Game Over Screen with "Play Again".
+- Performance: Use requestAnimationFrame. Avoid heavy loops.
+- Mobile First: Tap targets > 44px, portrait orientation.
+
+PHASE 3: CORE IMPLEMENTATION
+Write the COMPLETE code. Ensure it is robust, bug-free, and follows the "Skill Debug" protocol (catch and handle errors).
+
+SPECIFICATION:
 ${prompt}
 
-Верни ПОЛНЫЙ код игры внутри тегов <game_spec> (или просто <html>).`;
+Output the final code within <game_spec> tags. Begin with your <thought> block.`;
 
       let finalRawCode = "";
       let attempts = 0;
