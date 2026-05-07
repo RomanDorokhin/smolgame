@@ -75,10 +75,9 @@ export function useAuth() {
       if (
         msg === 'unauthorized' ||
         msg.includes('401') ||
-        msg.includes('initData') ||
-        msg.includes('Telegram')
+        msg.includes('initData')
       ) {
-        setLoginError('Вход через GitHub доступен только из Telegram. Открой приложение через бота — не по прямой ссылке в браузере.');
+        setLoginError('Сессия не найдена. Попробуй обновить страницу или войти через Telegram.');
       } else if (msg === 'Load failed' || msg.includes('network') || msg.includes('fetch')) {
         setLoginError('Нет связи с сервером. Проверь интернет и повтори попытку.');
       } else if (msg.includes('503') || msg.includes('GITHUB_CLIENT')) {
