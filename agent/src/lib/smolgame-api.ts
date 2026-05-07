@@ -110,7 +110,7 @@ export class SmolGameAPI {
     }
 
     if (options.body && !(options.body instanceof FormData)) {
-      headers['content-type'] = 'application/json';
+      headers['Content-Type'] = 'application/json';
     }
 
     const response = await fetch(`${API_BASE}${finalPath}`, {
