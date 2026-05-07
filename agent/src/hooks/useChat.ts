@@ -223,7 +223,7 @@ export function useChat() {
           continue; 
         }
 
-        const modelId = currentSettings.models[currentProvider] || DEFAULT_MODELS[currentProvider];
+        const modelId = currentSettings.models[currentProvider] || (Array.isArray(DEFAULT_MODELS[currentProvider]) ? DEFAULT_MODELS[currentProvider][0] : DEFAULT_MODELS[currentProvider]);
 
         try {
           // Robust key check with localStorage fallback
