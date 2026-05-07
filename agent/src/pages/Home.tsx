@@ -164,7 +164,7 @@ export default function Home() {
                 <div className="py-10 text-center">
                   {/* 🔍 TEMP DEBUG PANEL — remove after fix */}
                   <div className="mb-6 p-3 bg-yellow-500/10 border border-yellow-500/30 rounded-xl text-left text-[10px] font-mono">
-                    <div className="text-yellow-400 font-bold mb-2">🔍 DEBUG</div>
+                    <div className="text-yellow-400 font-bold mb-2">🔍 DEBUG (BUILD: BROWSER_OK_V1)</div>
                     <div>primaryProvider: <span className="text-white">{settings.primaryProvider}</span></div>
                     <div>isGenerating: <span className={isGenerating ? 'text-green-400' : 'text-white'}>{isGenerating ? '⏳ YES' : 'NO'}</span></div>
                     <div>keys in settings:</div>
