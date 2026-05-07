@@ -43,4 +43,6 @@ export interface ChatSession {
   updatedAt: number;
   modelName: string;
   retryCount?: number;
+  isPipelineRunning?: boolean;
+  pipelineStep?: string;
 }

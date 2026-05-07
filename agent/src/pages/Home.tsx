@@ -196,11 +196,12 @@ export default function Home() {
                       onRetry={message.role === "assistant" ? retryLastMessage : undefined}
                     />
                   ))}
-                  
-                  {isGenerating && (
+                                   {(isGenerating || isPipelineRunning) && (
                     <div className="flex items-center gap-3 py-4 text-[#a3b8d4] animate-pulse">
                       <div className="w-1.5 h-1.5 rounded-full bg-[#a3b8d4] animate-bounce" />
-                      <span className="text-[11px] font-bold uppercase tracking-tighter">{generationStep || 'Создаю...'}</span>
+                      <span className="text-[11px] font-bold uppercase tracking-tighter">
+                        {isPipelineRunning ? `⚙️ ${generationStep}` : (generationStep || 'Анализирую...')}
+                      </span>
                     </div>
                   )}
 
@@ -218,9 +219,9 @@ export default function Home() {
             <ChatInput
               onSend={sendMessage}
               onStop={stopGeneration}
-              isGenerating={isGenerating}
-              disabled={false}
-              placeholder="Опишите игру..."
+              isGenerating={isGenerating || isPipelineRunning}
+              disabled={isGenerating || isPipelineRunning}
+              placeholder={isPipelineRunning ? "Дождитесь завершения генерации..." : "Опишите игру..."}
             />
             <div className="mt-3 text-[9px] text-center text-white/10 uppercase tracking-[0.2em] font-black">
               Agent 3.0 • Entirely in browser

@@ -130,6 +130,15 @@ export function useChat() {
     }
   }, []);
 
+  // Cleanup: Reset stalled pipeline states on mount
+  useEffect(() => {
+    setSessions(prev => prev.map(s => ({ 
+      ...s, 
+      isPipelineRunning: false, 
+      pipelineStep: s.isPipelineRunning ? "Прервано (обнови страницу)" : s.pipelineStep 
+    })));
+  }, []);
+
   useEffect(() => {
     if (activeSessionId) {
       localStorage.setItem(ACTIVE_SESSION_KEY, activeSessionId);
@@ -153,6 +162,10 @@ export function useChat() {
   const handleOpenGameFlow = async (sessionId: string, assistantMsgId: string, prompt: string, apiKey: string, model: string, provider: string, currentContent: string) => {
     setGenerationStep(`Запуск внутренней генерации...`);
     setIsPipelineRunning(true);
+    
+    // Sync to session immediately
+    setSessions(prev => prev.map(s => s.id === sessionId ? { ...s, isPipelineRunning: true, pipelineStep: "Запуск..." } : s));
+
     try {
       // 1. Generate the code directly using the LLM pool with Bulldozer logic
       setGenerationStep(`Генерация кода (запуск цикла отказоустойчивости)...`);
@@ -260,6 +273,7 @@ export function useChat() {
     } finally {
       setIsPipelineRunning(false);
       setGenerationStep("");
+      setSessions(prev => prev.map(s => s.id === sessionId ? { ...s, isPipelineRunning: false, pipelineStep: "" } : s));
     }
   };
 
