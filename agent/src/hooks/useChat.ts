@@ -375,21 +375,34 @@ ${feedback}
             });
             
             if (deployResult.ok) {
+              const pushStatus = `\n\n🚀 **Игра опубликована на GitHub!**\n🔗 [Посмотреть код](https://github.com/${deployResult.repo})\n🌐 [Играть (Pages)]( ${deployResult.pagesUrl} )`;
+              
               setSessions(prev => prev.map(s => s.id === sessionId ? {
                 ...s, messages: s.messages.map(m => m.id === assistantMsgId ? {
                   ...m, 
+                  content: m.content + pushStatus,
                   pipelineResult: { ...result, score: finalScore, autoDeployed: true, generatedCode: finalRawCode },
                   deployResult: { pagesUrl: deployResult.pagesUrl, repoUrl: `https://github.com/${deployResult.repo}`, pagesReady: deployResult.pagesReady }
                 } : m)
               } : s));
             } else {
                const errorMsg = deployResult.error || JSON.stringify(deployResult);
-               setGenerationStep(`Ошибка публикации: ${errorMsg}`);
+               const pushError = `\n\n❌ **Ошибка публикации на GitHub:** ${errorMsg}`;
+               
+               setSessions(prev => prev.map(s => s.id === sessionId ? {
+                ...s, messages: s.messages.map(m => m.id === assistantMsgId ? {
+                  ...m, 
+                  content: m.content + pushError
+                } : m)
+              } : s));
                console.error("Deploy failed with status:", deployResult.status, deployResult);
             }
           } catch (e: any) {
             console.error("Deploy Exception:", e);
-            setGenerationStep(`Ошибка сети: ${e.message}`);
+            const netError = `\n\n❌ **Критическая ошибка сети при пуше:** ${e.message}`;
+            setSessions(prev => prev.map(s => s.id === sessionId ? {
+              ...s, messages: s.messages.map(m => m.id === assistantMsgId ? { ...m, content: m.content + netError } : m)
+            } : s));
           } finally { setIsAutoDeploying(false); }
         }
       }
