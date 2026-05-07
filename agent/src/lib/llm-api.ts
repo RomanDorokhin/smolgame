@@ -84,6 +84,12 @@ const PROVIDER_URLS: Record<string, string> = {
   deepseek: "https://api.deepseek.com/chat/completions",
 };
 
+const MODELS_LIST_URLS: Record<string, string> = {
+  openrouter: "https://openrouter.ai/api/v1/models",
+  groq: "https://api.groq.com/openai/v1/models",
+  together: "https://api.together.xyz/v1/models",
+};
+
 const DEFAULT_MODELS: Record<string, string> = {
   openrouter: "google/gemini-2.0-flash-exp",
   groq: "llama-3.3-70b-versatile",
@@ -95,6 +101,52 @@ const DEFAULT_MODELS: Record<string, string> = {
   deepseek: "deepseek-chat",
   custom: "gpt-3.5-turbo",
 };
+
+export interface ModelInfo {
+  id: string;
+  name: string;
+  isFree: boolean;
+  provider: APIProvider;
+  contextLength?: number;
+}
+
+/** Fetches available models from a provider's API */
+export async function fetchAvailableModels(provider: APIProvider, apiKey: string): Promise<ModelInfo[]> {
+  const url = MODELS_LIST_URLS[provider];
+  if (!url || !apiKey) return [];
+
+  try {
+    const response = await fetch(url, {
+      headers: { "Authorization": `Bearer ${apiKey}` }
+    });
+    if (!response.ok) return [];
+    const data = await response.json();
+
+    if (provider === "openrouter") {
+      return data.data.map((m: any) => ({
+        id: m.id,
+        name: m.name,
+        isFree: m.pricing?.prompt === "0" && m.pricing?.completion === "0",
+        provider: "openrouter",
+        contextLength: m.context_length
+      }));
+    }
+
+    if (provider === "groq" || provider === "together") {
+      return data.data.map((m: any) => ({
+        id: m.id,
+        name: m.id,
+        isFree: false, // Groq/Together don't explicitly mark free, but their API is often free-tier based
+        provider,
+      }));
+    }
+
+    return [];
+  } catch (e) {
+    console.error(`Failed to fetch models for ${provider}`, e);
+    return [];
+  }
+}
 
 export async function* generateStream(
   messages: ChatMessage[],
