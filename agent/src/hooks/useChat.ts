@@ -214,9 +214,12 @@ export function useChat() {
         attempts++;
         if (attempts > maxTotalAttempts) break;
 
-        const key = currentSettings.keys[currentProvider];
-        if (!key || key.trim().length === 0) {
-          console.warn(`[Pipeline] Skipping ${currentProvider} - key mysteriously missing`);
+        const keyVal = currentSettings.keys[currentProvider];
+        const key = typeof keyVal === 'string' ? keyVal.trim() : "";
+        
+        if (!key || key.length === 0) {
+          console.warn(`[Pipeline] Skipping ${currentProvider} - key missing (type: ${typeof keyVal})`);
+          failureLog.push(`${currentProvider}: Ключ отсутствует в настройках (тип: ${typeof keyVal})`);
           continue; 
         }
 
@@ -264,8 +267,9 @@ export function useChat() {
       }
 
       if (!finalRawCode) {
-        const missingKeys = failureLog.filter(l => l.includes("empty or invalid")).map(l => l.split(':')[0].trim());
-        let errorMsg = `Все модели провалены:\n${failureLog.map(l => `• ${l}`).join('\n')}`;
+        const missingKeys = failureLog.filter(l => l.includes("empty or invalid") || l.includes("отсутствует")).map(l => l.split(':')[0].trim());
+        const debugKeys = Object.keys(currentSettings.keys).map(k => `${k}(${typeof currentSettings.keys[k as APIProvider]})`).join(', ');
+        let errorMsg = `Все модели провалены:\n${failureLog.map(l => `• ${l}`).join('\n')}\n\n[Debug: ${debugKeys}]`;
         
         if (missingKeys.length > 0) {
           errorMsg += `\n\n⚠️ **Внимание:** Похоже, у тебя не введены или не сохранились ключи для: **${missingKeys.join(', ')}**. \nПроверь вкладку **API Orchestrator** в боковой панели.`;
