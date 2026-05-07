@@ -157,15 +157,15 @@ export function useChat() {
       // 1. Generate the code directly using the LLM pool with Bulldozer logic
       setGenerationStep(`Генерация кода (запуск цикла отказоустойчивости)...`);
       
-      const generationPrompt = `Create a professional, single-file web game based on this spec:
+      const generationPrompt = `You are the OpenGame Implementation Engine. 
+      TASK: Implement the game described in this spec:
       ${prompt}
       
-      REQUIREMENTS:
-      - Language: Russian for UI, English for code.
-      - Style: Premium, modern, animated.
-      - File: MUST be index.html only.
-      - Quality: Adhere to all SmolGame quality standards.
-      - Format: Output ONLY the HTML code inside <game_spec> tags.`;
+      INSTRUCTIONS:
+      1. If you have enough info, output the full index.html code inside <game_spec> tags.
+      2. If the spec is critically incomplete or contradictory, ask a short clarification question (WITHOUT tags).
+      3. Use professional, modern, animated style. Adhere to all quality standards.
+      4. Language: UI in Russian, Code in English.`;
 
       let finalRawCode = "";
       let attempts = 0;
@@ -180,8 +180,8 @@ export function useChat() {
         if (!key) continue;
 
         try {
-          setGenerationStep(`Генерация: ${currentProvider} (${modelId})... Попытка ${attempts}`);
-          let generatedCode = "";
+          setGenerationStep(`Инженер (${currentProvider}) анализирует ТЗ...`);
+          let generatedResponse = "";
           const stream = await generateStream(
             [{ role: "user", content: generationPrompt }],
             { provider: currentProvider, model: modelId, key },
@@ -189,17 +189,26 @@ export function useChat() {
           );
 
           for await (const chunk of stream) {
-            generatedCode += chunk;
+            generatedResponse += chunk;
           }
 
-          const codeMatch = generatedCode.match(/<game_spec>([\s\S]*?)<\/game_spec>/);
-          finalRawCode = codeMatch ? codeMatch[1].trim() : generatedCode.trim();
+          const codeMatch = generatedResponse.match(/<game_spec>([\s\S]*?)<\/game_spec>/);
           
-          if (finalRawCode.length > 100) break; // Success!
+          if (codeMatch) {
+            finalRawCode = codeMatch[1].trim();
+            break; // Success! We have code.
+          } else if (generatedResponse.length > 20 && !generatedResponse.includes('<html>')) {
+            // It's likely a question or clarification
+            setSessions(prev => prev.map(s => s.id === sessionId ? {
+              ...s, messages: s.messages.map(m => m.id === assistantMsgId ? { 
+                ...m, content: cleanTechnicalContent(currentContent) + `\n\n🛠 **Уточнение от инженера OpenGame:**\n${generatedResponse}` 
+              } : m)
+            } : s));
+            return; // Stop and wait for user input
+          }
         } catch (err: any) {
           console.warn(`Attempt ${attempts} failed for ${currentProvider}:`, err);
           if (attempts >= maxTotalAttempts) throw err;
-          // Wait 3s before next attempt in the loop
           await new Promise(r => setTimeout(r, 3000));
         }
       }
