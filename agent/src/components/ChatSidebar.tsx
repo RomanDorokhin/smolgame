@@ -84,7 +84,7 @@ export function ChatSidebar({
       )}
 
       <aside
-        className={`fixed md:static inset-y-0 left-0 z-50 w-72 bg-[#0d0e12] border-r border-sidebar-border flex flex-col transition-transform duration-200 ease-in-out shadow-2xl ${
+        className={`fixed md:static inset-y-0 left-0 z-50 w-72 bg-[#0d0e12] border-r border-sidebar-border flex flex-col h-[100dvh] transition-transform duration-200 ease-in-out shadow-2xl ${
           isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
         }`}
       >
@@ -131,7 +131,7 @@ export function ChatSidebar({
           </Button>
         </div>
 
-        <div className="flex-1 px-3 bg-[#0d0e12] overflow-y-auto pb-6">
+        <div className="flex-1 min-h-0 px-3 bg-[#0d0e12] overflow-y-auto pb-6">
           {showSettings ? (
             <div className="space-y-4 py-2 pb-10">
               <div className="p-3 bg-white/5 border border-white/10 rounded-xl space-y-3">
@@ -169,16 +169,21 @@ export function ChatSidebar({
                     {expandedProvider === p && (
                       <div className="p-3 pt-0 space-y-3 bg-white/[0.02]">
                         {PROVIDER_INFO[p] && (
-                          <div className="bg-white/5 p-2 rounded-lg border border-white/10 mb-2">
-                            <div className="flex items-center justify-between mb-1">
-                              <span className="text-[10px] font-bold text-white/70">Где взять ключ?</span>
-                              <a href={PROVIDER_INFO[p].url} target="_blank" rel="noopener noreferrer" className="text-[9px] bg-primary/20 text-primary px-2 py-0.5 rounded hover:bg-primary hover:text-white transition-colors">
-                                {p === 'custom' ? 'Открыть список' : 'Перейти на сайт'}
-                              </a>
+                          <div className="bg-blue-500/10 p-3 rounded-lg border border-blue-500/20 mb-3 mt-2">
+                            <div className="flex items-center justify-between mb-2">
+                              <span className="text-[10px] font-black uppercase text-blue-400">Как получить ключ</span>
                             </div>
-                            <div className="text-[9px] text-white/50 leading-relaxed whitespace-pre-line font-medium">
+                            <div className="text-[11px] text-white/80 leading-relaxed whitespace-pre-line font-medium mb-3">
                               {PROVIDER_INFO[p].desc}
                             </div>
+                            <Button 
+                              variant="default"
+                              size="sm"
+                              className="w-full h-8 text-[10px] font-black uppercase tracking-widest bg-blue-600 hover:bg-blue-500 text-white rounded-md"
+                              onClick={() => window.open(PROVIDER_INFO[p].url, '_blank')}
+                            >
+                              Получить бесплатно
+                            </Button>
                           </div>
                         )}
                         {p === "custom" && (
