@@ -176,7 +176,7 @@ export class SmolGameAPI {
   }) {
     return this.apiFetch('/api/github/publish-game', {
       method: 'POST',
-      body: JSON.stringify(payload),
+      body: payload, // apiFetch will handle stringification
     });
   }
 
