@@ -41,7 +41,9 @@ export class GameFlowOrchestratorV2 {
         this.sessionManager = GameSessionManagerV2.loadGame(userId, gameId);
         this.gameId = gameId;
       } catch (error) {
-        throw new Error(`Failed to load game: ${gameId}`);
+        console.warn(`[Orchestrator] Failed to load game ${gameId}, falling back to new game:`, error);
+        this.sessionManager = GameSessionManagerV2.createNewGame(userId);
+        this.gameId = this.sessionManager.getGameId();
       }
     } else {
       this.sessionManager = GameSessionManagerV2.createNewGame(userId);

@@ -204,7 +204,12 @@ export function useChat() {
 
     try {
       if (!orchestratorRef.current) {
+        try {
           orchestratorRef.current = new GameFlowOrchestratorV2("user-1", sessionId);
+        } catch (e) {
+          console.error("[useChat] FATAL: Orchestrator failed even with internal catch. Retrying with new game.", e);
+          orchestratorRef.current = new GameFlowOrchestratorV2("user-1", undefined);
+        }
       }
       const orchestrator = orchestratorRef.current;
 
