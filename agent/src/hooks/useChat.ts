@@ -179,15 +179,25 @@ export function useChat() {
       // 1. Generate the code directly using the LLM pool with Bulldozer logic
       setGenerationStep(`Генерация кода (запуск цикла отказоустойчивости)...`);
       
-      const generationPrompt = `You are the OpenGame Implementation Engine. 
-      TASK: Implement the game described in this spec:
-      ${prompt}
-      
-      INSTRUCTIONS:
-      1. If you have enough info, output the full index.html code inside <game_spec> tags.
-      2. If the spec is critically incomplete or contradictory, ask a short clarification question (WITHOUT tags).
-      3. Use professional, modern, animated style. Adhere to all quality standards.
-      4. Language: UI in Russian, Code in English.`;
+      const generationPrompt = `Ты - Ведущий Инженер OpenGame (OpenGame-Bench Standard). 
+Твоя задача: на основе спецификации ниже написать ПОЛНЫЙ, САМОДОСТАТОЧНЫЙ код игры на одном HTML файле, строго следуя техническому стандарту OpenGame.
+
+ТЕХНИЧЕСКИЙ СТАНДАРТ OPENGAME:
+1. АРХИТЕКТУРА: Только один HTML файл (HTML5 + CSS3 + Vanilla JS). Никаких внешних библиотек и ресурсов.
+2. ИНТЕРФЕЙС (UI/UX): 
+   - Touch-First: кнопки минимум 44x44px. 
+   - Portrait Only: игра должна идеально работать в вертикальном режиме.
+   - Экраны: Обязательно наличие экрана "Start", "Game Over" и "Score".
+3. МЕХАНИКА (GAME SKILL): 
+   - Используй requestAnimationFrame для плавного цикла. 
+   - Обязательно: Кнопка перезапуска ("Play Again").
+   - Логика проигрыша: Обязательно сохраняй "Best Score" в localStorage.
+4. ВИЗУАЛ: Современная эстетика (градиенты, тени, микро-анимации).
+
+СПЕЦИФИКАЦИЯ:
+${prompt}
+
+Верни ПОЛНЫЙ код игры внутри тегов <game_spec> (или просто <html>).`;
 
       let finalRawCode = "";
       let attempts = 0;
