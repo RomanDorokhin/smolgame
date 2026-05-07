@@ -25,8 +25,8 @@ function generateId() {
 }
 
 function cleanTechnicalContent(text: string) {
-  // Use regex to find the start of any technical tag (even partial or slashes)
-  const tagMatch = text.match(/<(\/)?(opengame_prompt|game_spec)|(\/)(opengame_prompt|game_spec)/i);
+  // Catch any variation of opengame_prompt or game_spec with <, [, or /
+  const tagMatch = text.match(/[<\[\/]?(opengame_prompt|game_spec)[>\]\s]?/i);
   if (tagMatch && tagMatch.index !== undefined) {
     const baseText = text.substring(0, tagMatch.index);
     return (baseText + '\n\n⚙️ **[Инструкции для движка OpenGame переданы]**').trim();
@@ -431,13 +431,16 @@ ${isComplete ? `ЗАДАЧА: Сформируй финальное ТЗ вну�
               if (success) {
                 setUsage(prev => ({ ...prev, requests: { ...prev.requests, [provider]: (prev.requests[provider] || 0) + 1 } }));
                 
-                // Support both <tag> and /tag formats - more forgiving
-                const promptMatch = fullContent.match(/<opengame_prompt>([\s\S]*?)<\/opengame_prompt>/i) 
-                                 || fullContent.match(/\/opengame_prompt\s+([\s\S]+)/i);
+                // Delimiter-agnostic prompt detection (supports <>, [], /, or plain)
+                const promptMatch = fullContent.match(/(?:<|\[|\/)?opengame_prompt(?:>|\]|\s+)([\s\S]+)/i);
                                  
                 if (promptMatch) {
-                  // Extract content and remove trailing /about or system instructions if they leaked
-                  let spec = promptMatch[1].replace(/\/about[\s\S]*/i, '').trim();
+                  // Clean up potential trailing brackets or leaked commands
+                  let spec = promptMatch[1]
+                    .replace(/<\/opengame_prompt>/i, '')
+                    .replace(/\]/g, '')
+                    .replace(/\/about[\s\S]*/i, '')
+                    .trim();
                   await handleOpenGameFlow(sessionId, assistantMsg.id, spec, apiKey, modelId, provider, fullContent);
                 }
                 break;
