@@ -170,6 +170,10 @@ export async function* generateStream(
   }
 
   let url = PROVIDER_URLS[config.provider] || PROVIDER_URLS.openrouter;
+  if (config.provider === "gemini") {
+    url = `${url}?key=${config.apiKey}`;
+  }
+  
   if (config.provider === "custom" && config.baseUrl) {
     url = config.baseUrl;
   }
