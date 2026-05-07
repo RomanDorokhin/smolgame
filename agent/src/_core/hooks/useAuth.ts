@@ -70,27 +70,34 @@ export function useAuth() {
     const webId = SmolGameAPI.getWebId();
     const API_BASE = 'https://smolgame.dorokhin731.workers.dev';
     
-    // Direct redirect for browser - skips the fetch 401 issue
-    const oauthUrl = `${API_BASE}/api/github/oauth-start?web_id=${webId}&smol_bypass=1`;
-
-    try {
-      // Use Telegram WebApp native method if available
-      const tg = (window as any).Telegram?.WebApp;
-      if (tg?.openLink && tg?.initData) {
-        // If in TG, we still try the fetch way first as it's cleaner
+    // Use Telegram WebApp native method if available
+    const tg = (window as any).Telegram?.WebApp;
+    if (tg?.openLink && tg?.initData) {
+      try {
         const { url } = await SmolGameAPI.githubOAuthStart();
         if (url) {
           tg.openLink(url);
           return;
         }
-      }
-      
-      // Fallback/Browser: Direct navigation
-      window.location.href = oauthUrl;
-    } catch (err: any) {
-      console.error("[useAuth] Login failed, trying direct redirect", err);
-      window.location.href = oauthUrl;
+      } catch (e) { /* fallback to form */ }
     }
+
+    // Browser/Fallback: Submit a real HTML form to bypass fetch 401
+    // This forces a real POST navigation which servers usually trust more than fetch
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = `${API_BASE}/api/github/oauth-start?web_id=${webId}&smol_bypass=1`;
+    form.style.display = 'none';
+
+    // Add hidden input for web_id just in case
+    const input = document.createElement('input');
+    input.type = 'hidden';
+    input.name = 'web_id';
+    input.value = webId;
+    form.appendChild(input);
+
+    document.body.appendChild(form);
+    form.submit();
   };
 
   const clearLoginError = () => setLoginError(null);
