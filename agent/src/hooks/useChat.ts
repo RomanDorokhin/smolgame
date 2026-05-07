@@ -158,6 +158,7 @@ export function useChat() {
   const currentSession = sessions.find((s) => s.id === activeSessionId) || sessions[0] || createDefaultSession();
 
   const handleOpenGameFlow = async (sessionId: string, assistantMsgId: string, prompt: string, currentSettings: ChatSettings, currentContent: string, initialProvider: string) => {
+    let failureLog: string[] = [];
     setGenerationStep(`Запуск внутренней генерации...`);
     setIsPipelineRunning(true);
     
@@ -257,13 +258,13 @@ export function useChat() {
           }
         } catch (err: any) {
           console.warn(`Attempt with ${currentProvider} failed:`, err.message);
-          // If we have more providers to try, just continue. 
-          // If this was the last provider in our rotated list, then we'll check finalRawCode later.
+          failureLog.push(`${currentProvider}: ${err.message}`);
+          // Continue to next provider
         }
       }
 
       if (!finalRawCode) {
-        throw new Error("Все доступные модели (Gemini, Groq и др.) не смогли сгенерировать код. Проверьте валидность ключей или лимиты.");
+        throw new Error(`Все модели провалены:\n${failureLog.map(l => `• ${l}`).join('\n')}`);
       }
 
       if (finalRawCode) {
