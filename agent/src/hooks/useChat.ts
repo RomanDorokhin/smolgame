@@ -182,9 +182,9 @@ export function useChat() {
       } : s));
     }
 
-    const currentSessions = sessionsRef.current;
-    const freshSession = currentSessions.find(s => s.id === sessionId);
-    const messageHistory = freshSession ? [...freshSession.messages] : [];
+    // 🔍 FIX: Construct history manually to include the message we just added
+    const historyBefore = sessionsRef.current.find(s => s.id === sessionId)?.messages || [];
+    const messageHistory = [...historyBefore, userMsg];
 
     setIsGenerating(true);
     
