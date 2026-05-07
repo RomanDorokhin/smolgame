@@ -195,12 +195,14 @@ PHASE 2: CORE IMPLEMENTATION RULES
 - ERROR HANDLING: Wrap critical game loops in try-catch for "Skill Debug" compliance.
 - REPLAYABILITY: Persistent high scores in localStorage.
 
-PHASE 3: EXECUTION
+PHASE 3: EXECUTION & AUTO-DEPLOY
 Write the COMPLETE code. Include a <thought> block first where you verify the checklist above.
+Your goal is to pass the internal Quality Gate (60+) and trigger an IMMEDIATE GitHub push. Do NOT ask for manual testing.
 
 SPECIFICATION:
 ${prompt}
 
+[PIPELINE_START]
 Output within <game_spec> tags.`;
 
       let finalRawCode = "";
