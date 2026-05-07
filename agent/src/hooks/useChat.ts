@@ -25,16 +25,14 @@ function generateId() {
 }
 
 function cleanTechnicalContent(text: string) {
-  // If the text contains the prompt, we ONLY keep what's BEFORE it to prevent roleplay/leakage
-  const promptIndex = text.indexOf('<opengame_prompt>');
-  let baseText = promptIndex !== -1 ? text.substring(0, promptIndex) : text;
+  // Use regex to find the start of any technical tag (even partial)
+  const tagMatch = text.match(/<(opengame_prompt|game_spec)/);
+  if (tagMatch && tagMatch.index !== undefined) {
+    const baseText = text.substring(0, tagMatch.index);
+    return (baseText + '\n\n⚙️ **[Инструкции для движка OpenGame переданы]**').trim();
+  }
   
-  // Replace opengame_prompt blocks with a placeholder for the UI
-  let cleaned = baseText + '\n\n⚙️ **[Инструкции для движка OpenGame переданы]**\n';
-  
-  // Also hide game_spec tags just in case
-  cleaned = cleaned.replace(/<game_spec>[\s\S]*?<\/game_spec>/g, '');
-  return cleaned.trim();
+  return text.trim();
 }
 
 function loadSessions(): ChatSession[] {
