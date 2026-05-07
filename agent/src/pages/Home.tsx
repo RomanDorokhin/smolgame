@@ -173,6 +173,15 @@ export default function Home() {
                     ))}
                     {Object.keys(settings.keys).length === 0 && <div className="text-red-400 ml-2">NO KEYS AT ALL</div>}
                     
+                    {/* 🚀 ACTION LOG */}
+                    <div className="mt-2 pt-2 border-t border-yellow-500/20">
+                      <div className="text-yellow-400 font-bold">Action Log:</div>
+                      {debugLog.map((log, i) => (
+                        <div key={i} className="text-white/60 leading-tight">• {log}</div>
+                      ))}
+                      {debugLog.length === 0 && <div className="text-white/20">• No actions yet</div>}
+                    </div>
+
                     {/* 🚨 ТУТ БУДЕТ ОШИБКА */}
                     <div className="mt-2 pt-2 border-t border-yellow-500/20">
                       <div className="text-yellow-400 font-bold">Last Error:</div>

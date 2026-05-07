@@ -93,7 +93,12 @@ export function useChat() {
   const [sessions, setSessions] = useState<ChatSession[]>([]);
   const [activeSessionId, setActiveSessionId] = useState<string>("");
   const [settings, setSettings] = useState<ChatSettings>(loadSettings);
-  const [usage, setUsage] = useState<UsageStats>(loadUsage);
+  const [usage, setUsage] = useState<UsageStats>(loadUsage());
+  const [debugLog, setDebugLog] = useState<string[]>([]);
+
+  const addLog = (msg: string) => {
+    setDebugLog(prev => [msg, ...prev].slice(0, 5));
+  };
   const [isGenerating, setIsGenerating] = useState(false);
   const [isPipelineRunning, setIsPipelineRunning] = useState(false);
   const [generationStep, setGenerationStep] = useState("");
@@ -154,7 +159,9 @@ export function useChat() {
   };
 
   const sendMessage = useCallback(async (content: string, isHidden: boolean = false) => {
-    if (isGenerating && !isHidden) return;
+    addLog("🚀 Нажато 'Отправить'");
+    if (!content.trim()) { addLog("❌ Пустой текст"); return; }
+    if (isGenerating && !isHidden) { addLog("❌ Уже идет генерация"); return; }
 
     const userMsg: ChatMessage = { id: generateId(), role: "user", content, timestamp: Date.now(), isHidden };
     const assistantMsg: ChatMessage = { id: generateId(), role: "assistant", content: "", timestamp: Date.now(), isStreaming: true };
@@ -187,6 +194,8 @@ export function useChat() {
     const messageHistory = freshSession ? [...freshSession.messages] : [];
 
     setIsGenerating(true);
+    setGenerationStep("Подготовка...");
+    addLog("🔧 Инициализация...");
     
     const controller = new AbortController();
     abortControllerRef.current = controller;
@@ -194,17 +203,15 @@ export function useChat() {
 
     const currentSettings = settings;
 
-    // 🔍 DEBUG: Log settings state
-    console.group('[useChat] 🔍 DEBUG sendMessage');
-    console.log('[useChat] primaryProvider:', currentSettings.primaryProvider);
-    console.log('[useChat] autoFailover:', currentSettings.autoFailover);
-    console.log('[useChat] keys present:', Object.entries(currentSettings.keys).map(([k, v]) => `${k}: ${v ? '✅ KEY_SET' : '❌ EMPTY'}`));
-    console.log('[useChat] raw settings from localStorage:', localStorage.getItem('smol_chat_settings_v3'));
-    console.groupEnd();
-
     try {
       if (!orchestratorRef.current) {
+        try {
+          addLog("🏗️ Создание оркестратора...");
           orchestratorRef.current = new GameFlowOrchestratorV2("user-1", sessionId);
+        } catch (initErr: any) {
+          addLog("⚠️ Ошибка оркестратора, пробую 'default'");
+          orchestratorRef.current = new GameFlowOrchestratorV2("user-1", "default");
+        }
       }
       const orchestrator = orchestratorRef.current;
 
@@ -215,21 +222,19 @@ export function useChat() {
       ? [currentSettings.primaryProvider, ...FALLBACK_ORDER.filter(p => p !== currentSettings.primaryProvider)]
       : [currentSettings.primaryProvider];
 
-    console.log('[useChat] providers to try:', providersToTry);
+    addLog(`📡 Провайдеры: ${providersToTry.join(', ')}`);
 
     for (const provider of providersToTry) {
       if (success) break;
       
       const apiKey = currentSettings.keys[provider];
-      console.log(`[useChat] checking provider '${provider}': key=${apiKey ? '✅ EXISTS' : '❌ MISSING'}`);
+      addLog(`🔑 Проверка ${provider}: ${apiKey ? 'OK' : 'MISSING'}`);
       if (!apiKey) continue;
 
       const status = pool.getStatus(provider);
       if (status.state === "OPEN") continue;
 
       try {
-        console.log(`[Orchestrator] Attempting with ${provider}...`);
-        
         const currentAnswers = orchestrator.getSession().answers || {};
         const isComplete = orchestrator.isInterviewComplete();
         
@@ -420,6 +425,7 @@ ${selfCorrectionContext}
       } catch (e: any) {
         console.error(`[Orchestrator] ${provider} failed:`, e.message);
         lastError = `[${provider}] ${e.message}`;
+        addLog(`❌ Ошибка ${provider}: ${e.message}`);
         // Continue to next provider in loop
       }
     }
@@ -450,6 +456,7 @@ ${selfCorrectionContext}
       clearTimeout(timeoutId);
       setIsGenerating(false);
       abortControllerRef.current = null;
+      setGenerationStep("");
       
       // Safety net: ensure isStreaming is strictly false in case of uncaught synchronous exceptions
       setSessions(prev => prev.map(s => s.id === sessionId ? {
@@ -484,6 +491,7 @@ ${selfCorrectionContext}
     sendMessage,
     deployToGitHub,
     stopGeneration,
+    debugLog,
     updateSettings: (s: Partial<ChatSettings>) => setSettings(prev => ({ ...prev, ...s })),
     createNewChat: () => {
       const s = createDefaultSession();
