@@ -296,21 +296,21 @@ function switchTab(tab) {
       const link = document.createElement('link');
       link.rel = 'stylesheet';
       link.crossOrigin = 'anonymous';
-      link.href = '/smolgame/agent-dist/assets/index.css?v=20000';
+      link.href = '/smolgame/agent-v3/assets/index.css?v=20000';
       document.head.appendChild(link);
 
       const agentRoot = document.getElementById('agent-root');
       if (!agentRoot) return;
 
       if (!agentRoot.hasChildNodes()) {
-        agentRoot.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--muted,#888);font-size:14px;gap:8px;"><span style="width:18px;height:18px;border:2px solid currentColor;border-top-color:transparent;border-radius:50%;animation:spin 0.7s linear infinite;display:inline-block;"></span>Загрузка архитектора v20000…</div><style>@keyframes spin{to{transform:rotate(360deg)}}</style>';
+        agentRoot.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--muted,#888);font-size:14px;gap:8px;"><span style="width:18px;height:18px;border:2px solid currentColor;border-top-color:transparent;border-radius:50%;animation:spin 0.7s linear infinite;display:inline-block;"></span>Загрузка архитектора v3...</div><style>@keyframes spin{to{transform:rotate(360deg)}}</style>';
       }
 
       // Inject JS module
       const script = document.createElement('script');
       script.type = 'module';
       script.crossOrigin = 'anonymous';
-      script.src = '/smolgame/agent-dist/assets/index.js?v=20000';
+      script.src = '/smolgame/agent-v3/assets/index.js?v=20000';
       document.head.appendChild(script);
       
       script.onload = () => {

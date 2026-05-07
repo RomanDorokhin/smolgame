@@ -7,7 +7,7 @@ export default defineConfig({
   base: './',
   plugins: [react()],
   build: {
-    outDir: '../agent-dist',
+    outDir: '../agent-v3',
     emptyOutDir: true,
     rollupOptions: {
       output: {

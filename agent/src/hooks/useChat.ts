@@ -210,7 +210,7 @@ export function useChat() {
     setIsGenerating(true);
     const controller = new AbortController();
     abortControllerRef.current = controller;
-    const timeoutId = setTimeout(() => controller.abort(), 90000);
+    const timeoutId = setTimeout(() => controller.abort(), 180000); // 3 minutes
 
     try {
       if (!orchestratorRef.current) orchestratorRef.current = new GameFlowOrchestratorV2("user-1", sessionId);
@@ -313,8 +313,8 @@ export function useChat() {
               
               if (isRateLimit && retries < maxRetries) {
                 retries++;
-                setGenerationStep(`Лимит ${provider}. Жду 2 сек...`);
-                await new Promise(r => setTimeout(r, 2000));
+                setGenerationStep(`Лимит ${provider}. Жду 10 сек...`);
+                await new Promise(r => setTimeout(r, 10000));
                 continue;
               }
 
