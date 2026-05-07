@@ -166,13 +166,18 @@ export function useChat() {
     } : s));
 
     setIsGenerating(true);
-    abortControllerRef.current = new AbortController();
+    
+    // Add 60s timeout to prevent infinite hangs if network drops silently (e.g. iOS WebView backgrounding)
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+    const timeoutId = setTimeout(() => controller.abort(), 60000);
 
-    // Ensure orchestrator exists
-    if (!orchestratorRef.current) {
-        orchestratorRef.current = new GameFlowOrchestratorV2("user-1", sessionId);
-    }
-    const orchestrator = orchestratorRef.current;
+    try {
+      // Ensure orchestrator exists
+      if (!orchestratorRef.current) {
+          orchestratorRef.current = new GameFlowOrchestratorV2("user-1", sessionId);
+      }
+      const orchestrator = orchestratorRef.current;
 
     let success = false;
     let lastError = "";
@@ -272,7 +277,7 @@ ${JSON.stringify(currentAnswers, null, 2)}
           apiKey,
           model: settings.models[provider] || "",
           baseUrl: settings.customBaseUrl
-        }, abortControllerRef.current.signal);
+        }, controller.signal);
 
         let fullContent = "";
         
@@ -391,7 +396,10 @@ ${JSON.stringify(currentAnswers, null, 2)}
 
 
       } catch (e: any) {
-        if (e.name === 'AbortError') throw e;
+        if (e.name === 'AbortError') {
+          lastError = "Превышено время ожидания или запрос отменён (Timeout/Abort).";
+          break; // Exit provider loop on abort
+        }
         console.error(`[Orchestrator] ${provider} failed:`, e.message);
         lastError = e.message;
       }
@@ -409,7 +417,7 @@ ${JSON.stringify(currentAnswers, null, 2)}
         ...s,
         messages: s.messages.map(m => m.id === assistantMsg.id ? { 
           ...m, 
-          content: `❌ Все провайдеры недоступны.\n\n**Статус провайдеров:**\n${statusSummary}\n\nПоследняя ошибка: ${lastError}`,
+          content: `❌ Не удалось получить ответ.\n\n**Статус:**\n${statusSummary}\n\nПоследняя ошибка: ${lastError}`,
           isStreaming: false 
         } : m)
       } : s));
@@ -420,8 +428,17 @@ ${JSON.stringify(currentAnswers, null, 2)}
       } : s));
     }
 
-    setIsGenerating(false);
-    abortControllerRef.current = null;
+    } finally {
+      clearTimeout(timeoutId);
+      setIsGenerating(false);
+      abortControllerRef.current = null;
+      
+      // Safety net: ensure isStreaming is strictly false in case of uncaught synchronous exceptions
+      setSessions(prev => prev.map(s => s.id === sessionId ? {
+        ...s,
+        messages: s.messages.map(m => m.id === assistantMsg.id ? { ...m, isStreaming: false } : m)
+      } : s));
+    }
   }, [activeSessionId, sessions, settings, isGenerating]);
 
   const deployToGitHub = useCallback(async () => {
