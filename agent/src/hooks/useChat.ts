@@ -203,37 +203,46 @@ export function useChat() {
     console.groupEnd();
 
     try {
+      console.log('[useChat] STEP 1: Initializing orchestrator...');
       if (!orchestratorRef.current) {
         try {
           orchestratorRef.current = new GameFlowOrchestratorV2("user-1", sessionId);
+          console.log('[useChat] STEP 1a: Orchestrator created with sessionId');
         } catch (e) {
-          console.error("[useChat] FATAL: Orchestrator failed even with internal catch. Retrying with new game.", e);
+          console.error("[useChat] STEP 1b: Orchestrator failed, retrying with undefined", e);
           orchestratorRef.current = new GameFlowOrchestratorV2("user-1", undefined);
         }
       }
       const orchestrator = orchestratorRef.current;
+      console.log('[useChat] STEP 2: Orchestrator ready.');
 
-    let success = false;
-    let lastError = "";
-    
-    const providersToTry = currentSettings.autoFailover 
-      ? [currentSettings.primaryProvider, ...FALLBACK_ORDER.filter(p => p !== currentSettings.primaryProvider)]
-      : [currentSettings.primaryProvider];
+      let success = false;
+      let lastError = "";
+      
+      console.log('[useChat] STEP 3: Calculating providers...');
+      const providersToTry = currentSettings.autoFailover 
+        ? [currentSettings.primaryProvider, ...FALLBACK_ORDER.filter(p => p !== currentSettings.primaryProvider)]
+        : [currentSettings.primaryProvider];
+      
+      console.log('[useChat] STEP 4: Providers to try:', providersToTry);
 
-    const hasAnyKey = Object.values(currentSettings.keys).some(k => !!k);
-    if (!hasAnyKey) {
-      setSessions(prev => prev.map(s => s.id === sessionId ? {
-        ...s,
-        messages: [...s.messages, {
-          id: generateId(),
-          role: "assistant",
-          content: "❌ **Ошибка: Ключи API не найдены.**\n\nПожалуйста, открой настройки (иконка ⚙️ слева) и введи хотя бы один ключ (Groq, Gemini или OpenRouter), чтобы я мог начать работу. Если ты открыл сайт в новом браузере, ключи нужно ввести заново.",
-          timestamp: Date.now()
-        }]
-      } : s));
-      setIsGenerating(false);
-      return;
-    }
+      const hasAnyKey = Object.values(currentSettings.keys).some(k => !!k);
+      console.log('[useChat] STEP 5: Has any key:', hasAnyKey);
+
+      if (!hasAnyKey) {
+        console.warn('[useChat] STEP 5a: NO KEYS FOUND!');
+        setSessions(prev => prev.map(s => s.id === sessionId ? {
+          ...s,
+          messages: [...s.messages, {
+            id: generateId(),
+            role: "assistant",
+            content: "❌ **Ошибка: Ключи API не найдены.**",
+            timestamp: Date.now()
+          }]
+        } : s));
+        setIsGenerating(false);
+        return;
+      }
 
     console.log('[useChat] providers to try:', providersToTry);
 
