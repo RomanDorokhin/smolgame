@@ -56,19 +56,36 @@ export function useAuth() {
     setLoginError(null);
     try {
       const { url } = await SmolGameAPI.githubOAuthStart();
-      if (url) {
-        window.location.href = url;
-      } else {
+      if (!url) {
         setLoginError('Сервер не вернул URL для входа. Попробуй ещё раз.');
+        return;
+      }
+      // Use Telegram WebApp native method if available (required in Telegram Mini App)
+      const tg = (window as any).Telegram?.WebApp;
+      if (tg?.openLink) {
+        tg.openLink(url);
+      } else {
+        // Fallback for browser testing
+        window.open(url, '_blank');
       }
     } catch (err: any) {
       console.error("[useAuth] Failed to start GitHub OAuth", err);
-      // No alert() — surface error via state so UI can render it inline
-      setLoginError(
-        err?.message?.includes('401') || err?.message?.includes('Telegram')
-          ? 'Открой приложение через бота в Telegram — вход доступен только там.'
-          : err?.message || 'Не удалось запустить вход через GitHub.'
-      );
+      const msg: string = err?.message || '';
+      // Map raw server/network errors to user-friendly messages
+      if (
+        msg === 'unauthorized' ||
+        msg.includes('401') ||
+        msg.includes('initData') ||
+        msg.includes('Telegram')
+      ) {
+        setLoginError('Вход через GitHub доступен только из Telegram. Открой приложение через бота — не по прямой ссылке в браузере.');
+      } else if (msg === 'Load failed' || msg.includes('network') || msg.includes('fetch')) {
+        setLoginError('Нет связи с сервером. Проверь интернет и повтори попытку.');
+      } else if (msg.includes('503') || msg.includes('GITHUB_CLIENT')) {
+        setLoginError('GitHub OAuth не настроен на сервере. Напиши админу.');
+      } else {
+        setLoginError(msg || 'Не удалось запустить вход через GitHub.');
+      }
     }
   };
 
