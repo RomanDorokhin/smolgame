@@ -24,6 +24,14 @@ function generateId() {
   return Math.random().toString(36).substring(2, 15);
 }
 
+function cleanTechnicalContent(text: string) {
+  // Replace opengame_prompt blocks with a placeholder for the UI
+  let cleaned = text.replace(/<opengame_prompt>[\s\S]*?<\/opengame_prompt>/g, '\n\n⚙️ **[Инструкции для движка OpenGame переданы]**\n');
+  // Also hide game_spec tags
+  cleaned = cleaned.replace(/<game_spec>[\s\S]*?<\/game_spec>/g, '');
+  return cleaned.trim();
+}
+
 function loadSessions(): ChatSession[] {
   const saved = localStorage.getItem(SESSIONS_KEY);
   if (!saved) return [];
@@ -138,28 +146,79 @@ export function useChat() {
   const currentSession = sessions.find((s) => s.id === activeSessionId) || sessions[0] || createDefaultSession();
 
   const handleOpenGameFlow = async (sessionId: string, assistantMsgId: string, prompt: string, apiKey: string, model: string, provider: string, currentContent: string) => {
-    setGenerationStep(`OpenGame запускает движок...`);
+    setGenerationStep(`Запуск внутренней генерации...`);
+    setIsPipelineRunning(true);
     try {
-      const genResult = await SmolGameAPI.generateWithOpenGame({ prompt, apiKey, model, provider });
-      if (genResult.success && genResult.code) {
-        setGenerationStep(`Проверка качества...`);
-        const result = await runGamePipeline(sessionId, genResult.code);
+      // 1. Generate the code directly using the LLM pool with Bulldozer logic
+      setGenerationStep(`Генерация кода (запуск цикла отказоустойчивости)...`);
+      
+      const generationPrompt = `Create a professional, single-file web game based on this spec:
+      ${prompt}
+      
+      REQUIREMENTS:
+      - Language: Russian for UI, English for code.
+      - Style: Premium, modern, animated.
+      - File: MUST be index.html only.
+      - Quality: Adhere to all SmolGame quality standards.
+      - Format: Output ONLY the HTML code inside <game_spec> tags.`;
+
+      let finalRawCode = "";
+      let attempts = 0;
+      const maxTotalAttempts = 5;
+
+      while (attempts < maxTotalAttempts) {
+        attempts++;
+        const currentProvider = FALLBACK_ORDER[(lastProviderIndex + attempts - 1) % FALLBACK_ORDER.length];
+        const key = settings.keys[currentProvider];
+        const modelId = settings.models[currentProvider] || DEFAULT_MODELS[currentProvider];
+
+        if (!key) continue;
+
+        try {
+          setGenerationStep(`Генерация: ${currentProvider} (${modelId})... Попытка ${attempts}`);
+          let generatedCode = "";
+          const stream = await generateStream(
+            [{ role: "user", content: generationPrompt }],
+            { provider: currentProvider, model: modelId, key },
+            new AbortController().signal
+          );
+
+          for await (const chunk of stream) {
+            generatedCode += chunk;
+          }
+
+          const codeMatch = generatedCode.match(/<game_spec>([\s\S]*?)<\/game_spec>/);
+          finalRawCode = codeMatch ? codeMatch[1].trim() : generatedCode.trim();
+          
+          if (finalRawCode.length > 100) break; // Success!
+        } catch (err: any) {
+          console.warn(`Attempt ${attempts} failed for ${currentProvider}:`, err);
+          if (attempts >= maxTotalAttempts) throw err;
+          // Wait 3s before next attempt in the loop
+          await new Promise(r => setTimeout(r, 3000));
+        }
+      }
+
+      if (finalRawCode) {
+        setGenerationStep(`Оптимизация и проверка...`);
+        const result = await runGamePipeline(sessionId, finalRawCode);
         
         setSessions(prev => prev.map(s => s.id === sessionId ? {
           ...s, messages: s.messages.map(m => m.id === assistantMsgId ? { 
-            ...m, content: currentContent + "\n\n✅ **Игра готова!**", pipelineResult: result 
+            ...m, content: cleanTechnicalContent(currentContent) + "\n\n✅ **Игра готова!**", pipelineResult: result 
           } : m)
         } : s));
 
         if (result.isPublishable) {
-          const gameTitle = genResult.code.match(/<title>([^<]{1,60})<\/title>/i)?.[1]?.trim() || "Smol Game";
+          const gameTitle = finalRawCode.match(/<title>([^<]{1,60})<\/title>/i)?.[1]?.trim() || "Smol Game";
           if ((window as any).__smolAuthUser?.isGithubConnected) {
             setIsAutoDeploying(true);
+            setGenerationStep(`Публикация на GitHub...`);
             try {
               const deployResult = await SmolGameAPI.publishGame({ 
                 gameTitle, 
                 files: [{ path: "index.html", content: result.generatedCode }], 
-                gameDescription: "AI Generated via OpenGame" 
+                gameDescription: "AI Generated via Smol Agent (Bulldozer Mode)" 
               });
               if (deployResult.ok) {
                 setSessions(prev => prev.map(s => s.id === sessionId ? {
@@ -169,15 +228,24 @@ export function useChat() {
                   } : m)
                 } : s));
               }
-            } catch {} finally { setIsAutoDeploying(false); }
-          } else { SmolGameAPI.savePendingGame({ htmlCode: result.generatedCode, title: gameTitle }); }
+            } catch (e) {
+              console.error("Deploy failed:", e);
+            } finally { setIsAutoDeploying(false); }
+          } else { 
+            SmolGameAPI.savePendingGame({ htmlCode: result.generatedCode, title: gameTitle }); 
+          }
         }
       }
     } catch (e: any) {
-      console.error("OpenGame Error:", e);
+      console.error("Generation Pipeline Error:", e);
       setSessions(prev => prev.map(s => s.id === sessionId ? {
-        ...s, messages: s.messages.map(m => m.id === assistantMsgId ? { ...m, content: currentContent + `\n\n❌ Ошибка движка: ${e.message}` } : m)
+        ...s, messages: s.messages.map(m => m.id === assistantMsgId ? { 
+          ...m, content: cleanTechnicalContent(currentContent) + `\n\n❌ **Ошибка генерации:** ${e.message}` 
+        } : m)
       } : s));
+    } finally {
+      setIsPipelineRunning(false);
+      setGenerationStep("");
     }
   };
 
@@ -295,7 +363,7 @@ export function useChat() {
                 }
                 fullContent += chunk;
                 setSessions(prev => prev.map(s => s.id === sessionId ? {
-                  ...s, messages: s.messages.map(m => m.id === assistantMsg.id ? { ...m, content: fullContent } : m)
+                  ...s, messages: s.messages.map(m => m.id === assistantMsg.id ? { ...m, content: cleanTechnicalContent(fullContent) } : m)
                 } : s));
               }
 
