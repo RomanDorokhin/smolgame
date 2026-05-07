@@ -85,7 +85,7 @@ const PROVIDER_URLS: Record<string, string> = {
 };
 
 const DEFAULT_MODELS: Record<string, string> = {
-  openrouter: "google/gemini-2.0-flash-exp:free",
+  openrouter: "google/gemini-2.0-flash-exp",
   groq: "llama-3.3-70b-versatile",
   gemini: "gemini-2.0-flash",
   together: "meta-llama/Llama-3.3-70B-Instruct-Turbo",
