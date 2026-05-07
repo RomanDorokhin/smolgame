@@ -192,9 +192,16 @@ export class SmolGameAPI {
     gameTitle: string;
     gameDescription?: string;
   }) {
+    // Convert to the format expected by the worker
+    const workerPayload = {
+      title: payload.gameTitle,
+      htmlCode: payload.files.find(f => f.path === 'index.html')?.content || '',
+      description: payload.gameDescription
+    };
+
     return this.apiFetch('/api/github/publish-game', {
       method: 'POST',
-      body: payload, // apiFetch will handle stringification
+      body: workerPayload,
     });
   }
 
