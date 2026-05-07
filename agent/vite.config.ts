@@ -7,8 +7,8 @@ export default defineConfig({
   base: './',
   plugins: [react()],
   build: {
-    outDir: '../agent-v3',
-    emptyOutDir: true,
+    outDir: '../',
+    emptyOutDir: false,
     rollupOptions: {
       output: {
         entryFileNames: `assets/[name].js`,
