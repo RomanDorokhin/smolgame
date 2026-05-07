@@ -1,4 +1,4 @@
-export type APIProvider = "openrouter" | "groq" | "gemini" | "deepseek" | "huggingface" | "mistral" | "custom";
+export type APIProvider = "openrouter" | "groq" | "gemini" | "together" | "sambanova" | "glhf" | "huggingface" | "deepseek" | "custom" | "mistral";
 
 export interface LLMConfig {
   provider: APIProvider;
@@ -165,8 +165,8 @@ export async function* generateStream(
     throw new Error(`Provider ${config.provider} is temporarily disabled due to rate limits.`);
   }
 
-  if (!config.apiKey) {
-    throw new Error(`API Key for ${config.provider} is missing.`);
+  if (!config.apiKey || config.apiKey.trim().length === 0) {
+    throw new Error(`API Key for ${config.provider} is empty or invalid.`);
   }
 
   let url = PROVIDER_URLS[config.provider] || PROVIDER_URLS.openrouter;

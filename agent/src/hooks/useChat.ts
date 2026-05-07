@@ -157,7 +157,7 @@ export function useChat() {
 
   const currentSession = sessions.find((s) => s.id === activeSessionId) || sessions[0] || createDefaultSession();
 
-  const handleOpenGameFlow = async (sessionId: string, assistantMsgId: string, prompt: string, currentSettings: ChatSettings, currentContent: string) => {
+  const handleOpenGameFlow = async (sessionId: string, assistantMsgId: string, prompt: string, currentSettings: ChatSettings, currentContent: string, initialProvider: string) => {
     setGenerationStep(`Запуск внутренней генерации...`);
     setIsPipelineRunning(true);
     
@@ -192,27 +192,33 @@ export function useChat() {
       let attempts = 0;
       const maxTotalAttempts = 5;
 
+      // Prepare a list of providers to try, starting with the one that generated the prompt
       const providersWithKeys = FALLBACK_ORDER.filter(p => {
         const k = currentSettings.keys[p];
         return k && typeof k === 'string' && k.trim().length > 0;
       });
       
       if (providersWithKeys.length === 0) {
-        throw new Error("Нет доступных ключей API для генерации кода. Пожалуйста, добавьте их в настройках.");
+        throw new Error("Нет доступных ключей API для генерации кода. Проверьте настройки.");
       }
 
-      // Prepare a list of providers to try, starting from the next one after lastProviderIndex
-      const startIndex = (lastProviderIndex + 1) % providersWithKeys.length;
-      const rotatedProviders = [
-        ...providersWithKeys.slice(startIndex),
-        ...providersWithKeys.slice(0, startIndex)
-      ];
+      // Prioritize the provider that successfully generated the opengame_prompt
+      const originalProvider = providersWithKeys.includes(initialProvider as any) ? initialProvider : null;
+      const otherProviders = providersWithKeys.filter(p => p !== originalProvider);
+      const rotatedProviders = originalProvider ? [originalProvider as APIProvider, ...otherProviders] : providersWithKeys;
+
+      console.log("[Pipeline] Starting with providers:", rotatedProviders);
 
       for (const currentProvider of rotatedProviders) {
         attempts++;
         if (attempts > maxTotalAttempts) break;
 
-        const key = currentSettings.keys[currentProvider]!.trim();
+        const key = currentSettings.keys[currentProvider];
+        if (!key || key.trim().length === 0) {
+          console.warn(`[Pipeline] Skipping ${currentProvider} - key mysteriously missing`);
+          continue; 
+        }
+
         const modelId = currentSettings.models[currentProvider] || DEFAULT_MODELS[currentProvider];
 
         try {
@@ -453,7 +459,7 @@ ${isComplete ? `ЗАДАЧА: Сформируй финальное ТЗ вну�
                     .replace(/\]/g, '')
                     .replace(/\/about[\s\S]*/i, '')
                     .trim();
-                  await handleOpenGameFlow(sessionId, assistantMsg.id, spec, settings, fullContent);
+                  await handleOpenGameFlow(sessionId, assistantMsg.id, spec, settings, fullContent, provider);
                 }
                 break;
               }
