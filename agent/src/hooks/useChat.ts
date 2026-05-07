@@ -346,12 +346,11 @@ ${feedback}
         }
         // --- END SELF-CORRECTION ---
 
-        // Final message update - ULTIMATE SCORE RETRIEVAL
+        // Final message update - FIXING SCORE FOR THE LAST TIME
         let finalScore: number | string = "???";
         if (result) {
-          if (typeof result.score === 'number') finalScore = result.score;
-          else if (typeof (result as any).totalScore === 'number') finalScore = (result as any).totalScore;
-          else if (result.passed !== undefined && result.totalChecks) {
+          finalScore = result.score || (result as any).totalScore || (result as any).qualityScore || "???";
+          if (finalScore === "???" && result.passed !== undefined && result.totalChecks) {
             finalScore = Math.round((result.passed / result.totalChecks) * 100);
           }
         }
@@ -366,40 +365,35 @@ ${feedback}
           } : m)
         } : s));
 
-        // FORCED PUSH LOGIC
-        const isActuallyPublishable = result.isPublishable || (typeof finalScore === 'number' && finalScore >= 60);
-        
-        if (isActuallyPublishable) {
+        // GitHub Publish Logic - Trust the Backend
+        if (typeof finalScore === 'number' && finalScore >= 60) {
           const gameTitle = finalRawCode.match(/<title>([^<]{1,60})<\/title>/i)?.[1]?.trim() || "Smol Game";
-          const githubToken = localStorage.getItem("smol_github_token");
           
-          if (githubToken) {
-            setIsAutoDeploying(true);
-            setGenerationStep(`Публикация на GitHub...`);
-            try {
-              const deployResult = await SmolGameAPI.publishGame({ 
-                gameTitle, 
-                files: [{ path: "index.html", content: finalRawCode }], 
-                gameDescription: "AI Generated via Smol Agent (OpenGame Engine)" 
-              });
-              
-              if (deployResult.ok) {
-                setSessions(prev => prev.map(s => s.id === sessionId ? {
-                  ...s, messages: s.messages.map(m => m.id === assistantMsgId ? {
-                    ...m, 
-                    pipelineResult: { ...result, score: finalScore, autoDeployed: true, generatedCode: finalRawCode },
-                    deployResult: { pagesUrl: deployResult.pagesUrl, repoUrl: `https://github.com/${deployResult.repo}`, pagesReady: deployResult.pagesReady }
-                  } : m)
-                } : s));
-              } else {
-                alert(`Ошибка пуша (ok:false): ${JSON.stringify(deployResult)}`);
-              }
-            } catch (e: any) {
-              alert(`Критическая ошибка пуша: ${e.message}`);
-            } finally { setIsAutoDeploying(false); }
-          } else { 
-            SmolGameAPI.savePendingGame({ htmlCode: finalRawCode, title: gameTitle }); 
-          }
+          setIsAutoDeploying(true);
+          setGenerationStep(`Публикация на GitHub...`);
+          
+          try {
+            const deployResult = await SmolGameAPI.publishGame({ 
+              gameTitle, 
+              files: [{ path: "index.html", content: finalRawCode }], 
+              gameDescription: "AI Generated via Smol Agent (OpenGame Engine)" 
+            });
+            
+            if (deployResult.ok) {
+              setSessions(prev => prev.map(s => s.id === sessionId ? {
+                ...s, messages: s.messages.map(m => m.id === assistantMsgId ? {
+                  ...m, 
+                  pipelineResult: { ...result, score: finalScore, autoDeployed: true, generatedCode: finalRawCode },
+                  deployResult: { pagesUrl: deployResult.pagesUrl, repoUrl: `https://github.com/${deployResult.repo}`, pagesReady: deployResult.pagesReady }
+                } : m)
+              } : s));
+            } else if (deployResult.status === 401) {
+              // If backend says 401, THEN show login button (this happens automatically via UI if deployResult.ok is false and status is 401)
+              console.warn("GitHub not connected, UI will show login button");
+            }
+          } catch (e) {
+            console.error("Deploy failed:", e);
+          } finally { setIsAutoDeploying(false); }
         }
       }
     } catch (e: any) {
