@@ -25,6 +25,14 @@ export function useAuth() {
       } else {
         throw new Error("No valid user in response");
       }
+    } catch (error) {
+      console.warn("[useAuth] Not authenticated via SmolGame Worker — Guest Mode.", error);
+      setUser({
+        id: 'guest',
+        username: 'Guest',
+        first_name: 'Guest',
+        isGithubConnected: false
+      });
       setIsAuthenticated(false);
     } finally {
       setIsLoading(false);
