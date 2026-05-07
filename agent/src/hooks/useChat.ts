@@ -182,16 +182,26 @@ export function useChat() {
       let attempts = 0;
       const maxTotalAttempts = 5;
 
+      const providersWithKeys = FALLBACK_ORDER.filter(p => !!settings.keys[p]);
+      if (providersWithKeys.length === 0) {
+        throw new Error("Нет доступных ключей API для генерации кода.");
+      }
+
       while (attempts < maxTotalAttempts) {
         attempts++;
-        const currentProvider = FALLBACK_ORDER[(lastProviderIndex + attempts - 1) % FALLBACK_ORDER.length];
+        const currentProvider = providersWithKeys[(lastProviderIndex + attempts - 1) % providersWithKeys.length];
         const key = settings.keys[currentProvider];
         const modelId = settings.models[currentProvider] || DEFAULT_MODELS[currentProvider];
 
-        if (!key) continue;
-
         try {
+          const stepMsg = `\n\n⚙️ **Инженер (${currentProvider})** анализирует ТЗ... (Попытка ${attempts})`;
           setGenerationStep(`Инженер (${currentProvider}) анализирует ТЗ...`);
+          setSessions(prev => prev.map(s => s.id === sessionId ? {
+            ...s, messages: s.messages.map(m => m.id === assistantMsgId ? { 
+              ...m, content: cleanTechnicalContent(currentContent) + stepMsg 
+            } : m)
+          } : s));
+
           let generatedResponse = "";
           const stream = await generateStream(
             [{ role: "user", content: generationPrompt }],
@@ -222,6 +232,10 @@ export function useChat() {
           if (attempts >= maxTotalAttempts) throw err;
           await new Promise(r => setTimeout(r, 3000));
         }
+      }
+
+      if (!finalRawCode) {
+        throw new Error("Все модели вернули пустой ответ или ошибку. Попробуйте другой провайдер.");
       }
 
       if (finalRawCode) {
