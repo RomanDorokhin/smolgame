@@ -118,10 +118,21 @@ export class SmolGameAPI {
       headers,
     });
 
-    const data = await response.json().catch(() => ({}));
+    const contentType = response.headers.get('content-type');
+    let data;
+    if (contentType && contentType.includes('application/json')) {
+      try {
+        data = await response.json();
+      } catch (e) {
+        data = await response.text();
+      }
+    } else {
+      data = await response.text();
+    }
 
     if (!response.ok) {
-      throw new Error(data.error || response.statusText || 'Request failed');
+      const errorMsg = (typeof data === 'object' ? data?.error : data) || response.statusText || 'Unknown error';
+      throw new Error(`${errorMsg} (Status: ${response.status})`);
     }
 
     return data;
