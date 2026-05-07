@@ -166,11 +166,19 @@ export default function Home() {
                   <div className="mb-6 p-3 bg-yellow-500/10 border border-yellow-500/30 rounded-xl text-left text-[10px] font-mono">
                     <div className="text-yellow-400 font-bold mb-2">🔍 DEBUG</div>
                     <div>primaryProvider: <span className="text-white">{settings.primaryProvider}</span></div>
+                    <div>isGenerating: <span className={isGenerating ? 'text-green-400' : 'text-white'}>{isGenerating ? '⏳ YES' : 'NO'}</span></div>
                     <div>keys in settings:</div>
                     {Object.entries(settings.keys).map(([k, v]) => (
                       <div key={k} className="ml-2">{k}: <span className={v ? 'text-green-400' : 'text-red-400'}>{v ? '✅ SET' : '❌ EMPTY'}</span></div>
                     ))}
                     {Object.keys(settings.keys).length === 0 && <div className="text-red-400 ml-2">NO KEYS AT ALL</div>}
+                    
+                    {/* 🚨 ТУТ БУДЕТ ОШИБКА */}
+                    <div className="mt-2 pt-2 border-t border-yellow-500/20">
+                      <div className="text-yellow-400 font-bold">Last Error:</div>
+                      <div className="text-red-400 break-all">{currentSession.messages.findLast(m => m.role === 'assistant' && m.content.includes('❌'))?.content || 'None'}</div>
+                    </div>
+
                     <div className="mt-2 text-white/40 break-all">localStorage raw: {localStorage.getItem('smol_chat_settings_v3')?.slice(0, 200)}</div>
                   </div>
                   <div className="w-16 h-16 rounded-2xl bg-[#13141a] border border-white/5 flex items-center justify-center mx-auto mb-6">

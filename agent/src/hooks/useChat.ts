@@ -418,12 +418,9 @@ ${selfCorrectionContext}
         }
 
       } catch (e: any) {
-        if (e.name === 'AbortError') {
-          lastError = "Превышено время ожидания или запрос отменён (Timeout/Abort).";
-          break;
-        }
         console.error(`[Orchestrator] ${provider} failed:`, e.message);
-        lastError = e.message;
+        lastError = `[${provider}] ${e.message}`;
+        // Continue to next provider in loop
       }
     }
 
