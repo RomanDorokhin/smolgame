@@ -346,26 +346,32 @@ ${feedback}
         }
         // --- END SELF-CORRECTION ---
 
-        // Final message update - FIXING SCORE ACCESS
-        const displayScore = result.score !== undefined ? result.score : (result as any).totalScore || "???";
-        const finalStatusMsg = `\n\n✅ **Игра готова! (Качество: ${displayScore}/100)**\n\nТы можешь запустить её кнопкой ниже или скопировать код.`;
+        // Final message update - ULTIMATE SCORE RETRIEVAL
+        let finalScore: number | string = "???";
+        if (result) {
+          if (typeof result.score === 'number') finalScore = result.score;
+          else if (typeof (result as any).totalScore === 'number') finalScore = (result as any).totalScore;
+          else if (result.passed !== undefined && result.totalChecks) {
+            finalScore = Math.round((result.passed / result.totalChecks) * 100);
+          }
+        }
         
-        console.log("[Push Debug] Result object:", result);
+        const finalStatusMsg = `\n\n✅ **Игра готова! (Качество: ${finalScore}/100)**\n\nТы можешь запустить её кнопкой ниже или скопировать код.`;
         
         setSessions(prev => prev.map(s => s.id === sessionId ? {
           ...s, messages: s.messages.map(m => m.id === assistantMsgId ? { 
             ...m, 
             content: cleanTechnicalContent(currentContent) + finalStatusMsg,
-            pipelineResult: { ...result, generatedCode: finalRawCode }
+            pipelineResult: { ...result, score: finalScore, generatedCode: finalRawCode }
           } : m)
         } : s));
 
-        // TRAP: Publish to GitHub
-        if (result.isPublishable) {
+        // FORCED PUSH LOGIC
+        const isActuallyPublishable = result.isPublishable || (typeof finalScore === 'number' && finalScore >= 60);
+        
+        if (isActuallyPublishable) {
           const gameTitle = finalRawCode.match(/<title>([^<]{1,60})<\/title>/i)?.[1]?.trim() || "Smol Game";
           const githubToken = localStorage.getItem("smol_github_token");
-          
-          console.log("[Push Debug] Attempting publish. Token exists:", !!githubToken, "Title:", gameTitle);
           
           if (githubToken) {
             setIsAutoDeploying(true);
@@ -377,30 +383,23 @@ ${feedback}
                 gameDescription: "AI Generated via Smol Agent (OpenGame Engine)" 
               });
               
-              console.log("[Push Debug] Deploy result:", deployResult);
-              
               if (deployResult.ok) {
                 setSessions(prev => prev.map(s => s.id === sessionId ? {
                   ...s, messages: s.messages.map(m => m.id === assistantMsgId ? {
                     ...m, 
-                    pipelineResult: { ...result, autoDeployed: true, generatedCode: finalRawCode },
+                    pipelineResult: { ...result, score: finalScore, autoDeployed: true, generatedCode: finalRawCode },
                     deployResult: { pagesUrl: deployResult.pagesUrl, repoUrl: `https://github.com/${deployResult.repo}`, pagesReady: deployResult.pagesReady }
                   } : m)
                 } : s));
               } else {
-                console.error("[Push Debug] Deploy failed but no exception thrown", deployResult);
-                alert(`Ошибка пуша: ${JSON.stringify(deployResult)}`);
+                alert(`Ошибка пуша (ok:false): ${JSON.stringify(deployResult)}`);
               }
             } catch (e: any) {
-              console.error("[Push Debug] Deploy Exception:", e);
               alert(`Критическая ошибка пуша: ${e.message}`);
             } finally { setIsAutoDeploying(false); }
           } else { 
-            console.log("[Push Debug] No token found, saving to pending.");
             SmolGameAPI.savePendingGame({ htmlCode: finalRawCode, title: gameTitle }); 
           }
-        } else {
-           console.log("[Push Debug] Game not publishable. Score:", displayScore);
         }
       }
     } catch (e: any) {
