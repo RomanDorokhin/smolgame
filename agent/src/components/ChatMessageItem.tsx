@@ -214,13 +214,18 @@ export function ChatMessageItem({ message, onRetry, onSend, isLast }: ChatMessag
                     },
                   }}
                 >
-                  {message.role === "assistant"
-                    ? message.content
-                        .replace(/<game_prototype>[\s\S]*?(?:<\/game_prototype>|$)/g, "")
-                        .replace(/<game_spec>[\s\S]*?(?:<\/game_spec>|$)/g, "")
-                        .replace(/<thought>[\s\S]*?(?:<\/thought>|$)/g, "")
-                        .trim()
-                    : message.content}
+                  {(() => {
+                    if (message.role !== "assistant") return message.content;
+                    const filtered = message.content
+                      .replace(/<game_prototype>[\s\S]*?(?:<\/game_prototype>|$)/g, "")
+                      .replace(/<game_spec>[\s\S]*?(?:<\/game_spec>|$)/g, "")
+                      .replace(/<thought>[\s\S]*?(?:<\/thought>|$)/g, "")
+                      .trim();
+                    
+                    // Если после фильтрации ничего не осталось, но текст в сообщении есть,
+                    // значит AI выдал ответ только в тегах. Показываем оригинал.
+                    return filtered || message.content;
+                  })()}
                 </ReactMarkdown>
               ) : isStreaming ? (
                 <div className="flex items-center gap-1.5 text-[#a3b8d4]">
