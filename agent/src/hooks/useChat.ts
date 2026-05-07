@@ -25,9 +25,14 @@ function generateId() {
 }
 
 function cleanTechnicalContent(text: string) {
+  // If the text contains the prompt, we ONLY keep what's BEFORE it to prevent roleplay/leakage
+  const promptIndex = text.indexOf('<opengame_prompt>');
+  let baseText = promptIndex !== -1 ? text.substring(0, promptIndex) : text;
+  
   // Replace opengame_prompt blocks with a placeholder for the UI
-  let cleaned = text.replace(/<opengame_prompt>[\s\S]*?<\/opengame_prompt>/g, '\n\n⚙️ **[Инструкции для движка OpenGame переданы]**\n');
-  // Also hide game_spec tags
+  let cleaned = baseText + '\n\n⚙️ **[Инструкции для движка OpenGame переданы]**\n';
+  
+  // Also hide game_spec tags just in case
   cleaned = cleaned.replace(/<game_spec>[\s\S]*?<\/game_spec>/g, '');
   return cleaned.trim();
 }
@@ -297,7 +302,17 @@ export function useChat() {
 4. VISUAL: Own style, Russian/Visual-only, no violence.
 5. DEMO: Mandatory ?demo=1, real gameplay, loopable.`;
 
-      const SMART_SYSTEM_PROMPT = `Ты — Элитный Геймдизайнер SmolGame. Твоя цель — собрать ТЗ.\n\nПРАВИЛА:\n1. Задавай ОДИН вопрос.\n2. Когда всё ясно — выводи <opengame_prompt>.\n3. ВНУТРИ <opengame_prompt> ОБЯЗАТЕЛЬНО ВКЛЮЧИ: ${QUALITY_CRITERIA}\n\n${isComplete ? `ЗАДАЧА: Сформируй <opengame_prompt>.` : `ВОПРОС ПРО ${FIELD_NAMES[nextField || 'genre']}.`}\n\nОТВЕТ НА РУССКОМ. ТЗ ВНУТРИ ТЕГА — НА АНГЛИЙСКОМ.`;
+      const SMART_SYSTEM_PROMPT = `Ты — Элитный Геймдизайнер SmolGame. Твоя задача — собрать требования.
+
+ПРАВИЛА:
+1. Задавай ТОЛЬКО ОДИН уточняющий вопрос.
+2. Когда всё ясно (у тебя есть жанр, механика и визуал) — выводи <opengame_prompt> со всеми деталями.
+3. ПОСЛЕ ВЫВОДА ТЕГА <opengame_prompt> ТЫ ДОЛЖЕН НЕМЕДЛЕННО ЗАМОЛЧАТЬ. Никакого текста после тега.
+4. НИКОГДА не пытайся играть в игру в чате. Ты — интервьюер, а не движок.
+
+ВНУТРИ <opengame_prompt> ОБЯЗАТЕЛЬНО ВКЛЮЧИ: ${QUALITY_CRITERIA}
+
+${isComplete ? `ЗАДАЧА: Сформируй финальное ТЗ внутри <opengame_prompt>.` : `ВОПРОС ПРО ${FIELD_NAMES[nextField || 'genre']}.`}`;
 
       // 1. Prepare providers with keys and rotate start point
       const providersWithKeys = FALLBACK_ORDER.filter(p => !!settings.keys[p]);
