@@ -234,7 +234,7 @@ export function useChat() {
           let generatedResponse = "";
           const stream = await generateStream(
             [{ role: "user", content: generationPrompt }],
-            { provider: currentProvider, model: modelId, key },
+            { provider: currentProvider, model: modelId, apiKey: key },
             new AbortController().signal
           );
 
