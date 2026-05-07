@@ -226,6 +226,16 @@ export function useChat() {
         const modelId = currentSettings.models[currentProvider] || DEFAULT_MODELS[currentProvider];
 
         try {
+          // Robust key check with localStorage fallback
+          let finalKey = key;
+          if (!finalKey) {
+            const saved = localStorage.getItem("smol_settings");
+            if (saved) {
+              const parsed = JSON.parse(saved);
+              finalKey = parsed.keys?.[currentProvider] || "";
+            }
+          }
+
           const stepMsg = `\n\n⚙️ **Инженер (${currentProvider})** анализирует ТЗ...`;
           setGenerationStep(`Инженер (${currentProvider}) анализирует ТЗ...`);
           setSessions(prev => prev.map(s => s.id === sessionId ? {
@@ -235,9 +245,10 @@ export function useChat() {
           } : s));
 
           let generatedResponse = "";
-          const stream = await generateStream(
+          // CRITICAL: generateStream is a generator, don't await the call itself
+          const stream = generateStream(
             [{ role: "user", content: generationPrompt }],
-            { provider: currentProvider, model: modelId, apiKey: key },
+            { provider: currentProvider, model: modelId, apiKey: finalKey },
             new AbortController().signal
           );
 
