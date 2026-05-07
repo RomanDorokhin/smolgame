@@ -179,28 +179,29 @@ export function useChat() {
       // 1. Generate the code directly using the LLM pool with Bulldozer logic
       setGenerationStep(`Генерация кода (запуск цикла отказоустойчивости)...`);
       
-      const generationPrompt = `You are the OpenGame Core Agent (Powered by GameCoder-27B Logic).
-Your objective is to build a game following the precise agentic workflows of the OpenGame framework.
+      const generationPrompt = `You are the OpenGame Core Agent. You MUST build the game according to the OPENGAME DEBUG PROTOCOL.
 
-PHASE 1: THOUGHTS & ARCHITECTURE
-Before writing code, you MUST analyze the requirements through the lens of OpenGame Skills:
-- Template Selection: Determine the optimal HTML5 Canvas/DOM structure.
-- Logic Scaffolding: Plan the game loop, state management, and asset loading.
-- UX Mapping: Plan touch-interactions and responsive layout.
+PHASE 1: PRE-BUILD VERIFICATION (OPENGAME STANDARDS)
+Before outputting code, verify:
+- ANIMATION SYSTEM: 3-Layer check (asset-pack -> animations -> code keys).
+- CONFIG ALIGNMENT: All gameConfig.json keys MUST match code references.
+- UI COMPONENTS: Must have Start, HUD, and Game Over screens.
+- MOBILE OPTIMIZATION: Portrait mode, touch-first inputs (>44px targets).
+- SCENE MANAGEMENT: All scenes MUST be registered in a central game config.
 
-PHASE 2: OPENGAME TECHNICAL CONSTRAINTS
-- Single-File Implementation: All HTML, CSS, and JS in ONE block.
-- Standard-Compliant UI: Start Screen, HUD (Score/Level), Game Over Screen with "Play Again".
-- Performance: Use requestAnimationFrame. Avoid heavy loops.
-- Mobile First: Tap targets > 44px, portrait orientation.
+PHASE 2: CORE IMPLEMENTATION RULES
+- SINGLE-FILE: HTML + CSS + JS in one self-contained block.
+- PERFORMANCE: Use requestAnimationFrame. Avoid global leaks.
+- ERROR HANDLING: Wrap critical game loops in try-catch for "Skill Debug" compliance.
+- REPLAYABILITY: Persistent high scores in localStorage.
 
-PHASE 3: CORE IMPLEMENTATION
-Write the COMPLETE code. Ensure it is robust, bug-free, and follows the "Skill Debug" protocol (catch and handle errors).
+PHASE 3: EXECUTION
+Write the COMPLETE code. Include a <thought> block first where you verify the checklist above.
 
 SPECIFICATION:
 ${prompt}
 
-Output the final code within <game_spec> tags. Begin with your <thought> block.`;
+Output within <game_spec> tags.`;
 
       let finalRawCode = "";
       let attempts = 0;
