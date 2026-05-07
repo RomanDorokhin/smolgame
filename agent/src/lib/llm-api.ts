@@ -77,16 +77,20 @@ const PROVIDER_URLS: Record<string, string> = {
   openrouter: "https://openrouter.ai/api/v1/chat/completions",
   groq: "https://api.groq.com/openai/v1/chat/completions",
   gemini: "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
-  mistral: "https://api.mistral.ai/v1/chat/completions",
-  deepseek: "https://api.deepseek.com/v1/chat/completions",
+  together: "https://api.together.xyz/v1/chat/completions",
+  sambanova: "https://api.sambanova.ai/v1/chat/completions",
+  glhf: "https://glhf.chat/api/openai/v1/chat/completions",
+  huggingface: "https://api-inference.huggingface.co/v1/chat/completions",
 };
 
 const DEFAULT_MODELS: Record<string, string> = {
-  openrouter: "deepseek/deepseek-chat",
+  openrouter: "google/gemini-2.0-flash-exp:free",
   groq: "llama-3.3-70b-versatile",
   gemini: "gemini-2.0-flash",
-  mistral: "codestral-latest",
-  deepseek: "deepseek-chat",
+  together: "meta-llama/Llama-3.3-70B-Instruct-Turbo",
+  sambanova: "Meta-Llama-3.1-70B-Instruct",
+  glhf: "hf:meta-llama/Llama-3.1-405B-Instruct",
+  huggingface: "meta-llama/Llama-3.2-11B-Vision-Instruct",
   custom: "gpt-3.5-turbo",
 };
 

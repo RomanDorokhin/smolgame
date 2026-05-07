@@ -140,14 +140,6 @@ export default function Home() {
                 {user.photo_url && (
                   <img src={user.photo_url} alt="avatar" className="w-5 h-5 rounded-full border border-green-500/30" />
                 )}
-                <div className="flex flex-col">
-                  <span className="text-[9px] font-black uppercase tracking-widest text-green-500/80">
-                    GitHub Connected
-                  </span>
-                  <span className="text-[10px] font-bold leading-tight truncate max-w-[80px] sm:max-w-[120px]">
-                     @{user.githubUsername || user.username}
-                  </span>
-                </div>
               </div>
             ) : (
               <Button

@@ -1,3 +1,5 @@
+import * as acorn from 'acorn';
+
 /**
  * Professional Game Requirement Validator
  * Validates all 35 SmolGame requirements
@@ -47,6 +49,7 @@ export class GameRequirementValidatorPro {
   private htmlCode: string;
   private checks: RequirementCheck[] = [];
   private gameId: string;
+  private _sanitizedCache: string | null = null;
 
   constructor(htmlCode: string, gameId: string = 'unknown') {
     this.htmlCode = htmlCode;
@@ -112,11 +115,102 @@ export class GameRequirementValidatorPro {
   // ──────────── TECHNICAL REQUIREMENTS ────────────
 
   /**
-   * Strip comments and string literals to avoid false-positive matches.
-   * This is a lightweight "AST-like" pre-processing step.
+   * Extracts all JavaScript code from <script> tags and inline event handlers.
    */
+  private extractScripts(): string {
+    const scripts: string[] = [];
+    
+    // 1. <script> tags
+    const scriptRegex = /<script\b[^>]*>([\s\S]*?)<\/script>/gi;
+    let match;
+    while ((match = scriptRegex.exec(this.htmlCode)) !== null) {
+      scripts.push(match[1]);
+    }
+
+    // 2. Inline handlers (onclick, onload etc)
+    const handlerRegex = /\son[a-z]+\s*=\s*["']([\s\S]*?)["']/gi;
+    while ((match = handlerRegex.exec(this.htmlCode)) !== null) {
+      scripts.push(match[1]);
+    }
+
+    return scripts.join('\n;\n'); // Semicolon to prevent merge errors
+  }
+
+  /**
+   * Uses Acorn to parse JS and find specific function calls or property accesses.
+   * This is much more robust than regex as it ignores comments and strings automatically.
+   */
+  private parseAndCheckCalls(forbiddenCalls: string[], forbiddenProps: string[] = []): string[] {
+    const code = this.extractScripts();
+    const found: string[] = [];
+    
+    try {
+      const ast = acorn.parse(code, { ecmaVersion: 'latest', sourceType: 'script' }) as any;
+      
+      const walk = (node: any) => {
+        if (!node) return;
+
+        // Check for function calls: fetch(), alert()
+        if (node.type === 'CallExpression') {
+          const callee = node.callee;
+          if (callee.type === 'Identifier' && forbiddenCalls.includes(callee.name)) {
+            found.push(`${callee.name}()`);
+          }
+          // Handle window.fetch(), parent.alert()
+          if (callee.type === 'MemberExpression') {
+            const prop = callee.property;
+            if (prop.type === 'Identifier' && forbiddenCalls.includes(prop.name)) {
+              found.push(`${prop.name}()`);
+            }
+          }
+        }
+
+        // Check for property access: window.parent, location.href
+        if (node.type === 'MemberExpression') {
+          const prop = node.property;
+          if (prop.type === 'Identifier' && forbiddenProps.includes(prop.name)) {
+            found.push(prop.name);
+          }
+        }
+
+        // Check for new XMLHttpRequest()
+        if (node.type === 'NewExpression') {
+          const callee = node.callee;
+          if (callee.type === 'Identifier' && forbiddenCalls.includes(callee.name)) {
+            found.push(`new ${callee.name}()`);
+          }
+        }
+
+        for (const key in node) {
+          if (node[key] && typeof node[key] === 'object') {
+            if (Array.isArray(node[key])) {
+              node[key].forEach((child: any) => walk(child));
+            } else {
+              walk(node[key]);
+            }
+          }
+        }
+      };
+
+      walk(ast);
+    } catch (e) {
+      console.warn('[AST Validator] Parse error, falling back to regex:', e);
+      // Fallback to regex if parsing fails (e.g. invalid JS)
+      const sanitized = this.sanitizedCode;
+      forbiddenCalls.forEach(call => {
+        if (new RegExp(`\\b${call}\\s*\\(`).test(sanitized)) found.push(`${call}()`);
+      });
+      forbiddenProps.forEach(prop => {
+        if (new RegExp(`\\b${prop}\\b`).test(sanitized)) found.push(prop);
+      });
+    }
+
+    return [...new Set(found)];
+  }
+
   private get sanitizedCode(): string {
-    return this.htmlCode
+    if (this._sanitizedCache) return this._sanitizedCache;
+    this._sanitizedCache = this.htmlCode
       // Remove single-line comments
       .replace(/\/\/.*/g, '')
       // Remove multi-line comments
@@ -125,26 +219,22 @@ export class GameRequirementValidatorPro {
       .replace(/"[^"\\]*(?:\\.[^"\\]*)*"/g, '""')
       .replace(/'[^'\\]*(?:\\.[^'\\]*)*'/g, "''")
       .replace(/`[^`\\]*(?:\\.[^`\\]*)*`/g, '``');
+    return this._sanitizedCache;
   }
 
   private async checkNoBackend(): Promise<void> {
+    const forbidden = ['fetch', 'XMLHttpRequest', 'axios', '$.ajax'];
+    const detected = this.parseAndCheckCalls(forbidden);
+    
+    // External URLs regex (still useful for src="https://api...")
     const code = this.sanitizedCode;
-
-    // Real fetch() call: word boundary so "fetch" inside identifiers is ignored
-    const hasFetch = /\bfetch\s*\(/.test(code);
-    const hasXHR = /\bXMLHttpRequest\b/.test(code);
-    const hasAxios = /\baxios\s*[\.\(]/.test(code);
-    const hasJqueryAjax = /\$\.ajax\s*\(/.test(code);
-
-    // External URLs (http/https) that are NOT CDN/font/static resource loads
-    // Allow: cdn., fonts., github.io, unpkg., jsdelivr., googleapis.
     const externalUrls = (code.match(/https?:\/\/[^\s"'`]+/g) || []).filter(url =>
       !/(cdn\.|fonts\.|github\.io|unpkg\.com|jsdelivr\.net|googleapis\.com|cloudflare\.com|rawgit|raw\.github)/.test(url) &&
       // must look like an API call (has path segment beyond root)
       /https?:\/\/[^/]+\/\S+/.test(url)
     );
 
-    const hasBackendCalls = hasFetch || hasXHR || hasAxios || hasJqueryAjax || externalUrls.length > 0;
+    const hasBackendCalls = detected.length > 0 || externalUrls.length > 0;
 
     this.addCheck({
       id: 1,
@@ -154,7 +244,7 @@ export class GameRequirementValidatorPro {
       priority: 'critical',
       status: hasBackendCalls ? 'fail' : 'pass',
       message: hasBackendCalls
-        ? `Detected backend API calls: ${[hasFetch && 'fetch()', hasXHR && 'XMLHttpRequest', hasAxios && 'axios', hasJqueryAjax && '$.ajax', externalUrls.length > 0 && `${externalUrls.length} external URL(s)`].filter(Boolean).join(', ')}`
+        ? `Detected backend API calls: ${[...detected, externalUrls.length > 0 && `${externalUrls.length} external URL(s)`].filter(Boolean).join(', ')}`
         : 'No backend calls detected',
       suggestion: hasBackendCalls
         ? 'Remove all fetch/axios calls. Use localStorage instead.'
@@ -166,9 +256,10 @@ export class GameRequirementValidatorPro {
   private async checkIframeCompatibility(): Promise<void> {
     const hasXFrameOptions = this.htmlCode.includes('X-Frame-Options');
     const hasFrameAncestors = this.htmlCode.includes('frame-ancestors');
-    const hasIframeBreaker = this.htmlCode.includes('window.top') ||
-      this.htmlCode.includes('parent.window') ||
-      this.htmlCode.includes('self !== top');
+    
+    // Check for iframe-breaking JS using AST
+    const detected = this.parseAndCheckCalls([], ['top', 'parent']);
+    const hasIframeBreaker = detected.length > 0 || this.sanitizedCode.includes('self !== top');
 
     const status = hasXFrameOptions || hasFrameAncestors || hasIframeBreaker
       ? 'fail'
@@ -182,10 +273,10 @@ export class GameRequirementValidatorPro {
       priority: 'critical',
       status,
       message: status === 'fail'
-        ? 'Detected iframe-blocking code or headers'
+        ? `Detected iframe-blocking code: ${[hasXFrameOptions && 'X-Frame-Options', hasFrameAncestors && 'frame-ancestors', ...detected].filter(Boolean).join(', ')}`
         : 'No iframe-blocking code detected',
       suggestion: status === 'fail'
-        ? 'Remove X-Frame-Options headers and iframe-breaking code'
+        ? 'Remove X-Frame-Options headers and avoid using window.top / window.parent'
         : undefined,
       canAutoFix: true,
     });
@@ -246,13 +337,10 @@ export class GameRequirementValidatorPro {
   }
 
   private async checkNoSystemDialogs(): Promise<void> {
-    const code = this.sanitizedCode;
-    // Only match actual calls, not method names in strings/comments
-    const hasAlert = /\balert\s*\(/.test(code);
-    const hasConfirm = /\bconfirm\s*\(/.test(code);
-    const hasPrompt = /\bprompt\s*\(/.test(code);
+    const forbidden = ['alert', 'confirm', 'prompt'];
+    const detected = this.parseAndCheckCalls(forbidden);
 
-    const status = hasAlert || hasConfirm || hasPrompt ? 'fail' : 'pass';
+    const status = detected.length > 0 ? 'fail' : 'pass';
 
     this.addCheck({
       id: 5,
@@ -262,7 +350,7 @@ export class GameRequirementValidatorPro {
       priority: 'critical',
       status,
       message: status === 'fail'
-        ? `Detected system dialogs: ${[hasAlert && 'alert()', hasConfirm && 'confirm()', hasPrompt && 'prompt()'].filter(Boolean).join(', ')}`
+        ? `Detected system dialogs: ${detected.join(', ')}`
         : 'No system dialogs detected',
       suggestion: status === 'fail'
         ? 'Replace with custom UI dialogs or toast notifications'

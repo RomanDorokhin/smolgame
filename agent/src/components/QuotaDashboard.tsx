@@ -10,15 +10,17 @@ interface QuotaDashboardProps {
 }
 
 const PROVIDER_LIMITS: Record<string, number> = {
-  groq: 14400, // RPD roughly
+  groq: 14400,
   gemini: 1500,
-  mistral: 100,
-  deepseek: 1000,
+  together: 1000,
+  sambanova: 5000,
+  glhf: 1000,
   openrouter: 1000,
+  huggingface: 100,
 };
 
 export function QuotaDashboard({ usage, keys }: QuotaDashboardProps) {
-  const providers: APIProvider[] = ["groq", "gemini", "deepseek", "mistral", "openrouter"];
+  const providers: APIProvider[] = ["groq", "gemini", "together", "sambanova", "glhf", "openrouter", "huggingface"];
 
   return (
     <div className="grid grid-cols-2 gap-2 p-1">

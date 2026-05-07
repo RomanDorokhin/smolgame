@@ -26,7 +26,7 @@ const SYSTEM_PROMPT_CONTENT = "Ты — Старший Геймдизайнер 
 "4. ГЕНЕРАЦИЯ: ТОЛЬКО ПОСЛЕ того, как все 7 параметров будут ясны, выдавай <game_prototype>.\n" +
 "5. ЯЗЫК: Русский.";
 
-const FALLBACK_ORDER: APIProvider[] = ["groq", "gemini", "deepseek", "mistral", "openrouter", "custom"];
+const FALLBACK_ORDER: APIProvider[] = ["groq", "gemini", "together", "sambanova", "glhf", "openrouter", "huggingface", "custom"];
 
 function generateId() {
   return Math.random().toString(36).substring(2, 15);

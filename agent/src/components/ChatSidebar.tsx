@@ -54,11 +54,13 @@ export function ChatSidebar({
   const { user, isAuthenticated, login, logout } = useAuth();
 
   const PROVIDER_INFO: Record<string, { url: string, name: string, desc: string }> = {
-    openrouter: { url: "https://openrouter.ai/keys", name: "OpenRouter", desc: "1. Регистрация\n2. Нажать 'Create Key'\n💡 Один ключ для 100+ моделей (есть бесплатные)" },
     groq: { url: "https://console.groq.com/keys", name: "Groq", desc: "1. Войти\n2. API Keys -> Create Key\n⚡ Сверхбыстрые Llama модели (бесплатно)" },
     gemini: { url: "https://aistudio.google.com/app/apikey", name: "Google Gemini", desc: "1. Войти через Google\n2. Create API key\n🧠 Мощные модели с бесплатным лимитом" },
-    deepseek: { url: "https://platform.deepseek.com/api_keys", name: "DeepSeek", desc: "1. Регистрация\n2. Пополнить баланс\n3. Create Key\n🎯 Отличная логика и код" },
-    mistral: { url: "https://console.mistral.ai/api-keys/", name: "Mistral", desc: "1. Регистрация\n2. Привязать карту\n3. Create Key" },
+    together: { url: "https://api.together.xyz/settings/api-keys", name: "Together AI", desc: "1. Регистрация\n2. Получите $5 бонуса\n🚀 Llama 3.3 70B и другие" },
+    sambanova: { url: "https://cloud.sambanova.ai/apis", name: "SambaNova", desc: "1. Регистрация\n2. Create API Key\n🔥 Невероятная скорость Llama 3.1" },
+    glhf: { url: "https://glhf.chat/users/settings/api", name: "GLHF", desc: "1. Войти\n2. Generate Token\n💎 Огромные модели (405B) бесплатно" },
+    openrouter: { url: "https://openrouter.ai/keys", name: "OpenRouter", desc: "1. Регистрация\n2. Нажать 'Create Key'\n💡 Один ключ для 100+ моделей (есть бесплатные)" },
+    huggingface: { url: "https://huggingface.co/settings/tokens", name: "HuggingFace", desc: "1. Settings -> Access Tokens\n2. Create New Token (Read)\n🤗 Тысячи моделей" },
     custom: { url: "https://github.com/cheahjs/free-llm-api-resources", name: "Custom API", desc: "1. Найти бесплатный API по ссылке\n2. Вставить Base URL и любой ключ ниже" }
   };
 
@@ -151,7 +153,7 @@ export function ChatSidebar({
 
               <div className="space-y-2">
                 <label className="text-[10px] font-black uppercase text-white/30 ml-1">Providers & Keys</label>
-                {["groq", "gemini", "deepseek", "mistral", "openrouter", "custom"].map((p) => (
+                {["groq", "gemini", "together", "sambanova", "glhf", "openrouter", "huggingface", "custom"].map((p) => (
                   <div key={p} className="border border-white/10 rounded-xl overflow-hidden bg-white/[0.03]">
                     <button 
                       onClick={() => setExpandedProvider(expandedProvider === p ? null : p as APIProvider)}
