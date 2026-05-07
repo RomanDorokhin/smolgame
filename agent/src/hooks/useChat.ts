@@ -143,9 +143,8 @@ export function useChat() {
 
   // ── Refs for stable access to state in async functions ─────────────────
   const sessionsRef = useRef(sessions);
-  const settingsRef = useRef(settings);
   useEffect(() => { sessionsRef.current = sessions; }, [sessions]);
-  useEffect(() => { settingsRef.current = settings; }, [settings]);
+  // NOTE: settings is read directly in sendMessage (not via ref) to always get the latest keys
 
   const currentSession = sessions.find((s) => s.id === activeSessionId) || sessions[0] || {
     id: "default",
@@ -193,7 +192,7 @@ export function useChat() {
     abortControllerRef.current = controller;
     const timeoutId = setTimeout(() => controller.abort(), 60000);
 
-    const currentSettings = settingsRef.current;
+    const currentSettings = settings;
 
     // 🔍 DEBUG: Log settings state
     console.group('[useChat] 🔍 DEBUG sendMessage');
