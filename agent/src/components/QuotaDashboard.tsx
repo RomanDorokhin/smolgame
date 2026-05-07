@@ -20,7 +20,7 @@ const PROVIDER_LIMITS: Record<string, number> = {
 };
 
 export function QuotaDashboard({ usage, keys }: QuotaDashboardProps) {
-  const providers: APIProvider[] = ["groq", "gemini", "together", "sambanova", "glhf", "openrouter", "huggingface"];
+  const providers: APIProvider[] = ["groq", "gemini", "together", "sambanova", "glhf", "deepseek", "openrouter", "huggingface", "custom"];
 
   return (
     <div className="grid grid-cols-2 gap-2 p-1">

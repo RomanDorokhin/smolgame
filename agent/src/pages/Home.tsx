@@ -49,6 +49,7 @@ export default function Home() {
     isPipelineRunning
   } = useChat();
 
+  const providers: APIProvider[] = ["groq", "gemini", "together", "sambanova", "glhf", "deepseek", "openrouter", "huggingface", "custom"];
   const { user, isAuthenticated, isLoading: authLoading, login, loginError, clearLoginError } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -214,13 +215,20 @@ export default function Home() {
         {/* Input area - Aligned with SmolGame navigation height */}
         <div className="px-4 py-4 md:px-8 md:py-6 bg-[#0a0b0e] border-t border-white/5 shrink-0">
           <div className="max-w-2xl mx-auto">
-            <ChatInput
-              onSend={sendMessage}
-              onStop={stopGeneration}
-              isGenerating={isGenerating}
-              disabled={!settings.keys[settings.primaryProvider]}
-              placeholder={!settings.keys[settings.primaryProvider] ? "Введите API ключи в настройках" : "Опишите игру..."}
-            />
+            {(() => {
+              const hasAnyKey = Object.values(settings.keys).some(k => !!k);
+              const primaryHasKey = !!settings.keys[settings.primaryProvider];
+              
+              return (
+                <ChatInput
+                  onSend={sendMessage}
+                  onStop={stopGeneration}
+                  isGenerating={isGenerating}
+                  disabled={!hasAnyKey}
+                  placeholder={!hasAnyKey ? "Введите API ключи в настройках" : !primaryHasKey ? `Primary (${settings.primaryProvider}) не настроен, сработает Failover` : "Опишите игру..."}
+                />
+              );
+            })()}
             <div className="mt-3 text-[9px] text-center text-white/10 uppercase tracking-[0.2em] font-black">
               Agent 3.0 • Entirely in browser
             </div>
