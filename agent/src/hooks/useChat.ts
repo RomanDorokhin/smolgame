@@ -264,7 +264,14 @@ export function useChat() {
       }
 
       if (!finalRawCode) {
-        throw new Error(`Все модели провалены:\n${failureLog.map(l => `• ${l}`).join('\n')}`);
+        const missingKeys = failureLog.filter(l => l.includes("empty or invalid")).map(l => l.split(':')[0].trim());
+        let errorMsg = `Все модели провалены:\n${failureLog.map(l => `• ${l}`).join('\n')}`;
+        
+        if (missingKeys.length > 0) {
+          errorMsg += `\n\n⚠️ **Внимание:** Похоже, у тебя не введены или не сохранились ключи для: **${missingKeys.join(', ')}**. \nПроверь вкладку **API Orchestrator** в боковой панели.`;
+        }
+        
+        throw new Error(errorMsg);
       }
 
       if (finalRawCode) {
