@@ -192,17 +192,16 @@ export class SmolGameAPI {
     gameTitle: string;
     gameDescription?: string;
   }) {
-    // Using FormData is often more reliable for large text payloads (like game code)
-    const formData = new FormData();
-    formData.append('title', payload.gameTitle);
-    formData.append('htmlCode', payload.files.find(f => f.path === 'index.html')?.content || '');
-    if (payload.gameDescription) {
-      formData.append('description', payload.gameDescription);
-    }
+    // The backend EXPECTS this exact JSON structure (see github-publish.js:42)
+    const body = {
+      files: payload.files,
+      gameTitle: payload.gameTitle,
+      gameDescription: payload.gameDescription
+    };
 
     return this.apiFetch('/api/github/publish-game', {
       method: 'POST',
-      body: formData,
+      body: body,
     });
   }
 
