@@ -346,15 +346,8 @@ ${feedback}
         }
         // --- END SELF-CORRECTION ---
 
-        // Final message update - FIXING SCORE FOR THE LAST TIME
-        let finalScore: number | string = "???";
-        if (result) {
-          finalScore = result.score || (result as any).totalScore || (result as any).qualityScore || "???";
-          if (finalScore === "???" && result.passed !== undefined && result.totalChecks) {
-            finalScore = Math.round((result.passed / result.totalChecks) * 100);
-          }
-        }
-        
+        // Final message update - USING THE CORRECT finalScore FIELD
+        const finalScore = result?.finalScore !== undefined ? result.finalScore : "???";
         const finalStatusMsg = `\n\n✅ **Игра готова! (Качество: ${finalScore}/100)**\n\nТы можешь запустить её кнопкой ниже или скопировать код.`;
         
         setSessions(prev => prev.map(s => s.id === sessionId ? {
@@ -365,7 +358,7 @@ ${feedback}
           } : m)
         } : s));
 
-        // GitHub Publish Logic - Trust the Backend
+        // GitHub Publish Logic - Threshold is 60
         if (typeof finalScore === 'number' && finalScore >= 60) {
           const gameTitle = finalRawCode.match(/<title>([^<]{1,60})<\/title>/i)?.[1]?.trim() || "Smol Game";
           
@@ -387,9 +380,12 @@ ${feedback}
                   deployResult: { pagesUrl: deployResult.pagesUrl, repoUrl: `https://github.com/${deployResult.repo}`, pagesReady: deployResult.pagesReady }
                 } : m)
               } : s));
-            } else if (deployResult.status === 401) {
-              // If backend says 401, THEN show login button (this happens automatically via UI if deployResult.ok is false and status is 401)
-              console.warn("GitHub not connected, UI will show login button");
+            } else {
+               // Show error or login if needed
+               console.warn("Deploy not OK:", deployResult);
+               if (deployResult.status === 401) {
+                 setGenerationStep("Требуется вход в GitHub...");
+               }
             }
           } catch (e) {
             console.error("Deploy failed:", e);
