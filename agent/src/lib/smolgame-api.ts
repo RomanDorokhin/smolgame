@@ -6,6 +6,7 @@
 const API_BASE = 'https://smolgame.dorokhin731.workers.dev';
 const INIT_DATA_SS_KEY = 'smolgame:tgInitData:v1';
 const WEB_ID_LS_KEY = 'smolgame:webId:v1';
+const PENDING_GAME_LS_KEY = 'smolgame:pendingGame:v1';
 
 export interface SmolGameUser {
   id: string;
@@ -152,5 +153,59 @@ export class SmolGameAPI {
       method: 'POST',
       body: JSON.stringify(payload),
     });
+  }
+
+  /**
+   * Poll GitHub Pages URL until it becomes available (up to ~3 min)
+   * Resolves with true when page responds OK, false on timeout.
+   */
+  static async pollPagesReady(
+    pagesUrl: string,
+    onProgress?: (attempt: number, maxAttempts: number) => void
+  ): Promise<boolean> {
+    const maxAttempts = 24;   // 24 × 8 sec = ~3.2 minutes
+    const intervalMs = 8000;
+
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      onProgress?.(attempt, maxAttempts);
+      try {
+        // Probe via a no-cors fetch — we only care about a non-error response
+        const res = await fetch(pagesUrl, { method: 'HEAD', mode: 'no-cors' });
+        // no-cors always has type 'opaque', status 0 — but it doesn't throw → page is up
+        if (res.type === 'opaque' || res.ok) return true;
+      } catch {
+        // Network error → page not ready yet, keep waiting
+      }
+      if (attempt < maxAttempts) {
+        await new Promise(r => setTimeout(r, intervalMs));
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Save a pending (pre-auth) game to localStorage so it survives redirect
+   */
+  static savePendingGame(data: { htmlCode: string; title: string }) {
+    try {
+      localStorage.setItem(PENDING_GAME_LS_KEY, JSON.stringify({ ...data, savedAt: Date.now() }));
+    } catch { /* ignore quota errors */ }
+  }
+
+  /**
+   * Load and clear the pending game (returns null if none / expired after 10 min)
+   */
+  static popPendingGame(): { htmlCode: string; title: string } | null {
+    try {
+      const raw = localStorage.getItem(PENDING_GAME_LS_KEY);
+      if (!raw) return null;
+      localStorage.removeItem(PENDING_GAME_LS_KEY);
+      const data = JSON.parse(raw);
+      // Expire after 10 minutes
+      if (Date.now() - (data.savedAt ?? 0) > 10 * 60 * 1000) return null;
+      return { htmlCode: data.htmlCode, title: data.title };
+    } catch {
+      return null;
+    }
   }
 }
