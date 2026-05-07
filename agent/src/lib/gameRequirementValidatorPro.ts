@@ -109,17 +109,42 @@ export class GameRequirementValidatorPro {
     return this.generateReport();
   }
 
-  // ============ TECHNICAL REQUIREMENTS ============
+  // ──────────── TECHNICAL REQUIREMENTS ────────────
+
+  /**
+   * Strip comments and string literals to avoid false-positive matches.
+   * This is a lightweight "AST-like" pre-processing step.
+   */
+  private get sanitizedCode(): string {
+    return this.htmlCode
+      // Remove single-line comments
+      .replace(/\/\/.*/g, '')
+      // Remove multi-line comments
+      .replace(/\/\*[\s\S]*?\*\//g, '')
+      // Replace string contents with empty placeholders (preserve delimiters)
+      .replace(/"[^"\\]*(?:\\.[^"\\]*)*"/g, '""')
+      .replace(/'[^'\\]*(?:\\.[^'\\]*)*'/g, "''")
+      .replace(/`[^`\\]*(?:\\.[^`\\]*)*`/g, '``');
+  }
 
   private async checkNoBackend(): Promise<void> {
-    const hasBackendCalls =
-      this.htmlCode.includes('fetch(') ||
-      this.htmlCode.includes('XMLHttpRequest') ||
-      this.htmlCode.includes('axios') ||
-      this.htmlCode.includes('$.ajax') ||
-      this.htmlCode.includes('http://') ||
-      this.htmlCode.includes('https://') && !this.htmlCode.includes('github') &&
-      !this.htmlCode.includes('cdn');
+    const code = this.sanitizedCode;
+
+    // Real fetch() call: word boundary so "fetch" inside identifiers is ignored
+    const hasFetch = /\bfetch\s*\(/.test(code);
+    const hasXHR = /\bXMLHttpRequest\b/.test(code);
+    const hasAxios = /\baxios\s*[\.\(]/.test(code);
+    const hasJqueryAjax = /\$\.ajax\s*\(/.test(code);
+
+    // External URLs (http/https) that are NOT CDN/font/static resource loads
+    // Allow: cdn., fonts., github.io, unpkg., jsdelivr., googleapis.
+    const externalUrls = (code.match(/https?:\/\/[^\s"'`]+/g) || []).filter(url =>
+      !/(cdn\.|fonts\.|github\.io|unpkg\.com|jsdelivr\.net|googleapis\.com|cloudflare\.com|rawgit|raw\.github)/.test(url) &&
+      // must look like an API call (has path segment beyond root)
+      /https?:\/\/[^/]+\/\S+/.test(url)
+    );
+
+    const hasBackendCalls = hasFetch || hasXHR || hasAxios || hasJqueryAjax || externalUrls.length > 0;
 
     this.addCheck({
       id: 1,
@@ -129,7 +154,7 @@ export class GameRequirementValidatorPro {
       priority: 'critical',
       status: hasBackendCalls ? 'fail' : 'pass',
       message: hasBackendCalls
-        ? 'Detected backend API calls (fetch, XMLHttpRequest, axios)'
+        ? `Detected backend API calls: ${[hasFetch && 'fetch()', hasXHR && 'XMLHttpRequest', hasAxios && 'axios', hasJqueryAjax && '$.ajax', externalUrls.length > 0 && `${externalUrls.length} external URL(s)`].filter(Boolean).join(', ')}`
         : 'No backend calls detected',
       suggestion: hasBackendCalls
         ? 'Remove all fetch/axios calls. Use localStorage instead.'
@@ -221,9 +246,11 @@ export class GameRequirementValidatorPro {
   }
 
   private async checkNoSystemDialogs(): Promise<void> {
-    const hasAlert = this.htmlCode.includes('alert(');
-    const hasConfirm = this.htmlCode.includes('confirm(');
-    const hasPrompt = this.htmlCode.includes('prompt(');
+    const code = this.sanitizedCode;
+    // Only match actual calls, not method names in strings/comments
+    const hasAlert = /\balert\s*\(/.test(code);
+    const hasConfirm = /\bconfirm\s*\(/.test(code);
+    const hasPrompt = /\bprompt\s*\(/.test(code);
 
     const status = hasAlert || hasConfirm || hasPrompt ? 'fail' : 'pass';
 
@@ -235,7 +262,7 @@ export class GameRequirementValidatorPro {
       priority: 'critical',
       status,
       message: status === 'fail'
-        ? 'Detected system dialogs (alert/confirm/prompt)'
+        ? `Detected system dialogs: ${[hasAlert && 'alert()', hasConfirm && 'confirm()', hasPrompt && 'prompt()'].filter(Boolean).join(', ')}`
         : 'No system dialogs detected',
       suggestion: status === 'fail'
         ? 'Replace with custom UI dialogs or toast notifications'

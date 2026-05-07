@@ -17,9 +17,11 @@ interface ProviderStatus {
   state: "CLOSED" | "OPEN" | "HALF_OPEN";
   nextRetryAt: number;
   failureCount: number;
+  lastError?: string;
 }
 
-const CIRCUIT_BREAKER_COOLDOWN = 60 * 1000; // 1 minute
+const CIRCUIT_BREAKER_COOLDOWN_ERROR = 60 * 1000;       // 1 min for generic errors
+const CIRCUIT_BREAKER_COOLDOWN_RATE_LIMIT = 5 * 60 * 1000; // 5 min for 429
 const MAX_FAILURES = 2;
 
 class ProviderPool {
@@ -32,6 +34,7 @@ class ProviderPool {
     const status = this.statuses[provider];
     if (status.state === "OPEN" && Date.now() >= status.nextRetryAt) {
       status.state = "HALF_OPEN";
+      console.log(`[CircuitBreaker] ${provider} entering HALF_OPEN state`);
     }
     return status;
   }
@@ -40,16 +43,31 @@ class ProviderPool {
     const status = this.getStatus(provider);
     status.state = "CLOSED";
     status.failureCount = 0;
+    status.lastError = undefined;
   }
 
-  reportFailure(provider: string, isRateLimit: boolean) {
+  reportFailure(provider: string, isRateLimit: boolean, errorMessage?: string) {
     const status = this.getStatus(provider);
     status.failureCount++;
+    status.lastError = errorMessage;
     if (isRateLimit || status.failureCount >= MAX_FAILURES) {
       status.state = "OPEN";
-      status.nextRetryAt = Date.now() + CIRCUIT_BREAKER_COOLDOWN;
-      console.warn(`[Orchestrator] Provider ${provider} is now OPEN (Rate limited or failed)`);
+      const cooldown = isRateLimit ? CIRCUIT_BREAKER_COOLDOWN_RATE_LIMIT : CIRCUIT_BREAKER_COOLDOWN_ERROR;
+      status.nextRetryAt = Date.now() + cooldown;
+      const cooldownSec = Math.round(cooldown / 1000);
+      console.warn(`[CircuitBreaker] ${provider} → OPEN (${isRateLimit ? 'rate limited' : 'errors'}) for ${cooldownSec}s`);
     }
+  }
+
+  /** Returns a human-readable status string for all providers */
+  getSummary(providers: string[]): string {
+    return providers.map(p => {
+      const s = this.getStatus(p);
+      if (s.state === "CLOSED") return `${p}: ✅`;
+      if (s.state === "HALF_OPEN") return `${p}: 🟡`;
+      const secondsLeft = Math.max(0, Math.round((s.nextRetryAt - Date.now()) / 1000));
+      return `${p}: ❌ (${secondsLeft}s)`;
+    }).join(' | ');
   }
 }
 
@@ -116,10 +134,10 @@ export async function* generateStream(
 
   if (!response.ok) {
     const isRateLimit = response.status === 429;
-    pool.reportFailure(config.provider, isRateLimit);
-    
     const error = await response.json().catch(() => ({}));
-    throw new Error(error.error?.message || `API error (${response.status}): ${response.statusText}`);
+    const errorMsg = error.error?.message || `API error (${response.status}): ${response.statusText}`;
+    pool.reportFailure(config.provider, isRateLimit, errorMsg);
+    throw new Error(errorMsg);
   }
 
   pool.reportSuccess(config.provider);

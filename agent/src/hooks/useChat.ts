@@ -12,6 +12,7 @@ import { GameFlowOrchestratorV2 } from "../lib/core/gameFlowOrchestratorV2";
 import type { GameSpec } from "../lib/core/types";
 import { generateStream, pool } from "../lib/llm-api";
 import { SmolGameAPI } from "../lib/smolgame-api";
+import type { PipelineResult } from "../lib/core/gameGenerationPipelinePro";
 
 const SESSIONS_KEY = "smol_chat_sessions_v3";
 const ACTIVE_SESSION_KEY = "smol_active_session_id_v3";
@@ -105,6 +106,8 @@ export function useChat() {
 
   const orchestratorRef = useRef<GameFlowOrchestratorV2 | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
+  /** Last failed pipeline result — used for Self-Correction Loop */
+  const lastFailedPipelineRef = useRef<PipelineResult | null>(null);
 
   useEffect(() => {
     const loaded = loadSessions();
@@ -206,6 +209,27 @@ export function useChat() {
         };
         const nextFieldRu = nextField ? FIELD_NAMES[nextField] : "";
 
+        // ── Build Self-Correction suffix if previous pipeline failed ─────────────────────────────
+        let selfCorrectionContext = "";
+        if (lastFailedPipelineRef.current && isComplete) {
+          const pr = lastFailedPipelineRef.current;
+          const failedGates = (pr.qualityGateResult?.hardGates || [])
+            .filter(g => g.status === 'fail')
+            .map(g => `- ${g.name}: ${g.message}`);
+          const critErrors = (pr.validationReport?.criticalFailures || [])
+            .map(f => `- ${f.requirement}: ${f.message}`);
+          if (failedGates.length || critErrors.length) {
+            selfCorrectionContext = `
+
+⚠️ САМОКОРРЕКЦИЯ: Предыдущая версия игры не прошла валидацию (оценка: ${pr.finalScore}/100).
+Критические ошибки, которые НЕОБХОДИМО исправить в новой версии:
+${[...failedGates, ...critErrors].join('\n')}
+
+Генерируй полностью новый код, устраняя все вышеуказанные проблемы.`;
+          }
+        }
+        // ────────────────────────────────────────────────────────────────────────────────
+
         const SMART_SYSTEM_PROMPT = `Ты — Элитный Геймдизайнер и Frontend-разработчик SmolGame.
 Твоя цель — помочь пользователю создать хитовую веб-игру (мини-игру). Игры для SmolGame должны работать в браузере (Touch управление, только Portrait ориентация).
 
@@ -230,7 +254,7 @@ ${JSON.stringify(currentAnswers, null, 2)}
 2. КАТЕГОРИЧЕСКИ ЗАПРЕЩАЕТСЯ выводить список всех параметров! Спрашивай только про тот, что указан выше.
 3. Если пользователь только что ответил на твой предыдущий вопрос, выдели суть его ответа в формате JSON внутри тега <game_spec>.
 Пример: <game_spec>{"${nextField}": "выжимка ответа пользователя"}</game_spec>
-`}
+`}${selfCorrectionContext}
 `;
 
         const messagesForAI = [
@@ -312,7 +336,15 @@ ${JSON.stringify(currentAnswers, null, 2)}
             setIsPipelineRunning(false);
             setGenerationStep("");
 
-            // ── Авто-деплой после успешного пайплайна ────────────────────
+            // ── Store result for Self-Correction Loop ──────────────────────────
+            if (result.isPublishable) {
+              lastFailedPipelineRef.current = null; // Success — clear previous errors
+            } else {
+              lastFailedPipelineRef.current = result; // Store for next attempt
+            }
+            // ──────────────────────────────────────────────────────────
+
+            // ── Авто-деплой после успешного пайплайна ─────────────────
             if (result.isPublishable) {
               const gameTitle = codeMatch[1].match(/<title>([^<]{1,60})<\/title>/i)?.[1]?.trim()
                 || "Smol Game";
@@ -353,6 +385,7 @@ ${JSON.stringify(currentAnswers, null, 2)}
           }
         }
 
+
       } catch (e: any) {
         if (e.name === 'AbortError') throw e;
         console.error(`[Orchestrator] ${provider} failed:`, e.message);
@@ -361,11 +394,18 @@ ${JSON.stringify(currentAnswers, null, 2)}
     }
 
     if (!success) {
+      // Build a helpful error message showing all provider statuses
+      const allProviders = [...new Set([settings.primaryProvider, ...FALLBACK_ORDER])];
+      const configuredProviders = allProviders.filter(p => settings.keys[p]);
+      const statusSummary = configuredProviders.length > 0
+        ? pool.getSummary(configuredProviders)
+        : 'Нет настроенных провайдеров. Добавь API ключи в настройках.';
+
       setSessions(prev => prev.map(s => s.id === activeSessionId ? {
         ...s,
         messages: s.messages.map(m => m.id === assistantMsg.id ? { 
           ...m, 
-          content: `❌ Ошибка: Все провайдеры недоступны.\nПоследняя ошибка: ${lastError}`,
+          content: `❌ Все провайдеры недоступны.\n\n**Статус провайдеров:**\n${statusSummary}\n\nПоследняя ошибка: ${lastError}`,
           isStreaming: false 
         } : m)
       } : s));

@@ -456,7 +456,7 @@ export function ChatMessageItem({ message, onRetry, onSend, isLast }: ChatMessag
                     : `<!DOCTYPE html><html><body style="margin:0;overflow:hidden;background:#000;">${htmlCode}</body></html>`
                 }
                 className="w-full h-full border-none"
-                sandbox="allow-scripts allow-modals"
+                sandbox="allow-scripts allow-pointer-lock"
               />
             </div>
           </div>
