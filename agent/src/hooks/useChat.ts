@@ -192,19 +192,27 @@ export function useChat() {
       let attempts = 0;
       const maxTotalAttempts = 5;
 
-      const providersWithKeys = FALLBACK_ORDER.filter(p => !!settings.keys[p]);
+      const providersWithKeys = FALLBACK_ORDER.filter(p => !!settings.keys[p]?.trim());
       if (providersWithKeys.length === 0) {
-        throw new Error("Нет доступных ключей API для генерации кода.");
+        throw new Error("Нет доступных ключей API для генерации кода. Пожалуйста, добавьте их в настройках.");
       }
 
-      while (attempts < maxTotalAttempts) {
+      // Prepare a list of providers to try, starting from the next one after lastProviderIndex
+      const startIndex = (lastProviderIndex + 1) % providersWithKeys.length;
+      const rotatedProviders = [
+        ...providersWithKeys.slice(startIndex),
+        ...providersWithKeys.slice(0, startIndex)
+      ];
+
+      for (const currentProvider of rotatedProviders) {
         attempts++;
-        const currentProvider = providersWithKeys[(lastProviderIndex + attempts - 1) % providersWithKeys.length];
-        const key = settings.keys[currentProvider];
+        if (attempts > maxTotalAttempts) break;
+
+        const key = settings.keys[currentProvider]!;
         const modelId = settings.models[currentProvider] || DEFAULT_MODELS[currentProvider];
 
         try {
-          const stepMsg = `\n\n⚙️ **Инженер (${currentProvider})** анализирует ТЗ... (Попытка ${attempts})`;
+          const stepMsg = `\n\n⚙️ **Инженер (${currentProvider})** анализирует ТЗ...`;
           setGenerationStep(`Инженер (${currentProvider}) анализирует ТЗ...`);
           setSessions(prev => prev.map(s => s.id === sessionId ? {
             ...s, messages: s.messages.map(m => m.id === assistantMsgId ? { 
@@ -238,14 +246,14 @@ export function useChat() {
             return; // Stop and wait for user input
           }
         } catch (err: any) {
-          console.warn(`Attempt ${attempts} failed for ${currentProvider}:`, err);
-          if (attempts >= maxTotalAttempts) throw err;
-          await new Promise(r => setTimeout(r, 3000));
+          console.warn(`Attempt with ${currentProvider} failed:`, err.message);
+          // If we have more providers to try, just continue. 
+          // If this was the last provider in our rotated list, then we'll check finalRawCode later.
         }
       }
 
       if (!finalRawCode) {
-        throw new Error("Все модели вернули пустой ответ или ошибку. Попробуйте другой провайдер.");
+        throw new Error("Все доступные модели (Gemini, Groq и др.) не смогли сгенерировать код. Проверьте валидность ключей или лимиты.");
       }
 
       if (finalRawCode) {
