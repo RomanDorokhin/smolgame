@@ -346,28 +346,44 @@ ${feedback}
         }
         // --- END SELF-CORRECTION ---
 
+        // Final message update with valid score and trigger for UI
+        const finalStatusMsg = `\n\n✅ **Игра готова! (Качество: ${result.score}/100)**\n\nТы можешь запустить её кнопкой ниже или скопировать код.`;
+        
         setSessions(prev => prev.map(s => s.id === sessionId ? {
           ...s, messages: s.messages.map(m => m.id === assistantMsgId ? { 
-            ...m, content: cleanTechnicalContent(currentContent) + `\n\n✅ **Игра готова! (Качество: ${result.score}/100)**`, pipelineResult: result 
+            ...m, 
+            content: cleanTechnicalContent(currentContent) + finalStatusMsg,
+            pipelineResult: { ...result, generatedCode: finalRawCode } // Ensure full code is here for the Play button
           } : m)
         } : s));
 
+        // Attempt to publish to GitHub if connected
         if (result.isPublishable) {
           const gameTitle = finalRawCode.match(/<title>([^<]{1,60})<\/title>/i)?.[1]?.trim() || "Smol Game";
-          if ((window as any).__smolAuthUser?.isGithubConnected) {
+          
+          // Improved check for GitHub connection
+          const isGithubConnected = (window as any).__smolAuthUser?.isGithubConnected || !!localStorage.getItem("smol_github_token");
+          
+          if (isGithubConnected) {
             setIsAutoDeploying(true);
             setGenerationStep(`Публикация на GitHub...`);
             try {
               const deployResult = await SmolGameAPI.publishGame({ 
                 gameTitle, 
-                files: [{ path: "index.html", content: result.generatedCode }], 
-                gameDescription: "AI Generated via Smol Agent (Bulldozer Mode)" 
+                files: [{ path: "index.html", content: finalRawCode }], 
+                gameDescription: "AI Generated via Smol Agent (OpenGame Engine)" 
               });
+              
               if (deployResult.ok) {
                 setSessions(prev => prev.map(s => s.id === sessionId ? {
                   ...s, messages: s.messages.map(m => m.id === assistantMsgId ? {
-                    ...m, pipelineResult: { ...result, autoDeployed: true },
-                    deployResult: { pagesUrl: deployResult.pagesUrl, repoUrl: `https://github.com/${deployResult.repo}`, pagesReady: deployResult.pagesReady }
+                    ...m, 
+                    pipelineResult: { ...result, autoDeployed: true, generatedCode: finalRawCode },
+                    deployResult: { 
+                      pagesUrl: deployResult.pagesUrl, 
+                      repoUrl: `https://github.com/${deployResult.repo}`, 
+                      pagesReady: deployResult.pagesReady 
+                    }
                   } : m)
                 } : s));
               }
@@ -375,7 +391,8 @@ ${feedback}
               console.error("Deploy failed:", e);
             } finally { setIsAutoDeploying(false); }
           } else { 
-            SmolGameAPI.savePendingGame({ htmlCode: result.generatedCode, title: gameTitle }); 
+            // If not connected, save to pending
+            SmolGameAPI.savePendingGame({ htmlCode: finalRawCode, title: gameTitle }); 
           }
         }
       }
