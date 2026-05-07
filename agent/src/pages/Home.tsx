@@ -86,18 +86,26 @@ export default function Home() {
           </div>
         )}
 
-        {/* Login Error Banner — replaces alert() for GitHub OAuth failures */}
-        {loginError && (
-          <div className="mx-4 mt-2 mb-0 flex items-start gap-3 p-3 bg-red-500/10 border border-red-500/20 rounded-xl animate-in slide-in-from-top duration-200">
-            <AlertCircle size={15} className="text-red-400 shrink-0 mt-0.5" />
-            <p className="text-[11px] text-red-300 font-medium flex-1 leading-relaxed">{loginError}</p>
-            <button
-              onClick={clearLoginError}
-              className="text-red-400/60 hover:text-red-300 shrink-0 transition-colors"
-              aria-label="Закрыть"
+        {/* GitHub Auth Gate */}
+        {!authLoading && !user?.isGithubConnected && (
+          <div className="absolute inset-0 z-[60] flex flex-col items-center justify-center bg-[#0a0b0e] p-6 text-center animate-in fade-in duration-300">
+            <div className="w-20 h-20 bg-white/5 rounded-3xl flex items-center justify-center mb-6 border border-white/10">
+              <Github size={40} className="text-white" />
+            </div>
+            <h2 className="text-2xl font-bold text-white mb-2 tracking-tight">Подключи GitHub, чтобы начать</h2>
+            <p className="text-sm text-white/50 max-w-[280px] mb-8 leading-relaxed text-center">
+              Для создания и публикации игр Агенту необходим доступ к твоему GitHub аккаунту.
+            </p>
+            <Button 
+              onClick={login} 
+              className="h-12 px-8 bg-white text-black hover:bg-white/90 rounded-2xl font-bold text-base transition-all active:scale-95 flex items-center gap-2"
             >
-              <X size={14} />
-            </button>
+              <Github size={20} />
+              Войти через GitHub
+            </Button>
+            {loginError && (
+              <p className="mt-4 text-[11px] text-red-400 font-medium max-w-[240px]">{loginError}</p>
+            )}
           </div>
         )}
 
