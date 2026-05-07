@@ -151,32 +151,19 @@ export function useChat() {
   const sendMessage = useCallback(async (content: string, isHidden: boolean = false) => {
     if (isGenerating && !isHidden) return;
 
-    // Capture session ID at call time to avoid stale closure
     const sessionId = activeSessionId;
+    const freshSession = sessions.find(s => s.id === sessionId);
+    const messageHistory = freshSession ? [...freshSession.messages] : [];
 
     const userMsg: ChatMessage = { id: generateId(), role: "user", content, timestamp: Date.now(), isHidden };
     const assistantMsg: ChatMessage = { id: generateId(), role: "assistant", content: "", timestamp: Date.now(), isStreaming: true };
 
-    let updatedSessions: typeof sessions = [];
-    let messageHistory: ChatMessage[] = [];
-
-    setSessions(prev => {
-      const freshSession = prev.find(s => s.id === sessionId);
-      if (freshSession) {
-        messageHistory = [...freshSession.messages];
-      }
-
-      updatedSessions = prev.map(s => s.id === sessionId ? {
-        ...s,
-        messages: [...s.messages, userMsg, assistantMsg],
-        updatedAt: Date.now(),
-        title: s.title === "New Chat" ? content.slice(0, 30) : s.title
-      } : s);
-      return updatedSessions;
-    });
-
-    // Persist immediately so Telegram background/foreground cycles don't lose messages
-    setTimeout(() => { if (updatedSessions.length) saveSessions(updatedSessions); }, 0);
+    setSessions(prev => prev.map(s => s.id === sessionId ? {
+      ...s,
+      messages: [...s.messages, userMsg, assistantMsg],
+      updatedAt: Date.now(),
+      title: s.title === "New Chat" ? content.slice(0, 30) : s.title
+    } : s));
 
     setIsGenerating(true);
     abortControllerRef.current = new AbortController();
@@ -435,7 +422,7 @@ ${JSON.stringify(currentAnswers, null, 2)}
 
     setIsGenerating(false);
     abortControllerRef.current = null;
-  }, [activeSessionId, settings, isGenerating]);
+  }, [activeSessionId, sessions, settings, isGenerating]);
 
   const deployToGitHub = useCallback(async () => {
     sendMessage("Пользователь отправил игру на модерацию.", true);
