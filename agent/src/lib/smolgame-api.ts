@@ -192,20 +192,17 @@ export class SmolGameAPI {
     gameTitle: string;
     gameDescription?: string;
   }) {
-    // Shotgun approach: send all possible field names to ensure compatibility
-    const workerPayload = {
-      title: payload.gameTitle,
-      gameTitle: payload.gameTitle,
-      htmlCode: payload.files.find(f => f.path === 'index.html')?.content || '',
-      code: payload.files.find(f => f.path === 'index.html')?.content || '',
-      html: payload.files.find(f => f.path === 'index.html')?.content || '',
-      description: payload.gameDescription,
-      gameDescription: payload.gameDescription
-    };
+    // Using FormData is often more reliable for large text payloads (like game code)
+    const formData = new FormData();
+    formData.append('title', payload.gameTitle);
+    formData.append('htmlCode', payload.files.find(f => f.path === 'index.html')?.content || '');
+    if (payload.gameDescription) {
+      formData.append('description', payload.gameDescription);
+    }
 
     return this.apiFetch('/api/github/publish-game', {
       method: 'POST',
-      body: workerPayload,
+      body: formData,
     });
   }
 
