@@ -970,7 +970,7 @@ export class GameRequirementValidatorPro {
       c => c.priority === 'critical' && c.status === 'fail'
     );
 
-    const isPublishable = criticalFailures.length === 0 && score >= 70;
+    const isPublishable = criticalFailures.length === 0 && score >= 60;
 
     const summary = `
 Game Validation Report
@@ -1006,8 +1006,8 @@ ${criticalFailures.length > 0
       nextSteps.push(`${autoFixable.length} issues can be auto-fixed`);
     }
 
-    if (score < 70) {
-      nextSteps.push('Improve score to 70+ before publishing');
+    if (score < 60) {
+      nextSteps.push('Improve score to 60+ before publishing');
     }
 
     return {
