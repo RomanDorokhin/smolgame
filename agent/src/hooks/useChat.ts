@@ -358,7 +358,7 @@ ${feedback}
           } : m)
         } : s));
 
-        // GitHub Publish Logic - Threshold is 60
+        // GitHub Publish Logic - Threshold is 60. Use backend session.
         if (typeof finalScore === 'number' && finalScore >= 60) {
           const gameTitle = finalRawCode.match(/<title>([^<]{1,60})<\/title>/i)?.[1]?.trim() || "Smol Game";
           
@@ -381,14 +381,13 @@ ${feedback}
                 } : m)
               } : s));
             } else {
-               // Show error or login if needed
-               console.warn("Deploy not OK:", deployResult);
-               if (deployResult.status === 401) {
-                 setGenerationStep("Требуется вход в GitHub...");
-               }
+               const errorMsg = deployResult.error || JSON.stringify(deployResult);
+               setGenerationStep(`Ошибка публикации: ${errorMsg}`);
+               console.error("Deploy failed with status:", deployResult.status, deployResult);
             }
-          } catch (e) {
-            console.error("Deploy failed:", e);
+          } catch (e: any) {
+            console.error("Deploy Exception:", e);
+            setGenerationStep(`Ошибка сети: ${e.message}`);
           } finally { setIsAutoDeploying(false); }
         }
       }

@@ -74,10 +74,17 @@ export class SmolGameAPI {
   }
 
   static getWebId(): string {
-    let id = localStorage.getItem(WEB_ID_LS_KEY);
+    // Sync with main site PERSIST_ID_KEY from state.js
+    const PERSIST_ID_KEY = 'smolgame:persisted_id:v1';
+    let id = localStorage.getItem(PERSIST_ID_KEY);
+    
+    // Fallback only if absolutely empty
+    if (!id) {
+      id = localStorage.getItem(WEB_ID_LS_KEY);
+    }
     if (!id) {
       id = Math.random().toString(36).slice(2) + Date.now().toString(36);
-      localStorage.setItem(WEB_ID_LS_KEY, id);
+      localStorage.setItem(PERSIST_ID_KEY, id);
     }
     return id;
   }
