@@ -285,41 +285,7 @@ export function ChatMessageItem({ message, onRetry, onSend, isLast }: ChatMessag
                       <Check size={14} strokeWidth={3} /> Готово к публикации
                     </p>
 
-                    {/* ── Deploy States ── */}
-                    {deployState.phase === "idle" && (
-                      <div className="space-y-2">
-                        {!isAuthenticated || !isGithubConnected ? (
-                          <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl">
-                            <p className="text-[10px] text-amber-400 font-bold mb-2">
-                              🔗 Нужно подключить GitHub для публикации
-                            </p>
-                            <p className="text-[10px] text-white/40 mb-3">
-                              Игра будет сохранена и опубликована автоматически после входа.
-                            </p>
-                            <Button
-                              variant="default"
-                              size="sm"
-                              className="w-full h-10 text-[11px] font-black uppercase tracking-widest gap-2 bg-[#a3b8d4] text-[#0a0b0e] hover:bg-[#a3b8d4]/90 rounded-xl"
-                              onClick={handleDeploy}
-                            >
-                              <Github size={14} />
-                              Войти через GitHub и опубликовать
-                            </Button>
-                          </div>
-                        ) : (
-                          <Button
-                            variant="default"
-                            size="sm"
-                            className="w-full h-10 text-[11px] font-black uppercase tracking-widest gap-2 bg-[#a3b8d4] text-[#0a0b0e] hover:bg-[#a3b8d4]/90 rounded-xl"
-                            onClick={handleDeploy}
-                          >
-                            <Github size={14} />
-                            Публикация в SmolGame
-                          </Button>
-                        )}
-                      </div>
-                    )}
-
+                    {/* Deploy States (Only showing status, no buttons) */}
                     {deployState.phase === "deploying" && (
                       <div className="flex items-center gap-3 p-3 bg-[#a3b8d4]/5 border border-[#a3b8d4]/15 rounded-xl">
                         <Loader2 size={16} className="animate-spin text-[#a3b8d4] shrink-0" />
@@ -334,38 +300,9 @@ export function ChatMessageItem({ message, onRetry, onSend, isLast }: ChatMessag
                           <div className="flex-1 min-w-0">
                             <p className="text-[11px] text-amber-400 font-bold">GitHub Pages активируется…</p>
                             <p className="text-[9px] text-white/30 mt-0.5">
-                              Попытка {deployState.attempt}/{deployState.maxAttempts} · обычно 1–3 минуты
+                              Попытка {deployState.attempt}/{deployState.maxAttempts}
                             </p>
                           </div>
-                        </div>
-                        {/* Progress bar */}
-                        <div className="w-full h-1 bg-white/5 rounded-full overflow-hidden">
-                          <div
-                            className="h-full bg-amber-400/60 rounded-full transition-all duration-[8000ms] ease-linear"
-                            style={{ width: `${Math.round((deployState.attempt / deployState.maxAttempts) * 100)}%` }}
-                          />
-                        </div>
-                        <p className="text-[9px] text-white/25 text-center">
-                          Ссылка появится здесь как только страница загрузится
-                        </p>
-                        {/* Показываем ссылки заранее с предупреждением */}
-                        <div className="flex gap-2 flex-wrap">
-                          <a
-                            href={deployState.repoUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#13141a] border border-white/5 rounded-lg text-[10px] text-white/40 hover:text-white/80 hover:border-white/15 transition-all"
-                          >
-                            <Github size={11} /> Код на GitHub
-                          </a>
-                          <a
-                            href={deployState.pagesUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#13141a] border border-white/5 rounded-lg text-[10px] text-white/30 hover:text-amber-400/80 hover:border-amber-400/20 transition-all"
-                          >
-                            <ExternalLink size={11} /> Ссылка (ещё не активна)
-                          </a>
                         </div>
                       </div>
                     )}
@@ -382,13 +319,6 @@ export function ChatMessageItem({ message, onRetry, onSend, isLast }: ChatMessag
                         >
                           <Play size={14} fill="currentColor" /> Открыть игру
                         </Button>
-                        <Button
-                          variant="ghost"
-                          className="w-full h-8 text-[9px] text-white/30 hover:text-white gap-1.5"
-                          onClick={() => window.open(deployState.repoUrl, "_blank")}
-                        >
-                          <Github size={12} /> Посмотреть код в GitHub
-                        </Button>
                       </div>
                     )}
 
@@ -396,45 +326,19 @@ export function ChatMessageItem({ message, onRetry, onSend, isLast }: ChatMessag
                       <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-xl space-y-2">
                         <p className="text-[11px] text-red-400 font-bold">❌ Ошибка публикации</p>
                         <p className="text-[10px] text-white/50">{deployState.message}</p>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-8 text-[10px] text-white/40 hover:text-white"
-                          onClick={handleDeploy}
-                        >
-                          <RotateCcw size={12} className="mr-1" /> Попробовать снова
-                        </Button>
                       </div>
                     )}
                   </div>
                 ) : (
                   <div className="space-y-2">
                     <p className="text-[10px] text-yellow-500/50 font-bold uppercase tracking-wider">Требуются доработки:</p>
-                    {message.pipelineResult.nextSteps.slice(0, 3).map((step: string, i: number) => (
+                    {message.pipelineResult.nextSteps.slice(0, 3).map((step: any, i: number) => (
                       <p key={i} className="text-[10px] text-white/40 flex gap-2">
                         <span className="text-[#a3b8d4]">•</span> {step}
                       </p>
                     ))}
                   </div>
                 )}
-              </div>
-            )}
-
-            {htmlCode && (
-              <div className="p-5 bg-[#a3b8d4]/5 border border-[#a3b8d4]/20 rounded-2xl mt-4">
-                <div className="flex items-center justify-between gap-4">
-                  <div>
-                    <h4 className="text-xs font-black text-[#a3b8d4] uppercase tracking-widest">Локальный тест</h4>
-                    <p className="text-[10px] text-white/30 mt-1">Проверь игру перед публикацией</p>
-                  </div>
-                  <Button
-                    variant="default"
-                    className="h-10 px-6 bg-[#a3b8d4] text-[#0a0b0e] font-black uppercase tracking-widest text-[10px] rounded-xl hover:scale-105 transition-transform"
-                    onClick={() => setShowPreview(true)}
-                  >
-                    <Play size={14} fill="currentColor" className="mr-2" /> Запустить
-                  </Button>
-                </div>
               </div>
             )}
           </div>

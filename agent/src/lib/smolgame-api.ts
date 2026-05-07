@@ -192,11 +192,15 @@ export class SmolGameAPI {
     gameTitle: string;
     gameDescription?: string;
   }) {
-    // Convert to the format expected by the worker
+    // Shotgun approach: send all possible field names to ensure compatibility
     const workerPayload = {
       title: payload.gameTitle,
+      gameTitle: payload.gameTitle,
       htmlCode: payload.files.find(f => f.path === 'index.html')?.content || '',
-      description: payload.gameDescription
+      code: payload.files.find(f => f.path === 'index.html')?.content || '',
+      html: payload.files.find(f => f.path === 'index.html')?.content || '',
+      description: payload.gameDescription,
+      gameDescription: payload.gameDescription
     };
 
     return this.apiFetch('/api/github/publish-game', {
