@@ -17,7 +17,7 @@ export interface ModelProgress {
   status: "idle" | "downloading" | "loading" | "ready" | "error";
 }
 
-export type APIProvider = "openrouter" | "groq" | "gemini" | "together" | "sambanova" | "glhf" | "huggingface" | "custom";
+export type APIProvider = "openrouter" | "groq" | "gemini" | "together" | "sambanova" | "glhf" | "huggingface" | "deepseek" | "custom";
 
 export interface ChatSettings {
   primaryProvider: APIProvider;

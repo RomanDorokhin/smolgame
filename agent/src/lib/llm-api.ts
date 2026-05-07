@@ -81,6 +81,7 @@ const PROVIDER_URLS: Record<string, string> = {
   sambanova: "https://api.sambanova.ai/v1/chat/completions",
   glhf: "https://glhf.chat/api/openai/v1/chat/completions",
   huggingface: "https://api-inference.huggingface.co/v1/chat/completions",
+  deepseek: "https://api.deepseek.com/chat/completions",
 };
 
 const DEFAULT_MODELS: Record<string, string> = {
@@ -91,6 +92,7 @@ const DEFAULT_MODELS: Record<string, string> = {
   sambanova: "Meta-Llama-3.1-70B-Instruct",
   glhf: "hf:meta-llama/Llama-3.1-405B-Instruct",
   huggingface: "meta-llama/Llama-3.2-11B-Vision-Instruct",
+  deepseek: "deepseek-chat",
   custom: "gpt-3.5-turbo",
 };
 

@@ -58,7 +58,8 @@ export function ChatSidebar({
     gemini: { url: "https://aistudio.google.com/app/apikey", name: "Google Gemini", desc: "1. Войти через Google\n2. Create API key\n🧠 Мощные модели с бесплатным лимитом" },
     together: { url: "https://api.together.xyz/settings/api-keys", name: "Together AI", desc: "1. Регистрация\n2. Получите $5 бонуса\n🚀 Llama 3.3 70B и другие" },
     sambanova: { url: "https://cloud.sambanova.ai/apis", name: "SambaNova", desc: "1. Регистрация\n2. Create API Key\n🔥 Невероятная скорость Llama 3.1" },
-    glhf: { url: "https://glhf.chat/users/settings/api", name: "GLHF", desc: "1. Войти\n2. Generate Token\n💎 Огромные модели (405B) бесплатно" },
+    glhf: { url: "https://glhf.chat/settings/api", name: "GLHF", desc: "1. Войти\n2. Settings -> API\n💎 Огромные модели (405B) бесплатно" },
+    deepseek: { url: "https://platform.deepseek.com/api_keys", name: "DeepSeek", desc: "1. Регистрация\n2. Create API Key\n🐳 Мощные и доступные модели" },
     openrouter: { url: "https://openrouter.ai/keys", name: "OpenRouter", desc: "1. Регистрация\n2. Нажать 'Create Key'\n💡 Один ключ для 100+ моделей (есть бесплатные)" },
     huggingface: { url: "https://huggingface.co/settings/tokens", name: "HuggingFace", desc: "1. Settings -> Access Tokens\n2. Create New Token (Read)\n🤗 Тысячи моделей" },
     custom: { url: "https://github.com/cheahjs/free-llm-api-resources", name: "Custom API", desc: "1. Найти бесплатный API по ссылке\n2. Вставить Base URL и любой ключ ниже" }
@@ -153,7 +154,7 @@ export function ChatSidebar({
 
               <div className="space-y-2">
                 <label className="text-[10px] font-black uppercase text-white/30 ml-1">Providers & Keys</label>
-                {["groq", "gemini", "together", "sambanova", "glhf", "openrouter", "huggingface", "custom"].map((p) => (
+                {["groq", "gemini", "together", "sambanova", "glhf", "deepseek", "openrouter", "huggingface", "custom"].map((p) => (
                   <div key={p} className="border border-white/10 rounded-xl overflow-hidden bg-white/[0.03]">
                     <button 
                       onClick={() => setExpandedProvider(expandedProvider === p ? null : p as APIProvider)}
@@ -162,7 +163,9 @@ export function ChatSidebar({
                       <div className="flex items-center gap-3">
                         <div className={`w-2 h-2 rounded-full ${settings.keys[p as APIProvider] ? 'bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.6)]' : 'bg-white/10'}`} />
                         <span className={`text-[11px] font-bold uppercase tracking-tighter ${settings.primaryProvider === p ? 'text-primary' : 'text-white/80'}`}>
-                          {p} {settings.primaryProvider === p && "(Primary)"}
+                          {PROVIDER_INFO[p]?.name || p} 
+                          <span className="ml-2 text-[8px] px-1.5 py-0.5 rounded bg-green-500/10 text-green-500 border border-green-500/20">FREE</span>
+                          {settings.primaryProvider === p && " (Primary)"}
                         </span>
                       </div>
                       {expandedProvider === p ? <ChevronUp size={14} className="text-white/40" /> : <ChevronDown size={14} className="text-white/40" />}

@@ -26,7 +26,7 @@ const SYSTEM_PROMPT_CONTENT = "Ты — Старший Геймдизайнер 
 "4. ГЕНЕРАЦИЯ: ТОЛЬКО ПОСЛЕ того, как все 7 параметров будут ясны, выдавай <game_prototype>.\n" +
 "5. ЯЗЫК: Русский.";
 
-const FALLBACK_ORDER: APIProvider[] = ["groq", "gemini", "together", "sambanova", "glhf", "openrouter", "huggingface", "custom"];
+const FALLBACK_ORDER: APIProvider[] = ["groq", "gemini", "together", "sambanova", "glhf", "deepseek", "openrouter", "huggingface", "custom"];
 
 function generateId() {
   return Math.random().toString(36).substring(2, 15);
@@ -141,6 +141,12 @@ export function useChat() {
   useEffect(() => { localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); }, [settings]);
   useEffect(() => { localStorage.setItem(USAGE_KEY, JSON.stringify(usage)); }, [usage]);
 
+  // ── Refs for stable access to state in async functions ─────────────────
+  const sessionsRef = useRef(sessions);
+  const settingsRef = useRef(settings);
+  useEffect(() => { sessionsRef.current = sessions; }, [sessions]);
+  useEffect(() => { settingsRef.current = settings; }, [settings]);
+
   const currentSession = sessions.find((s) => s.id === activeSessionId) || sessions[0] || {
     id: "default",
     title: "New Project",
@@ -151,29 +157,45 @@ export function useChat() {
   const sendMessage = useCallback(async (content: string, isHidden: boolean = false) => {
     if (isGenerating && !isHidden) return;
 
-    const sessionId = activeSessionId;
-    const freshSession = sessions.find(s => s.id === sessionId);
-    const messageHistory = freshSession ? [...freshSession.messages] : [];
-
     const userMsg: ChatMessage = { id: generateId(), role: "user", content, timestamp: Date.now(), isHidden };
     const assistantMsg: ChatMessage = { id: generateId(), role: "assistant", content: "", timestamp: Date.now(), isStreaming: true };
 
-    setSessions(prev => prev.map(s => s.id === sessionId ? {
-      ...s,
-      messages: [...s.messages, userMsg, assistantMsg],
-      updatedAt: Date.now(),
-      title: s.title === "New Chat" ? content.slice(0, 30) : s.title
-    } : s));
+    let sessionId = activeSessionId;
+    // Safety check: ensure we have a valid session and add messages atomically
+    if (!sessionId || !sessionsRef.current.find(s => s.id === sessionId)) {
+      const newId = generateId();
+      const newSession: ChatSession = {
+        id: newId,
+        title: content.slice(0, 30),
+        messages: [userMsg, assistantMsg],
+        createdAt: Date.now(),
+        updatedAt: Date.now()
+      };
+      setSessions(prev => [newSession, ...prev]);
+      setActiveSessionId(newId);
+      sessionId = newId;
+    } else {
+      setSessions(prev => prev.map(s => s.id === sessionId ? {
+        ...s,
+        messages: [...s.messages, userMsg, assistantMsg],
+        updatedAt: Date.now(),
+        title: s.title === "New Chat" ? content.slice(0, 30) : s.title
+      } : s));
+    }
+
+    const currentSessions = sessionsRef.current;
+    const freshSession = currentSessions.find(s => s.id === sessionId);
+    const messageHistory = freshSession ? [...freshSession.messages] : [];
 
     setIsGenerating(true);
     
-    // Add 60s timeout to prevent infinite hangs if network drops silently (e.g. iOS WebView backgrounding)
     const controller = new AbortController();
     abortControllerRef.current = controller;
     const timeoutId = setTimeout(() => controller.abort(), 60000);
 
+    const currentSettings = settingsRef.current;
+
     try {
-      // Ensure orchestrator exists
       if (!orchestratorRef.current) {
           orchestratorRef.current = new GameFlowOrchestratorV2("user-1", sessionId);
       }
@@ -182,14 +204,14 @@ export function useChat() {
     let success = false;
     let lastError = "";
     
-    const providersToTry = settings.autoFailover 
-      ? [settings.primaryProvider, ...FALLBACK_ORDER.filter(p => p !== settings.primaryProvider)]
-      : [settings.primaryProvider];
+    const providersToTry = currentSettings.autoFailover 
+      ? [currentSettings.primaryProvider, ...FALLBACK_ORDER.filter(p => p !== currentSettings.primaryProvider)]
+      : [currentSettings.primaryProvider];
 
     for (const provider of providersToTry) {
       if (success) break;
       
-      const apiKey = settings.keys[provider];
+      const apiKey = currentSettings.keys[provider];
       if (!apiKey) continue;
 
       const status = pool.getStatus(provider);
@@ -198,10 +220,8 @@ export function useChat() {
       try {
         console.log(`[Orchestrator] Attempting with ${provider}...`);
         
-        // Dynamically build the smart prompt based on the current interview state
         const currentAnswers = orchestrator.getSession().answers || {};
         const isComplete = orchestrator.isInterviewComplete();
-        const progress = orchestrator.getInterviewProgress();
         
         const requiredFields = ['genre', 'mechanics', 'visuals', 'audience', 'story', 'progression', 'special_features'];
         const missingFields = requiredFields.filter(f => !(currentAnswers as any)[f]);
@@ -216,9 +236,7 @@ export function useChat() {
           progression: "Прогрессия (что открывается или улучшается)",
           special_features: "Уникальные фишки (что делает игру особенной)"
         };
-        const nextFieldRu = nextField ? FIELD_NAMES[nextField] : "";
 
-        // ── Build Self-Correction suffix if previous pipeline failed ─────────────────────────────
         let selfCorrectionContext = "";
         if (lastFailedPipelineRef.current && isComplete) {
           const pr = lastFailedPipelineRef.current;
@@ -237,10 +255,9 @@ ${[...failedGates, ...critErrors].join('\n')}
 Генерируй полностью новый код, устраняя все вышеуказанные проблемы.`;
           }
         }
-        // ────────────────────────────────────────────────────────────────────────────────
 
         const SMART_SYSTEM_PROMPT = `Ты — Элитный Геймдизайнер и Frontend-разработчик SmolGame.
-Твоя цель — помочь пользователю создать хитовую веб-игру (мини-игру). Игры для SmolGame должны работать в браузере (Touch управление, только Portrait ориентация).
+Твоя цель — помочь пользователю создать хитовую веб-игру (мини-игру). 
 
 ${isComplete ? `
 ИНТЕРВЬЮ ЗАВЕРШЕНО (7/7 собрано).
@@ -248,23 +265,25 @@ ${isComplete ? `
 ${JSON.stringify(currentAnswers, null, 2)}
 
 ТВОЯ ЗАДАЧА:
-Напиши полный рабочий код игры внутри тегов <game_prototype>...</game_prototype>.
-ВАЖНО: Код должен быть СТРОГО в формате HTML + встроенный JS + CSS (один файл, начинающийся с <!DOCTYPE html>).
-КРИТИЧЕСКОЕ ПРАВИЛО: НИКАКОГО PYTHON, PYGAME ИЛИ C++! Только чистый веб! Игра должна открываться и работать в мобильном браузере.
+Сгенерируй финальный код игры в тегах <game_prototype>...</game_prototype>.
+Игра должна быть на HTML5 (Canvas или чистый DOM), упакованная в ОДИН ФАЙЛ.
+Весь JS и CSS должен быть внутри HTML. Используй качественные ассеты (картинки, звуки) через CDN.
+${selfCorrectionContext}
 ` : `
-Мы находимся на этапе сбора идей (Собрано ${progress.filled}/7 параметров).
-Уже собрано:
-${JSON.stringify(currentAnswers, null, 2)}
+ИНТЕРВЬЮ В ПРОЦЕССЕ.
+Текущие ответы: ${JSON.stringify(currentAnswers)}
+Тебе нужно спросить пользователя про: ${nextField ? FIELD_NAMES[nextField] : "другие детали"}.
 
-Твоя задача на сейчас — узнать у пользователя ТОЛЬКО ОДИН недостающий параметр: "${nextFieldRu}".
+ТВОЯ ЗАДАЧА:
+1. Кратко прокомментируй текущие идеи пользователя.
+2. Задай ОДИН четкий вопрос про ${nextField ? FIELD_NAMES[nextField] : "следующий этап"}.
+Никогда не генерируй код игры, пока интервью не завершено!
+`}
 
-КРИТИЧЕСКИЕ ПРАВИЛА ИНТЕРВЬЮ:
-1. Задай РОВНО ОДИН короткий вопрос про параметр "${nextFieldRu}".
-2. КАТЕГОРИЧЕСКИ ЗАПРЕЩАЕТСЯ выводить список всех параметров! Спрашивай только про тот, что указан выше.
-3. Если пользователь только что ответил на твой предыдущий вопрос, выдели суть его ответа в формате JSON внутри тега <game_spec>.
-Пример: <game_spec>{"${nextField}": "выжимка ответа пользователя"}</game_spec>
-`}${selfCorrectionContext}
-`;
+ОБЯЗАТЕЛЬНО:
+- Твой ответ должен быть на РУССКОМ языке.
+- Используй Markdown для оформления.
+- Если ты хочешь обновить спецификацию игры на основе ответа пользователя, добавь в конце сообщения JSON в тегах <game_spec>{"genre": "...", ...}</game_spec>.`;
 
         const messagesForAI = [
           { role: "system" as const, content: SMART_SYSTEM_PROMPT },
@@ -275,8 +294,8 @@ ${JSON.stringify(currentAnswers, null, 2)}
         const stream = generateStream(messagesForAI, {
           provider,
           apiKey,
-          model: settings.models[provider] || "",
-          baseUrl: settings.customBaseUrl
+          model: currentSettings.models[provider] || "",
+          baseUrl: currentSettings.customBaseUrl
         }, controller.signal);
 
         let fullContent = "";
@@ -290,18 +309,8 @@ ${JSON.stringify(currentAnswers, null, 2)}
         for await (const chunk of stream) {
           fullContent += chunk;
           
-          // STRICT RUNTIME INTERCEPTOR: Prevent rogue code generation during interview
           if (!isComplete && fullContent.includes("<game_prototype>")) {
             fullContent = fullContent.replace(/<game_prototype>[\s\S]*?(?:<\/game_prototype>|$)/g, "\n[СИСТЕМА: Попытка сгенерировать код заблокирована. Сначала нужно завершить интервью.]\n");
-          }
-
-          // Dynamic status updates based on what the LLM is currently outputting
-          if (fullContent.includes("<thought>") && !fullContent.includes("</thought>")) {
-            setGenerationStep("Анализирую недостающие параметры...");
-          } else if (fullContent.includes("<game_prototype>") && !fullContent.includes("</game_prototype>")) {
-            setGenerationStep("Пишу код (HTML, JS, CSS)...");
-          } else if (fullContent.includes("</thought>")) {
-            setGenerationStep(isComplete ? "Формирую структуру..." : "Формулирую вопрос...");
           }
 
           setSessions(prev => prev.map(s => s.id === sessionId ? {
@@ -343,14 +352,17 @@ ${JSON.stringify(currentAnswers, null, 2)}
             
             setSessions(prev => prev.map(s => s.id === sessionId ? {
               ...s,
-              messages: s.messages.map(m => m.id === assistantMsg.id ? { ...m, pipelineResult: result, status: "Готово" } : m)
+              messages: s.messages.map(m => m.id === assistantMsg.id ? {
+                ...m,
+                pipelineResult: result
+              } : m)
             } : s));
-            
+
             setIsPipelineRunning(false);
             setGenerationStep("");
 
-            // ── Store result for Self-Correction Loop ──────────────────────────
-            if (result.isPublishable) {
+            // ── Success Gates handling ───────────────────────────────
+            if (result.finalScore >= 70) {
               lastFailedPipelineRef.current = null; // Success — clear previous errors
             } else {
               lastFailedPipelineRef.current = result; // Store for next attempt
@@ -364,7 +376,6 @@ ${JSON.stringify(currentAnswers, null, 2)}
               const isGithubConnected = (window as any).__smolAuthUser?.isGithubConnected;
               
               if (isGithubConnected) {
-                // Пользователь уже авторизован — деплоим сразу
                 setIsAutoDeploying(true);
                 setGenerationStep("Автоматическая публикация в GitHub...");
                 try {
@@ -390,19 +401,16 @@ ${JSON.stringify(currentAnswers, null, 2)}
                   setGenerationStep("");
                 }
               } else {
-                // Не авторизован — сохраняем игру в localStorage, чтобы подобрать после OAuth
                 SmolGameAPI.savePendingGame({ htmlCode: result.generatedCode, title: gameTitle });
               }
             }
-            // ─────────────────────────────────────────────────────────────
           }
         }
-
 
       } catch (e: any) {
         if (e.name === 'AbortError') {
           lastError = "Превышено время ожидания или запрос отменён (Timeout/Abort).";
-          break; // Exit provider loop on abort
+          break;
         }
         console.error(`[Orchestrator] ${provider} failed:`, e.message);
         lastError = e.message;
@@ -410,9 +418,8 @@ ${JSON.stringify(currentAnswers, null, 2)}
     }
 
     if (!success) {
-      // Build a helpful error message showing all provider statuses
-      const allProviders = [...new Set([settings.primaryProvider, ...FALLBACK_ORDER])];
-      const configuredProviders = allProviders.filter(p => settings.keys[p]);
+      const allProviders = [...new Set([currentSettings.primaryProvider, ...FALLBACK_ORDER])];
+      const configuredProviders = allProviders.filter(p => currentSettings.keys[p]);
       const statusSummary = configuredProviders.length > 0
         ? pool.getSummary(configuredProviders)
         : 'Нет настроенных провайдеров. Добавь API ключи в настройках.';
