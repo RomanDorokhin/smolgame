@@ -1138,24 +1138,26 @@ export async function deleteGame(req, env, gameId) {
     }
   }
 
-  // Удаляем всё атомарно через batch: сначала все связанные записи, потом саму игру.
-  // user_game_plays и game_reviews могут отсутствовать в старых схемах — удаляем отдельно.
+  // Удаляем связанные записи из опциональных таблиц тихо (могут не существовать в старых схемах).
+  // Это нужно сделать ДО основного batch, т.к. D1 batch не поддерживает частичные ошибки.
+  for (const sql of [
+    `DELETE FROM game_reviews WHERE game_id = ?`,
+    `DELETE FROM user_game_plays WHERE game_id = ?`,
+    `DELETE FROM activity WHERE game_id = ?`,
+  ]) {
+    try {
+      await env.DB.prepare(sql).bind(gameId).run();
+    } catch (e) {
+      if (!isMissingTableError(e)) throw e;
+    }
+  }
+
+  // Атомарно удаляем записи из гарантированно существующих таблиц и саму игру.
   await env.DB.batch([
     env.DB.prepare(`DELETE FROM likes WHERE game_id = ?`).bind(gameId),
     env.DB.prepare(`DELETE FROM bookmarks WHERE game_id = ?`).bind(gameId),
     env.DB.prepare(`DELETE FROM games WHERE id = ?`).bind(gameId),
   ]);
-  // Таблицы без гарантированного существования — чистим тихо.
-  try {
-    await env.DB.prepare(`DELETE FROM user_game_plays WHERE game_id = ?`).bind(gameId).run();
-  } catch (e) {
-    if (!isMissingTableError(e)) throw e;
-  }
-  try {
-    await env.DB.prepare(`DELETE FROM game_reviews WHERE game_id = ?`).bind(gameId).run();
-  } catch (e) {
-    if (!isMissingTableError(e)) throw e;
-  }
   return json({
     ok: true,
     githubDeleted,
