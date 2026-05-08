@@ -376,27 +376,31 @@ export function useGameAgent(settings: ChatSettings) {
         }
 
         // --- ШАГ 3: Авто-исправление (на основе критики) ---
-        if (score < 80 && pipeline.nextSteps && pipeline.nextSteps.length > 0) {
-          setStep("🔧 Авто-исправление...");
+        let attempts = 0;
+        const maxAttempts = 2;
+
+        while (score < 80 && attempts < maxAttempts && pipeline.nextSteps && pipeline.nextSteps.length > 0) {
+          attempts++;
+          setStep(`🔧 Авто-исправление (попытка ${attempts}/${maxAttempts})...`);
+          
           updateMessage(assistantId, {
-            content: (beforeTag ? beforeTag + "\n\n" : "") + `⚠️ **Качество: ${score}/100**. Исправляю замечания...`,
+            content: (beforeTag ? beforeTag + "\n\n" : "") + `⚠️ **Качество: ${score}/100**. Исправляю замечания (${attempts}/${maxAttempts})...`,
             isStreaming: true,
           });
 
           const fixMsgs = [
             { 
               role: "system" as const, 
-              content: ENGINEER_PROMPT + `\n\nCRITICAL FAILURE: YOUR PREVIOUS ATTEMPT FAILED THE QUALITY GATE (Score: ${score}/100).\n\nFIX THESE SPECIFIC ISSUES OR THE USER WILL REJECT THE WORK:\n${pipeline.nextSteps.join("\n")}\n\nREASONING FOR FIX: Explain how you will fix the Portrait Orientation or Demo Mode specifically in your <thought> block.\n\nEXISTING CODE TO FIX:\n${rawCode}` 
+              content: ENGINEER_PROMPT + `\n\nCRITICAL FAILURE: YOUR PREVIOUS CODE FAILED QUALITY GATE (Score: ${score}/100).\n\nFIX THESE SPECIFIC ISSUES:\n${pipeline.nextSteps.join("\n")}\n\nEXISTING CODE:\n${finalCode}` 
             },
-            { role: "user" as const, content: `REPAIR THE CODE. Ensure it is PORTRAIT-ONLY and has a WORKING DEMO/ANIMATED PREVIEW. Return the COMPLETE fixed HTML.` },
+            { role: "user" as const, content: `REPAIR THE CODE. Return the COMPLETE fixed HTML in <game_spec> tags. NO PLACEHOLDERS.` },
           ];
 
           const { text: fixedResponse } = await streamWithFallback(
             fixMsgs,
             (_chunk, full) => {
-              const chars = full.length;
               updateMessage(assistantId, {
-                content: (beforeTag ? beforeTag + "\n\n" : "") + `🔧 Авто-исправление... (${chars} симв.)`,
+                content: (beforeTag ? beforeTag + "\n\n" : "") + `🔧 Исправляю... (${full.length} симв.)`,
                 isStreaming: true,
               });
             },
@@ -412,6 +416,16 @@ export function useGameAgent(settings: ChatSettings) {
             // Перепроверяем финальный вариант
             pipeline = await runGamePipeline("agent-game", finalCode);
             score = pipeline.finalScore;
+            
+            // Снова спрашиваем критика (опционально, но для скора полезно)
+            const { text: reCritique } = await streamWithFallback([
+              { role: "system", content: "Rate this code 0-100. Return JSON: {\"realScore\": number}" },
+              { role: "user", content: finalCode }
+            ], () => {}, signal, usedProvider);
+            try {
+              const r = JSON.parse(reCritique.match(/\{[\s\S]*\}/)?.[0] || "{}");
+              if (r.realScore) score = r.realScore;
+            } catch(e) {}
           }
         }
 
@@ -435,7 +449,13 @@ export function useGameAgent(settings: ChatSettings) {
       // ══════════════════════════════════════════
       
       // Проверяем авторизацию перед публикацией
-      const isAuth = !!(window as any).__smolAuthUser?.isGithubConnected;
+      let isAuth = false;
+      try {
+        const me = await SmolGameAPI.getMe();
+        isAuth = !!me.isGithubConnected;
+      } catch (e) {
+        isAuth = false;
+      }
 
       if (!isAuth) {
         updateMessage(assistantId, {
