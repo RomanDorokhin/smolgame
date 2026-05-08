@@ -6,12 +6,12 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
   pages: write
   id-token: write
 
 jobs:
-  deploy-frontend:
+  build-frontend:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -29,23 +29,36 @@ jobs:
           npm install
           npm run build
 
-      - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v3
+      - name: Prepare Artifact
+        run: |
+          mkdir dist
+          # Copy root site files
+          cp index.html styles.css js -r assets -r dist/ || true
+          # Copy agent build (which is in agent-v3 folder)
+          cp agent-v3 dist/ -r || true
+          # Clean up source folders from dist just in case
+          rm -rf dist/agent dist/backend dist/OpenGame
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./
-          publish_branch: gh-pages
-          force_orphan: true
-          user_name: 'github-actions[bot]'
-          user_email: 'github-actions[bot]@users.noreply.github.com'
-          exclude_assets: '.git,.github,agent,backend,OpenGame'
+          path: ./dist
+
+  deploy-frontend:
+    needs: build-frontend
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
 
   deploy-backend:
     runs-on: ubuntu-latest
-    needs: deploy-frontend # Ensure frontend is deployed (optional, but keeps things orderly)
     steps:
       - uses: actions/checkout@v4
-
       - name: Deploy Cloudflare Worker
         uses: cloudflare/wrangler-action@v3
         with:
