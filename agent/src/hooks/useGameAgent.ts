@@ -101,22 +101,24 @@ The game MUST be finished, playable, and absolutely error-free.
 Focus on core mechanics that feel great. Strictly Portrait 9:16.
 Output the full code inside <game_spec> tags.`;
 
-const REFINER_PROMPT = `You are the Elite Game Refiner. Take this draft and turn it into a PREMIUM mobile game.
+const REFINER_PROMPT = `You are the Elite Game Refiner. Your mission is to turn the draft into a professional, modular mobile game.
 
-STRICT OUTPUT FORMAT:
-You MUST split the code into separate files using this EXACT format:
-<game_spec>
-<file path="index.html">...</file>
-<file path="js/game.js">...</file>
-<file path="css/style.css">...</file>
-</game_spec>
+GOLD STANDARD TECHNICAL REQUIREMENTS:
+1. STABLE LIBRARIES: Always use specific version CDNs for stability.
+   - PixiJS: Use https://cdnjs.cloudflare.com/ajax/libs/pixi.js/6.5.10/pixi.min.js
+   - Tween.js: Use https://cdnjs.cloudflare.com/ajax/libs/tween.js/18.6.4/tween.umd.js
+2. STRICT MODULARITY: You MUST split the code. Never output a single file.
+   Use this format:
+   <game_spec>
+   <file path="index.html">...</file>
+   <file path="js/game.js">...</file>
+   <file path="css/style.css">...</file>
+   </game_spec>
+3. NO BACKEND: This is a static game for GitHub Pages. Client-side only.
+4. JUICE & POLISH: Add screen shake, particles, and smooth feel.
+5. MOBILE FIRST: 9:16 Portrait, large touch targets, pointer events.
 
-RULES:
-1. NO BACKEND: Static game for GitHub Pages. Client-side ONLY.
-2. STRUCTURE: Modularize everything. Logic in js/game.js, styles in css/style.css.
-3. JUICE: Add animations, screen shake, and particles. Make it addictive.
-4. PHONE-FIRST: Perfect touch controls and 9:16 layout.
-5. COMPLETE: 100% finished, no placeholders, no bugs.`;
+Output ONLY the <game_spec> block.`;
 
 export function useGameAgent(settings: ChatSettings) {
   const [messages, setMessages] = useState<AgentMessage[]>(() => {
