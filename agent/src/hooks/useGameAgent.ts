@@ -92,12 +92,12 @@ export function useGameAgent(settings: ChatSettings) {
   const [isRunning, setIsRunning] = useState(false);
   const [step, setStep] = useState("");
   const abortRef = useRef<AbortController | null>(null);
-  const chatHistory = useRef<{ role: "user" | "assistant" | "system"; content: string }[]>(() => {
+  const chatHistory = useRef<{ role: "user" | "assistant" | "system"; content: string }[]>((() => {
     try {
       const saved = localStorage.getItem("smol_agent_history_v1");
       return saved ? JSON.parse(saved) : [];
     } catch { return []; }
-  }());
+  })());
 
   // Save to localStorage on change
   useEffect(() => {
