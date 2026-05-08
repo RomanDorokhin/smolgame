@@ -341,6 +341,15 @@ export default function Home() {
                                   <Pencil size={14} className="mr-2" /> Править
                                 </Button>
                                 <Button
+                                  className="flex-1 bg-purple-600/10 hover:bg-purple-600/20 text-purple-400 text-[10px] font-black uppercase tracking-widest h-10 rounded-xl border border-purple-500/10"
+                                  onClick={() => {
+                                    setActiveTab("chat");
+                                    sendMessage(`Улучши игру "${game.title}". Добавь в неё 'Сок' (Juice): частицы, спецэффекты, систему очков, уровни сложности и сделай геймплей более глубоким и интересным. Отполируй визуальную часть и управление.`);
+                                  }}
+                                >
+                                  <Sparkles size={14} className="mr-2" /> Улучшить
+                                </Button>
+                                <Button
                                   variant="ghost"
                                   className="w-10 h-10 p-0 shrink-0 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-xl border border-red-500/10"
                                   onClick={async () => {

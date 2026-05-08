@@ -250,8 +250,29 @@ export async function publishGameToGithub(req, env) {
     probeOk = false;
   }
 
+  const gameId = newId();
+  try {
+    // Record the game in our database so it's linked to the user
+    await env.DB.prepare(
+      `INSERT INTO games (id, title, description, genre, genre_emoji, url, author_id, status)
+       VALUES (?, ?, ?, ?, ?, ?, ?, 'published')`
+    ).bind(
+      gameId, 
+      rawTitle, 
+      rawDesc, 
+      body.genre || 'AI Prototype', 
+      body.genreEmoji || '✨', 
+      pagesUrl, 
+      user.id
+    ).run();
+  } catch (dbErr) {
+    console.error('[publish] DB insert failed:', dbErr);
+    // We don't return error here because the repo was already created successfully
+  }
+
   return json({
     ok: true,
+    id: gameId,
     repo: fullName,
     pagesUrl,
     pagesReady: probeOk,
