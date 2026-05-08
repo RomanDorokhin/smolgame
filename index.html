@@ -556,27 +556,45 @@
 <div id="toast"></div>
 
 <!-- ══ SCRIPTS ══ -->
-<!-- Порядок важен: config/utils/telegram → state → api → модули логики → события → main. -->
-<script src="js/config.js?v=20000"></script>
-<script src="js/genre-icons.js?v=20000"></script>
-<script src="js/utils.js?v=20000"></script>
-<script src="js/i18n.js?v=20000"></script>
-<script src="js/telegram.js?v=20000"></script>
-<script src="js/telegram-initdata.js?v=20000"></script>
-<script src="js/tg-gate.js?v=20000"></script>
-<script src="js/boot-splash.js?v=20000"></script>
-<script src="js/state.js?v=20000"></script>
-<script src="js/api.js?v=20000"></script>
-<script src="js/onboarding.js?v=20000" hidden></script>
-<script src="js/help-screens.js?v=20000"></script>
-<script src="js/feed.js?v=20000"></script>
-<script src="js/feed-nav-tip.js?v=20000"></script>
-<script src="js/feed-onboarding.js?v=20000"></script>
-<script src="js/actions.js?v=20000"></script>
-<script src="js/upload.js?v=20000"></script>
-<script src="js/genres.js?v=20000"></script>
-<script src="js/search.js?v=20000"></script>
-<script src="js/screens.js?v=20000"></script>
+<!-- Порядок важен: Core (config/utils/telegram → state → api) → Features → UI → Modules → Main. -->
+
+<!-- CORE -->
+<script src="js/core/config.js?v=21000"></script>
+<script src="js/features/genres/genre-icons.js?v=21000"></script>
+<script src="js/core/utils.js?v=21000"></script>
+<script src="js/core/i18n.js?v=21000"></script>
+<script src="js/core/telegram.js?v=21000"></script>
+<script src="js/core/telegram-initdata.js?v=21000"></script>
+<script src="js/core/tg-gate.js?v=21000"></script>
+<script src="js/ui/boot-splash.js?v=21000"></script>
+<script src="js/core/state.js?v=21000"></script>
+<script src="js/core/api.js?v=21000"></script>
+
+<!-- UI & COMMON -->
+<script src="js/ui/onboarding.js?v=21000" hidden></script>
+<script src="js/ui/help-screens.js?v=21000"></script>
+<script src="js/ui/screens.js?v=21000"></script>
+<script src="js/ui/overlay-pull-close.js?v=21000"></script>
+
+<!-- FEATURES -->
+<script src="js/features/feed/feed.js?v=21000"></script>
+<script src="js/features/feed/feed-nav-tip.js?v=21000"></script>
+<script src="js/features/feed/feed-onboarding.js?v=21000"></script>
+<script src="js/features/upload/upload.js?v=21000"></script>
+<script src="js/features/genres/genres.js?v=21000"></script>
+<script src="js/features/search/search.js?v=21000"></script>
+<script src="js/ui/liked-games.js?v=21000"></script>
+<script src="js/ui/game-detail.js?v=21000"></script>
+<script src="js/ui/game-editor.js?v=21000"></script>
+<script src="js/features/activity/activity.js?v=21000"></script>
+<script src="js/features/profile/profile.js?v=21000"></script>
+<script src="js/features/admin/admin.js?v=21000"></script>
+
+<!-- MODULES & EVENTS -->
+<script src="js/modules/actions.js?v=21000"></script>
+<script src="js/modules/events.js?v=21000"></script>
+
+<!-- MAIN -->
 <script>
 /** ══════════════════════════════════════════════════════════
  *  EXTENDED LOGIC (Auto-registration & Onboarding)
@@ -611,16 +629,7 @@
   };
 })();
 </script>
-
-<script src="js/liked-games.js?v=20000"></script>
-<script src="js/game-detail.js?v=20000"></script>
-<script src="js/game-editor.js?v=20000"></script>
-<script src="js/activity.js?v=20000"></script>
-<script src="js/profile_new.js?v=20000"></script>
-<script src="js/admin.js?v=20000"></script>
-<script src="js/events.js?v=20000"></script>
-<script src="js/overlay-pull-close.js?v=20000"></script>
-<script src="js/main.js?v=20000"></script>
+<script src="js/main.js?v=21000"></script>
 <!-- Agent script is injected lazily when the Create tab is first opened (see screens.js) -->
 </body>
 </html>

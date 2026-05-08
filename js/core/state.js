@@ -1,3 +1,13 @@
+/**
+ * core/state.js
+ * 
+ * Глобальное состояние приложения и пользователя.
+ * Инициализирует объект USER, управляет темами (светлая/темная) 
+ * и ключами localStorage для кэширования.
+ * 
+ * Зависимости: Telegram WebApp API
+ */
+
 let tgUser = null;
 try { tgUser = Telegram?.WebApp?.initDataUnsafe?.user; } catch (e) {}
 

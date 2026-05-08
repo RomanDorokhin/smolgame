@@ -1,3 +1,13 @@
+/**
+ * ui/screens.js
+ * 
+ * Менеджер экранов и навигации.
+ * Отвечает за переключение между Лентой, Профилем и Созданием игр.
+ * Управляет видимостью слоев, блокировкой скролла и ленивой загрузкой Агента.
+ * 
+ * Зависимости: state.js, events.js
+ */
+
 function setBottomNavActive(tab) {
   document.querySelectorAll('#bottom-nav .nav-item').forEach(n => n.classList.remove('active'));
   document.getElementById('nav-' + tab)?.classList.add('active');
