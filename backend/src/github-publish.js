@@ -260,3 +260,92 @@ export async function publishGameToGithub(req, env) {
       : 'Репозиторий и файлы на месте. Pages могут открыться через 1–3 минуты — обнови ссылку.',
   });
 }
+
+/**
+ * GET /api/github/get-file?repo=...&path=index.html
+ * Fetches content of a file from a repository.
+ */
+export async function getGameFileFromGithub(req, env) {
+  const user = await authenticate(req, env);
+  if (!user) return error('unauthorized', 401);
+
+  const url = new URL(req.url);
+  const repo = url.searchParams.get('repo'); // e.g. "owner/repo"
+  const path = url.searchParams.get('path') || 'index.html';
+
+  if (!repo) return error('repo query param is required');
+
+  // Use global token if available, else user's token
+  let token = env.COMMITS_GITHUB_TOKEN;
+  if (!token) {
+    const row = await env.DB.prepare(`SELECT github_access_token_enc AS enc FROM users WHERE id = ?`).bind(user.id).first();
+    if (row?.enc) {
+      const secret = githubClientSecret(env);
+      token = await decryptGithubToken(String(row.enc), secret);
+    }
+  }
+
+  if (!token) return error('GitHub token not found', 403);
+
+  const res = await ghJson(`https://api.github.com/repos/${repo}/contents/${encodeURIComponent(path)}`, { method: 'GET' }, token);
+  if (!res.ok) return error(res.data?.message || 'file not found', res.status);
+
+  // GitHub returns base64
+  const content = res.data.content ? atob(res.data.content.replace(/\s/g, '')) : '';
+  const utf8Content = decodeURIComponent(escape(content)); // Correctly handle UTF-8
+
+  return json({
+    path: res.data.path,
+    sha: res.data.sha,
+    content: utf8Content
+  });
+}
+
+/**
+ * POST /api/github/update-file
+ * body: { repo, path, content, sha, message }
+ * Updates a file in an existing repository.
+ */
+export async function updateGameFileOnGithub(req, env) {
+  const user = await authenticate(req, env);
+  if (!user) return error('unauthorized', 401);
+
+  let body;
+  try { body = await req.json(); } catch (e) { return error('invalid json'); }
+
+  const { repo, path, content, sha, message } = body;
+  if (!repo || !path || !content) return error('repo, path, content are required');
+
+  let token = env.COMMITS_GITHUB_TOKEN;
+  if (!token) {
+    const row = await env.DB.prepare(`SELECT github_access_token_enc AS enc FROM users WHERE id = ?`).bind(user.id).first();
+    if (row?.enc) {
+      const secret = githubClientSecret(env);
+      token = await decryptGithubToken(String(row.enc), secret);
+    }
+  }
+
+  if (!token) return error('GitHub token not found', 403);
+
+  const b64 = utf8ToBase64(content);
+  const put = await ghJson(
+    `https://api.github.com/repos/${repo}/contents/${encodeURIComponent(path)}`,
+    {
+      method: 'PUT',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        message: message || `Update ${path}`,
+        content: b64,
+        sha: sha, // Required for updates
+        branch: 'main',
+      }),
+    },
+    token
+  );
+
+  if (!put.ok) {
+    return error(put.data?.message || 'update failed', put.status);
+  }
+
+  return json({ ok: true, sha: put.data?.content?.sha });
+}

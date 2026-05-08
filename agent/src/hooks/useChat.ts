@@ -12,6 +12,7 @@ import { GameFlowOrchestratorV2 } from "../lib/core/gameFlowOrchestratorV2";
 import { generateStream, pool, DEFAULT_MODELS, fetchAvailableModels } from "../lib/llm-api";
 import { SmolGameAPI } from "../lib/smolgame-api";
 import type { PipelineResult } from "../lib/core/gameGenerationPipelinePro";
+import { parseAiderBlocks, applyAiderBlocks, AIDER_EDITOR_PROMPT } from "../lib/aider-utils";
 
 const SESSIONS_KEY = "smol_chat_sessions_v3";
 const ACTIVE_SESSION_KEY = "smol_active_session_id_v3";
@@ -441,7 +442,9 @@ ${feedback}
       } : s));
     }
 
-    const messageHistory = [...(sessionsRef.current.find(s => s.id === sessionId)?.messages || []), userMsg];
+    const session = sessionsRef.current.find(s => s.id === sessionId);
+    const messageHistory = [...(session?.messages || []), userMsg];
+    const isEditMode = !!session?.editTarget;
 
     // Reset pool status for manual retries
     FALLBACK_ORDER.forEach(p => pool.reset(p));
@@ -452,34 +455,40 @@ ${feedback}
     const timeoutId = setTimeout(() => controller.abort(), 180000); // 3 minutes
 
     try {
-      if (!orchestratorRef.current) orchestratorRef.current = new GameFlowOrchestratorV2("user-1", sessionId);
-      const orchestrator = orchestratorRef.current;
-      const currentAnswers = orchestrator.getSession().answers || {};
-      const isComplete = orchestrator.isInterviewComplete();
-      
-      const FIELD_NAMES: Record<string, string> = { genre: "Жанр", mechanics: "Механика", visuals: "Визуал", audience: "Аудитория", story: "Сюжет", progression: "Прогрессия", special_features: "Фишки" };
-      const missingFields = ['genre', 'mechanics', 'visuals', 'audience', 'story', 'progression', 'special_features'].filter(f => !(currentAnswers as any)[f]);
-      const nextField = missingFields[0];
+      let systemPrompt = "";
 
-      const QUALITY_CRITERIA = `
-1. TECHNICAL: Single HTML file, no backend, works in iframe, touch-first, portrait only, no system dialogs.
-2. GAMEPLAY: Instant action, honest game over, balanced, no bugs, replayability.
-3. UX: Tap zones 44px+, font 16px+, sound after tap, smooth performance.
-4. VISUAL: Own style, Russian/Visual-only, no violence.
-5. DEMO: Mandatory ?demo=1, real gameplay, loopable.`;
+      if (isEditMode && session?.editTarget) {
+        systemPrompt = AIDER_EDITOR_PROMPT + `\n\nCURRENT FILE CONTENT (${session.editTarget.path}):\n\`\`\`html\n${session.editTarget.currentCode}\n\`\`\``;
+      } else {
+        if (!orchestratorRef.current) orchestratorRef.current = new GameFlowOrchestratorV2("user-1", sessionId);
+        const orchestrator = orchestratorRef.current;
+        const currentAnswers = orchestrator.getSession().answers || {};
+        const isComplete = orchestrator.isInterviewComplete();
+        
+        const FIELD_NAMES: Record<string, string> = { genre: "Жанр", mechanics: "Механика", visuals: "Визуал", audience: "Аудитория", story: "Сюжет", progression: "Прогрессия", special_features: "Фишки" };
+        const missingFields = ['genre', 'mechanics', 'visuals', 'audience', 'story', 'progression', 'special_features'].filter(f => !(currentAnswers as any)[f]);
+        const nextField = missingFields[0];
 
-      const SMART_SYSTEM_PROMPT = `Ты — Элитный Геймдизайнер SmolGame. Твоя задача — собрать требования.
+        const QUALITY_CRITERIA = `
+  1. TECHNICAL: Single HTML file, no backend, works in iframe, touch-first, portrait only, no system dialogs.
+  2. GAMEPLAY: Instant action, honest game over, balanced, no bugs, replayability.
+  3. UX: Tap zones 44px+, font 16px+, sound after tap, smooth performance.
+  4. VISUAL: Own style, Russian/Visual-only, no violence.
+  5. DEMO: Mandatory ?demo=1, real gameplay, loopable.`;
 
-ПРАВИЛА:
-1. Задавай ТОЛЬКО ОДИН уточняющий вопрос.
-2. Когда всё ясно (у тебя есть жанр, механика и визуал) — выводи <opengame_prompt> со всеми деталями.
-3. ИСПОЛЬЗУЙ ТОЛЬКО XML ТЕГИ <opengame_prompt>...</opengame_prompt>. НИКАКИХ СЛЕШЕЙ ТИПА /opengame_prompt.
-4. ПОСЛЕ ВЫВОДА ТЕГА <opengame_prompt> ТЫ ДОЛЖЕН НЕМЕДЛЕННО ЗАМОЛЧАТЬ. Никакого текста после тега.
-5. НИКОГДА не пытайся играть в игру в чате. Ты — интервьюер, а не движок.
+        systemPrompt = `Ты — Элитный Геймдизайнер SmolGame. Твоя задача — собрать требования.
 
-ВНУТРИ <opengame_prompt> ОБЯЗАТЕЛЬНО ВКЛЮЧИ: ${QUALITY_CRITERIA}
+  ПРАВИЛА:
+  1. Задавай ТОЛЬКО ОДИН уточняющий вопрос.
+  2. Когда всё ясно (у тебя есть жанр, механика и визуал) — выводи <opengame_prompt> со всеми деталями.
+  3. ИСПОЛЬЗУЙ ТОЛЬКО XML ТЕГИ <opengame_prompt>...</opengame_prompt>. НИКАКИХ СЛЕШЕЙ ТИПА /opengame_prompt.
+  4. ПОСЛЕ ВЫВОДА ТЕГА <opengame_prompt> ТЫ ДОЛЖЕН НЕМЕДЛЕННО ЗАМОЛЧАТЬ. Никакого текста после тега.
+  5. НИКОГДА не пытайся играть в игру в чате. Ты — интервьюер, а не движок.
 
-${isComplete ? `ЗАДАЧА: Сформируй финальное ТЗ внутри <opengame_prompt>.` : `ВОПРОС ПРО ${FIELD_NAMES[nextField || 'genre']}.`}`;
+  ВНУТРИ <opengame_prompt> ОБЯЗАТЕЛЬНО ВКЛЮЧИ: ${QUALITY_CRITERIA}
+
+  ${isComplete ? `ЗАДАЧА: Сформируй финальное ТЗ внутри <opengame_prompt>.` : `ВОПРОС ПРО ${FIELD_NAMES[nextField || 'genre']}.`}`;
+      }
 
       // 1. Prepare providers with keys and rotate start point
       const providersWithKeys = FALLBACK_ORDER.filter(p => !!settings.keys[p]);
@@ -530,7 +539,7 @@ ${isComplete ? `ЗАДАЧА: Сформируй финальное ТЗ вну�
             setGenerationStep(`Пробую ${provider}: ${modelId.split('/').pop()}... ${retries > 0 ? `(повтор ${retries})` : ''}`);
 
             try {
-              const stream = generateStream([{ role: "system", content: SMART_SYSTEM_PROMPT }, ...messageHistory.map(m => ({ role: m.role as any, content: m.content })), { role: "user", content }], {
+              const stream = generateStream([{ role: "system", content: systemPrompt }, ...messageHistory.map(m => ({ role: m.role as any, content: m.content })), { role: "user", content }], {
                 provider, apiKey, model: modelId, baseUrl: settings.customBaseUrl
               }, controller.signal);
 
@@ -555,17 +564,33 @@ ${isComplete ? `ЗАДАЧА: Сформируй финальное ТЗ вну�
                 // Delimiter-agnostic prompt detection (supports <>, [], /, or plain)
                 const promptMatch = fullContent.match(/(?:<|\[|\/)?opengame_prompt(?:>|\]|\s+)([\s\S]+)/i);
                                  
-                if (promptMatch) {
-                  // Extract content and remove trailing /about or system instructions if they leaked
-                  let spec = promptMatch[1]
-                    .replace(/<\/opengame_prompt>/i, '')
-                    .replace(/\]/g, '')
-                    .replace(/\/about[\s\S]*/i, '')
-                    .trim();
-                  await handleOpenGameFlow(sessionId, assistantMsg.id, spec, settings, fullContent, provider);
+                  if (promptMatch) {
+                    // ... existing opengame_prompt logic ...
+                    let spec = promptMatch[1]
+                      .replace(/<\/opengame_prompt>/i, '')
+                      .replace(/\]/g, '')
+                      .replace(/\/about[\s\S]*/i, '')
+                      .trim();
+                    await handleOpenGameFlow(sessionId, assistantMsg.id, spec, settings, fullContent, provider);
+                  } else if (isEditMode) {
+                    // AIDER EDIT LOGIC
+                    const blocks = parseAiderBlocks(fullContent);
+                    if (blocks.length > 0) {
+                      const currentCode = sessionsRef.current.find(s => s.id === sessionId)?.editTarget?.currentCode || "";
+                      const editResult = applyAiderBlocks(currentCode, blocks);
+                      
+                      setSessions(prev => prev.map(s => s.id === sessionId ? {
+                        ...s,
+                        editTarget: s.editTarget ? { ...s.editTarget, currentCode: editResult.code } : undefined,
+                        messages: s.messages.map(m => m.id === assistantMsg.id ? {
+                          ...m,
+                          content: fullContent + `\n\n✅ **Применено правок: ${editResult.appliedCount}**` + (editResult.failedBlocks.length > 0 ? `\n⚠️ Не удалось применить: ${editResult.failedBlocks.length}` : "")
+                        } : m)
+                      } : s));
+                    }
+                  }
+                  break;
                 }
-                break;
-              }
             } catch (e: any) {
               const isRateLimit = e.message.includes("429");
               console.warn(`[useChat] Provider ${provider} model ${modelId} failed:`, e.message);
@@ -621,6 +646,79 @@ ${isComplete ? `ЗАДАЧА: Сформируй финальное ТЗ вну�
           ...s, messages: s.messages.filter(m => m.id !== lastUser.id && !m.isStreaming)
         } : s));
         sendMessage(lastUser.content);
+      }
+    },
+    startEditing: async (repoUrl: string) => {
+      setGenerationStep("Загрузка кода игры...");
+      setIsGenerating(true);
+      try {
+        // Extract repo from URL (e.g. https://github.com/owner/repo -> owner/repo)
+        let repo = repoUrl.replace('https://github.com/', '').split('/').slice(0, 2).join('/');
+        const data = await SmolGameAPI.getGameFile(repo);
+        
+        const newId = generateId();
+        const newSession: ChatSession = {
+          id: newId,
+          title: `Правка: ${repo.split('/')[1]}`,
+          messages: [{
+            id: generateId(),
+            role: "assistant",
+            content: `Я загрузил код игры из репозитория \`${repo}\`. Что именно вы хотите исправить или добавить?`,
+            timestamp: Date.now()
+          }],
+          createdAt: Date.now(),
+          updatedAt: Date.now(),
+          modelName: "auto",
+          editTarget: {
+            repo,
+            path: data.path,
+            sha: data.sha,
+            originalCode: data.content,
+            currentCode: data.content
+          }
+        };
+        
+        setSessions(prev => [newSession, ...prev]);
+        setActiveSessionId(newId);
+      } catch (e: any) {
+        alert("Не удалось загрузить игру: " + e.message);
+      } finally {
+        setIsGenerating(false);
+        setGenerationStep("");
+      }
+    },
+    saveChanges: async () => {
+      const session = sessionsRef.current.find(s => s.id === activeSessionId);
+      if (!session?.editTarget) return;
+      
+      setGenerationStep("Сохранение правок на GitHub...");
+      setIsGenerating(true);
+      try {
+        const result = await SmolGameAPI.updateGameFile({
+          repo: session.editTarget.repo,
+          path: session.editTarget.path,
+          content: session.editTarget.currentCode,
+          sha: session.editTarget.sha,
+          message: "Update via Smol Agent (Aider-style edit)"
+        });
+        
+        if (result.ok) {
+          setSessions(prev => prev.map(s => s.id === activeSessionId ? {
+            ...s,
+            editTarget: s.editTarget ? { ...s.editTarget, sha: result.sha, originalCode: s.editTarget.currentCode } : undefined,
+            messages: [...s.messages, {
+              id: generateId(),
+              role: "assistant",
+              content: "✅ **Изменения успешно сохранены в репозиторий!**",
+              timestamp: Date.now()
+            }]
+          } : s));
+        }
+      } catch (e: any) {
+        alert("Ошибка при сохранении: " + e.message);
+      } finally {
+        setIsGenerating(false);
+        setGenerationStep("");
       }
     }
   };

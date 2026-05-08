@@ -45,4 +45,11 @@ export interface ChatSession {
   retryCount?: number;
   isPipelineRunning?: boolean;
   pipelineStep?: string;
+  editTarget?: {
+    repo: string;
+    path: string;
+    sha: string;
+    originalCode: string;
+    currentCode: string;
+  };
 }

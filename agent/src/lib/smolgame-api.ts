@@ -258,4 +258,34 @@ export class SmolGameAPI {
       return null;
     }
   }
+
+  /**
+   * Fetch game file content from GitHub
+   */
+  static async getGameFile(repo: string, path: string = 'index.html'): Promise<{ path: string, sha: string, content: string }> {
+    return this.apiFetch(`/api/github/get-file?repo=${encodeURIComponent(repo)}&path=${encodeURIComponent(path)}`);
+  }
+
+  /**
+   * Update game file on GitHub
+   */
+  static async updateGameFile(payload: {
+    repo: string;
+    path: string;
+    content: string;
+    sha: string;
+    message?: string;
+  }): Promise<{ ok: boolean, sha: string }> {
+    return this.apiFetch('/api/github/update-file', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  }
+
+  /**
+   * Get current user's games
+   */
+  static async getMyGames(): Promise<{ games: any[] }> {
+    return this.apiFetch('/api/me/games');
+  }
 }

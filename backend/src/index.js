@@ -10,7 +10,7 @@ import {
 import { githubOAuthStart, githubOAuthCallback } from './github-oauth.js';
 import { githubOAuthDonePage } from './github-oauth-done.js';
 import { submitHtmlGame, serveHostedGame } from './hosted-games.js';
-import { publishGameToGithub } from './github-publish.js';
+import { publishGameToGithub, getGameFileFromGithub, updateGameFileOnGithub } from './github-publish.js';
 import { telegramWebhook } from './telegram-webhook.js';
 
 export default {
@@ -100,6 +100,8 @@ async function route(req, env, pathname) {
   if (pathname === '/api/submit' && m === 'POST') return submitGame(req, env);
   if (pathname === '/api/submit-html-game' && m === 'POST') return submitHtmlGame();
   if (pathname === '/api/github/publish-game' && m === 'POST') return publishGameToGithub(req, env);
+  if (pathname === '/api/github/get-file' && m === 'GET') return getGameFileFromGithub(req, env);
+  if (pathname === '/api/github/update-file' && m === 'POST') return updateGameFileOnGithub(req, env);
   if (pathname === '/api/upload-image' && m === 'POST') return uploadImage(req, env);
   if (pathname === '/api/auth/github/start' && m === 'GET') return githubOAuthStart(req, env);
   if (pathname === '/api/auth/github/unlink' && m === 'POST') return githubUnlink(req, env);
