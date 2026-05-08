@@ -343,22 +343,25 @@ export function useGameAgent(settings: ChatSettings) {
         const criticMsgs = [
           { 
             role: "system" as const, 
-            content: `You are the SmolGame MASTER CRITIC. Your job is to catch "fake" games that pass regex checks but are actually broken or empty.
+            content: `You are the SmolGame BRUTAL CRITIC. Your mission is to DESTROY fake, skeleton, or template code.
             
-            CHECKLIST:
-            1. Logic: Is there a real game loop?
-            2. Content: Is there actual gameplay code or just placeholders?
-            3. Mobile: Are there large touch targets and portrait layout?
-            4. Stability: Will it crash?
+            STRICT RULES:
+            - If you see "// handle logic here" or placeholders -> Score 0.
+            - If it's a generic "Clicker" template when the user asked for "3D Tetris" -> Score 0.
+            - If the game loop is just empty requestAnimationFrame -> Score 0.
+            - If there is no logic for winning/losing -> Score 20 max.
             
-            Return JSON only:
+            BE SKEPTICAL. BE MEAN. We only want REAL functional games.
+            
+            Return JSON:
             {
               "isFake": boolean,
               "realScore": number (0-100),
-              "issues": string[]
+              "issues": string[],
+              "verdict": "string"
             }` 
           },
-          { role: "user" as const, content: `Review this code and the pipeline score (${score}/100):\n\nCODE:\n${rawCode}\n\nPIPELINE REPORT:\n${pipeline.summary}` },
+          { role: "user" as const, content: `Review this code for a "${gameSpec.slice(0, 50)}...":\n\n${rawCode}` },
         ];
 
         const { text: criticResponse } = await streamWithFallback(criticMsgs, () => {}, signal, usedProvider);
@@ -508,8 +511,12 @@ export function useGameAgent(settings: ChatSettings) {
         }
       } catch (pubErr: any) {
         console.error("[Agent] Publication failed:", pubErr);
+        const errType = pubErr.message?.includes("fetch") || pubErr.message?.includes("Failed to fetch") 
+          ? "CORS / Ошибка соединения" 
+          : pubErr.message;
+        
         updateMessage(assistantId, {
-          content: (beforeTag ? beforeTag + "\n\n" : "") + `✅ **Игра готова! (Качество: ${score}/100)**\n\n❌ Ошибка сети при публикации.`,
+          content: (beforeTag ? beforeTag + "\n\n" : "") + `✅ **Игра готова! (Качество: ${score}/100)**\n\n⚠️ **Ошибка публикации: ${errType}**\n\nТы всё равно можешь запустить её в Студии и сохранить позже.`,
           gameCode: finalCode,
           isStreaming: false,
         });
