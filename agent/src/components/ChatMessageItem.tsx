@@ -294,7 +294,8 @@ export function ChatMessageItem({ message, onRetry, onSend, onSwitchTab, isLast 
                 )}
 
                 <div className="space-y-4">
-                  {message.gameCode && (
+                  {/* Big Play Button - ONLY when ready */}
+                  {deployState.phase === "ready" && (
                     <Button
                       className="w-full h-14 bg-[#22c55e] hover:bg-[#16a34a] text-white font-black uppercase tracking-[0.3em] text-[14px] rounded-2xl gap-3 shadow-[0_12px_24px_-6px_rgba(34,197,94,0.5)] transition-all active:scale-[0.97] hover:shadow-[0_15px_30px_-6px_rgba(34,197,94,0.6)]"
                       onClick={() => {
@@ -307,8 +308,8 @@ export function ChatMessageItem({ message, onRetry, onSend, onSwitchTab, isLast 
                     </Button>
                   )}
 
-                  {/* Deploy Status & Links */}
-                  {(deployState.phase === "ready" || deployState.phase === "waiting_pages" || deployState.phase === "deploying" || deployState.phase === "error") && (
+                  {/* Deploy Status & Waiting */}
+                  {(deployState.phase === "waiting_pages" || deployState.phase === "deploying" || deployState.phase === "error") && (
                     <div className="pt-2 border-t border-white/5 mt-2 space-y-4">
                       {deployState.phase === "deploying" && (
                         <div className="flex items-center gap-3 p-3 bg-[#a3b8d4]/5 border border-[#a3b8d4]/15 rounded-xl">
