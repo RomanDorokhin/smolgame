@@ -81,7 +81,7 @@ ${ne}`}],()=>{},G,re),ee=w.match(/<game_spec>([\s\S]*?)<\/game_spec>/i)||w.match
 
 `:"")+"✨ Исправляю баги и полирую до идеала...",isStreaming:!0}),f("✨ Полировка...");const{text:oe}=await x([{role:"system",content:cx},{role:"user",content:`Take this draft and make it perfect (modular files, mobile UX, juice, bugfixes):
 
-${se}`}],()=>{},G,re);P=oe}if(!P||P.length<500){y(C,{content:"❌ Инженер не вернул код игры. Попробуй ещё раз или смени провайдер в настройках.",isStreaming:!1});return}let ge=P;const k=P.match(/<game_spec>([\s\S]*?)<\/game_spec>/i);k&&(ge=k[1].trim()),ge=ge.replace(/https:\/\/pixijs\.download\/release\/pixi\.js/g,"https://cdnjs.cloudflare.com/ajax/libs/pixi.js/6.5.10/pixi.min.js").replace(/```[a-z]*\n/gi,"").replace(/```/g,""),f("🚀 Публикую в облако..."),y(C,{content:(J?J+`
+${se}`}],()=>{},G,re);P=oe}if(!P||P.length<500){y(C,{content:"❌ Инженер не вернул код игры. Попробуй ещё раз или смени провайдер в настройках.",isStreaming:!1});return}let ge=P;const k=P.match(/<game_spec>([\s\S]*?)<\/game_spec>/i);k&&(ge=k[1].trim()),ge=ge.replace(/https:\/\/pixijs\.download\/release\/pixi\.js/g,"https://cdnjs.cloudflare.com/ajax/libs/pixi.js/6.5.10/pixi.min.js").replace(/width:\s*canvas\.width/g,"width: window.innerWidth").replace(/height:\s*canvas\.height/g,"height: window.innerHeight").replace(/```[a-z]*\n/gi,"").replace(/```/g,""),f("🚀 Публикую в облако..."),y(C,{content:(J?J+`
 
 `:"")+`✅ **Игра создана!**
 

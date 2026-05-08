@@ -415,7 +415,10 @@ export function useGameAgent(settings: ChatSettings) {
       finalCode = finalCode
         // 1. Принудительно меняем PixiJS на стабильную v6
         .replace(/https:\/\/pixijs\.download\/release\/pixi\.js/g, "https://cdnjs.cloudflare.com/ajax/libs/pixi.js/6.5.10/pixi.min.js")
-        // 2. Вычищаем случайные Markdown-теги внутри кода (```javascript, ```css и т.д.)
+        // 2. Исправляем инициализацию (canvas.width/height часто равны 0)
+        .replace(/width:\s*canvas\.width/g, "width: window.innerWidth")
+        .replace(/height:\s*canvas\.height/g, "height: window.innerHeight")
+        // 3. Вычищаем случайные Markdown-теги внутри кода (```javascript, ```css и т.д.)
         .replace(/```[a-z]*\n/gi, '')
         .replace(/```/g, '');
       
