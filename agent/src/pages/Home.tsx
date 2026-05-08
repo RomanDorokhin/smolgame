@@ -4,17 +4,31 @@ import { ChatMessageItem } from "@/components/ChatMessageItem";
 import { ChatInput } from "@/components/ChatInput";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Menu, Sparkles, Github, Layout, MessageSquare, Play, Pencil, RotateCcw } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Menu, Sparkles, Github, Layout, MessageSquare, Play, Pencil, RotateCcw, X, ChevronDown, ChevronUp, Key } from "lucide-react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { SmolGameAPI } from "@/lib/smolgame-api";
 import { Component, type ReactNode } from "react";
+import type { ChatSettings, APIProvider } from "@/types/chat";
 
-// Загружаем настройки из localStorage
-function loadSettings() {
+function loadSettings(): ChatSettings {
   const saved = localStorage.getItem("smol_chat_settings_v3");
   if (!saved) return { primaryProvider: "openrouter", keys: {}, models: {}, autoFailover: true, maxRetries: 3 };
   try { return JSON.parse(saved); } catch { return { primaryProvider: "openrouter", keys: {}, models: {}, autoFailover: true, maxRetries: 3 }; }
 }
+
+function saveSettings(s: ChatSettings) {
+  localStorage.setItem("smol_chat_settings_v3", JSON.stringify(s));
+}
+
+const PROVIDERS: { id: APIProvider; name: string; url: string }[] = [
+  { id: "groq", name: "Groq", url: "https://console.groq.com/keys" },
+  { id: "gemini", name: "Google Gemini", url: "https://aistudio.google.com/app/apikey" },
+  { id: "openrouter", name: "OpenRouter", url: "https://openrouter.ai/keys" },
+  { id: "together", name: "Together AI", url: "https://api.together.xyz/settings/api-keys" },
+  { id: "deepseek", name: "DeepSeek", url: "https://platform.deepseek.com/api_keys" },
+  { id: "huggingface", name: "HuggingFace", url: "https://huggingface.co/settings/tokens" },
+];
 
 class ErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean }> {
   constructor(props: any) { super(props); this.state = { hasError: false }; }
@@ -33,14 +47,29 @@ class ErrorBoundary extends Component<{ children: ReactNode }, { hasError: boole
 }
 
 export default function Home() {
-  const settings = loadSettings();
+  const [settings, setSettings] = useState<ChatSettings>(loadSettings);
   const { messages, isRunning, step, sendMessage, stop, reset } = useGameAgent(settings);
   const { user, isAuthenticated, isLoading: authLoading, login } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<"chat" | "studio">("chat");
   const [myGames, setMyGames] = useState<any[]>([]);
   const [loadingGames, setLoadingGames] = useState(false);
+  const [expandedProvider, setExpandedProvider] = useState<APIProvider | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
+
+  const updateSettings = (patch: Partial<ChatSettings>) => {
+    setSettings(prev => {
+      const next = { ...prev, ...patch };
+      saveSettings(next);
+      return next;
+    });
+  };
+
+  const updateKey = (provider: APIProvider, key: string) => {
+    const next = { ...settings, keys: { ...settings.keys, [provider]: key } };
+    saveSettings(next);
+    setSettings(next);
+  };
 
   useEffect(() => {
     if (activeTab === "studio" && isAuthenticated) loadMyGames();
@@ -62,6 +91,64 @@ export default function Home() {
   return (
     <ErrorBoundary>
       <div className="flex h-full w-full bg-[#0a0b0e] text-white overflow-hidden font-sans">
+
+        {/* ── API Keys Sidebar ─────────────────── */}
+        {sidebarOpen && (
+          <div className="fixed inset-0 z-50 flex">
+            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setSidebarOpen(false)} />
+            <div className="relative w-80 max-w-[90vw] h-full bg-[#0d0e14] border-r border-white/5 flex flex-col z-10">
+              <div className="flex items-center justify-between px-5 py-4 border-b border-white/5">
+                <div className="flex items-center gap-3">
+                  <Key size={16} className="text-[#a3b8d4]" />
+                  <span className="text-sm font-black uppercase tracking-widest">API Ключи</span>
+                </div>
+                <button onClick={() => setSidebarOpen(false)} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white/5 text-white/40 hover:text-white transition-all">
+                  <X size={16} />
+                </button>
+              </div>
+              <ScrollArea className="flex-1 px-4 py-4">
+                <p className="text-[10px] text-white/30 uppercase tracking-widest font-bold mb-4">Добавь хотя бы один ключ</p>
+                <div className="space-y-2">
+                  {PROVIDERS.map(p => {
+                    const isExpanded = expandedProvider === p.id;
+                    const hasKey = !!(settings.keys[p.id] as string | undefined)?.trim();
+                    return (
+                      <div key={p.id} className={`rounded-xl border transition-all ${hasKey ? "border-green-500/20 bg-green-500/5" : "border-white/5 bg-[#13141a]"}`}>
+                        <button
+                          className="w-full flex items-center justify-between px-4 py-3"
+                          onClick={() => setExpandedProvider(isExpanded ? null : p.id)}
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className={`w-2 h-2 rounded-full ${hasKey ? "bg-green-500" : "bg-white/10"}`} />
+                            <span className="text-sm font-bold">{p.name}</span>
+                          </div>
+                          {isExpanded ? <ChevronUp size={14} className="text-white/40" /> : <ChevronDown size={14} className="text-white/40" />}
+                        </button>
+                        {isExpanded && (
+                          <div className="px-4 pb-4 space-y-3">
+                            <Input
+                              type="password"
+                              placeholder="Вставь ключ сюда..."
+                              value={(settings.keys[p.id] as string | undefined) || ""}
+                              onChange={e => updateKey(p.id, e.target.value)}
+                              className="bg-[#0a0b0e] border-white/10 text-white text-sm h-10 rounded-xl font-mono"
+                            />
+                            <a href={p.url} target="_blank" rel="noopener noreferrer"
+                              className="block text-center text-[10px] text-[#a3b8d4] hover:text-white uppercase tracking-widest font-bold transition-colors">
+                              Получить ключ →
+                            </a>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </ScrollArea>
+
+            </div>
+          </div>
+        )}
+
         <main className="flex-1 flex flex-col min-w-0 relative h-full">
           {authLoading && (
             <div className="absolute inset-0 z-50 flex items-center justify-center bg-[#0a0b0e]">
@@ -72,6 +159,14 @@ export default function Home() {
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-3 z-30 shrink-0 border-b border-white/5 bg-[#0a0b0e]/80 backdrop-blur-md">
             <div className="flex items-center gap-2">
+              {/* Hamburger — opens API keys sidebar */}
+              <button
+                onClick={() => setSidebarOpen(true)}
+                className="w-9 h-9 flex items-center justify-center rounded-xl bg-[#13141a] border border-white/5 hover:border-white/15 transition-all text-white/60 hover:text-white"
+              >
+                <Menu size={16} />
+              </button>
+
               <div className="flex bg-[#13141a] p-1 rounded-xl border border-white/5 ml-1">
                 <button
                   onClick={() => setActiveTab("chat")}
@@ -88,28 +183,11 @@ export default function Home() {
               </div>
 
               {activeTab === "chat" && messages.length > 0 && (
-                <Button
-                  variant="ghost" size="sm"
+                <Button variant="ghost" size="sm"
                   className="h-9 px-3 bg-[#13141a] border border-white/5 rounded-xl text-[9px] font-black uppercase tracking-widest text-white/30 hover:text-white transition-all ml-2"
                   onClick={reset}
                 >
-                  <RotateCcw size={12} className="mr-2" /> Новый чат
-                </Button>
-              )}
-            </div>
-
-            <div className="flex items-center gap-2">
-              {isAuthenticated && user ? (
-                <div className="flex items-center gap-2.5 px-3 py-1.5 rounded-xl bg-green-500/10 border border-green-500/20 text-green-500">
-                  <Github size={14} />
-                  {user.photo_url && <img src={user.photo_url} alt="avatar" className="w-5 h-5 rounded-full border border-green-500/30" />}
-                </div>
-              ) : (
-                <Button variant="ghost" size="sm"
-                  className="h-9 px-3 bg-[#13141a] border border-white/5 rounded-xl text-[9px] font-black uppercase tracking-widest text-[#a3b8d4] hover:text-white transition-all"
-                  onClick={login}
-                >
-                  <Github size={14} className="mr-2" /> Войти
+                  <RotateCcw size={12} className="mr-2" /> Новый
                 </Button>
               )}
             </div>
