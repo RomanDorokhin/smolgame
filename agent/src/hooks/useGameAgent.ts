@@ -119,30 +119,50 @@ export function useGameAgent(settings: ChatSettings) {
       : active;
 
     let lastError = "";
-    for (const providerId of ordered) {
+    for (let i = 0; i < ordered.length; i++) {
+      const providerId = ordered[i];
       if (signal.aborted) throw new Error("Cancelled");
 
       const status = pool.getStatus(providerId);
-      if (status.state === "OPEN") continue;
+      if (status.state === "OPEN") {
+        console.warn(`[Agent] Skipping tripped provider: ${providerId}`);
+        continue;
+      }
 
       const apiKey = settings.keys[providerId as keyof typeof settings.keys] as string;
       const model = (settings.models?.[providerId as keyof typeof settings.models] as string | undefined)
         || DEFAULT_MODELS[providerId]?.[0] || "gpt-3.5-turbo";
 
       try {
+        if (i > 0) {
+          // Если это не первый провайдер, значит предыдущий упал
+          setStep(`🔄 Переключаюсь на ${providerId.toUpperCase()}...`);
+        }
+
         let fullText = "";
-        for await (const chunk of generateStream(msgs, { provider: providerId, apiKey, model }, signal)) {
+        const stream = generateStream(msgs, { provider: providerId, apiKey, model }, signal);
+        
+        // Добавляем таймаут на начало ответа
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error("TIMEOUT")), 15000)
+        );
+
+        for await (const chunk of stream) {
           if (signal.aborted) break;
           fullText += chunk;
           onChunk(chunk, fullText);
         }
+        
         pool.reportSuccess(providerId);
         return { text: fullText, provider: providerId };
       } catch (e: any) {
         lastError = e.message || "Unknown";
-        const isRate = lastError.includes("429") || lastError.toLowerCase().includes("rate limit");
+        const isRate = lastError.includes("429") || lastError.toLowerCase().includes("rate limit") || lastError === "TIMEOUT";
         pool.reportFailure(providerId, isRate, lastError);
         console.warn(`[Agent] ${providerId} failed:`, lastError.slice(0, 80));
+        
+        // Если это был последний провайдер, пробрасываем ошибку дальше
+        if (i === ordered.length - 1) break;
       }
     }
     throw new Error(`All providers failed. Last: ${lastError}`);
