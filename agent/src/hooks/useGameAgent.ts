@@ -112,6 +112,7 @@ GOLD STANDARD TECHNICAL REQUIREMENTS:
    - PixiJS: Use EXACTLY https://cdnjs.cloudflare.com/ajax/libs/pixi.js/6.5.10/pixi.min.js
    - Tween.js: Use https://cdnjs.cloudflare.com/ajax/libs/tween.js/18.6.4/tween.umd.js
 2. STRICT MODULARITY: You MUST split the code into separate files.
+   IMPORTANT: DO NOT use "import" or "export" statements. Libraries are loaded via script tags and are available globally (PIXI, TWEEN).
    Use this format:
    <game_spec>
    <file path="index.html">...</file>
@@ -119,10 +120,15 @@ GOLD STANDARD TECHNICAL REQUIREMENTS:
    <file path="css/style.css">...</file>
    </game_spec>
 3. NO BACKEND: Static game for GitHub Pages. Client-side only.
-4. JUICE & POLISH: Add screen shake, particles, and smooth feel.
-5. MOBILE FIRST: 9:16 Portrait, large touch targets, pointer events.
+4. CODE QUALITY & STABILITY:
+   - Always initialize objects/variables BEFORE first access.
+   - Use try/catch for critical logic.
+   - Ensure game loops are stable and don't leak memory.
+5. JUICE & POLISH: Add screen shake, particles, and smooth feel.
+6. MOBILE FIRST: 9:16 Portrait, large touch targets, pointer events.
 
 Output ONLY the <game_spec> block.`;
+
 
 export function useGameAgent(settings: ChatSettings) {
   const [messages, setMessages] = useState<AgentMessage[]>(() => {
