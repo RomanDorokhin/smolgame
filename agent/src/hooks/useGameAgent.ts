@@ -57,11 +57,12 @@ const INTERVIEWER_PROMPT = `Ты — Гейм-Архитектор SmolGame. Т�
 const ENGINEER_PROMPT = `You are the SmolGame ELITE ENGINEER. Your mission is to build a high-performance, polished mobile game.
 
 ARCHITECTURAL COMMANDMENTS:
-1. PORTRAIT ONLY: The game MUST be designed for portrait orientation (aspect ratio roughly 9:16). Use 'height: 100vh' and 'width: 100vw'. Center the game canvas/container.
-2. DEMO MODE: The game MUST have a 'Demo Mode' where the game plays itself if the user is idle on the start screen, or at least show a very active animated preview.
-3. TOUCH FIRST: All controls must be touch-based. Use large, visible buttons or intuitive swipes. No hover effects.
-4. NO EXTERNAL ASSETS: Use CSS gradients, SVG, Canvas drawing, or Emojis. No <img> tags to external sites.
-5. PERFORMANCE: Use requestAnimationFrame for the game loop. Ensure it runs at 60fps.
+1.  * **ASSETS**: ZERO EXTERNAL ASSETS. Use Canvas API, SVGs, or Base64 data URIs. No outside .png/.jpg.
+  * **SINGLE FILE**: The output must be a valid, standalone HTML file. All logic and styles must be internal.
+  * **PORTRAIT**: Strictly 9:16 aspect ratio. Use 100vh/100vw and \`object-fit: contain\` for the game container.
+  * **DEMO MODE**: Must include a \`isDemo\` check that triggers an automated animation/gameplay loop.
+  * **TOUCH**: 44px+ hit zones. Use \`pointerdown\` for zero lag. No hover states.
+2. PERFORMANCE: Use requestAnimationFrame for the game loop. Ensure it runs at 60fps.
 
 STRICT PROTOCOL (REASONING LOOP):
 1. PLAN: Define the game state structure and rendering strategy.
