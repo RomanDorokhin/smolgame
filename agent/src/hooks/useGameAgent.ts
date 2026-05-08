@@ -171,26 +171,27 @@ export function useGameAgent(settings: ChatSettings) {
 
       let interviewText = "";
       let usedProvider = "";
-      let foundPromptTag = false;
+
+      // Вырезаем тег opengame_prompt из видимого текста (LLM может писать как <тег> так и просто слово)
+      const stripPromptTag = (text: string) =>
+        text
+          .replace(/<opengame_prompt>([\s\S]*?)<\/opengame_prompt>/gi, "")
+          .replace(/<\/?opengame_prompt>/gi, "")
+          .replace(/opengame_prompt[\s\S]*/i, "") // без скобок тоже
+          .trim();
 
       const { text: fullInterview, provider } = await streamWithFallback(
         interviewMsgs,
         (_chunk, full) => {
           if (signal.aborted) return;
-
-          // Показываем текст до тега
-          const tagIdx = full.indexOf("<opengame_prompt>");
-          const visible = tagIdx >= 0 ? full.slice(0, tagIdx).trim() : full.trim();
-
-          if (tagIdx >= 0) {
-            foundPromptTag = true;
-            updateMessage(assistantId, {
-              content: (visible || "🚀 ТЗ собрано! Подключаю инженера..."),
-              isStreaming: true,
-            });
-          } else {
-            updateMessage(assistantId, { content: visible || "🤔 ...", isStreaming: true });
-          }
+          const hasTag = /<opengame_prompt>/i.test(full) || /opengame_prompt/i.test(full);
+          const visible = stripPromptTag(full);
+          updateMessage(assistantId, {
+            content: hasTag
+              ? (visible || "🚀 ТЗ собрано! Подключаю инженера...")
+              : (visible || "🤔 ..."),
+            isStreaming: true,
+          });
         },
         signal
       );
@@ -199,14 +200,16 @@ export function useGameAgent(settings: ChatSettings) {
       usedProvider = provider;
       chatHistory.current.push({ role: "assistant", content: interviewText });
 
-      // Ищем тег <opengame_prompt>
-      const promptMatch = interviewText.match(/<opengame_prompt>([\s\S]*?)<\/opengame_prompt>/i)
-        || interviewText.match(/<opengame_prompt>([\s\S]*?)$/i);
+      // Ищем тег <opengame_prompt> — LLM может писать его по-разному
+      const promptMatch =
+        interviewText.match(/<opengame_prompt>([\s\S]*?)<\/opengame_prompt>/i) ||
+        interviewText.match(/<opengame_prompt>([\s\S]*?)$/i) ||
+        interviewText.match(/opengame_prompt\s*([\s\S]+)/i); // без скобок
 
       if (!promptMatch) {
-        // Просто разговор — нет тега, всё нормально
-        const visible = interviewText.replace(/<[^>]*>/g, "").trim();
-        updateMessage(assistantId, { content: visible || interviewText, isStreaming: false });
+        // Просто разговор — нет тега, показываем текст
+        const visible = stripPromptTag(interviewText) || interviewText.replace(/<[^>]*>/g, "").trim();
+        updateMessage(assistantId, { content: visible, isStreaming: false });
         return;
       }
 
@@ -214,7 +217,9 @@ export function useGameAgent(settings: ChatSettings) {
       // ФАЗА 2: Инженер пишет код
       // ══════════════════════════════════════════
       const gameSpec = promptMatch[1].trim();
-      const beforeTag = interviewText.slice(0, interviewText.indexOf("<opengame_prompt>")).trim();
+      // Текст до тега (если был)
+      const tagStart = interviewText.search(/<opengame_prompt>|opengame_prompt/i);
+      const beforeTag = tagStart > 0 ? interviewText.slice(0, tagStart).trim() : "";
 
       updateMessage(assistantId, {
         content: (beforeTag ? beforeTag + "\n\n" : "") + "🔨 Пишу код игры...",
@@ -311,7 +316,8 @@ export function useGameAgent(settings: ChatSettings) {
       // ══════════════════════════════════════════
       setStep("🚀 Публикую на GitHub...");
       updateMessage(assistantId, {
-        content: updateMessage.toString(), // temp, will be overwritten
+        content: (beforeTag ? beforeTag + "\n\n" : "") + `✅ **Игра готова! (${score}/100)**\n\n🚀 Публикую на GitHub...`,
+        gameCode: finalCode,
         isStreaming: true,
       });
 
