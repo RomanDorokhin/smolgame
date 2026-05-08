@@ -200,7 +200,10 @@ export default function Home() {
                             </Button>
                             <Button
                               className="flex-1 bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 text-[10px] font-black uppercase tracking-widest h-10 rounded-xl border border-blue-500/20"
-                              onClick={() => { setActiveTab("chat"); sendMessage(`Давай улучшим игру: ${game.title}`); }}
+                              onClick={() => {
+                                setActiveTab("chat");
+                                sendMessage(`Улучши игру "${game.title}". Репозиторий: ${game.repoUrl || game.url}`);
+                              }}
                             >
                               <Pencil size={14} className="mr-2" /> Переделать
                             </Button>

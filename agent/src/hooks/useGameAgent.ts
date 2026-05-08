@@ -230,6 +230,55 @@ export function useGameAgent(settings: ChatSettings) {
               }
             },
           }),
+
+          // Инструмент: Редактировать существующую игру из репозитория
+          editGame: tool({
+            description: "Загружает код существующей игры из GitHub репозитория, вносит изменения и пушит обратно. Используй когда пользователь хочет изменить или улучшить уже существующую игру.",
+            parameters: z.object({
+              repoUrl: z.string().describe("URL репозитория GitHub (например: https://github.com/owner/repo)"),
+              editInstructions: z.string().describe("Что нужно изменить в игре — подробное описание правок"),
+              updatedCode: z.string().describe("ПОЛНЫЙ обновлённый HTML код игры с внесёнными изменениями"),
+            }),
+            execute: async ({ repoUrl, editInstructions, updatedCode }) => {
+              setStep("✏️ Загружаю код из репозитория...");
+              toolCalls.push({ name: "editGame", status: "running", input: { repoUrl } });
+              updateMessage(assistantId, { toolCalls: [...toolCalls] });
+
+              try {
+                // Извлекаем owner/repo из URL
+                const repo = repoUrl.replace("https://github.com/", "").split("/").slice(0, 2).join("/");
+
+                // Загружаем текущий файл
+                setStep("✏️ Получаю текущий код...");
+                const fileData = await SmolGameAPI.getGameFile(repo);
+
+                // Пушим обновлённый код
+                setStep("✏️ Применяю правки и сохраняю...");
+                const updateResult = await SmolGameAPI.updateGameFile({
+                  repo,
+                  path: fileData.path,
+                  content: updatedCode,
+                  sha: fileData.sha,
+                  message: `Edit via SmolGame Agent: ${editInstructions.slice(0, 60)}`,
+                });
+
+                if (updateResult.ok) {
+                  toolCalls[toolCalls.length - 1] = { name: "editGame", status: "done", output: `Правки применены в ${repo}` };
+                  updateMessage(assistantId, {
+                    gameCode: updatedCode,
+                    toolCalls: [...toolCalls],
+                  });
+                  return { success: true, message: `Правки успешно сохранены в репозиторий ${repo}` };
+                } else {
+                  toolCalls[toolCalls.length - 1] = { name: "editGame", status: "error", output: "Ошибка сохранения" };
+                  return { success: false, message: "Не удалось сохранить правки в репозиторий" };
+                }
+              } catch (e: any) {
+                toolCalls[toolCalls.length - 1] = { name: "editGame", status: "error", output: e.message };
+                return { success: false, message: e.message };
+              }
+            },
+          }),
         },
       });
 
