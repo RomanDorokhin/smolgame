@@ -190,14 +190,17 @@ Output the full standalone HTML code inside <game_spec> tags. No multiple files 
 STRICT COMMANDS:
 1. FIX BUGS: Audit the code for logical errors, memory leaks, and performance.
 2. POLISH (JUICE): Add screen shake, particles, smooth tweens, score popups, and high-quality effects.
-3. PHONE-FIRST: Ensure touch controls are 100% responsive. Use pointer events. Zero lag.
+3. PHONE-FIRST (MOBILE UX): 
+   * **Touch Targets**: All interactive elements MUST be at least 44x44px.
+   * **Pointer Events**: Use 'pointerdown' for zero-lag interaction. Avoid 'click'.
+   * **Responsive Scaling**: Use viewport units (vw/vh) and ensure the game looks perfect in 9:16 Portrait mode.
+   * **UI Layout**: Position controls at the bottom of the screen for easy thumb access.
 4. MODULAR STRUCTURE: You MUST split the code into multiple files using the <file path="filename"> tags.
    Structure:
    - index.html (minimal)
    - js/game.js (logic)
    - css/style.css (styling)
-   - (optional) js/utils.js, etc.
-   Use relative paths for scripts/links (e.g. <script src="js/game.js">).
+   Use relative paths for scripts/links.
 
 Output Format:
 <thought>Analysis of the draft and improvement plan</thought>
