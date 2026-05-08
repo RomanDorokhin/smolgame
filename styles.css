@@ -7255,3 +7255,31 @@ body.keyboard-open .feed-reviews-drawer-compose {
   font-size: 14px;
   line-height: 1.6;
 }
+
+/* Final Fixes: Search and Profile Contrast */
+.genre-tag, .genre-pill {
+  display: inline-flex !important;
+  width: auto !important;
+  margin: 4px !important;
+  padding: 8px 16px !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+  border-radius: 100px !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  color: #fff !important;
+}
+.genre-tag.active, .genre-pill.selected {
+  background: #fff !important;
+  color: #000 !important;
+}
+#searchInput {
+  background: #13141a !important;
+  color: #fff !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+}
+.profile-stat-count, .profile-handle, .profile-name {
+  color: #ffffff !important;
+  opacity: 1 !important;
+}
+.profile-stat-label {
+  color: rgba(255, 255, 255, 0.6) !important;
+}
