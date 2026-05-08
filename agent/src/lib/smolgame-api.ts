@@ -117,33 +117,54 @@ export class SmolGameAPI {
       headers['Content-Type'] = 'application/json';
     }
 
-    const response = await fetch(`${API_BASE}${finalPath}`, {
-      ...options,
-      headers,
-      body
-    });
+    const maxRetries = 3;
+    let lastErr: any = null;
 
-    const contentType = response.headers.get('content-type');
-    let data;
-    if (contentType && contentType.includes('application/json')) {
+    for (let i = 0; i < maxRetries; i++) {
       try {
-        data = await response.json();
-      } catch (e) {
-        data = await response.text();
-      }
-    } else {
-      data = await response.text();
-    }
+        const response = await fetch(`${API_BASE}${finalPath}`, {
+          ...options,
+          headers,
+          body
+        });
 
-    if (!response.ok) {
-      if (response.status === 401) {
-        throw new Error('Сессия Telegram устарела. Пожалуйста, полностью перезапусти приложение SmolGame.');
-      }
-      const errorMsg = (typeof data === 'object' ? data?.error : data) || response.statusText || 'Unknown error';
-      throw new Error(`${errorMsg} (Status: ${response.status})`);
-    }
+        const contentType = response.headers.get('content-type');
+        let data;
+        if (contentType && contentType.includes('application/json')) {
+          try {
+            data = await response.json();
+          } catch (e) {
+            data = await response.text();
+          }
+        } else {
+          data = await response.text();
+        }
 
-    return data;
+        if (!response.ok) {
+          if (response.status === 401) {
+            throw new Error('Сессия Telegram устарела. Пожалуйста, полностью перезапусти приложение SmolGame.');
+          }
+          if (response.status >= 500 && i < maxRetries - 1) {
+            console.warn(`[API] Server error ${response.status}, retrying ${i+1}/${maxRetries}...`);
+            await new Promise(r => setTimeout(r, 1000 * (i + 1)));
+            continue;
+          }
+          const errorMsg = (typeof data === 'object' ? data?.error : data) || response.statusText || 'Unknown error';
+          throw new Error(`${errorMsg} (Status: ${response.status})`);
+        }
+
+        return data;
+      } catch (err: any) {
+        lastErr = err;
+        if (err.message?.includes('fetch') && i < maxRetries - 1) {
+          console.warn(`[API] Network error, retrying ${i+1}/${maxRetries}...`);
+          await new Promise(r => setTimeout(r, 1000 * (i + 1)));
+          continue;
+        }
+        throw err;
+      }
+    }
+    throw lastErr;
   }
 
   /**
