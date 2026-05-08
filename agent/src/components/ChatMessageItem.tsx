@@ -328,9 +328,19 @@ export function ChatMessageItem({ message, onRetry, onSend, isLast }: ChatMessag
                     )}
 
                     {deployState.phase === "error" && (
-                      <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-xl space-y-2">
-                        <p className="text-[11px] text-red-400 font-bold">❌ Ошибка публикации</p>
-                        <p className="text-[10px] text-white/50">{deployState.message}</p>
+                      <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-2xl space-y-3">
+                        <div className="flex items-center gap-2 text-red-400 font-black uppercase tracking-widest text-[10px]">
+                          <X size={14} strokeWidth={3} /> Ошибка публикации
+                        </div>
+                        <p className="text-[11px] text-white/70 leading-relaxed">{deployState.message}</p>
+                        {deployState.message.includes("Сессия Telegram устарела") && (
+                          <Button
+                            className="w-full h-9 bg-red-500/20 hover:bg-red-500/30 text-red-400 border border-red-500/30 font-black uppercase tracking-widest text-[10px] rounded-xl transition-all"
+                            onClick={() => window.location.reload()}
+                          >
+                            <RotateCcw size={14} className="mr-2" /> Обновить сессию
+                          </Button>
+                        )}
                       </div>
                     )}
                   </div>
