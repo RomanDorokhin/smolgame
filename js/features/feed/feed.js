@@ -539,7 +539,46 @@ function updateOverlay() {
   followBtn.classList.toggle('following', following);
 
   if (typeof loadFeedReviewCount === 'function') loadFeedReviewCount();
+
+  // Admin delete button visibility
+  const adminDeleteBtn = document.getElementById('adminDeleteBtn');
+  if (adminDeleteBtn) {
+    const isAdmin = document.body.classList.contains('is-admin');
+    adminDeleteBtn.style.display = isAdmin ? 'block' : 'none';
+  }
 }
+
+// Handler for admin actions in the feed
+document.addEventListener('click', async e => {
+  const btn = e.target.closest('[data-action="admin-delete-game"]');
+  if (!btn) return;
+  
+  const g = GAMES[window.currentIdx];
+  if (!g) return;
+  
+  const tf = typeof t === 'function' ? t : (k) => k;
+  const confirmMsg = tf('profile_delete_confirm_named').replace('{title}', g.title) || `Delete "${g.title}"?`;
+  
+  if (!confirm(confirmMsg)) return;
+  
+  try {
+    btn.disabled = true;
+    const res = await API.admin.delete(g.id);
+    if (res.success) {
+      showToast('🗑 ' + (tf('profile_delete_done') || 'Game deleted'));
+      // Remove from feed and go to next
+      GAMES.splice(window.currentIdx, 1);
+      renderFeed(); // Re-render to clear slides
+    } else {
+      throw new Error(res.error || 'Delete failed');
+    }
+  } catch (err) {
+    showToast('❌ ' + err.message);
+  } finally {
+    btn.disabled = false;
+    document.getElementById('sideActionPopup')?.setAttribute('hidden', '');
+  }
+});
 
 /** Горизонт в полоске: влево = следующая, вправо = предыдущая (как карточки) */
 const SWIPE_HORIZ_PX = 48;
