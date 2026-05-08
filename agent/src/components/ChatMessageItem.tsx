@@ -294,9 +294,22 @@ export function ChatMessageItem({ message, onRetry, onSend, onSwitchTab, isLast 
                 )}
 
                 <div className="space-y-4">
-                  {/* Always show deploy results if they exist */}
+                  {message.gameCode && (
+                    <Button
+                      className="w-full h-14 bg-[#22c55e] hover:bg-[#16a34a] text-white font-black uppercase tracking-[0.3em] text-[14px] rounded-2xl gap-3 shadow-[0_12px_24px_-6px_rgba(34,197,94,0.5)] transition-all active:scale-[0.97] hover:shadow-[0_15px_30px_-6px_rgba(34,197,94,0.6)]"
+                      onClick={() => {
+                        if (onSwitchTab) {
+                          onSwitchTab("studio");
+                        }
+                      }}
+                    >
+                      <Play size={22} fill="currentColor" className="ml-1" /> ИГРАТЬ
+                    </Button>
+                  )}
+
+                  {/* Deploy Status & Links */}
                   {(deployState.phase === "ready" || deployState.phase === "waiting_pages" || deployState.phase === "deploying" || deployState.phase === "error") && (
-                    <div className="pt-2 border-t border-white/5 mt-2">
+                    <div className="pt-2 border-t border-white/5 mt-2 space-y-4">
                       {deployState.phase === "deploying" && (
                         <div className="flex items-center gap-3 p-3 bg-[#a3b8d4]/5 border border-[#a3b8d4]/15 rounded-xl">
                           <Loader2 size={16} className="animate-spin text-[#a3b8d4] shrink-0" />
@@ -305,7 +318,7 @@ export function ChatMessageItem({ message, onRetry, onSend, onSwitchTab, isLast 
                       )}
 
                       {deployState.phase === "waiting_pages" && (
-                        <div className="space-y-3">
+                        <div className="space-y-3 py-1">
                           <div className="flex items-center gap-3 p-3 bg-amber-500/5 border border-amber-500/15 rounded-xl">
                             <Clock size={16} className="text-amber-400 shrink-0 animate-pulse" />
                             <div className="flex-1 min-w-0">
@@ -315,108 +328,53 @@ export function ChatMessageItem({ message, onRetry, onSend, onSwitchTab, isLast 
                               </p>
                             </div>
                           </div>
+                          
+                          <div className="space-y-2 px-1">
+                            <div className="h-1.5 w-full bg-blue-500/10 rounded-full overflow-hidden border border-blue-500/10">
+                              <div 
+                                className="h-full bg-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.5)] transition-all duration-700 ease-in-out" 
+                                style={{ width: `${(deployState.attempt / deployState.maxAttempts) * 100}%` }}
+                              />
+                            </div>
+                            <p className="text-[9px] text-white/40 text-center leading-tight">
+                              Первое включение GitHub Pages может занять до 60 сек.
+                            </p>
+                          </div>
                         </div>
                       )}
 
-                      {((deployState.phase === "ready" || deployState.phase === "waiting_pages" || deployState.phase === "error") || (message.gameCode)) && (
-                        <div className="space-y-3 mt-4">
+                      {(deployState.phase === "ready" || deployState.phase === "waiting_pages") && (
+                        <div className="grid grid-cols-2 gap-2">
                           <Button
-                            className="w-full h-14 bg-[#22c55e] hover:bg-[#16a34a] text-white font-black uppercase tracking-[0.3em] text-[14px] rounded-2xl gap-3 shadow-[0_12px_24px_-6px_rgba(34,197,94,0.5)] transition-all active:scale-[0.97] hover:shadow-[0_15px_30px_-6px_rgba(34,197,94,0.6)]"
-                            onClick={() => {
-                              if (onSwitchTab) {
-                                onSwitchTab("studio");
-                              }
-                            }}
+                            variant="outline"
+                            className="h-10 bg-white/5 border-white/10 text-white/70 hover:bg-white/10 rounded-xl text-[10px] font-black uppercase tracking-widest gap-2"
+                            onClick={() => window.open(deployState.pagesUrl, "_blank")}
                           >
-                            <Play size={22} fill="currentColor" className="ml-1" /> ИГРАТЬ
+                            <ExternalLink size={14} /> Играть (Web)
                           </Button>
-
-                          {(deployState.phase === "ready" || deployState.phase === "waiting_pages") && (
-                            <div className="grid grid-cols-2 gap-2">
-                              <Button
-                                variant="outline"
-                                className="h-10 bg-white/5 border-white/10 text-white/70 hover:bg-white/10 rounded-xl text-[10px] font-black uppercase tracking-widest gap-2"
-                                onClick={() => window.open(deployState.pagesUrl, "_blank")}
-                              >
-                                <ExternalLink size={14} /> Играть (Web)
-                              </Button>
-                              <Button
-                                variant="outline"
-                                className="h-10 bg-white/5 border-white/10 text-white/70 hover:bg-white/10 rounded-xl text-[10px] font-black uppercase tracking-widest gap-2"
-                                onClick={() => window.open(deployState.repoUrl, "_blank")}
-                              >
-                                <Github size={14} /> Репозиторий
-                              </Button>
-                            </div>
-                          )}
-
-                          {deployState.phase === "idle" && message.gameCode && (
-                            <Button
-                              variant="outline"
-                              className="w-full h-10 bg-blue-500/10 border-blue-500/20 text-blue-400 hover:bg-blue-500/20 rounded-xl text-[10px] font-black uppercase tracking-widest gap-2"
-                              onClick={() => {
-                                // Запускаем ручную публикацию
-                                const titleMatch = message.content.match(/(?:название|title|game)[\s:]*([^\n.]{3,40})/i);
-                                const gameTitle = titleMatch?.[1]?.trim() || "Smol Game";
-                                runDeploy(message.gameCode!, gameTitle);
-                              }}
-                            >
-                              <Github size={14} /> Опубликовать в GitHub
-                            </Button>
-                          )}
-
-                          {deployState.phase === "waiting_pages" && (
-                            <div className="space-y-3 py-2">
-                              <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest text-blue-400">
-                                <span className="flex items-center gap-2">
-                                  <Loader2 size={12} className="animate-spin" /> 
-                                  Разворачиваю в облаке...
-                                </span>
-                                <span>{Math.round((deployState.attempt / deployState.maxAttempts) * 100)}%</span>
-                              </div>
-                              <div className="h-1.5 w-full bg-blue-500/10 rounded-full overflow-hidden border border-blue-500/10">
-                                <div 
-                                  className="h-full bg-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.5)] transition-all duration-700 ease-in-out" 
-                                  style={{ width: `${(deployState.attempt / deployState.maxAttempts) * 100}%` }}
-                                />
-                              </div>
-                              <p className="text-[9px] text-white/40 text-center leading-tight">
-                                Первое включение GitHub Pages может занять до 60 сек.<br/>
-                                Это происходит только один раз.
-                              </p>
-                            </div>
-                          )}
-
-                          <p className="text-[10px] text-white/40 text-center uppercase font-black tracking-widest leading-tight">
-                            {deployState.phase === "ready" ? "✨ Игра опубликована и доступна по ссылке" : 
-                             deployState.phase === "error" ? "⚠️ Ошибка деплоя, но можно играть в Студии" :
-                             deployState.phase === "waiting_pages" ? "" :
-                             "🛠 Готова к тестированию"}
-                          </p>
+                          <Button
+                            variant="outline"
+                            className="h-10 bg-white/5 border-white/10 text-white/70 hover:bg-white/10 rounded-xl text-[10px] font-black uppercase tracking-widest gap-2"
+                            onClick={() => window.open(deployState.repoUrl, "_blank")}
+                          >
+                            <Github size={14} /> Репозиторий
+                          </Button>
                         </div>
                       )}
 
                       {deployState.phase === "error" && (
-                        <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-2xl space-y-3">
-                          <div className="flex items-center gap-2 text-red-400 font-black uppercase tracking-widest text-[10px]">
-                            <X size={14} strokeWidth={3} /> Ошибка публикации
+                        <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-xl space-y-2">
+                          <div className="flex items-center gap-2 text-red-400 font-black uppercase tracking-widest text-[9px]">
+                            <X size={12} strokeWidth={3} /> Ошибка публикации
                           </div>
-                          <p className="text-[11px] text-white/70 leading-relaxed">{deployState.message}</p>
-                          {deployState.message.includes("Сессия Telegram устарела") && (
-                            <Button
-                              className="w-full h-9 bg-red-500/20 hover:bg-red-500/30 text-red-400 border border-red-500/30 font-black uppercase tracking-widest text-[10px] rounded-xl transition-all"
-                              onClick={() => window.location.reload()}
-                            >
-                              <RotateCcw size={14} className="mr-2" /> Обновить сессию
-                            </Button>
-                          )}
+                          <p className="text-[10px] text-white/70 leading-relaxed">{deployState.message}</p>
                         </div>
                       )}
                     </div>
                   )}
 
-                  {!message.pipelineResult.isPublishable && (
-                    <div className="space-y-2 pt-2">
+                  {message.pipelineResult && !message.pipelineResult.isPublishable && (
+                    <div className="space-y-2 pt-2 border-t border-white/5">
                       <p className="text-[10px] text-yellow-500/50 font-bold uppercase tracking-wider">Требуются доработки:</p>
                       {message.pipelineResult.nextSteps.slice(0, 3).map((step: any, i: number) => (
                         <p key={i} className="text-[10px] text-white/40 flex gap-2">
