@@ -252,19 +252,30 @@ export class SmolGameAPI {
     pagesUrl: string,
     onProgress?: (attempt: number, maxAttempts: number) => void
   ): Promise<boolean> {
-    const maxAttempts = 24;   // 24 × 8 sec = ~3.2 minutes
+    const maxAttempts = 30;   // ~4 minutes max
     const intervalMs = 8000;
 
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
       onProgress?.(attempt, maxAttempts);
       try {
-        // Probe via a no-cors fetch — we only care about a non-error response
-        const res = await fetch(pagesUrl, { method: 'HEAD', mode: 'no-cors' });
-        // no-cors always has type 'opaque', status 0 — but it doesn't throw → page is up
-        if (res.type === 'opaque' || res.ok) return true;
-      } catch {
-        // Network error → page not ready yet, keep waiting
+        // Try a real fetch to see if it's alive. 
+        // We use a timestamp to bypass any interim caches.
+        const res = await fetch(`${pagesUrl}?t=${Date.now()}`, { 
+          method: 'GET',
+          // Note: GitHub Pages might block CORS for fetch, 
+          // but we can at least detect a difference between "Network Error" and "Ready"
+        });
+        
+        // If we get a 200, we are definitely ready.
+        if (res.status === 200) {
+          // Extra buffer for CDN propagation
+          await new Promise(r => setTimeout(r, 3000));
+          return true;
+        }
+      } catch (err) {
+        // Network error usually means it's not even resolving yet
       }
+      
       if (attempt < maxAttempts) {
         await new Promise(r => setTimeout(r, intervalMs));
       }
