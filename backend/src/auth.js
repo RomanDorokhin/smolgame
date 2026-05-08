@@ -88,9 +88,8 @@ const UPSERT_USER_SQL_VARIANTS = [
             first_name  = COALESCE(excluded.first_name, users.first_name),
             last_name   = COALESCE(excluded.last_name, users.last_name),
             photo_url   = COALESCE(excluded.photo_url, users.photo_url)`,
-    bind: (u) => [u.id, u.username, u.username, u.first_name, u.last_name, u.photo_url],
+    bind: (u) => [u.id, u.username ?? null, u.username ?? null, u.first_name ?? null, u.last_name ?? null, u.photo_url ?? null],
   },
-  // Есть tg_username, но нет site_handle в таблице
   {
     sql: `INSERT INTO users (id, username, tg_username, first_name, last_name, photo_url)
           VALUES (?, ?, ?, ?, ?, ?)
@@ -100,9 +99,8 @@ const UPSERT_USER_SQL_VARIANTS = [
             first_name  = COALESCE(excluded.first_name, users.first_name),
             last_name   = COALESCE(excluded.last_name, users.last_name),
             photo_url   = COALESCE(excluded.photo_url, users.photo_url)`,
-    bind: (u) => [u.id, u.username, u.username, u.first_name, u.last_name, u.photo_url],
+    bind: (u) => [u.id, u.username ?? null, u.username ?? null, u.first_name ?? null, u.last_name ?? null, u.photo_url ?? null],
   },
-  // Есть site_handle, нет tg_username
   {
     sql: `INSERT INTO users (id, username, first_name, last_name, photo_url)
           VALUES (?, ?, ?, ?, ?)
@@ -111,9 +109,8 @@ const UPSERT_USER_SQL_VARIANTS = [
             first_name  = COALESCE(excluded.first_name, users.first_name),
             last_name   = COALESCE(excluded.last_name, users.last_name),
             photo_url   = COALESCE(excluded.photo_url, users.photo_url)`,
-    bind: (u) => [u.id, u.username, u.first_name, u.last_name, u.photo_url],
+    bind: (u) => [u.id, u.username ?? null, u.first_name ?? null, u.last_name ?? null, u.photo_url ?? null],
   },
-  // Минимальная схема users
   {
     sql: `INSERT INTO users (id, username, first_name, last_name, photo_url)
           VALUES (?, ?, ?, ?, ?)
@@ -122,9 +119,8 @@ const UPSERT_USER_SQL_VARIANTS = [
             first_name  = COALESCE(excluded.first_name, users.first_name),
             last_name   = COALESCE(excluded.last_name, users.last_name),
             photo_url   = COALESCE(excluded.photo_url, users.photo_url)`,
-    bind: (u) => [u.id, u.username ?? '', u.first_name, u.last_name, u.photo_url],
+    bind: (u) => [u.id, u.username ?? null, u.first_name ?? null, u.last_name ?? null, u.photo_url ?? null],
   },
-  // Только id — достаточно для FOREIGN KEY в games, если остальные колонки другие/отсутствуют
   {
     sql: `INSERT OR IGNORE INTO users (id) VALUES (?)`,
     bind: (u) => [u.id],
