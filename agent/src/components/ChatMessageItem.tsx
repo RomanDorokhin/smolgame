@@ -323,16 +323,50 @@ export function ChatMessageItem({ message, onRetry, onSend, onSwitchTab, isLast 
                             onClick={() => {
                               if (onSwitchTab) {
                                 onSwitchTab("studio");
-                              } else if (deployState.phase === "ready" || deployState.phase === "waiting_pages") {
-                                window.open(deployState.pagesUrl, "_blank");
                               }
                             }}
                           >
                             <Play size={18} fill="currentColor" className="ml-1" /> ЗАПУСТИТЬ В СТУДИИ
                           </Button>
+
+                          {(deployState.phase === "ready" || deployState.phase === "waiting_pages") && (
+                            <div className="grid grid-cols-2 gap-2">
+                              <Button
+                                variant="outline"
+                                className="h-10 bg-white/5 border-white/10 text-white/70 hover:bg-white/10 rounded-xl text-[10px] font-black uppercase tracking-widest gap-2"
+                                onClick={() => window.open(deployState.pagesUrl, "_blank")}
+                              >
+                                <ExternalLink size={14} /> Играть (Web)
+                              </Button>
+                              <Button
+                                variant="outline"
+                                className="h-10 bg-white/5 border-white/10 text-white/70 hover:bg-white/10 rounded-xl text-[10px] font-black uppercase tracking-widest gap-2"
+                                onClick={() => window.open(deployState.repoUrl, "_blank")}
+                              >
+                                <Github size={14} /> Репозиторий
+                              </Button>
+                            </div>
+                          )}
+
+                          {deployState.phase === "idle" && message.gameCode && (
+                            <Button
+                              variant="outline"
+                              className="w-full h-10 bg-blue-500/10 border-blue-500/20 text-blue-400 hover:bg-blue-500/20 rounded-xl text-[10px] font-black uppercase tracking-widest gap-2"
+                              onClick={() => {
+                                // Запускаем ручную публикацию
+                                const titleMatch = message.content.match(/(?:название|title|game)[\s:]*([^\n.]{3,40})/i);
+                                const gameTitle = titleMatch?.[1]?.trim() || "Smol Game";
+                                runDeploy(message.gameCode!, gameTitle);
+                              }}
+                            >
+                              <Github size={14} /> Опубликовать в GitHub
+                            </Button>
+                          )}
+
                           <p className="text-[9px] text-white/30 text-center uppercase font-bold tracking-widest leading-tight">
                             {deployState.phase === "ready" ? "Игра готова!" : 
                              deployState.phase === "error" ? "Публикация не удалась, но можно править в студии" :
+                             deployState.phase === "idle" ? "Код сгенерирован" :
                              "GitHub Pages обновляется... (обычно 30-60 сек)"}
                           </p>
                         </div>
