@@ -96,39 +96,17 @@ const INTERVIEWER_PROMPT = `Ты — Гейм-Архитектор SmolGame. Т�
 // ──────────────────────────────────────────────
 // ФАЗА 2: Промпт для черновика (Draft)
 // ──────────────────────────────────────────────
-const DRAFT_PROMPT = `You are the SmolGame DRAFT ENGINEER. Build a core gameplay prototype in ONE SINGLE HTML file.
-Focus on:
-1. Core mechanics (collision, movement, scoring, game loop).
-2. Basic visuals and layout.
-3. Mobile-first (Portrait 9:16 aspect ratio).
-Output the full standalone HTML code inside <game_spec> tags. No multiple files yet.`;
+const DRAFT_PROMPT = `You are the Game Master. Build a FUN and COOL mobile game prototype in ONE SINGLE HTML file.
+The game MUST be finished, playable, and absolutely error-free.
+Focus on core mechanics that feel great. Strictly Portrait 9:16.
+Output the full code inside <game_spec> tags.`;
 
-// ──────────────────────────────────────────────
-// ФАЗА 3: Промпт для полировки (Refiner)
-// ──────────────────────────────────────────────
-const REFINER_PROMPT = `You are the SmolGame ELITE REFINER. Take the provided draft and turn it into a premium mobile game.
-STRICT COMMANDS:
-1. FIX BUGS: Audit the code for logical errors, memory leaks, and performance.
-2. POLISH (JUICE): Add screen shake, particles, smooth tweens, score popups, and high-quality effects.
-3. PHONE-FIRST (MOBILE UX): 
-   * **Touch Targets**: All interactive elements MUST be at least 44x44px.
-   * **Pointer Events**: Use 'pointerdown' for zero-lag interaction. Avoid 'click'.
-   * **Responsive Scaling**: Use viewport units (vw/vh) and ensure the game looks perfect in 9:16 Portrait mode.
-   * **UI Layout**: Position controls at the bottom of the screen for easy thumb access.
-4. MODULAR STRUCTURE: You MUST split the code into multiple files using the <file path="filename"> tags.
-   Structure:
-   - index.html (minimal)
-   - js/game.js (logic)
-   - css/style.css (styling)
-   Use relative paths for scripts/links.
-
-Output Format:
-<thought>Analysis of the draft and improvement plan</thought>
-<game_spec>
-<file path="index.html">...</file>
-<file path="js/game.js">...</file>
-...
-</game_spec>`;
+const REFINER_PROMPT = `You are the Elite Game Refiner. Take this draft and turn it into a PREMIUM mobile game.
+1. STRUCTURE: Split into modular files (index.html, js/game.js, css/style.css) using <file path="..."> tags.
+2. JUICE: Add particles, screen shake, and smooth animations to make the game addictive and fun to play.
+3. PHONE-FIRST: Perfect touch controls and UI layout for mobile phones.
+4. NO BUGS: Ensure the game is 100% complete and runs perfectly.
+Output the code inside <game_spec> tags.`;
 
 export function useGameAgent(settings: ChatSettings) {
   const [messages, setMessages] = useState<AgentMessage[]>(() => {
