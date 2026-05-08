@@ -83,11 +83,27 @@ CRITIQUE: ...
 </game_spec>`;
 
 export function useGameAgent(settings: ChatSettings) {
-  const [messages, setMessages] = useState<AgentMessage[]>([]);
+  const [messages, setMessages] = useState<AgentMessage[]>(() => {
+    try {
+      const saved = localStorage.getItem("smol_agent_messages_v1");
+      return saved ? JSON.parse(saved) : [];
+    } catch { return []; }
+  });
   const [isRunning, setIsRunning] = useState(false);
   const [step, setStep] = useState("");
   const abortRef = useRef<AbortController | null>(null);
-  const chatHistory = useRef<{ role: "user" | "assistant" | "system"; content: string }[]>([]);
+  const chatHistory = useRef<{ role: "user" | "assistant" | "system"; content: string }[]>(() => {
+    try {
+      const saved = localStorage.getItem("smol_agent_history_v1");
+      return saved ? JSON.parse(saved) : [];
+    } catch { return []; }
+  }());
+
+  // Save to localStorage on change
+  useEffect(() => {
+    localStorage.setItem("smol_agent_messages_v1", JSON.stringify(messages));
+    localStorage.setItem("smol_agent_history_v1", JSON.stringify(chatHistory.current));
+  }, [messages]);
 
   const addMessage = useCallback((msg: Omit<AgentMessage, "id" | "timestamp">) => {
     const full: AgentMessage = { ...msg, id: makeId(), timestamp: Date.now() };
@@ -601,6 +617,8 @@ NEXT_STEPS: [What to fix exactly]`;
   const reset = useCallback(() => {
     setMessages([]);
     chatHistory.current = [];
+    localStorage.removeItem("smol_agent_messages_v1");
+    localStorage.removeItem("smol_agent_history_v1");
     FALLBACK_ORDER.forEach(p => pool.reset(p));
   }, []);
 

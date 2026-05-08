@@ -290,7 +290,7 @@ export default function Home() {
                             title="Studio Preview"
                             srcDoc={studioGame.code}
                             className="w-full h-full border-none bg-[#0a0b0e]"
-                            sandbox="allow-scripts allow-pointer-lock"
+                            sandbox="allow-scripts allow-pointer-lock allow-same-origin"
                           />
                           <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
                             <div className="bg-black/80 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/10 text-[9px] font-bold text-[#22c55e] uppercase tracking-widest">Mobile Preview</div>

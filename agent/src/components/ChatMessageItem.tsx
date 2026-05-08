@@ -428,7 +428,7 @@ export function ChatMessageItem({ message, onRetry, onSend, onSwitchTab, isLast 
                     : `<!DOCTYPE html><html><body style="margin:0;overflow:hidden;background:#000;">${htmlCode}</body></html>`
                 }
                 className="w-full h-full border-none"
-                sandbox="allow-scripts allow-pointer-lock"
+                sandbox="allow-scripts allow-pointer-lock allow-same-origin"
               />
             </div>
           </div>
