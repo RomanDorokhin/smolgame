@@ -178,69 +178,117 @@ export function useChat() {
 
     try {
       // 1. Generate the code directly using the LLM pool with Bulldozer logic
-    try {
-      // --- STEP 1: THINKING & PLANNING ---
-      setGenerationStep(`SmolAgent: Планирую архитектуру...`);
-      const thinkingPrompt = `You are the SmolAgent Game Architect. 
-      TASK: Plan a complete, surrealistic, mobile-ready game based on this spec:
-      ${prompt}
+      setGenerationStep(`Генерация кода (запуск цикла отказоустойчивости)...`);
       
-      Output your thoughts on how to implement the game loop, physics, and surrealistic visuals. Do not write code yet.`;
+      const generationPrompt = `You are a visionary Game Architect. Your goal is to create a digital masterpiece that will WOW the player.
       
-      let thoughts = "";
-      const thinkStream = generateStream([{ role: "user", content: thinkingPrompt }], { provider: rotatedProviders[0], model: currentSettings.models[rotatedProviders[0]] || DEFAULT_MODELS[rotatedProviders[0]][0], apiKey: currentSettings.keys[rotatedProviders[0]] as string }, new AbortController().signal);
-      for await (const chunk of thinkStream) {
-        thoughts += chunk;
-        if (thoughts.length % 50 === 0) setGenerationStep(`SmolAgent: Думаю... (${thoughts.length} зн.)`);
+      BE AN AGENT: Don't just output code. Think deeply about the player's experience.
+      
+      STEPS FOR SUCCESS:
+      1. PLAN: Start by writing a detailed plan in <thought> tags. Consider the game loop, physics, mobile controls, and surreal aesthetics.
+      2. CRITIQUE: Inside the <thought> block, critique your own plan. What could go wrong? Is it too simple? How can you make it better?
+      3. IMPLEMENT: Provide the FULL, ready-to-play HTML code. Every single line must serve a purpose.
+      
+      YOUR VALUES:
+      - Craftsmanship: Write beautiful, efficient code.
+      - Empathy: Make controls intuitive and the gameplay rewarding.
+      - Creativity: Lean into the "Surrealistic" requirement. Surprise us.
+      
+      TECHNICAL REQUIREMENTS:
+      - Single-file (HTML+CSS+JS).
+      - requestAnimationFrame for smooth 60fps.
+      - Portrait mode, touch controls (>44px).
+      - Score HUD and Game Over screen are mandatory.
+      
+      Output your thought process first, then the code within <game_spec> tags.`;
+
+      let attempts = 0;
+
+      // Prepare a list of providers to try, starting with the one that generated the prompt
+      const providersWithKeys = FALLBACK_ORDER.filter(p => {
+        const k = currentSettings.keys[p];
+        return k && typeof k === 'string' && k.trim().length > 0;
+      });
+      
+      if (providersWithKeys.length === 0) {
+        throw new Error("Нет доступных ключей API для генерации кода. Проверьте настройки.");
       }
 
-      // Update UI with thoughts
-      setSessions(prev => prev.map(s => s.id === sessionId ? {
-        ...s, messages: s.messages.map(m => m.id === assistantMsgId ? { 
-          ...m, content: cleanTechnicalContent(currentContent) + `\n\n> **SmolAgent мысли:**\n> ${thoughts.slice(0, 300)}...` 
-        } : m)
-      } : s));
+      // Prioritize the provider that successfully generated the opengame_prompt
+      const originalProvider = providersWithKeys.includes(initialProvider as any) ? initialProvider : null;
+      const otherProviders = providersWithKeys.filter(p => p !== originalProvider);
+      const rotatedProviders = originalProvider ? [originalProvider as APIProvider, ...otherProviders] : providersWithKeys;
+      const maxTotalAttempts = rotatedProviders.length * 3;
+      let finalRawCode = "";
 
-      // --- STEP 2: FULL IMPLEMENTATION ---
-      setGenerationStep(`SmolAgent: Пишу полный код...`);
-      const implementationPrompt = `Based on your plan:
-      ${thoughts}
-      
-      Write the COMPLETE, READY-TO-PLAY HTML/JS/CSS code. 
-      Rules: No skeletons, no placeholders, full mobile logic, surrealistic style.
-      Output ONLY within <game_spec> tags.`;
+      console.log("[Pipeline] Starting with providers:", rotatedProviders);
 
-      let rawCode = "";
-      const codeStream = generateStream([{ role: "user", content: implementationPrompt }], { provider: rotatedProviders[0], model: currentSettings.models[rotatedProviders[0]] || DEFAULT_MODELS[rotatedProviders[0]][0], apiKey: currentSettings.keys[rotatedProviders[0]] as string }, new AbortController().signal);
-      for await (const chunk of codeStream) {
-        rawCode += chunk;
-        if (rawCode.length % 100 === 0) setGenerationStep(`SmolAgent: Кожу... (${rawCode.length} зн.)`);
+      for (const currentProvider of rotatedProviders) {
+        attempts++;
+        if (attempts > maxTotalAttempts) break;
+
+        const keyVal = currentSettings.keys[currentProvider];
+        const key = typeof keyVal === 'string' ? keyVal.trim() : "";
+        
+        if (!key || key.length === 0) {
+          console.warn(`[Pipeline] Skipping ${currentProvider} - key missing (type: ${typeof keyVal})`);
+          failureLog.push(`${currentProvider}: Ключ отсутствует в настройках (тип: ${typeof keyVal})`);
+          continue; 
+        }
+
+        const modelId = currentSettings.models[currentProvider] || (Array.isArray(DEFAULT_MODELS[currentProvider]) ? DEFAULT_MODELS[currentProvider][0] : DEFAULT_MODELS[currentProvider]);
+
+        try {
+          const stepMsg = `\n\n⚙️ **Инженер (${currentProvider})** анализирует ТЗ...`;
+          setGenerationStep(`Инженер (${currentProvider}) анализирует ТЗ...`);
+          setSessions(prev => prev.map(s => s.id === sessionId ? {
+            ...s, messages: s.messages.map(m => m.id === assistantMsgId ? { 
+              ...m, content: cleanTechnicalContent(currentContent) + stepMsg 
+            } : m)
+          } : s));
+
+          let generatedResponse = "";
+          try {
+            const stream = generateStream(
+              [{ role: "user", content: generationPrompt }],
+              { provider: currentProvider, model: modelId, apiKey: key },
+              new AbortController().signal
+            );
+
+            for await (const chunk of stream) {
+              generatedResponse += chunk;
+              // Update step to show it's actually working
+              if (generatedResponse.length % 50 === 0) {
+                setGenerationStep(`Инженер (${currentProvider}) пишет код (${generatedResponse.length} зн.)...`);
+              }
+            }
+          } catch (streamErr: any) {
+            console.error(`Stream error with ${currentProvider}:`, streamErr);
+            failureLog.push(`${currentProvider}: ${streamErr.message}`);
+            setGenerationStep(`Ошибка ${currentProvider}: ${streamErr.message.slice(0, 30)}...`);
+            continue; // Try next provider
+          }
+
+          const codeMatch = generatedResponse.match(/<game_spec>([\s\S]*?)<\/game_spec>/);
+          
+          if (codeMatch) {
+            finalRawCode = codeMatch[1].trim();
+            break; // Success! We have code.
+          } else if (generatedResponse.length > 20 && !generatedResponse.includes('<html>')) {
+            // It's likely a question or clarification
+            setSessions(prev => prev.map(s => s.id === sessionId ? {
+              ...s, messages: s.messages.map(m => m.id === assistantMsgId ? { 
+                ...m, content: cleanTechnicalContent(currentContent) + `\n\n🛠 **Уточнение от инженера OpenGame:**\n${generatedResponse}` 
+              } : m)
+            } : s));
+            return; // Stop and wait for user input
+          }
+        } catch (err: any) {
+          console.warn(`Attempt with ${currentProvider} failed:`, err.message);
+          failureLog.push(`${currentProvider}: ${err.message}`);
+          setGenerationStep(`Сбой ${currentProvider}. Пробую следующую...`);
+        }
       }
-
-      const codeMatch = rawCode.match(/<game_spec>([\s\S]*?)<\/game_spec>/);
-      finalRawCode = codeMatch ? codeMatch[1].trim() : rawCode.trim();
-
-      // --- STEP 3: SELF-REVIEW & CORRECTION ---
-      setGenerationStep(`SmolAgent: Проверяю сам себя на ошибки...`);
-      const reviewPrompt = `Review your own code for bugs, missing mechanics, or bad mobile UI:
-      \`\`\`html
-      ${finalRawCode}
-      \`\`\`
-      
-      If there are issues, fix them and return the FULL corrected code inside <game_spec>. 
-      If it is perfect, return "PERFECT".`;
-
-      let reviewResult = "";
-      const reviewStream = generateStream([{ role: "user", content: reviewPrompt }], { provider: rotatedProviders[0], model: currentSettings.models[rotatedProviders[0]] || DEFAULT_MODELS[rotatedProviders[0]][0], apiKey: currentSettings.keys[rotatedProviders[0]] as string }, new AbortController().signal);
-      for await (const chunk of reviewStream) reviewResult += chunk;
-
-      if (!reviewResult.includes("PERFECT")) {
-        setGenerationStep(`SmolAgent: Исправляю найденные косяки...`);
-        const fixedMatch = reviewResult.match(/<game_spec>([\s\S]*?)<\/game_spec>/);
-        if (fixedMatch) finalRawCode = fixedMatch[1].trim();
-      }
-
-      setGenerationStep(`SmolAgent: Финализация...`);
 
       if (!finalRawCode) {
         const missingKeys = failureLog.filter(l => l.includes("empty or invalid") || l.includes("отсутствует")).map(l => l.split(':')[0].trim());
