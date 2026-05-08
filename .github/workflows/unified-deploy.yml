@@ -34,7 +34,10 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./
-          # We exclude source folders and git config from the published site
+          publish_branch: gh-pages
+          force_orphan: true
+          user_name: 'github-actions[bot]'
+          user_email: 'github-actions[bot]@users.noreply.github.com'
           exclude_assets: '.git,.github,agent,backend,OpenGame'
 
   deploy-backend:
