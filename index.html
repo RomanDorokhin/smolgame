@@ -25,11 +25,18 @@ opengame_prompt, game_spec {
 }
 
 /* Emergency fix for layout overflow in Feed */
-.game-info-overlay, .game-info, #game-info, .slide-info {
+.game-info-overlay, .game-info, #game-info, .slide-info, .feed-item, .slide {
   overflow-wrap: break-word !important;
   word-wrap: break-word !important;
   word-break: break-word !important;
   max-width: 100vw !important;
+  white-space: normal !important;
+}
+
+#feed, body.feed-open {
+  max-width: 100vw !important;
+  overflow-x: hidden !important;
+  position: relative;
 }
 </style>
 
