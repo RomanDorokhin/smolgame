@@ -85,7 +85,7 @@ ${se}`}],()=>{},Y,re);P=ue}if(!P||P.length<500){y(C,{content:"❌ Инженер
 
 `:"")+`✅ **Игра создана!**
 
-🚀 **Публикую на платформу...**`,gameCode:ye,isStreaming:!0});const V=ee.match(/(?:название|title|game)[\s:]*([^\n.]{3,40})/i)?.[1]?.trim()||"SmolGame";try{const w=ix(ye),te=w.length>0?w:[{path:"index.html",content:ye}],ue=`Мобильная игра: ${V}. Создана SmolGame Agent.`,ae=await un.publishGame({gameTitle:V,files:te,gameDescription:ue});f("🚀 Финализация облачной сборки..."),y(C,{content:(J?J+`
+🚀 **Публикую на платформу...**`,gameCode:ye,isStreaming:!0});const V=ee.match(/(?:название|title|game)[\s:]*([^\n.]{3,40})/i)?.[1]?.trim()||"SmolGame";try{const w=ix(ye),te=w.length>0?w:[{path:"index.html",content:ye}],ae=await un.publishGame({gameTitle:V,files:te,gameDescription:"Создано через SmolGame AI Agent."});f("🚀 Финализация облачной сборки..."),y(C,{content:(J?J+`
 
 `:"")+`✅ **Игра создана!**
 

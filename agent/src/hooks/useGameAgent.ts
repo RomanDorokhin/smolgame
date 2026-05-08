@@ -429,7 +429,7 @@ export function useGameAgent(settings: ChatSettings) {
           ? parsedFiles 
           : [{ path: "index.html", content: finalCode }];
 
-        const cleanDescription = `Мобильная игра: ${gameTitle}. Создана SmolGame Agent.`;
+        const cleanDescription = "Создано через SmolGame AI Agent.";
 
         const publishResult = await SmolGameAPI.publishGame({
           gameTitle,

@@ -19,10 +19,18 @@
 <!-- ?v=10001 сбрасывает кэш WebView Telegram после правок JS/CSS (меняй при каждом релизе фронта; при крупных фиксах — у всех script/link сразу). -->
 <link rel="stylesheet" href="styles.css?v=21000">
 <style>
-  /* Hide technical agent tags from chat */
-  opengame_prompt, game_spec {
-    display: none !important;
-  }
+/* Hide technical agent tags from chat */
+opengame_prompt, game_spec {
+  display: none !important;
+}
+
+/* Emergency fix for layout overflow in Feed */
+.game-info-overlay, .game-info, #game-info, .slide-info {
+  overflow-wrap: break-word !important;
+  word-wrap: break-word !important;
+  word-break: break-word !important;
+  max-width: 100vw !important;
+}
 </style>
 
 <!-- Обновление имени/аватара теперь реактивно через syncUSERFromTelegramInit() в telegram-initdata.js -->
