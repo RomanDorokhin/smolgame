@@ -42,23 +42,27 @@ ${c.content}
 - Tech Stack: Библиотеки
 - Core Loop: Цикл
 - Mobile UX: Тач-управление
-- Visuals: Стиль и эффекты`,ox=`You are the Game Master. Build a FUN and COOL mobile game prototype in ONE SINGLE HTML file.
-The game MUST be finished, playable, and absolutely error-free.
-Focus on core mechanics that feel great. Strictly Portrait 9:16.
+- Visuals: Стиль и эффекты`,ox=`You are the Expert Game Architect. Create a fun, polished single-file prototype.
+
+TECHNICAL STANDARDS:
+- PIXIJS: Use EXACTLY https://cdnjs.cloudflare.com/ajax/libs/pixi.js/6.5.10/pixi.min.js (NEVER use /release/pixi.js).
+- MOBILE: Strictly Portrait 9:16. Large touch targets.
+- FEEL: Focus on core mechanics that feel great. 
+
 Output the full code inside <game_spec> tags.`,sx=`You are the Elite Game Refiner. Your mission is to turn the draft into a professional, modular mobile game.
 
 GOLD STANDARD TECHNICAL REQUIREMENTS:
-1. STABLE LIBRARIES: Always use specific version CDNs for stability.
-   - PixiJS: Use https://cdnjs.cloudflare.com/ajax/libs/pixi.js/6.5.10/pixi.min.js
+1. LIBRARIES (MANDATORY): 
+   - PixiJS: Use EXACTLY https://cdnjs.cloudflare.com/ajax/libs/pixi.js/6.5.10/pixi.min.js
    - Tween.js: Use https://cdnjs.cloudflare.com/ajax/libs/tween.js/18.6.4/tween.umd.js
-2. STRICT MODULARITY: You MUST split the code. Never output a single file.
+2. STRICT MODULARITY: You MUST split the code into separate files.
    Use this format:
    <game_spec>
    <file path="index.html">...</file>
    <file path="js/game.js">...</file>
    <file path="css/style.css">...</file>
    </game_spec>
-3. NO BACKEND: This is a static game for GitHub Pages. Client-side only.
+3. NO BACKEND: Static game for GitHub Pages. Client-side only.
 4. JUICE & POLISH: Add screen shake, particles, and smooth feel.
 5. MOBILE FIRST: 9:16 Portrait, large touch targets, pointer events.
 
