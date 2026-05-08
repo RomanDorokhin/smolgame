@@ -297,7 +297,7 @@ export function useGameAgent(settings: ChatSettings) {
         finalCode = rawCode;
 
         updateMessage(assistantId, {
-          content: (beforeTag ? beforeTag + "\n\n" : "") + `✅ **Игра готова! Качество: ${score}/100**\n\nТы можешь запустить её или скопировать код.`,
+          content: (beforeTag ? beforeTag + "\n\n" : "") + `✅ **Игра готова! (Качество: ${score}/100)**\n\nТы можешь запустить её кнопкой ниже или скопировать код.`,
           gameCode: finalCode,
           pipelineResult: pipeline,
           isStreaming: true,
@@ -316,7 +316,7 @@ export function useGameAgent(settings: ChatSettings) {
       // ══════════════════════════════════════════
       setStep("🚀 Публикую на GitHub...");
       updateMessage(assistantId, {
-        content: (beforeTag ? beforeTag + "\n\n" : "") + `✅ **Игра готова! (${score}/100)**\n\n🚀 Публикую на GitHub...`,
+        content: (beforeTag ? beforeTag + "\n\n" : "") + `✅ **Игра готова! (Качество: ${score}/100)**\n\n🚀 **Публикую на GitHub...**`,
         gameCode: finalCode,
         isStreaming: true,
       });
@@ -334,7 +334,7 @@ export function useGameAgent(settings: ChatSettings) {
 
         if (publishResult.ok) {
           updateMessage(assistantId, {
-            content: (beforeTag ? beforeTag + "\n\n" : "") + `✅ **Игра готова! (${score}/100)**\n\n🚀 Опубликована на GitHub!`,
+            content: (beforeTag ? beforeTag + "\n\n" : "") + `✅ **Игра готова! (Качество: ${score}/100)**\n\n🚀 **Опубликована на GitHub!**`,
             gameCode: finalCode,
             deployResult: {
               pagesUrl: publishResult.pagesUrl,
@@ -343,16 +343,18 @@ export function useGameAgent(settings: ChatSettings) {
             },
             isStreaming: false,
           });
+          console.log("[Agent] Published successfully:", publishResult.pagesUrl);
         } else {
           updateMessage(assistantId, {
-            content: (beforeTag ? beforeTag + "\n\n" : "") + `✅ **Игра готова! (${score}/100)**`,
+            content: (beforeTag ? beforeTag + "\n\n" : "") + `✅ **Игра готова! (Качество: ${score}/100)**\n\n⚠️ Ошибка публикации: ${publishResult.error || "неизвестно"}`,
             gameCode: finalCode,
             isStreaming: false,
           });
         }
-      } catch (pubErr) {
+      } catch (pubErr: any) {
+        console.error("[Agent] Publication failed:", pubErr);
         updateMessage(assistantId, {
-          content: (beforeTag ? beforeTag + "\n\n" : "") + `✅ **Игра готова! (${score}/100)**`,
+          content: (beforeTag ? beforeTag + "\n\n" : "") + `✅ **Игра готова! (Качество: ${score}/100)**\n\n❌ Ошибка сети при публикации.`,
           gameCode: finalCode,
           isStreaming: false,
         });
