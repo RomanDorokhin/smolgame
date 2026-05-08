@@ -363,10 +363,32 @@ export function ChatMessageItem({ message, onRetry, onSend, onSwitchTab, isLast 
                             </Button>
                           )}
 
+                          {deployState.phase === "waiting_pages" && (
+                            <div className="space-y-3 py-2">
+                              <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest text-blue-400">
+                                <span className="flex items-center gap-2">
+                                  <Loader2 size={12} className="animate-spin" /> 
+                                  Разворачиваю в облаке...
+                                </span>
+                                <span>{Math.round((deployState.attempt / deployState.maxAttempts) * 100)}%</span>
+                              </div>
+                              <div className="h-1.5 w-full bg-blue-500/10 rounded-full overflow-hidden border border-blue-500/10">
+                                <div 
+                                  className="h-full bg-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.5)] transition-all duration-700 ease-in-out" 
+                                  style={{ width: `${(deployState.attempt / deployState.maxAttempts) * 100}%` }}
+                                />
+                              </div>
+                              <p className="text-[9px] text-white/40 text-center leading-tight">
+                                Первое включение GitHub Pages может занять до 60 сек.<br/>
+                                Это происходит только один раз.
+                              </p>
+                            </div>
+                          )}
+
                           <p className="text-[10px] text-white/40 text-center uppercase font-black tracking-widest leading-tight">
-                            {deployState.phase === "ready" ? "✨ Игра опубликована в GitHub" : 
+                            {deployState.phase === "ready" ? "✨ Игра опубликована и доступна по ссылке" : 
                              deployState.phase === "error" ? "⚠️ Ошибка деплоя, но можно играть в Студии" :
-                             deployState.phase === "waiting_pages" ? "⌛ Подготовка ссылки для ленты..." :
+                             deployState.phase === "waiting_pages" ? "" :
                              "🛠 Готова к тестированию"}
                           </p>
                         </div>
