@@ -317,16 +317,16 @@ export function ChatMessageItem({ message, onRetry, onSend, onSwitchTab, isLast 
                       )}
 
                       {((deployState.phase === "ready" || deployState.phase === "waiting_pages" || deployState.phase === "error") || (message.gameCode)) && (
-                        <div className="space-y-2 mt-4">
+                        <div className="space-y-3 mt-4">
                           <Button
-                            className="w-full h-12 bg-[#22c55e] hover:bg-[#16a34a] text-white font-black uppercase tracking-[0.2em] text-[12px] rounded-2xl gap-3 shadow-[0_8px_20px_-4px_rgba(34,197,94,0.4)] transition-all active:scale-[0.98]"
+                            className="w-full h-14 bg-[#22c55e] hover:bg-[#16a34a] text-white font-black uppercase tracking-[0.3em] text-[14px] rounded-2xl gap-3 shadow-[0_12px_24px_-6px_rgba(34,197,94,0.5)] transition-all active:scale-[0.97] hover:shadow-[0_15px_30px_-6px_rgba(34,197,94,0.6)]"
                             onClick={() => {
                               if (onSwitchTab) {
                                 onSwitchTab("studio");
                               }
                             }}
                           >
-                            <Play size={18} fill="currentColor" className="ml-1" /> ЗАПУСТИТЬ В СТУДИИ
+                            <Play size={22} fill="currentColor" className="ml-1" /> ИГРАТЬ
                           </Button>
 
                           {(deployState.phase === "ready" || deployState.phase === "waiting_pages") && (
@@ -363,11 +363,11 @@ export function ChatMessageItem({ message, onRetry, onSend, onSwitchTab, isLast 
                             </Button>
                           )}
 
-                          <p className="text-[9px] text-white/30 text-center uppercase font-bold tracking-widest leading-tight">
-                            {deployState.phase === "ready" ? "Игра готова!" : 
-                             deployState.phase === "error" ? "Публикация не удалась, но можно править в студии" :
-                             deployState.phase === "idle" ? "Код сгенерирован" :
-                             "GitHub Pages обновляется... (обычно 30-60 сек)"}
+                          <p className="text-[10px] text-white/40 text-center uppercase font-black tracking-widest leading-tight">
+                            {deployState.phase === "ready" ? "✨ Игра опубликована в GitHub" : 
+                             deployState.phase === "error" ? "⚠️ Ошибка деплоя, но можно играть в Студии" :
+                             deployState.phase === "waiting_pages" ? "⌛ Подготовка ссылки для ленты..." :
+                             "🛠 Готова к тестированию"}
                           </p>
                         </div>
                       )}
