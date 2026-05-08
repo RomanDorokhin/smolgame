@@ -317,4 +317,48 @@ export class SmolGameAPI {
   static async getMyGames(): Promise<{ games: any[] }> {
     return this.apiFetch('/api/me/games');
   }
+
+  /**
+   * Secure AI Chat via Backend Proxy
+   */
+  static async* chatStream(payload: {
+    messages: any[];
+    provider: string;
+    model?: string;
+  }, signal?: AbortSignal): AsyncGenerator<string> {
+    const initData = this.getInitData();
+    const webId = this.getWebId();
+    
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      'x-web-id': webId,
+    };
+    if (initData) headers['x-telegram-init-data'] = initData;
+
+    const response = await fetch(`${API_BASE}/api/ai/chat`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ ...payload, stream: true }),
+      signal
+    });
+
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({ error: "Unknown error" }));
+      throw new Error(err.error || `API Error ${response.status}`);
+    }
+
+    const reader = response.body?.getReader();
+    if (!reader) throw new Error("API returned an empty body");
+
+    const decoder = new TextDecoder();
+    let buffer = "";
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      const chunk = decoder.decode(value, { stream: true });
+      yield chunk;
+    }
+  }
 }

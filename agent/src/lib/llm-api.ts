@@ -1,4 +1,4 @@
-export type APIProvider = "openrouter" | "groq" | "gemini" | "together" | "sambanova" | "glhf" | "huggingface" | "deepseek" | "custom" | "mistral";
+export type APIProvider = "smolbackend" | "openrouter" | "groq" | "gemini" | "together" | "sambanova" | "glhf" | "huggingface" | "deepseek" | "custom" | "mistral";
 
 export interface LLMConfig {
   provider: APIProvider;
@@ -160,6 +160,33 @@ export async function* generateStream(
   config: LLMConfig,
   signal?: AbortSignal
 ): AsyncGenerator<string> {
+  // --- SMOLBACKEND PROXY (SECURE) ---
+  if (config.provider === "smolbackend") {
+    const { SmolGameAPI } = await import("./smolgame-api");
+    const stream = SmolGameAPI.chatStream({
+      messages,
+      provider: "openai", // Default internal provider on worker
+      model: config.model || "gpt-4o",
+    }, signal);
+
+    for await (const chunk of stream) {
+      // The backend returns SSE (data: ...) for OpenAI
+      const lines = chunk.split("\n");
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (trimmed.startsWith("data: ")) {
+          if (trimmed === "data: [DONE]") continue;
+          try {
+            const json = JSON.parse(trimmed.substring(6));
+            const content = json.choices[0]?.delta?.content || "";
+            if (content) yield content;
+          } catch (e) {}
+        }
+      }
+    }
+    return;
+  }
+
   const status = pool.getStatus(config.provider);
   if (status.state === "OPEN") {
     throw new Error(`Provider ${config.provider} is temporarily disabled due to rate limits.`);

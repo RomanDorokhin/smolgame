@@ -12,6 +12,7 @@ import { githubOAuthDonePage } from './github-oauth-done.js';
 import { submitHtmlGame, serveHostedGame } from './hosted-games.js';
 import { publishGameToGithub, getGameFileFromGithub, updateGameFileOnGithub } from './github-publish.js';
 import { telegramWebhook } from './telegram-webhook.js';
+import { handleAiChat } from './ai-proxy.js';
 
 export default {
   async fetch(req, env, ctx) {
@@ -107,6 +108,7 @@ async function route(req, env, pathname) {
   if (pathname === '/api/auth/github/unlink' && m === 'POST') return githubUnlink(req, env);
   if (pathname === '/auth/github/callback' && m === 'GET') return githubOAuthCallback(req, env);
   if (pathname === '/auth/github/done' && m === 'GET') return githubOAuthDonePage(req, env);
+  if (pathname === '/api/ai/chat' && m === 'POST') return handleAiChat(req, env);
 
   let match;
   if ((match = pathname.match(/^\/api\/games\/([^/]+)$/))) {
