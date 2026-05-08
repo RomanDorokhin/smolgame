@@ -307,18 +307,17 @@ export function ChatMessageItem({ message, onRetry, onSend, isLast }: ChatMessag
                       </div>
                     )}
 
-                    {deployState.phase === "ready" && (
-                      <div className="space-y-2">
-                        <div className="flex items-center gap-2 p-2 bg-green-500/10 border border-green-500/20 rounded-xl mb-3">
-                          <Check size={14} className="text-green-500 shrink-0" />
-                          <span className="text-[11px] text-green-400 font-bold">Опубликовано! Игра доступна 🎮</span>
-                        </div>
+                    {(deployState.phase === "ready" || deployState.phase === "waiting_pages") && deployState.pagesUrl && (
+                      <div className="space-y-2 mt-4">
                         <Button
-                          className="w-full h-10 bg-green-500 text-white font-black uppercase tracking-widest text-[11px] rounded-xl gap-2"
+                          className="w-full h-12 bg-[#22c55e] hover:bg-[#16a34a] text-white font-black uppercase tracking-[0.2em] text-[12px] rounded-2xl gap-3 shadow-[0_8px_20px_-4px_rgba(34,197,94,0.4)] transition-all active:scale-[0.98]"
                           onClick={() => window.open(deployState.pagesUrl, "_blank")}
                         >
-                          <Play size={14} fill="currentColor" /> Открыть игру
+                          <Play size={18} fill="currentColor" className="ml-1" /> ЗАПУСТИТЬ ИГРУ
                         </Button>
+                        <p className="text-[9px] text-white/30 text-center uppercase font-bold tracking-widest">
+                          {deployState.phase === "ready" ? "Игра готова к запуску" : "GitHub Pages обновляется... (загрузка ~10 сек)"}
+                        </p>
                       </div>
                     )}
 
