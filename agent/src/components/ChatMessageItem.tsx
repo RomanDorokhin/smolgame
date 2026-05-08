@@ -279,81 +279,81 @@ export function ChatMessageItem({ message, onRetry, onSend, isLast }: ChatMessag
                   </span>
                 </div>
 
-                {message.pipelineResult.isPublishable ? (
-                  <div className="space-y-4">
-                    <p className="text-[10px] text-green-500 font-black uppercase tracking-wider flex items-center gap-2">
-                      <Check size={14} strokeWidth={3} /> Готово к публикации
-                    </p>
+                <div className="space-y-4">
+                  {/* Always show deploy results if they exist */}
+                  {(deployState.phase === "ready" || deployState.phase === "waiting_pages" || deployState.phase === "deploying" || deployState.phase === "error") && (
+                    <div className="pt-2 border-t border-white/5 mt-2">
+                      {deployState.phase === "deploying" && (
+                        <div className="flex items-center gap-3 p-3 bg-[#a3b8d4]/5 border border-[#a3b8d4]/15 rounded-xl">
+                          <Loader2 size={16} className="animate-spin text-[#a3b8d4] shrink-0" />
+                          <span className="text-[11px] text-[#a3b8d4] font-bold">{deployState.status}</span>
+                        </div>
+                      )}
 
-                    {/* Deploy States (Only showing status, no buttons) */}
-                    {deployState.phase === "deploying" && (
-                      <div className="flex items-center gap-3 p-3 bg-[#a3b8d4]/5 border border-[#a3b8d4]/15 rounded-xl">
-                        <Loader2 size={16} className="animate-spin text-[#a3b8d4] shrink-0" />
-                        <span className="text-[11px] text-[#a3b8d4] font-bold">{deployState.status}</span>
-                      </div>
-                    )}
-
-                    {deployState.phase === "waiting_pages" && (
-                      <div className="space-y-3">
-                        <div className="flex items-center gap-3 p-3 bg-amber-500/5 border border-amber-500/15 rounded-xl">
-                          <Clock size={16} className="text-amber-400 shrink-0 animate-pulse" />
-                          <div className="flex-1 min-w-0">
-                            <p className="text-[11px] text-amber-400 font-bold">GitHub Pages активируется…</p>
-                            <p className="text-[9px] text-white/30 mt-0.5">
-                              Попытка {deployState.attempt}/{deployState.maxAttempts}
-                            </p>
+                      {deployState.phase === "waiting_pages" && (
+                        <div className="space-y-3">
+                          <div className="flex items-center gap-3 p-3 bg-amber-500/5 border border-amber-500/15 rounded-xl">
+                            <Clock size={16} className="text-amber-400 shrink-0 animate-pulse" />
+                            <div className="flex-1 min-w-0">
+                              <p className="text-[11px] text-amber-400 font-bold">GitHub Pages активируется…</p>
+                              <p className="text-[9px] text-white/30 mt-0.5">
+                                Попытка {deployState.attempt}/{deployState.maxAttempts}
+                              </p>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    )}
+                      )}
 
-                    {(deployState.phase === "ready" || deployState.phase === "waiting_pages") && deployState.pagesUrl && (
-                      <div className="space-y-2 mt-4">
-                        <Button
-                          className="w-full h-12 bg-[#22c55e] hover:bg-[#16a34a] text-white font-black uppercase tracking-[0.2em] text-[12px] rounded-2xl gap-3 shadow-[0_8px_20px_-4px_rgba(34,197,94,0.4)] transition-all active:scale-[0.98]"
-                          onClick={() => {
-                            if (onSwitchTab) {
-                              onSwitchTab("studio");
-                            } else {
-                              window.open(deployState.pagesUrl, "_blank");
-                            }
-                          }}
-                        >
-                          <Play size={18} fill="currentColor" className="ml-1" /> ЗАПУСТИТЬ ИГРУ
-                        </Button>
-                        <p className="text-[9px] text-white/30 text-center uppercase font-bold tracking-widest">
-                          {deployState.phase === "ready" ? "Игра готова к запуску" : "GitHub Pages обновляется... (загрузка ~10 сек)"}
-                        </p>
-                      </div>
-                    )}
-
-                    {deployState.phase === "error" && (
-                      <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-2xl space-y-3">
-                        <div className="flex items-center gap-2 text-red-400 font-black uppercase tracking-widest text-[10px]">
-                          <X size={14} strokeWidth={3} /> Ошибка публикации
-                        </div>
-                        <p className="text-[11px] text-white/70 leading-relaxed">{deployState.message}</p>
-                        {deployState.message.includes("Сессия Telegram устарела") && (
+                      {(deployState.phase === "ready" || deployState.phase === "waiting_pages") && deployState.pagesUrl && (
+                        <div className="space-y-2 mt-4">
                           <Button
-                            className="w-full h-9 bg-red-500/20 hover:bg-red-500/30 text-red-400 border border-red-500/30 font-black uppercase tracking-widest text-[10px] rounded-xl transition-all"
-                            onClick={() => window.location.reload()}
+                            className="w-full h-12 bg-[#22c55e] hover:bg-[#16a34a] text-white font-black uppercase tracking-[0.2em] text-[12px] rounded-2xl gap-3 shadow-[0_8px_20px_-4px_rgba(34,197,94,0.4)] transition-all active:scale-[0.98]"
+                            onClick={() => {
+                              if (onSwitchTab) {
+                                onSwitchTab("studio");
+                              } else {
+                                window.open(deployState.pagesUrl, "_blank");
+                              }
+                            }}
                           >
-                            <RotateCcw size={14} className="mr-2" /> Обновить сессию
+                            <Play size={18} fill="currentColor" className="ml-1" /> ЗАПУСТИТЬ В СТУДИИ
                           </Button>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  <div className="space-y-2">
-                    <p className="text-[10px] text-yellow-500/50 font-bold uppercase tracking-wider">Требуются доработки:</p>
-                    {message.pipelineResult.nextSteps.slice(0, 3).map((step: any, i: number) => (
-                      <p key={i} className="text-[10px] text-white/40 flex gap-2">
-                        <span className="text-[#a3b8d4]">•</span> {step}
-                      </p>
-                    ))}
-                  </div>
-                )}
+                          <p className="text-[9px] text-white/30 text-center uppercase font-bold tracking-widest leading-tight">
+                            {deployState.phase === "ready" ? "Игра готова!" : "GitHub Pages обновляется... (обычно 30-60 сек)"}
+                          </p>
+                        </div>
+                      )}
+
+                      {deployState.phase === "error" && (
+                        <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-2xl space-y-3">
+                          <div className="flex items-center gap-2 text-red-400 font-black uppercase tracking-widest text-[10px]">
+                            <X size={14} strokeWidth={3} /> Ошибка публикации
+                          </div>
+                          <p className="text-[11px] text-white/70 leading-relaxed">{deployState.message}</p>
+                          {deployState.message.includes("Сессия Telegram устарела") && (
+                            <Button
+                              className="w-full h-9 bg-red-500/20 hover:bg-red-500/30 text-red-400 border border-red-500/30 font-black uppercase tracking-widest text-[10px] rounded-xl transition-all"
+                              onClick={() => window.location.reload()}
+                            >
+                              <RotateCcw size={14} className="mr-2" /> Обновить сессию
+                            </Button>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {!message.pipelineResult.isPublishable && (
+                    <div className="space-y-2 pt-2">
+                      <p className="text-[10px] text-yellow-500/50 font-bold uppercase tracking-wider">Требуются доработки:</p>
+                      {message.pipelineResult.nextSteps.slice(0, 3).map((step: any, i: number) => (
+                        <p key={i} className="text-[10px] text-white/40 flex gap-2">
+                          <span className="text-[#a3b8d4]">•</span> {step}
+                        </p>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
             )}
           </div>
