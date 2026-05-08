@@ -284,37 +284,17 @@ export default function Home() {
                         </div>
                       </div>
 
-                      <div className="flex-1 grid grid-cols-1 lg:grid-cols-2 gap-6 min-h-[500px]">
-                        <div className="relative rounded-3xl overflow-hidden bg-black border border-white/10 shadow-2xl group">
+                      <div className="flex-1 flex justify-center min-h-[600px] py-4">
+                        <div className="relative w-full max-w-[400px] aspect-[9/16] rounded-[2rem] overflow-hidden bg-black border-[8px] border-[#13141a] shadow-2xl shadow-blue-900/20 group">
                           <iframe
                             title="Studio Preview"
                             srcDoc={studioGame.code}
-                            className="w-full h-full border-none"
+                            className="w-full h-full border-none bg-[#0a0b0e]"
                             sandbox="allow-scripts allow-pointer-lock"
                           />
                           <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <div className="bg-black/80 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/10 text-[9px] font-bold text-[#22c55e] uppercase tracking-widest">Live Preview</div>
+                            <div className="bg-black/80 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/10 text-[9px] font-bold text-[#22c55e] uppercase tracking-widest">Mobile Preview</div>
                           </div>
-                        </div>
-                        <div className="bg-[#13141a] rounded-3xl border border-white/5 flex flex-col overflow-hidden">
-                          <div className="px-5 py-3 border-b border-white/5 flex items-center justify-between">
-                            <span className="text-[10px] font-black uppercase tracking-widest text-white/20">Исходный код</span>
-                            <Button 
-                              variant="ghost" 
-                              size="sm" 
-                              className="h-7 text-[9px] text-[#a3b8d4]"
-                              onClick={() => {
-                                navigator.clipboard.writeText(studioGame.code);
-                              }}
-                            >
-                              Копировать
-                            </Button>
-                          </div>
-                          <ScrollArea className="flex-1">
-                            <pre className="p-5 text-[11px] font-mono text-white/40 leading-relaxed overflow-x-auto">
-                              <code>{studioGame.code}</code>
-                            </pre>
-                          </ScrollArea>
                         </div>
                       </div>
                     </div>
