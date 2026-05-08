@@ -184,7 +184,7 @@ export async function publishGameToGithub(req, env) {
       b64 = utf8ToBase64(content);
     }
     const put = await ghJson(
-      `https://api.github.com/repos/${fullName}/contents/${encodeURIComponent(path)}`,
+      `https://api.github.com/repos/${fullName}/contents/${path.split('/').map(encodeURIComponent).join('/')}`,
       {
         method: 'PUT',
         headers: { 'content-type': 'application/json' },
