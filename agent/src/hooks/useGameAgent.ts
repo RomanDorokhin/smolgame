@@ -102,10 +102,14 @@ Focus on core mechanics that feel great. Strictly Portrait 9:16.
 Output the full code inside <game_spec> tags.`;
 
 const REFINER_PROMPT = `You are the Elite Game Refiner. Take this draft and turn it into a PREMIUM mobile game.
-1. STRUCTURE: Split into modular files (index.html, js/game.js, css/style.css) using <file path="..."> tags.
-2. JUICE: Add particles, screen shake, and smooth animations to make the game addictive and fun to play.
-3. PHONE-FIRST: Perfect touch controls and UI layout for mobile phones.
-4. NO BUGS: Ensure the game is 100% complete and runs perfectly.
+
+STRICT COMPATIBILITY RULES:
+1. LIBRARIES: If using PixiJS, use version 6.5.10 (https://cdnjs.cloudflare.com/ajax/libs/pixi.js/6.5.10/pixi.min.js) to avoid async initialization bugs.
+2. STRUCTURE: Split into modular files (index.html, js/game.js, css/style.css) using <file path="..."> tags.
+3. JUICE: Add particles, screen shake, and smooth animations to make the game addictive and fun.
+4. PHONE-FIRST: Perfect touch controls and UI layout for mobile phones.
+5. NO BUGS: Ensure the game is 100% complete and runs perfectly.
+
 Output the code inside <game_spec> tags.`;
 
 export function useGameAgent(settings: ChatSettings) {
