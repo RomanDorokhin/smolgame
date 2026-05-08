@@ -1,6 +1,10 @@
 /**
- * useGameAgent — Агент на базе проверенного llm-api.ts (SSE streaming)
- * Без Vercel AI SDK — используем тот же fetch что работал раньше
+ * useGameAgent v2 — Двухфазная архитектура как в старом useChat.ts
+ *
+ * Фаза 1: ИНТЕРВЬЮЕР собирает детали → выдаёт <opengame_prompt> тег
+ * Фаза 2: ИНЖЕНЕР получает ТЗ → пишет полный код в <game_spec> тегах
+ *
+ * Использует проверенный generateStream из llm-api.ts (без Vercel AI SDK)
  */
 
 import { useState, useRef, useCallback } from "react";
@@ -19,53 +23,57 @@ export interface AgentMessage {
   gameCode?: string;
   pipelineResult?: any;
   deployResult?: any;
-  toolCalls?: AgentToolCall[];
-}
-
-export interface AgentToolCall {
-  name: string;
-  status: "running" | "done" | "error";
-  input?: any;
-  output?: string;
 }
 
 function makeId() {
   return Math.random().toString(36).slice(2, 10);
 }
 
-const PROVIDER_ORDER: APIProvider[] = [
+const FALLBACK_ORDER: APIProvider[] = [
   "groq", "gemini", "together", "openrouter", "deepseek", "sambanova", "huggingface"
 ];
 
-const SYSTEM_PROMPT = `Ты — SmolGame Agent, специалист по созданию веб-игр для мобильных.
-
-ЗАДАЧА: Пообщайся с пользователем, собери детали (жанр + механика + стиль) и создай полноценную игру.
+// ──────────────────────────────────────────────
+// ФАЗА 1: Промпт для интервьюера
+// ──────────────────────────────────────────────
+const INTERVIEWER_PROMPT = `Ты — Геймдизайнер SmolGame. Твоя задача — собрать детали для создания игры.
 
 ПРАВИЛА:
-1. Общайся по-русски, дружелюбно.
-2. Задавай по ОДНОМУ вопросу за раз.
-3. Когда собрал достаточно деталей — сразу пиши код игры.
-4. Код должен быть ПОЛНЫМ (не менее 5000 символов), с requestAnimationFrame, touch-управлением, Start/HUD/GameOver экранами.
-5. После кода — опубликуй игру.
+1. Задавай ТОЛЬКО ОДИН уточняющий вопрос за раз.
+2. Как только собрал жанр + механику + визуальный стиль — НЕМЕДЛЕННО выводи тег <opengame_prompt> с полным ТЗ.
+3. ИСПОЛЬЗУЙ ТОЛЬКО XML ТЕГ <opengame_prompt>...</opengame_prompt>. Никаких слешей.
+4. ПОСЛЕ ТЕГА <opengame_prompt> — МОЛЧИ. Никакого текста после тега.
+5. НИКОГДА не описывай готовую игру, не пиши код в чате, не предлагай "варианты функций".
+6. Ты — интервьюер. Не движок, не автор. Только сбор данных.
 
-КОГДА ГОТОВ СОЗДАТЬ ИГРУ — используй этот формат:
-\`\`\`action
-{"tool": "createGame", "gameTitle": "Название игры", "gameCode": "<!DOCTYPE html>...ВЕСЬ КОД..."}
-\`\`\`
+ВНУТРИ <opengame_prompt> ОБЯЗАТЕЛЬНО:
+- Жанр и основная механика
+- Визуальный стиль и тема
+- Управление (touch-first, мобильные)
+- Уникальная фишка
+- Start Screen, HUD, Game Over Screen
+- Сохранение рекорда в localStorage`;
 
-КОГДА ГОТОВ ОПУБЛИКОВАТЬ — используй этот формат:
-\`\`\`action
-{"tool": "publishGame", "gameTitle": "Название игры", "gameCode": "<!DOCTYPE html>...ВЕСЬ КОД..."}
-\`\`\`
+// ──────────────────────────────────────────────
+// ФАЗА 2: Промпт для инженера (генерация кода)
+// ──────────────────────────────────────────────
+const ENGINEER_PROMPT = `You are the SmolGame ELITE ENGINEER. Build a FULLY FUNCTIONAL, POLISHED, COMPLETE game.
 
-Если просто общаешься — отвечай обычным текстом без \`\`\`action блоков.`;
+STRICT RULES:
+1. NO SKELETONS: All functions MUST be fully implemented.
+2. NO PLACEHOLDERS: Never use comments like "// handle logic here".
+3. SINGLE-FILE: Complete HTML + CSS + JS in one file.
+4. MOBILE-FIRST: Large touch controls (44px+), portrait mode, no system dialogs.
+5. MUST HAVE: requestAnimationFrame game loop, Start Screen, HUD, Game Over Screen, localStorage high scores.
+6. MINIMUM: 5000 characters of code. Real gameplay, not a demo.
+7. Output ONLY within <game_spec> tags. Nothing else.`;
 
 export function useGameAgent(settings: ChatSettings) {
   const [messages, setMessages] = useState<AgentMessage[]>([]);
   const [isRunning, setIsRunning] = useState(false);
   const [step, setStep] = useState("");
   const abortRef = useRef<AbortController | null>(null);
-  const chatHistory = useRef<{ role: string; content: string }[]>([]);
+  const chatHistory = useRef<{ role: "user" | "assistant" | "system"; content: string }[]>([]);
 
   const addMessage = useCallback((msg: Omit<AgentMessage, "id" | "timestamp">) => {
     const full: AgentMessage = { ...msg, id: makeId(), timestamp: Date.now() };
@@ -77,56 +85,58 @@ export function useGameAgent(settings: ChatSettings) {
     setMessages(prev => prev.map(m => m.id === id ? { ...m, ...patch } : m));
   }, []);
 
-  const executeAction = useCallback(async (
-    toolName: string,
-    args: any,
-    assistantId: string,
-    toolCalls: AgentToolCall[]
-  ) => {
-    if (toolName === "createGame") {
-      const { gameTitle, gameCode } = args;
-      toolCalls.push({ name: "createGame", status: "running", input: { gameTitle } });
-      updateMessage(assistantId, { content: "🎮 Проверяю качество кода...", toolCalls: [...toolCalls], isStreaming: true });
-      try {
-        const pipeline = await runGamePipeline("agent-game", gameCode);
-        const score = pipeline.finalScore;
-        toolCalls[toolCalls.length - 1] = { name: "createGame", status: "done", output: `${score}/100` };
-        updateMessage(assistantId, {
-          content: `✅ **${gameTitle}** готова! Качество: ${score}/100`,
-          gameCode, pipelineResult: pipeline, toolCalls: [...toolCalls], isStreaming: true,
-        });
-        return { success: true, score, gameCode };
-      } catch (e: any) {
-        toolCalls[toolCalls.length - 1] = { name: "createGame", status: "error", output: e.message };
-        return { success: false };
-      }
-    }
+  // Получаем список провайдеров с ключами
+  const getActiveProviders = useCallback(() => {
+    return FALLBACK_ORDER.filter(p => {
+      const key = settings.keys[p as keyof typeof settings.keys] as string | undefined;
+      return key && key.trim().length > 0;
+    });
+  }, [settings]);
 
-    if (toolName === "publishGame") {
-      const { gameTitle, gameCode } = args;
-      toolCalls.push({ name: "publishGame", status: "running" });
-      updateMessage(assistantId, { toolCalls: [...toolCalls], isStreaming: true });
-      setStep("🚀 Публикую...");
+  // Стриминг через ротацию провайдеров
+  const streamWithFallback = useCallback(async (
+    msgs: { role: "user" | "assistant" | "system"; content: string }[],
+    onChunk: (chunk: string, full: string) => void,
+    signal: AbortSignal,
+    preferredProvider?: string
+  ): Promise<{ text: string; provider: string }> => {
+    const active = getActiveProviders();
+    if (active.length === 0) throw new Error("NO_KEYS");
+
+    // Предпочитаемый провайдер ставим первым
+    const ordered = preferredProvider && active.includes(preferredProvider as APIProvider)
+      ? [preferredProvider as APIProvider, ...active.filter(p => p !== preferredProvider)]
+      : active;
+
+    let lastError = "";
+    for (const providerId of ordered) {
+      if (signal.aborted) throw new Error("Cancelled");
+
+      const status = pool.getStatus(providerId);
+      if (status.state === "OPEN") continue;
+
+      const apiKey = settings.keys[providerId as keyof typeof settings.keys] as string;
+      const model = (settings.models?.[providerId as keyof typeof settings.models] as string | undefined)
+        || DEFAULT_MODELS[providerId]?.[0] || "gpt-3.5-turbo";
+
       try {
-        const result = await SmolGameAPI.publishGame({
-          gameTitle,
-          files: [{ path: "index.html", content: gameCode }],
-          gameDescription: "Generated by SmolGame Agent",
-        });
-        if (result.ok) {
-          toolCalls[toolCalls.length - 1] = { name: "publishGame", status: "done", output: result.pagesUrl };
-          updateMessage(assistantId, {
-            deployResult: { pagesUrl: result.pagesUrl, repoUrl: `https://github.com/${result.repo}`, pagesReady: result.pagesReady },
-            toolCalls: [...toolCalls],
-          });
-        } else {
-          toolCalls[toolCalls.length - 1] = { name: "publishGame", status: "error", output: result.error };
+        let fullText = "";
+        for await (const chunk of generateStream(msgs, { provider: providerId, apiKey, model }, signal)) {
+          if (signal.aborted) break;
+          fullText += chunk;
+          onChunk(chunk, fullText);
         }
+        pool.reportSuccess(providerId);
+        return { text: fullText, provider: providerId };
       } catch (e: any) {
-        toolCalls[toolCalls.length - 1] = { name: "publishGame", status: "error", output: e.message };
+        lastError = e.message || "Unknown";
+        const isRate = lastError.includes("429") || lastError.toLowerCase().includes("rate limit");
+        pool.reportFailure(providerId, isRate, lastError);
+        console.warn(`[Agent] ${providerId} failed:`, lastError.slice(0, 80));
       }
     }
-  }, [updateMessage]);
+    throw new Error(`All providers failed. Last: ${lastError}`);
+  }, [settings, getActiveProviders]);
 
   const sendMessage = useCallback(async (userText: string) => {
     if (isRunning) return;
@@ -134,101 +144,226 @@ export function useGameAgent(settings: ChatSettings) {
     addMessage({ role: "user", content: userText });
     chatHistory.current.push({ role: "user", content: userText });
 
-    const assistantId = addMessage({ role: "assistant", content: "🤔 Думаю...", isStreaming: true });
+    const assistantId = addMessage({ role: "assistant", content: "🤔 ...", isStreaming: true });
     setIsRunning(true);
     abortRef.current = new AbortController();
+    const signal = abortRef.current.signal;
 
-    const activeProviders = PROVIDER_ORDER.filter(p => {
-      const key = settings.keys[p as keyof typeof settings.keys] as string | undefined;
-      return key && key.trim().length > 0;
-    });
-
-    if (activeProviders.length === 0) {
+    if (getActiveProviders().length === 0) {
       updateMessage(assistantId, {
-        content: "❌ Нет API ключей. Открой настройки (≡) и добавь хотя бы один ключ (Groq, Gemini, OpenRouter и т.д.).",
+        content: "❌ Нет API ключей. Открой настройки (≡) и добавь хотя бы один ключ.",
         isStreaming: false,
       });
       setIsRunning(false);
       return;
     }
 
-    const toolCalls: AgentToolCall[] = [];
-    let success = false;
-    let lastError = "";
-
     try {
-      for (const providerId of activeProviders) {
-        if (abortRef.current?.signal.aborted) break;
+      // ══════════════════════════════════════════
+      // ФАЗА 1: Интервьюер собирает ТЗ
+      // ══════════════════════════════════════════
+      setStep("💬 Думаю...");
 
-        const status = pool.getStatus(providerId);
-        if (status.state === "OPEN") {
-          const secLeft = Math.round((status.nextRetryAt - Date.now()) / 1000);
-          console.log(`[Agent] ${providerId} OPEN — пропускаю (ещё ${secLeft}s)`);
-          continue;
-        }
+      const interviewMsgs = [
+        { role: "system" as const, content: INTERVIEWER_PROMPT },
+        ...chatHistory.current.slice(-16),
+      ];
 
-        const apiKey = settings.keys[providerId as keyof typeof settings.keys] as string;
-        const model = (settings.models?.[providerId as keyof typeof settings.models] as string | undefined)
-          || DEFAULT_MODELS[providerId]?.[0] || "gpt-3.5-turbo";
+      let interviewText = "";
+      let usedProvider = "";
+      let foundPromptTag = false;
 
-        setStep(`🔄 ${providerId}...`);
-        updateMessage(assistantId, { content: `🔄 Подключаю **${providerId}**...`, isStreaming: true });
+      const { text: fullInterview, provider } = await streamWithFallback(
+        interviewMsgs,
+        (_chunk, full) => {
+          if (signal.aborted) return;
 
-        try {
-          let fullText = "";
+          // Показываем текст до тега
+          const tagIdx = full.indexOf("<opengame_prompt>");
+          const visible = tagIdx >= 0 ? full.slice(0, tagIdx).trim() : full.trim();
 
-          const msgs = [
-            { role: "system" as const, content: SYSTEM_PROMPT },
-            ...chatHistory.current.slice(-12).map(m => ({
-              role: m.role as "user" | "assistant" | "system",
-              content: m.content
-            })),
-          ];
-
-          for await (const chunk of generateStream(msgs, { provider: providerId, apiKey, model }, abortRef.current.signal)) {
-            if (abortRef.current?.signal.aborted) break;
-            fullText += chunk;
-            const visibleText = fullText.split("```action")[0].trim();
-            updateMessage(assistantId, { content: visibleText || "💬 ...", isStreaming: true });
+          if (tagIdx >= 0) {
+            foundPromptTag = true;
+            updateMessage(assistantId, {
+              content: (visible || "🚀 ТЗ собрано! Подключаю инженера..."),
+              isStreaming: true,
+            });
+          } else {
+            updateMessage(assistantId, { content: visible || "🤔 ...", isStreaming: true });
           }
+        },
+        signal
+      );
 
-          // Парсим action-блок
-          const actionMatch = fullText.match(/```action\s*\n([\s\S]*?)\n?```/);
-          if (actionMatch) {
-            try {
-              const action = JSON.parse(actionMatch[1].trim());
-              if (action.tool && action.gameTitle && action.gameCode) {
-                await executeAction(action.tool, action, assistantId, toolCalls);
-              }
-            } catch (e) {
-              console.warn("[Agent] Не удалось распарсить action:", e);
-            }
-          }
+      interviewText = fullInterview;
+      usedProvider = provider;
+      chatHistory.current.push({ role: "assistant", content: interviewText });
 
-          const visibleText = fullText.split("```action")[0].trim();
-          updateMessage(assistantId, {
-            content: visibleText || "Готово!",
-            isStreaming: false,
-            toolCalls: toolCalls.length > 0 ? toolCalls : undefined,
-          });
+      // Ищем тег <opengame_prompt>
+      const promptMatch = interviewText.match(/<opengame_prompt>([\s\S]*?)<\/opengame_prompt>/i)
+        || interviewText.match(/<opengame_prompt>([\s\S]*?)$/i);
 
-          chatHistory.current.push({ role: "assistant", content: fullText });
-          pool.reportSuccess(providerId);
-          success = true;
-          break;
-
-        } catch (e: any) {
-          lastError = e.message || "Неизвестная ошибка";
-          const isRateLimit = lastError.includes("429") || lastError.toLowerCase().includes("rate limit");
-          pool.reportFailure(providerId, isRateLimit, lastError);
-          console.warn(`[Agent] ${providerId} failed:`, lastError.slice(0, 120));
-        }
+      if (!promptMatch) {
+        // Просто разговор — нет тега, всё нормально
+        const visible = interviewText.replace(/<[^>]*>/g, "").trim();
+        updateMessage(assistantId, { content: visible || interviewText, isStreaming: false });
+        return;
       }
 
-      if (!success) {
-        const summary = pool.getSummary(activeProviders);
+      // ══════════════════════════════════════════
+      // ФАЗА 2: Инженер пишет код
+      // ══════════════════════════════════════════
+      const gameSpec = promptMatch[1].trim();
+      const beforeTag = interviewText.slice(0, interviewText.indexOf("<opengame_prompt>")).trim();
+
+      updateMessage(assistantId, {
+        content: (beforeTag ? beforeTag + "\n\n" : "") + "🔨 Пишу код игры...",
+        isStreaming: true,
+      });
+
+      setStep("🔨 Инженер пишет код...");
+
+      const engineerMsgs = [
+        { role: "system" as const, content: ENGINEER_PROMPT },
+        { role: "user" as const, content: `Build this game:\n\n${gameSpec}` },
+      ];
+
+      let rawCode = "";
+      let engineerText = "";
+
+      const { text: engineerResponse } = await streamWithFallback(
+        engineerMsgs,
+        (_chunk, full) => {
+          engineerText = full;
+          // Показываем прогресс пока накапливается код
+          const lines = full.split("\n").length;
+          const chars = full.length;
+          updateMessage(assistantId, {
+            content: (beforeTag ? beforeTag + "\n\n" : "") + `🔨 Инженер пишет код... (${chars} симв., ${lines} строк)`,
+            isStreaming: true,
+          });
+        },
+        signal,
+        usedProvider // Предпочитаем тот же провайдер что уже работал
+      );
+
+      engineerText = engineerResponse;
+
+      // Извлекаем код из <game_spec> тегов
+      const codeMatch = engineerText.match(/<game_spec>([\s\S]*?)<\/game_spec>/i)
+        || engineerText.match(/```html([\s\S]*?)```/i)
+        || engineerText.match(/<html[\s\S]*<\/html>/i);
+
+      if (codeMatch) {
+        rawCode = codeMatch[1]?.trim() || codeMatch[0]?.trim() || "";
+        // Если извлекли из тегов — добавляем DOCTYPE если нет
+        if (!rawCode.includes("<!DOCTYPE") && !rawCode.toLowerCase().startsWith("<html")) {
+          rawCode = `<!DOCTYPE html>\n<html lang="ru">\n${rawCode}\n</html>`;
+        }
+      } else {
+        // Попробуем взять весь ответ если там HTML
+        const htmlMatch = engineerText.match(/<!DOCTYPE[\s\S]*/i);
+        rawCode = htmlMatch?.[0] || engineerText;
+      }
+
+      if (!rawCode || rawCode.length < 500) {
         updateMessage(assistantId, {
-          content: `❌ Все провайдеры недоступны.\n\n**Ошибка:** \`${lastError.slice(0, 150)}\`\n\n${summary}\n\nПроверь ключи в настройках (≡).`,
+          content: "❌ Инженер не вернул код игры. Попробуй ещё раз или смени провайдер в настройках.",
+          isStreaming: false,
+        });
+        return;
+      }
+
+      // ══════════════════════════════════════════
+      // ФАЗА 3: Проверка качества
+      // ══════════════════════════════════════════
+      setStep("🎮 Проверяю качество...");
+      updateMessage(assistantId, {
+        content: (beforeTag ? beforeTag + "\n\n" : "") + "🎮 Проверяю качество кода...",
+        isStreaming: true,
+      });
+
+      let finalCode = rawCode;
+      let score = 0;
+
+      try {
+        const pipeline = await runGamePipeline("agent-game", rawCode);
+        score = pipeline.finalScore;
+        finalCode = rawCode;
+
+        updateMessage(assistantId, {
+          content: (beforeTag ? beforeTag + "\n\n" : "") + `✅ **Игра готова! Качество: ${score}/100**\n\nТы можешь запустить её или скопировать код.`,
+          gameCode: finalCode,
+          pipelineResult: pipeline,
+          isStreaming: true,
+        });
+      } catch (e) {
+        // Качество не прошло — всё равно показываем код
+        updateMessage(assistantId, {
+          content: (beforeTag ? beforeTag + "\n\n" : "") + `⚠️ **Игра создана** (проверка качества не пройдена)\n\nКод доступен для просмотра.`,
+          gameCode: finalCode,
+          isStreaming: true,
+        });
+      }
+
+      // ══════════════════════════════════════════
+      // ФАЗА 4: Публикация
+      // ══════════════════════════════════════════
+      setStep("🚀 Публикую на GitHub...");
+      updateMessage(assistantId, {
+        content: updateMessage.toString(), // temp, will be overwritten
+        isStreaming: true,
+      });
+
+      // Берём название из ТЗ
+      const titleMatch = gameSpec.match(/(?:название|title|game)[\s:]*([^\n.]{3,40})/i);
+      const gameTitle = titleMatch?.[1]?.trim() || "SmolGame";
+
+      try {
+        const publishResult = await SmolGameAPI.publishGame({
+          gameTitle,
+          files: [{ path: "index.html", content: finalCode }],
+          gameDescription: `Generated by SmolGame Agent: ${gameSpec.slice(0, 100)}`,
+        });
+
+        if (publishResult.ok) {
+          updateMessage(assistantId, {
+            content: (beforeTag ? beforeTag + "\n\n" : "") + `✅ **Игра готова! (${score}/100)**\n\n🚀 Опубликована на GitHub!`,
+            gameCode: finalCode,
+            deployResult: {
+              pagesUrl: publishResult.pagesUrl,
+              repoUrl: `https://github.com/${publishResult.repo}`,
+              pagesReady: publishResult.pagesReady,
+            },
+            isStreaming: false,
+          });
+        } else {
+          updateMessage(assistantId, {
+            content: (beforeTag ? beforeTag + "\n\n" : "") + `✅ **Игра готова! (${score}/100)**`,
+            gameCode: finalCode,
+            isStreaming: false,
+          });
+        }
+      } catch (pubErr) {
+        updateMessage(assistantId, {
+          content: (beforeTag ? beforeTag + "\n\n" : "") + `✅ **Игра готова! (${score}/100)**`,
+          gameCode: finalCode,
+          isStreaming: false,
+        });
+      }
+
+    } catch (e: any) {
+      if (e.message === "NO_KEYS") {
+        updateMessage(assistantId, {
+          content: "❌ Нет API ключей. Открой настройки (≡).",
+          isStreaming: false,
+        });
+      } else if (e.message === "Cancelled") {
+        updateMessage(assistantId, { content: "⏹️ Остановлено.", isStreaming: false });
+      } else {
+        const summary = pool.getSummary(getActiveProviders());
+        updateMessage(assistantId, {
+          content: `❌ Ошибка: ${e.message.slice(0, 200)}\n\n${summary}\n\nПроверь ключи в настройках (≡).`,
           isStreaming: false,
         });
       }
@@ -236,7 +371,7 @@ export function useGameAgent(settings: ChatSettings) {
       setIsRunning(false);
       setStep("");
     }
-  }, [isRunning, settings, addMessage, updateMessage, executeAction]);
+  }, [isRunning, settings, addMessage, updateMessage, getActiveProviders, streamWithFallback]);
 
   const stop = useCallback(() => {
     abortRef.current?.abort();
@@ -247,6 +382,7 @@ export function useGameAgent(settings: ChatSettings) {
   const reset = useCallback(() => {
     setMessages([]);
     chatHistory.current = [];
+    FALLBACK_ORDER.forEach(p => pool.reset(p));
   }, []);
 
   return { messages, isRunning, step, sendMessage, stop, reset };
