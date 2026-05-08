@@ -315,11 +315,51 @@ export function useGameAgent(settings: ChatSettings) {
 
       let finalCode = rawCode;
       let score = 0;
+      let pipeline: any = null;
 
       try {
-        const pipeline = await runGamePipeline("agent-game", rawCode);
+        pipeline = await runGamePipeline("agent-game", rawCode);
         score = pipeline.finalScore;
-        finalCode = rawCode;
+
+        // AUTO-FIX LOOP: Если скор ниже 80 и есть список замечаний, пробуем исправить один раз автоматически
+        if (score < 80 && pipeline.nextSteps && pipeline.nextSteps.length > 0) {
+          setStep("🔧 Авто-исправление...");
+          updateMessage(assistantId, {
+            content: (beforeTag ? beforeTag + "\n\n" : "") + `⚠️ **Качество: ${score}/100**. Исправляю замечания...`,
+            isStreaming: true,
+          });
+
+          const fixMsgs = [
+            { 
+              role: "system" as const, 
+              content: ENGINEER_PROMPT + `\n\nYOUR PREVIOUS CODE FAILED QUALITY GATE WITH SCORE ${score}/100.\nFIX THESE ISSUES:\n${pipeline.nextSteps.join("\n")}\n\nEXISTING CODE:\n${rawCode}` 
+            },
+            { role: "user" as const, content: `Please fix all issues listed above and return the COMPLETE corrected code in <game_spec> tags.` },
+          ];
+
+          const { text: fixedResponse } = await streamWithFallback(
+            fixMsgs,
+            (_chunk, full) => {
+              const chars = full.length;
+              updateMessage(assistantId, {
+                content: (beforeTag ? beforeTag + "\n\n" : "") + `🔧 Авто-исправление... (${chars} симв.)`,
+                isStreaming: true,
+              });
+            },
+            signal,
+            usedProvider
+          );
+
+          const fixedCodeMatch = fixedResponse.match(/<game_spec>([\s\S]*?)<\/game_spec>/i) 
+            || fixedResponse.match(/<html[\s\S]*<\/html>/i);
+          
+          if (fixedCodeMatch) {
+            finalCode = fixedCodeMatch[1]?.trim() || fixedCodeMatch[0]?.trim();
+            // Перепроверяем финальный вариант
+            pipeline = await runGamePipeline("agent-game", finalCode);
+            score = pipeline.finalScore;
+          }
+        }
 
         updateMessage(assistantId, {
           content: (beforeTag ? beforeTag + "\n\n" : "") + `✅ **Игра готова! (Качество: ${score}/100)**\n\nТы можешь запустить её кнопкой ниже или скопировать код.`,
@@ -328,9 +368,9 @@ export function useGameAgent(settings: ChatSettings) {
           isStreaming: true,
         });
       } catch (e) {
-        // Качество не прошло — всё равно показываем код
+        // Ошибка в пайплайне — всё равно показываем оригинал
         updateMessage(assistantId, {
-          content: (beforeTag ? beforeTag + "\n\n" : "") + `⚠️ **Игра создана** (проверка качества не пройдена)\n\nКод доступен для просмотра.`,
+          content: (beforeTag ? beforeTag + "\n\n" : "") + `⚠️ **Игра создана** (проверка качества прервана)\n\nКод доступен для просмотра.`,
           gameCode: finalCode,
           isStreaming: true,
         });
