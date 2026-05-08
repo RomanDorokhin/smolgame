@@ -282,14 +282,16 @@ export function ChatMessageItem({ message, onRetry, onSend, onSwitchTab, isLast 
               </div>
             )}
 
-            {message.pipelineResult && (
+            {(message.pipelineResult || message.gameCode) && (
               <div className="p-4 bg-[#13141a] border border-white/5 rounded-2xl animate-in fade-in zoom-in duration-300">
-                <div className="flex items-center justify-between mb-3">
-                  <h5 className="text-[10px] font-black uppercase tracking-widest text-white/20">Анализ качества</h5>
-                  <span className={`text-xs font-black ${message.pipelineResult.finalScore >= 70 ? "text-green-500" : "text-yellow-500"}`}>
-                    {message.pipelineResult.finalScore}/100
-                  </span>
-                </div>
+                {message.pipelineResult && (
+                  <div className="flex items-center justify-between mb-3">
+                    <h5 className="text-[10px] font-black uppercase tracking-widest text-white/20">Анализ качества</h5>
+                    <span className={`text-xs font-black ${message.pipelineResult.finalScore >= 70 ? "text-green-500" : "text-yellow-500"}`}>
+                      {message.pipelineResult.finalScore}/100
+                    </span>
+                  </div>
+                )}
 
                 <div className="space-y-4">
                   {/* Always show deploy results if they exist */}
