@@ -103,12 +103,12 @@ Output the full code inside <game_spec> tags.`;
 
 const REFINER_PROMPT = `You are the Elite Game Refiner. Take this draft and turn it into a PREMIUM mobile game.
 
-STRICT COMPATIBILITY RULES:
-1. LIBRARIES: If using PixiJS, use version 6.5.10 (https://cdnjs.cloudflare.com/ajax/libs/pixi.js/6.5.10/pixi.min.js) to avoid async initialization bugs.
+STRICT RULES:
+1. NO BACKEND: This is a 100% static game for GitHub Pages. Use ONLY client-side JavaScript. No server-side code.
 2. STRUCTURE: Split into modular files (index.html, js/game.js, css/style.css) using <file path="..."> tags.
 3. JUICE: Add particles, screen shake, and smooth animations to make the game addictive and fun.
 4. PHONE-FIRST: Perfect touch controls and UI layout for mobile phones.
-5. NO BUGS: Ensure the game is 100% complete and runs perfectly.
+5. NO BUGS: Ensure the game is 100% complete and runs perfectly on any browser.
 
 Output the code inside <game_spec> tags.`;
 
