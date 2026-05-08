@@ -314,10 +314,48 @@ export function useGameAgent(settings: ChatSettings) {
       let pipeline: any = null;
 
       try {
+        // --- ШАГ 1: Быстрая проверка (Пайплайн) ---
         pipeline = await runGamePipeline("agent-game", rawCode);
         score = pipeline.finalScore;
 
-        // AUTO-FIX LOOP: Если скор ниже 80 и есть список замечаний, пробуем исправить один раз автоматически
+        // --- ШАГ 2: Умная проверка (Нейро-критик) ---
+        setStep("🧠 Нейро-критик...");
+        const criticMsgs = [
+          { 
+            role: "system" as const, 
+            content: `You are the SmolGame MASTER CRITIC. Your job is to catch "fake" games that pass regex checks but are actually broken or empty.
+            
+            CHECKLIST:
+            1. Logic: Is there a real game loop?
+            2. Content: Is there actual gameplay code or just placeholders?
+            3. Mobile: Are there large touch targets and portrait layout?
+            4. Stability: Will it crash?
+            
+            Return JSON only:
+            {
+              "isFake": boolean,
+              "realScore": number (0-100),
+              "issues": string[]
+            }` 
+          },
+          { role: "user" as const, content: `Review this code and the pipeline score (${score}/100):\n\nCODE:\n${rawCode}\n\nPIPELINE REPORT:\n${pipeline.summary}` },
+        ];
+
+        const { text: criticResponse } = await streamWithFallback(criticMsgs, () => {}, signal, usedProvider);
+        
+        try {
+          const critique = JSON.parse(criticResponse.match(/\{[\s\S]*\}/)?.[0] || "{}");
+          if (critique.isFake || critique.realScore < score) {
+            score = critique.realScore;
+            if (critique.issues) {
+              pipeline.nextSteps = [...(pipeline.nextSteps || []), ...critique.issues];
+            }
+          }
+        } catch (e) {
+          console.error("Critic JSON parse failed", e);
+        }
+
+        // --- ШАГ 3: Авто-исправление (на основе критики) ---
         if (score < 80 && pipeline.nextSteps && pipeline.nextSteps.length > 0) {
           setStep("🔧 Авто-исправление...");
           updateMessage(assistantId, {
