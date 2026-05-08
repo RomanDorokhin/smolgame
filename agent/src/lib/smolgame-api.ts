@@ -221,11 +221,25 @@ export class SmolGameAPI {
     gameTitle: string;
     gameDescription?: string;
   }) {
-    // The backend EXPECTS this exact JSON structure (see github-publish.js:42)
+    // ── САНИТАЙЗЕР МЕТАДАННЫХ ───────────────────────────────────────────
+    // Убираем JSON, лишние скобки и артефакты, которые рвут верстку ленты
+    const clean = (str: string) => {
+      if (!str) return "";
+      // Если строка похожа на JSON (начинается с { или [), заменяем на заглушку
+      if (str.trim().startsWith('{') || str.trim().startsWith('[')) {
+        return "SmolGame Generation";
+      }
+      // Ограничиваем длину и убираем странные символы
+      return str.replace(/[`*#]/g, '').slice(0, 200).trim();
+    };
+
+    const sanitizedTitle = clean(payload.gameTitle) || "Новая игра";
+    const sanitizedDescription = clean(payload.gameDescription || "Создано через SmolGame AI Agent.");
+
     const body = {
       files: payload.files,
-      gameTitle: payload.gameTitle,
-      gameDescription: payload.gameDescription
+      gameTitle: sanitizedTitle,
+      gameDescription: sanitizedDescription
     };
 
     return this.apiFetch('/api/github/publish-game', {
