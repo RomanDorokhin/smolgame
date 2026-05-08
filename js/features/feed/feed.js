@@ -563,15 +563,15 @@ document.addEventListener('click', async e => {
   
   try {
     btn.disabled = true;
-    const res = await API.admin.delete(g.id);
-    if (res.success) {
-      showToast('🗑 ' + (tf('profile_delete_done') || 'Game deleted'));
-      // Remove from feed and go to next
-      GAMES.splice(window.currentIdx, 1);
-      renderFeed(); // Re-render to clear slides
-    } else {
-      throw new Error(res.error || 'Delete failed');
-    }
+    const res = await API.delete(g.id, { deleteGithubRepo: true });
+    // apiFetch бросает ошибку при любом HTTP-сбое, поэтому здесь — всегда успех.
+    let msg = '🗑 ' + (tf('profile_delete_done') || 'Game deleted');
+    if (res?.githubDeleted) msg += '; репозиторий на GitHub удалён';
+    else if (res?.githubDeleteNote) msg += '. ' + res.githubDeleteNote;
+    showToast(msg);
+    // Убираем игру из ленты и перерендериваем.
+    GAMES.splice(window.currentIdx, 1);
+    renderFeed();
   } catch (err) {
     showToast('❌ ' + err.message);
   } finally {
