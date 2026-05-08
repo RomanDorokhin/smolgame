@@ -1,19 +1,18 @@
 /**
- * useGameAgent — Умный агент на базе Vercel AI SDK
- * Полная ротация провайдеров + таймауты
+ * useGameAgent — Агент на базе проверенного llm-api.ts (SSE streaming)
+ * Без Vercel AI SDK — используем тот же fetch что работал раньше
  */
 
 import { useState, useRef, useCallback } from "react";
-import { generateText, tool } from "ai";
-import { createOpenAI } from "@ai-sdk/openai";
-import { z } from "zod";
+import { generateStream, pool, DEFAULT_MODELS } from "../lib/llm-api";
+import type { APIProvider } from "../lib/llm-api";
 import { runGamePipeline } from "../lib/core/gameGenerationPipelinePro";
 import { SmolGameAPI } from "../lib/smolgame-api";
-import type { ChatSettings, APIProvider } from "../types/chat";
+import type { ChatSettings } from "../types/chat";
 
 export interface AgentMessage {
   id: string;
-  role: "user" | "assistant" | "tool";
+  role: "user" | "assistant";
   content: string;
   timestamp: number;
   isStreaming?: boolean;
@@ -34,71 +33,39 @@ function makeId() {
   return Math.random().toString(36).slice(2, 10);
 }
 
-// Порядок перебора провайдеров (Оркестр)
 const PROVIDER_ORDER: APIProvider[] = [
-  "groq", "gemini", "together", "openrouter", "deepseek", "sambanova", "huggingface", "custom"
+  "groq", "gemini", "together", "openrouter", "deepseek", "sambanova", "huggingface"
 ];
 
-const DEFAULT_MODELS: Record<string, string> = {
-  groq: "llama-3.3-70b-versatile",
-  gemini: "gemini-2.0-flash",
-  together: "meta-llama/Llama-3.3-70B-Instruct-Turbo",
-  openrouter: "google/gemini-2.0-flash-001",
-  deepseek: "deepseek-chat",
-  sambanova: "Meta-Llama-3.3-70B-Instruct",
-  huggingface: "mistralai/Mistral-7B-Instruct-v0.3",
-};
+const SYSTEM_PROMPT = `Ты — SmolGame Agent, специалист по созданию веб-игр для мобильных.
 
-const BASE_URLS: Record<string, string> = {
-  groq: "https://api.groq.com/openai/v1",
-  gemini: "https://generativelanguage.googleapis.com/v1beta/openai/",
-  together: "https://api.together.xyz/v1",
-  openrouter: "https://openrouter.ai/api/v1",
-  deepseek: "https://api.deepseek.com/v1",
-  sambanova: "https://api.sambanova.ai/v1",
-  huggingface: "https://api-inference.huggingface.co/v1/",
-};
+ЗАДАЧА: Пообщайся с пользователем, собери детали (жанр + механика + стиль) и создай полноценную игру.
 
-interface ProviderConfig {
-  id: APIProvider;
-  model: LanguageModel;
-  name: string;
-}
+ПРАВИЛА:
+1. Общайся по-русски, дружелюбно.
+2. Задавай по ОДНОМУ вопросу за раз.
+3. Когда собрал достаточно деталей — сразу пиши код игры.
+4. Код должен быть ПОЛНЫМ (не менее 5000 символов), с requestAnimationFrame, touch-управлением, Start/HUD/GameOver экранами.
+5. После кода — опубликуй игру.
 
-type LanguageModel = ReturnType<ReturnType<typeof createOpenAI>>;
+КОГДА ГОТОВ СОЗДАТЬ ИГРУ — используй этот формат:
+\`\`\`action
+{"tool": "createGame", "gameTitle": "Название игры", "gameCode": "<!DOCTYPE html>...ВЕСЬ КОД..."}
+\`\`\`
 
-function buildProviderList(settings: ChatSettings): ProviderConfig[] {
-  const list: ProviderConfig[] = [];
+КОГДА ГОТОВ ОПУБЛИКОВАТЬ — используй этот формат:
+\`\`\`action
+{"tool": "publishGame", "gameTitle": "Название игры", "gameCode": "<!DOCTYPE html>...ВЕСЬ КОД..."}
+\`\`\`
 
-  for (const p of PROVIDER_ORDER) {
-    const key = settings.keys[p];
-    if (!key || typeof key !== "string" || !key.trim()) continue;
-
-    const baseURL = p === "custom" ? settings.customBaseUrl : BASE_URLS[p];
-    if (!baseURL) continue;
-
-    // compatibility: "strict" — принудительно использует /chat/completions
-    // вместо нового /responses API, который не поддерживают большинство провайдеров
-    const client = createOpenAI({
-      baseURL,
-      apiKey: key.trim(),
-      compatibility: "strict",
-    });
-
-    const modelId = (settings.models?.[p] as string | undefined) || DEFAULT_MODELS[p] || "gpt-4o-mini";
-    list.push({ id: p, model: client(modelId), name: `${p} (${modelId.split("/").pop()})` });
-  }
-
-  return list;
-}
-
-const REQUEST_TIMEOUT_MS = 90_000; // 90 секунд на провайдера
+Если просто общаешься — отвечай обычным текстом без \`\`\`action блоков.`;
 
 export function useGameAgent(settings: ChatSettings) {
   const [messages, setMessages] = useState<AgentMessage[]>([]);
   const [isRunning, setIsRunning] = useState(false);
   const [step, setStep] = useState("");
   const abortRef = useRef<AbortController | null>(null);
+  const chatHistory = useRef<{ role: string; content: string }[]>([]);
 
   const addMessage = useCallback((msg: Omit<AgentMessage, "id" | "timestamp">) => {
     const full: AgentMessage = { ...msg, id: makeId(), timestamp: Date.now() };
@@ -110,197 +77,166 @@ export function useGameAgent(settings: ChatSettings) {
     setMessages(prev => prev.map(m => m.id === id ? { ...m, ...patch } : m));
   }, []);
 
+  const executeAction = useCallback(async (
+    toolName: string,
+    args: any,
+    assistantId: string,
+    toolCalls: AgentToolCall[]
+  ) => {
+    if (toolName === "createGame") {
+      const { gameTitle, gameCode } = args;
+      toolCalls.push({ name: "createGame", status: "running", input: { gameTitle } });
+      updateMessage(assistantId, { content: "🎮 Проверяю качество кода...", toolCalls: [...toolCalls], isStreaming: true });
+      try {
+        const pipeline = await runGamePipeline("agent-game", gameCode);
+        const score = pipeline.finalScore;
+        toolCalls[toolCalls.length - 1] = { name: "createGame", status: "done", output: `${score}/100` };
+        updateMessage(assistantId, {
+          content: `✅ **${gameTitle}** готова! Качество: ${score}/100`,
+          gameCode, pipelineResult: pipeline, toolCalls: [...toolCalls], isStreaming: true,
+        });
+        return { success: true, score, gameCode };
+      } catch (e: any) {
+        toolCalls[toolCalls.length - 1] = { name: "createGame", status: "error", output: e.message };
+        return { success: false };
+      }
+    }
+
+    if (toolName === "publishGame") {
+      const { gameTitle, gameCode } = args;
+      toolCalls.push({ name: "publishGame", status: "running" });
+      updateMessage(assistantId, { toolCalls: [...toolCalls], isStreaming: true });
+      setStep("🚀 Публикую...");
+      try {
+        const result = await SmolGameAPI.publishGame({
+          gameTitle,
+          files: [{ path: "index.html", content: gameCode }],
+          gameDescription: "Generated by SmolGame Agent",
+        });
+        if (result.ok) {
+          toolCalls[toolCalls.length - 1] = { name: "publishGame", status: "done", output: result.pagesUrl };
+          updateMessage(assistantId, {
+            deployResult: { pagesUrl: result.pagesUrl, repoUrl: `https://github.com/${result.repo}`, pagesReady: result.pagesReady },
+            toolCalls: [...toolCalls],
+          });
+        } else {
+          toolCalls[toolCalls.length - 1] = { name: "publishGame", status: "error", output: result.error };
+        }
+      } catch (e: any) {
+        toolCalls[toolCalls.length - 1] = { name: "publishGame", status: "error", output: e.message };
+      }
+    }
+  }, [updateMessage]);
+
   const sendMessage = useCallback(async (userText: string) => {
     if (isRunning) return;
 
     addMessage({ role: "user", content: userText });
-    const assistantId = addMessage({ role: "assistant", content: "🤔 Думаю...", isStreaming: true });
+    chatHistory.current.push({ role: "user", content: userText });
 
+    const assistantId = addMessage({ role: "assistant", content: "🤔 Думаю...", isStreaming: true });
     setIsRunning(true);
     abortRef.current = new AbortController();
 
-    const providers = buildProviderList(settings);
-    if (providers.length === 0) {
+    const activeProviders = PROVIDER_ORDER.filter(p => {
+      const key = settings.keys[p as keyof typeof settings.keys] as string | undefined;
+      return key && key.trim().length > 0;
+    });
+
+    if (activeProviders.length === 0) {
       updateMessage(assistantId, {
-        content: "❌ Нет доступных API ключей. Открой настройки (≡) и добавь хотя бы один ключ.",
-        isStreaming: false
+        content: "❌ Нет API ключей. Открой настройки (≡) и добавь хотя бы один ключ (Groq, Gemini, OpenRouter и т.д.).",
+        isStreaming: false,
       });
       setIsRunning(false);
       return;
     }
 
-    // Собираем историю для контекста
-    const history = messages
-      .filter(m => m.role === "user" || m.role === "assistant")
-      .slice(-10)
-      .map(m => ({ role: m.role as "user" | "assistant", content: m.content }));
-
     const toolCalls: AgentToolCall[] = [];
+    let success = false;
     let lastError = "";
 
-    // ОРКЕСТР: перебираем провайдеров по очереди
     try {
-      let success = false;
-
-      for (const providerConfig of providers) {
+      for (const providerId of activeProviders) {
         if (abortRef.current?.signal.aborted) break;
 
-        setStep(`🔄 ${providerConfig.name}...`);
-        updateMessage(assistantId, { content: `🔄 Подключаю **${providerConfig.name}**...`, isStreaming: true });
+        const status = pool.getStatus(providerId);
+        if (status.state === "OPEN") {
+          const secLeft = Math.round((status.nextRetryAt - Date.now()) / 1000);
+          console.log(`[Agent] ${providerId} OPEN — пропускаю (ещё ${secLeft}s)`);
+          continue;
+        }
 
-        const timeoutController = new AbortController();
-        const timeoutId = setTimeout(() => timeoutController.abort(), REQUEST_TIMEOUT_MS);
+        const apiKey = settings.keys[providerId as keyof typeof settings.keys] as string;
+        const model = (settings.models?.[providerId as keyof typeof settings.models] as string | undefined)
+          || DEFAULT_MODELS[providerId]?.[0] || "gpt-3.5-turbo";
+
+        setStep(`🔄 ${providerId}...`);
+        updateMessage(assistantId, { content: `🔄 Подключаю **${providerId}**...`, isStreaming: true });
 
         try {
-          const result = await generateText({
-            model: providerConfig.model,
-            maxSteps: 5,
-            abortSignal: timeoutController.signal,
-            system: `Ты — SmolGame Agent, специалист по созданию веб-игр для мобильных телефонов.
+          let fullText = "";
 
-Твоя задача: пообщаться с пользователем, понять что он хочет сделать, и когда у тебя есть достаточно информации (жанр + механика + стиль) — создать полноценную игру.
+          const msgs = [
+            { role: "system" as const, content: SYSTEM_PROMPT },
+            ...chatHistory.current.slice(-12).map(m => ({
+              role: m.role as "user" | "assistant" | "system",
+              content: m.content
+            })),
+          ];
 
-ПРАВИЛА:
-- Общайся по-русски, дружелюбно и энергично.
-- Задавай по ОДНОМУ вопросу за раз, чтобы собрать детали.
-- Когда деталей достаточно — вызови инструмент createGame.
-- После createGame — вызови инструмент publishGame.
-- Если пользователь просит переделать — вызови createGame снова.`,
-            messages: [
-              ...history,
-              { role: "user", content: userText }
-            ],
-            tools: {
-              createGame: tool({
-                description: "Создаёт полноценную HTML-игру. Вызывай когда собрал достаточно информации о жанре, механике и стиле.",
-                parameters: z.object({
-                  gameSpec: z.string().describe("Подробное описание игры"),
-                  gameCode: z.string().describe("ПОЛНЫЙ рабочий HTML+CSS+JS код игры. Минимум 3000 символов. БЕЗ СКЕЛЕТОВ."),
-                }),
-                execute: async ({ gameSpec, gameCode }) => {
-                  setStep("🎮 Проверяю качество...");
-                  toolCalls.push({ name: "createGame", status: "running", input: { gameSpec } });
-                  updateMessage(assistantId, { content: "🎮 Оцениваю качество игры...", toolCalls: [...toolCalls], isStreaming: true });
-                  try {
-                    const pipeline = await runGamePipeline("agent-game", gameCode);
-                    const score = pipeline.finalScore;
-                    toolCalls[toolCalls.length - 1] = { name: "createGame", status: "done", output: `${score}/100` };
-                    updateMessage(assistantId, {
-                      content: `✅ **Игра создана! (${score}/100)**`,
-                      gameCode, pipelineResult: pipeline, toolCalls: [...toolCalls], isStreaming: true
-                    });
-                    return { success: true, score, gameCode };
-                  } catch (e: any) {
-                    toolCalls[toolCalls.length - 1] = { name: "createGame", status: "error", output: e.message };
-                    return { success: false, message: e.message };
-                  }
-                },
-              }),
+          for await (const chunk of generateStream(msgs, { provider: providerId, apiKey, model }, abortRef.current.signal)) {
+            if (abortRef.current?.signal.aborted) break;
+            fullText += chunk;
+            const visibleText = fullText.split("```action")[0].trim();
+            updateMessage(assistantId, { content: visibleText || "💬 ...", isStreaming: true });
+          }
 
-              publishGame: tool({
-                description: "Публикует игру на GitHub Pages. Вызывай после createGame.",
-                parameters: z.object({
-                  gameTitle: z.string(),
-                  gameCode: z.string(),
-                }),
-                execute: async ({ gameTitle, gameCode }) => {
-                  setStep("🚀 Публикую...");
-                  toolCalls.push({ name: "publishGame", status: "running" });
-                  updateMessage(assistantId, { toolCalls: [...toolCalls] });
-                  try {
-                    const result = await SmolGameAPI.publishGame({
-                      gameTitle,
-                      files: [{ path: "index.html", content: gameCode }],
-                      gameDescription: "Generated by SmolGame AI Agent",
-                    });
-                    if (result.ok) {
-                      toolCalls[toolCalls.length - 1] = { name: "publishGame", status: "done", output: result.pagesUrl };
-                      updateMessage(assistantId, {
-                        deployResult: { pagesUrl: result.pagesUrl, repoUrl: `https://github.com/${result.repo}`, pagesReady: result.pagesReady },
-                        toolCalls: [...toolCalls],
-                      });
-                      return { success: true, pagesUrl: result.pagesUrl };
-                    }
-                    toolCalls[toolCalls.length - 1] = { name: "publishGame", status: "error", output: result.error };
-                    return { success: false, message: result.error };
-                  } catch (e: any) {
-                    toolCalls[toolCalls.length - 1] = { name: "publishGame", status: "error", output: e.message };
-                    return { success: false, message: e.message };
-                  }
-                },
-              }),
+          // Парсим action-блок
+          const actionMatch = fullText.match(/```action\s*\n([\s\S]*?)\n?```/);
+          if (actionMatch) {
+            try {
+              const action = JSON.parse(actionMatch[1].trim());
+              if (action.tool && action.gameTitle && action.gameCode) {
+                await executeAction(action.tool, action, assistantId, toolCalls);
+              }
+            } catch (e) {
+              console.warn("[Agent] Не удалось распарсить action:", e);
+            }
+          }
 
-              editGame: tool({
-                description: "Загружает код игры из GitHub и вносит изменения.",
-                parameters: z.object({
-                  repoUrl: z.string(),
-                  editInstructions: z.string(),
-                  updatedCode: z.string(),
-                }),
-                execute: async ({ repoUrl, editInstructions, updatedCode }) => {
-                  setStep("✏️ Применяю правки...");
-                  toolCalls.push({ name: "editGame", status: "running", input: { repoUrl } });
-                  updateMessage(assistantId, { toolCalls: [...toolCalls] });
-                  try {
-                    const repo = repoUrl.replace("https://github.com/", "").split("/").slice(0, 2).join("/");
-                    const fileData = await SmolGameAPI.getGameFile(repo);
-                    const updateResult = await SmolGameAPI.updateGameFile({
-                      repo, path: fileData.path, content: updatedCode, sha: fileData.sha,
-                      message: `Edit: ${editInstructions.slice(0, 60)}`,
-                    });
-                    if (updateResult.ok) {
-                      toolCalls[toolCalls.length - 1] = { name: "editGame", status: "done", output: `Сохранено в ${repo}` };
-                      updateMessage(assistantId, { gameCode: updatedCode, toolCalls: [...toolCalls] });
-                      return { success: true, message: `Правки сохранены` };
-                    }
-                    toolCalls[toolCalls.length - 1] = { name: "editGame", status: "error", output: "Ошибка" };
-                    return { success: false, message: "Не удалось сохранить" };
-                  } catch (e: any) {
-                    toolCalls[toolCalls.length - 1] = { name: "editGame", status: "error", output: e.message };
-                    return { success: false, message: e.message };
-                  }
-                },
-              }),
-            },
-          });
-
-          clearTimeout(timeoutId);
-          success = true;
-
+          const visibleText = fullText.split("```action")[0].trim();
           updateMessage(assistantId, {
-            content: result.text || "Готово!",
+            content: visibleText || "Готово!",
             isStreaming: false,
             toolCalls: toolCalls.length > 0 ? toolCalls : undefined,
           });
+
+          chatHistory.current.push({ role: "assistant", content: fullText });
+          pool.reportSuccess(providerId);
+          success = true;
           break;
 
         } catch (e: any) {
-          clearTimeout(timeoutId);
           lastError = e.message || "Неизвестная ошибка";
-          const isTimeout = e.name === "AbortError" || lastError.includes("aborted");
-          const isRateLimit = lastError.includes("429") || lastError.includes("rate limit");
-
-          console.warn(`[Agent] ${providerConfig.name} failed:`, lastError.slice(0, 100));
-          setStep(isTimeout ? `⏱️ Таймаут` : isRateLimit ? `⚡ Лимит` : `❌ Недоступен`);
-
-          if (isRateLimit) await new Promise(r => setTimeout(r, 3000));
+          const isRateLimit = lastError.includes("429") || lastError.toLowerCase().includes("rate limit");
+          pool.reportFailure(providerId, isRateLimit, lastError);
+          console.warn(`[Agent] ${providerId} failed:`, lastError.slice(0, 120));
         }
       }
 
       if (!success) {
+        const summary = pool.getSummary(activeProviders);
         updateMessage(assistantId, {
-          content: `❌ Все провайдеры недоступны.\n\nОшибка: \`${lastError.slice(0, 200)}\`\n\nПроверь ключи в настройках (≡).`,
+          content: `❌ Все провайдеры недоступны.\n\n**Ошибка:** \`${lastError.slice(0, 150)}\`\n\n${summary}\n\nПроверь ключи в настройках (≡).`,
           isStreaming: false,
         });
       }
     } finally {
-      // Гарантированно сбрасываем состояние — даже если что-то сломалось
       setIsRunning(false);
       setStep("");
     }
-  }, [isRunning, messages, settings, addMessage, updateMessage]);
-
-
+  }, [isRunning, settings, addMessage, updateMessage, executeAction]);
 
   const stop = useCallback(() => {
     abortRef.current?.abort();
@@ -310,6 +246,7 @@ export function useGameAgent(settings: ChatSettings) {
 
   const reset = useCallback(() => {
     setMessages([]);
+    chatHistory.current = [];
   }, []);
 
   return { messages, isRunning, step, sendMessage, stop, reset };
