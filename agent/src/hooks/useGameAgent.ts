@@ -429,14 +429,7 @@ export function useGameAgent(settings: ChatSettings) {
           ? parsedFiles 
           : [{ path: "index.html", content: finalCode }];
 
-        const cleanDescription = gameSpec
-          .replace(/\*\*.*?\*\*/g, '') // Убираем жирный текст (теги)
-          .replace(/[-*]/g, '')        // Убираем маркеры списков
-          .split('\n')
-          .map(l => l.trim())
-          .filter(l => l.length > 5)
-          .join(' ')
-          .slice(0, 150) + '...';
+        const cleanDescription = `Мобильная игра: ${gameTitle}. Создана SmolGame Agent.`;
 
         const publishResult = await SmolGameAPI.publishGame({
           gameTitle,
