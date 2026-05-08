@@ -143,9 +143,10 @@ async function renderProfile() {
     if (handleRead) handleRead.textContent = USER.siteHandle || USER.id || '—';
     if (bioRead) bioRead.textContent = '';
 
-    const setStatGames = v => { const el = document.getElementById('statGames'); if (el) el.textContent = v; };
-    const setStatFollowers = v => { const el = document.getElementById('statFollowers'); if (el) el.textContent = v; };
-    const setStatLikes = v => { const el = document.getElementById('statLikes'); if (el) el.textContent = v; };
+    const setStatGames = v => { const el = document.getElementById('statGames'); if (el) { el.textContent = v; el.style.color = '#fff'; } };
+    const setStatFollowers = v => { const el = document.getElementById('statFollowers'); if (el) { el.textContent = v; el.style.color = '#fff'; } };
+    const setStatLikes = v => { const el = document.getElementById('statLikes'); if (el) { el.textContent = v; el.style.color = '#fff'; } };
+
     setStatGames('…');
     setStatFollowers('…');
     setStatLikes('…');

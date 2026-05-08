@@ -300,13 +300,16 @@ export function ChatMessageItem({ message, onRetry, onSend, onSwitchTab, isLast 
                     <Button
                       className="w-full h-14 bg-[#22c55e] hover:bg-[#16a34a] text-white font-black uppercase tracking-[0.3em] text-[14px] rounded-2xl gap-3 shadow-[0_12px_24px_-6px_rgba(34,197,94,0.5)] transition-all active:scale-[0.97] hover:shadow-[0_15px_30px_-6px_rgba(34,197,94,0.6)]"
                       onClick={() => {
-                        if (onSwitchTab) {
+                        if (deployState.gameUrl) {
+                          window.open(deployState.gameUrl, '_blank');
+                        } else if (onSwitchTab) {
                           onSwitchTab("studio");
                         }
                       }}
                     >
                       <Play size={22} fill="currentColor" className="ml-1" /> ИГРАТЬ
                     </Button>
+
                   )}
 
                   {/* Deploy Status & Waiting */}
