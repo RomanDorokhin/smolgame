@@ -7,7 +7,7 @@
  * Использует проверенный generateStream из llm-api.ts (без Vercel AI SDK)
  */
 
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { generateStream, pool, DEFAULT_MODELS } from "../lib/llm-api";
 import type { APIProvider } from "../lib/llm-api";
 import { runGamePipeline } from "../lib/core/gameGenerationPipelinePro";
