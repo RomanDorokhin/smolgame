@@ -243,16 +243,6 @@ Output within <game_spec> tags.`;
         const modelId = currentSettings.models[currentProvider] || (Array.isArray(DEFAULT_MODELS[currentProvider]) ? DEFAULT_MODELS[currentProvider][0] : DEFAULT_MODELS[currentProvider]);
 
         try {
-          // Robust key check with localStorage fallback
-          let finalKey = key;
-          if (!finalKey) {
-            const saved = localStorage.getItem("smol_settings");
-            if (saved) {
-              const parsed = JSON.parse(saved);
-              finalKey = parsed.keys?.[currentProvider] || "";
-            }
-          }
-
           const stepMsg = `\n\n⚙️ **Инженер (${currentProvider})** анализирует ТЗ...`;
           setGenerationStep(`Инженер (${currentProvider}) анализирует ТЗ...`);
           setSessions(prev => prev.map(s => s.id === sessionId ? {
@@ -262,15 +252,25 @@ Output within <game_spec> tags.`;
           } : s));
 
           let generatedResponse = "";
-          // CRITICAL: generateStream is a generator, don't await the call itself
-          const stream = generateStream(
-            [{ role: "user", content: generationPrompt }],
-            { provider: currentProvider, model: modelId, apiKey: finalKey },
-            new AbortController().signal
-          );
+          try {
+            const stream = generateStream(
+              [{ role: "user", content: generationPrompt }],
+              { provider: currentProvider, model: modelId, apiKey: key },
+              new AbortController().signal
+            );
 
-          for await (const chunk of stream) {
-            generatedResponse += chunk;
+            for await (const chunk of stream) {
+              generatedResponse += chunk;
+              // Update step to show it's actually working
+              if (generatedResponse.length % 50 === 0) {
+                setGenerationStep(`Инженер (${currentProvider}) пишет код (${generatedResponse.length} зн.)...`);
+              }
+            }
+          } catch (streamErr: any) {
+            console.error(`Stream error with ${currentProvider}:`, streamErr);
+            failureLog.push(`${currentProvider}: ${streamErr.message}`);
+            setGenerationStep(`Ошибка ${currentProvider}: ${streamErr.message.slice(0, 30)}...`);
+            continue; // Try next provider
           }
 
           const codeMatch = generatedResponse.match(/<game_spec>([\s\S]*?)<\/game_spec>/);
@@ -290,7 +290,7 @@ Output within <game_spec> tags.`;
         } catch (err: any) {
           console.warn(`Attempt with ${currentProvider} failed:`, err.message);
           failureLog.push(`${currentProvider}: ${err.message}`);
-          // Continue to next provider
+          setGenerationStep(`Сбой ${currentProvider}. Пробую следующую...`);
         }
       }
 

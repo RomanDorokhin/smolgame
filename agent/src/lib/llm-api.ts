@@ -180,8 +180,11 @@ export async function* generateStream(
 
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
-    "Authorization": `Bearer ${config.apiKey}`,
   };
+
+  if (config.provider !== "gemini") {
+    headers["Authorization"] = `Bearer ${config.apiKey}`;
+  }
 
   if (config.provider === "openrouter") {
     headers["HTTP-Referer"] = window.location.origin;
