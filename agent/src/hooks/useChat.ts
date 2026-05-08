@@ -180,27 +180,21 @@ export function useChat() {
       // 1. Generate the code directly using the LLM pool with Bulldozer logic
       setGenerationStep(`Генерация кода (запуск цикла отказоустойчивости)...`);
       
-      const generationPrompt = `You are a visionary Game Architect. Your goal is to create a digital masterpiece that will WOW the player.
+      const generationPrompt = `You are the OpenGame ELITE ARCHITECT. You MUST build a FULLY FUNCTIONAL, POLISHED, and COMPLETE game.
       
-      BE AN AGENT: Don't just output code. Think deeply about the player's experience.
+      STRICT RULES:
+      1. NO SKELETONS: All functions MUST be fully implemented.
+      2. NO PLACEHOLDERS: Never use comments like "handle logic here".
+      3. SINGLE-FILE: HTML + CSS + JS in one block. 
+      4. MOBILE-FIRST: Large touch controls, tested for portrait mode.
+      5. SURREALISTIC: Use vibrant colors and creative animations.
       
-      STEPS FOR SUCCESS:
-      1. PLAN: Start by writing a detailed plan in <thought> tags. Consider the game loop, physics, mobile controls, and surreal aesthetics.
-      2. CRITIQUE: Inside the <thought> block, critique your own plan. What could go wrong? Is it too simple? How can you make it better?
-      3. IMPLEMENT: Provide the FULL, ready-to-play HTML code. Every single line must serve a purpose.
+      TECHNICAL:
+      - Use requestAnimationFrame.
+      - Add "Start", "HUD", and "Game Over" screens.
+      - Save High Scores in localStorage.
       
-      YOUR VALUES:
-      - Craftsmanship: Write beautiful, efficient code.
-      - Empathy: Make controls intuitive and the gameplay rewarding.
-      - Creativity: Lean into the "Surrealistic" requirement. Surprise us.
-      
-      TECHNICAL REQUIREMENTS:
-      - Single-file (HTML+CSS+JS).
-      - requestAnimationFrame for smooth 60fps.
-      - Portrait mode, touch controls (>44px).
-      - Score HUD and Game Over screen are mandatory.
-      
-      Output your thought process first, then the code within <game_spec> tags.`;
+      Output within <game_spec> tags. COMPLETE code ONLY.`;
 
       let attempts = 0;
 
