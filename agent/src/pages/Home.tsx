@@ -234,6 +234,7 @@ export default function Home() {
                         isLast={i === arr.length - 1}
                         onSend={sendMessage}
                         onRetry={message.role === "assistant" ? retryLastMessage : undefined}
+                        onSwitchTab={setActiveTab}
                       />
                     ))}
                     {(isGenerating || isPipelineRunning) && (

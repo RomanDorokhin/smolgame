@@ -311,7 +311,13 @@ export function ChatMessageItem({ message, onRetry, onSend, isLast }: ChatMessag
                       <div className="space-y-2 mt-4">
                         <Button
                           className="w-full h-12 bg-[#22c55e] hover:bg-[#16a34a] text-white font-black uppercase tracking-[0.2em] text-[12px] rounded-2xl gap-3 shadow-[0_8px_20px_-4px_rgba(34,197,94,0.4)] transition-all active:scale-[0.98]"
-                          onClick={() => window.open(deployState.pagesUrl, "_blank")}
+                          onClick={() => {
+                            if (onSwitchTab) {
+                              onSwitchTab("studio");
+                            } else {
+                              window.open(deployState.pagesUrl, "_blank");
+                            }
+                          }}
                         >
                           <Play size={18} fill="currentColor" className="ml-1" /> ЗАПУСТИТЬ ИГРУ
                         </Button>
