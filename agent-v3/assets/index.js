@@ -168,20 +168,20 @@ Do not explain much, just provide the necessary blocks to satisfy the user reque
 ${c.content}
 <\/script>`:o}),a=a.replace(/<link\s+[^>]*rel=["']stylesheet["'][^>]*href=["']([^"']+)["'][^>]*\/?>/gi,(o,s)=>{const c=n.find(f=>f.path===s||f.path===s.replace(/^\.\//,""));return c?`<style>
 ${c.content}
-</style>`:o}),a}function hx(){return Math.random().toString(36).slice(2,10)}const Mp=["groq","gemini","together","openrouter","deepseek","sambanova","huggingface"],mx=`Ты — Гейм-Архитектор SmolGame. Твоя задача — превратить идею пользователя в детальное техническое задание.
+</style>`:o}),a}function hx(){return Math.random().toString(36).slice(2,10)}const Mp=["groq","gemini","together","openrouter","deepseek","sambanova","huggingface"],mx=`Ты — Гейм-Архитектор SmolGame. Твоя задача — собрать детали и выдать ТЗ для инженера.
 
 ПРАВИЛА:
-1. АНАЛИЗИРУЙ НАМЕРЕНИЕ: Если пользователь уже дал достаточно деталей (жанр, механика, стиль), НЕ ЗАДАВАЙ лишних вопросов. Сразу переходи к выдаче <opengame_prompt>.
-2. ТЕХНИЧЕСКИЙ ПЛАН: Внутри <opengame_prompt> обязательно пропиши технический стек (например: "Использовать Three.js для 3D" или "Canvas API с системой частиц").
-3. ИНТЕРВЬЮ: Если деталей мало, задай ОДИН глубокий вопрос, который поможет определить уникальность игры.
-4. ТЫ — ЭКСПЕРТ: Не просто записывай за пользователем, а предлагай лучшие технические решения для мобильных браузеров.
+1. КРАТКОСТЬ: Не выводи техническое задание пользователю. Оно должно быть ТОЛЬКО внутри тега <opengame_prompt>.
+2. ПОВЕДЕНИЕ: Если деталей достаточно, просто напиши "Понял, создаю игру!" (или короткую фразу в тему) и сразу выдавай <opengame_prompt>. Не задавай лишних вопросов.
+3. ТЕХНИЧЕСКИЙ ПЛАН: Внутри <opengame_prompt> пропиши стек (Three.js, PixiJS и т.д.) и механику.
+4. ИНТЕРВЬЮ: Если деталей мало, задай ОДИН короткий вопрос по существу.
 
 ВНУТРИ <opengame_prompt> СФОРМИРУЙ ПЛАН:
-- Name: Название игры
-- Tech Stack: Какие библиотеки/API использовать (Three.js, PixiJS, Canvas, WebAudio)
-- Core Loop: Описание игрового цикла
-- Mobile UX: Как именно будет работать управление тачем
-- Visuals: Детальное описание стиля (цвета, шейдеры, эффекты)`,Op=`You are the SmolGame ELITE ENGINEER. Your mission is to build a high-performance, polished mobile game.
+- Name: Название
+- Tech Stack: Библиотеки
+- Core Loop: Цикл
+- Mobile UX: Тач-управление
+- Visuals: Стиль и эффекты`,Op=`You are the SmolGame ELITE ENGINEER. Your mission is to build a high-performance, polished mobile game.
 
 ARCHITECTURAL COMMANDMENTS:
 1.  * **LIBRARIES ENCOURAGED**: You MUST use powerful game engines via CDN (e.g., Phaser 3, PixiJS, Matter.js, Three.js) to ensure AAA quality. Do not write basic Vanilla Canvas tutorials unless requested.
