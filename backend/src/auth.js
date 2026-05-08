@@ -45,27 +45,33 @@ export function initDataFromRequest(req) {
  */
 export async function authenticate(req, env) {
   const initData = initDataFromRequest(req);
-  if (!initData) return null;
-  const user = await verifyInitData(initData, env.TELEGRAM_BOT_TOKEN);
-  if (!user) return null;
+  const webId = req.headers.get('x-web-id') || new URL(req.url).searchParams.get('web_id');
 
-  const adminIds = new Set(
-    String(env.ADMIN_TG_IDS || '')
-      .split(',')
-      .map(s => s.trim())
-      .filter(Boolean)
-  );
-  const premiumIds = new Set(
-    String(env.PREMIUM_TG_IDS || '')
-      .split(',')
-      .map(s => s.trim())
-      .filter(Boolean)
-  );
-  const uid = String(user.id);
-  user.id = uid; // ENSURE STRING ID for DB queries
-  user.isAdmin = [...adminIds].some(a => String(a) === uid);
-  user.isPremium = [...premiumIds].some(a => String(a) === uid);
-  return user;
+  if (initData) {
+    const user = await verifyInitData(initData, env.TELEGRAM_BOT_TOKEN);
+    if (user) {
+      const adminIds = new Set(String(env.ADMIN_TG_IDS || '').split(',').map(s => s.trim()).filter(Boolean));
+      const premiumIds = new Set(String(env.PREMIUM_TG_IDS || '').split(',').map(s => s.trim()).filter(Boolean));
+      const uid = String(user.id);
+      user.id = uid;
+      user.isAdmin = [...adminIds].some(a => String(a) === uid);
+      user.isPremium = [...premiumIds].some(a => String(a) === uid);
+      return user;
+    }
+  }
+
+  // Fallback to web_id for browser usage
+  if (webId) {
+    return {
+      id: `web:${webId}`,
+      username: `guest_${webId.slice(0, 8)}`,
+      first_name: 'Web',
+      last_name: 'Guest',
+      isWebGuest: true
+    };
+  }
+
+  return null;
 }
 
 /**
