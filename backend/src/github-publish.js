@@ -93,8 +93,8 @@ export async function publishGameToGithub(req, env) {
     return error('invalid json');
   }
 
-  const rawTitle = body.gameTitle != null ? String(body.gameTitle).trim() : '';
-  const rawDesc = body.gameDescription != null ? String(body.gameDescription).trim() : '';
+  const rawTitle = body.gameTitle != null ? String(body.gameTitle).replace(/[\x00-\x1F\x7F]/g, '').trim() : '';
+  const rawDesc = body.gameDescription != null ? String(body.gameDescription).replace(/[\x00-\x1F\x7F]/g, ' ').replace(/\s+/g, ' ').trim() : '';
   if (!rawTitle) return error('Укажи название игры перед созданием репозитория.');
   if (rawTitle.length > 120) return error('Название игры слишком длинное (макс 120 символов).');
 
