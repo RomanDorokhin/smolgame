@@ -339,14 +339,41 @@ export function useGameAgent(settings: ChatSettings) {
 
         if (codeMatch) {
           rawCode = codeMatch[1]?.trim() || codeMatch[0]?.trim() || "";
-          // Если извлекли из тегов — добавляем DOCTYPE если нет
-          if (!rawCode.includes("<!DOCTYPE") && !rawCode.toLowerCase().startsWith("<html")) {
-            rawCode = `<!DOCTYPE html>\n<html lang="ru">\n${rawCode}\n</html>`;
-          }
         } else {
-          // Попробуем взять весь ответ если там HTML
-          const htmlMatch = engineerText.match(/<!DOCTYPE[\s\S]*/i);
-          rawCode = htmlMatch?.[0] || engineerText;
+          // Попробуем взять весь ответ если там HTML, иначе считаем что это JS
+          const htmlMatch = engineerText.match(/<!DOCTYPE[\s\S]*/i) || engineerText.match(/<html[\s\S]*<\/html>/i);
+          const jsMatch = engineerText.match(/```(?:javascript|js)\n([\s\S]*?)```/i);
+          
+          if (htmlMatch) {
+            rawCode = htmlMatch[0];
+          } else if (jsMatch) {
+            rawCode = jsMatch[1].trim();
+          } else {
+            rawCode = engineerText.trim();
+          }
+        }
+
+        // Если код не содержит тегов HTML, значит это чистый JS — оборачиваем его в шаблон
+        if (!rawCode.toLowerCase().includes("<html") && !rawCode.toLowerCase().includes("<canvas")) {
+          rawCode = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>SmolGame</title>
+  <style>
+    body { margin: 0; padding: 0; background: #000; overflow: hidden; display: flex; justify-content: center; align-items: center; height: 100vh; }
+    canvas { width: 100vw; height: 100vh; max-width: calc(100vh * 9 / 16); max-height: calc(100vw * 16 / 9); object-fit: contain; }
+  </style>
+</head>
+<body>
+  <script>
+${rawCode}
+  </script>
+</body>
+</html>`;
+        } else if (!rawCode.includes("<!DOCTYPE") && !rawCode.toLowerCase().startsWith("<html")) {
+          rawCode = `<!DOCTYPE html>\n<html lang="en">\n${rawCode}\n</html>`;
         }
       }
 
