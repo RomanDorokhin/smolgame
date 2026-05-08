@@ -10,8 +10,6 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { generateStream, pool, DEFAULT_MODELS } from "../lib/llm-api";
 import type { APIProvider } from "../lib/llm-api";
-import { runGamePipeline } from "../lib/core/gameGenerationPipelinePro";
-import { GameTestingFrameworkPro } from "../lib/core/gameTestingFrameworkPro";
 import { parseAiderBlocks, applyAiderBlocks, AIDER_EDITOR_PROMPT } from "../lib/aider-utils";
 import { SmolGameAPI } from "../lib/smolgame-api";
 import type { ChatSettings } from "../types/chat";
@@ -410,156 +408,13 @@ export function useGameAgent(settings: ChatSettings) {
       }
 
       // ══════════════════════════════════════════
-      // ФАЗА 3: Проверка качества
+      // ФАЗА 3: Публикация
       // ══════════════════════════════════════════
-      setStep("🎮 Проверяю качество...");
-      updateMessage(assistantId, {
-        content: (beforeTag ? beforeTag + "\n\n" : "") + "🎮 Проверяю качество кода...",
-        isStreaming: true,
-      });
-
-      let finalCode = rawCode;
-      let score = 0;
-      let pipeline: any = null;
-
-      try {
-        // --- ШАГ 1: Быстрая проверка (Пайплайн) ---
-        pipeline = await runGamePipeline("agent-game", rawCode);
-        score = pipeline.finalScore;
-
-        // --- ШАГ 3.1: Тестирование в реальном времени (Runtime Test) ---
-        setStep("🕵️ Тестирую запуск игры...");
-        const tester = new GameTestingFrameworkPro(assistantId, rawCode);
-        const testReport = await tester.runAllTests();
-        
-        console.log("[Agent] Runtime Test Report:", testReport);
-
-        // --- ШАГ 3.2: AI-Критик (Вердикт) ---
-        setStep("⚖️ Финальная проверка качества...");
-        
-        const criticPrompt = `You are a brutal game critic and technical lead.
-Review this game code:
-${rawCode.slice(0, 5000)}
-
-Technical Test Report:
-${testReport.summary}
-
-Regex Validation Score: ${score}/100
-
-CRITICAL RULES:
-1. If the Technical Test Report says 'NOT PLAYABLE' or has 'JS Errors' > 0, the score is 0.
-2. If it's a skeletal template with "// implement logic here", the score is 0.
-3. Check if the game matches the prompt: "${gameSpec}"
-
-Response format:
-SCORE: [0-100]
-CRITIQUE: [Your brutal feedback]
-NEXT_STEPS: [What to fix exactly]`;
-
-        let criticResponse = "";
-        await streamWithFallback(
-          [{ role: "user", content: criticPrompt }],
-          (_c, full) => { criticResponse = full; },
-          signal,
-          usedProvider
-        );
-        
-        const criticScoreMatch = criticResponse.match(/SCORE:\s*(\d+)/);
-        const criticScore = parseInt(criticScoreMatch?.[1] || "0");
-        const critique = criticResponse.split("CRITIQUE:")[1]?.split("NEXT_STEPS:")[0]?.trim() || "";
-        const nextSteps = criticResponse.split("NEXT_STEPS:")[1]?.trim() || "";
-
-        const finalScore = Math.min(score, criticScore);
-        pipeline.finalScore = finalScore;
-        pipeline.critique = critique;
-        pipeline.nextSteps = [nextSteps];
-        score = finalScore;
-        finalCode = rawCode;
-
-        // --- ШАГ 3: Авто-исправление (на основе критики) ---
-        let attempts = 0;
-        const maxAttempts = 2;
-
-        while (score < 80 && attempts < maxAttempts) {
-          attempts++;
-          setStep(`🔧 Модульный ремонт (попытка ${attempts}/${maxAttempts})...`);
-          
-          updateMessage(assistantId, {
-            content: (beforeTag ? beforeTag + "\n\n" : "") + `⚠️ **Качество: ${score}/100**. Исправляю только проблемные места (${attempts}/${maxAttempts})...`,
-            isStreaming: true,
-          });
-
-          const fixMsgs = [
-            { 
-              role: "system" as const, 
-              content: AIDER_EDITOR_PROMPT + `\n\nCURRENT FILE CONTENT:\n${finalCode}\n\nFIX THESE ISSUES:\n${pipeline.nextSteps.join("\n")}` 
-            },
-            { role: "user" as const, content: `Produce SEARCH/REPLACE blocks to fix the issues mentioned above. Do not rewrite the whole file.` },
-          ];
-
-          const { text: fixResponse } = await streamWithFallback(
-            fixMsgs,
-            (_chunk, full) => {
-              updateMessage(assistantId, {
-                content: (beforeTag ? beforeTag + "\n\n" : "") + `🔧 Применяю исправления... (${full.length} симв.)`,
-                isStreaming: true,
-              });
-            },
-            signal,
-            usedProvider
-          );
-
-          // Пробуем применить блоки
-          const blocks = parseAiderBlocks(fixResponse);
-          if (blocks.length > 0) {
-            const patchResult = applyAiderBlocks(finalCode, blocks);
-            if (patchResult.appliedCount > 0) {
-              finalCode = patchResult.code;
-              console.log(`[Agent] Applied ${patchResult.appliedCount} blocks successfully.`);
-            } else {
-              console.warn("[Agent] Failed to apply any SEARCH/REPLACE blocks. Falling back to full rewrite...");
-              // Fallback to full rewrite if diff failed
-              const fallbackMsgs = [
-                { role: "system", content: ENGINEER_PROMPT + `\n\nEXISTING CODE:\n${finalCode}\n\nISSUE:\n${pipeline.nextSteps.join("\n")}` },
-                { role: "user", content: "SEARCH/REPLACE failed. Return the COMPLETE fixed HTML now." }
-              ];
-              const { text: fullFix } = await streamWithFallback(fallbackMsgs, () => {}, signal, usedProvider);
-              const fullMatch = fullFix.match(/<game_spec>([\s\S]*?)<\/game_spec>/i) || fullFix.match(/<html[\s\S]*<\/html>/i);
-              if (fullMatch) finalCode = fullMatch[1]?.trim() || fullMatch[0]?.trim();
-            }
-          } else {
-            // Если блоков вообще нет, значит он прислал полный код (не послушался)
-            const fullMatch = fixResponse.match(/<game_spec>([\s\S]*?)<\/game_spec>/i) || fixResponse.match(/<html[\s\S]*<\/html>/i);
-            if (fullMatch) finalCode = fullMatch[1]?.trim() || fullMatch[0]?.trim();
-          }
-
-          // Перепроверяем финальный вариант
-          pipeline = await runGamePipeline("agent-game", finalCode);
-          score = pipeline.finalScore;
-        }
-
-        updateMessage(assistantId, {
-          content: (beforeTag ? beforeTag + "\n\n" : "") + `✅ **Игра готова! (Качество: ${score}/100)**\n\nТы можешь запустить её кнопкой ниже или скопировать код.`,
-          gameCode: finalCode,
-          pipelineResult: pipeline,
-          isStreaming: true,
-        });
-      } catch (e) {
-        // Ошибка в пайплайне — всё равно показываем оригинал
-        updateMessage(assistantId, {
-          content: (beforeTag ? beforeTag + "\n\n" : "") + `⚠️ **Игра создана** (проверка качества прервана)\n\nКод доступен для просмотра.`,
-          gameCode: finalCode,
-          isStreaming: true,
-        });
-      }
-
-      // ══════════════════════════════════════════
-      // ФАЗА 4: Публикация
-      // ══════════════════════════════════════════
+      const finalCode = rawCode;
       
       setStep("🚀 Публикую в облако...");
       updateMessage(assistantId, {
-        content: (beforeTag ? beforeTag + "\n\n" : "") + `✅ **Игра готова! (Качество: ${score}/100)**\n\n🚀 **Публикую на платформу...**`,
+        content: (beforeTag ? beforeTag + "\n\n" : "") + `✅ **Игра создана!**\n\n🚀 **Публикую на платформу...**`,
         gameCode: finalCode,
         isStreaming: true,
       });
@@ -582,7 +437,7 @@ NEXT_STEPS: [What to fix exactly]`;
         });
 
         updateMessage(assistantId, {
-          content: (beforeTag ? beforeTag + "\n\n" : "") + `✅ **Игра готова! (Качество: ${score}/100)**\n\n✨ **Игра опубликована!** Нажми «ИГРАТЬ», чтобы протестировать её.`,
+          content: (beforeTag ? beforeTag + "\n\n" : "") + `✅ **Игра готова!**\n\n✨ **Игра опубликована!** Нажми «ИГРАТЬ», чтобы протестировать её.`,
           gameCode: parsedFiles.length > 0 ? mergeFilesForPreview(parsedFiles) : finalCode,
           deployResult: {
             pagesUrl: publishResult.pagesUrl,
@@ -595,7 +450,7 @@ NEXT_STEPS: [What to fix exactly]`;
         console.error("[Agent] Publication failed:", pubErr);
         const errMsg = pubErr.message || "Ошибка сети или сервера";
         updateMessage(assistantId, {
-          content: (beforeTag ? beforeTag + "\n\n" : "") + `✅ **Игра готова! (Качество: ${score}/100)**\n\n⚠️ **Публикация не удалась:** ${errMsg}\n\nТы всё равно можешь запустить её в Студии!`,
+          content: (beforeTag ? beforeTag + "\n\n" : "") + `✅ **Игра готова!**\n\n⚠️ **Публикация не удалась:** ${errMsg}\n\nТы всё равно можешь запустить её в Студии!`,
           gameCode: finalCode,
           isStreaming: false,
         });
