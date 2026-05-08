@@ -296,7 +296,7 @@ function switchTab(tab) {
       const link = document.createElement('link');
       link.rel = 'stylesheet';
       link.crossOrigin = 'anonymous';
-      link.href = '/smolgame/agent-v3/assets/index.css?v=30030';
+      link.href = '/smolgame/agent-v3/assets/index.css?v=30050';
       document.head.appendChild(link);
 
       const agentRoot = document.getElementById('agent-root');
@@ -310,7 +310,7 @@ function switchTab(tab) {
       const script = document.createElement('script');
       script.type = 'module';
       script.crossOrigin = 'anonymous';
-      script.src = '/smolgame/agent-v3/assets/index.js?v=30030';
+      script.src = '/smolgame/agent-v3/assets/index.js?v=30050';
       document.head.appendChild(script);
       
       script.onload = () => {
