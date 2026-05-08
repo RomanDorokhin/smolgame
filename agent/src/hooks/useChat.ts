@@ -206,9 +206,7 @@ ${prompt}
 [PIPELINE_START]
 Output within <game_spec> tags.`;
 
-      let finalRawCode = "";
       let attempts = 0;
-      const maxTotalAttempts = rotatedProviders.length * 3; // Try each provider up to 3 times (with its fallback models)
 
       // Prepare a list of providers to try, starting with the one that generated the prompt
       const providersWithKeys = FALLBACK_ORDER.filter(p => {
@@ -224,6 +222,8 @@ Output within <game_spec> tags.`;
       const originalProvider = providersWithKeys.includes(initialProvider as any) ? initialProvider : null;
       const otherProviders = providersWithKeys.filter(p => p !== originalProvider);
       const rotatedProviders = originalProvider ? [originalProvider as APIProvider, ...otherProviders] : providersWithKeys;
+      const maxTotalAttempts = rotatedProviders.length * 3;
+      let finalRawCode = "";
 
       console.log("[Pipeline] Starting with providers:", rotatedProviders);
 
