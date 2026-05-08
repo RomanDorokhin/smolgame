@@ -404,7 +404,12 @@ export function useGameAgent(settings: ChatSettings) {
       // ══════════════════════════════════════════
       // ФАЗА 3: Публикация
       // ══════════════════════════════════════════
-      const finalCode = rawCode;
+      // Очистка: вырезаем ТОЛЬКО то, что внутри <game_spec>
+      let finalCode = rawCode;
+      const specMatch = rawCode.match(/<game_spec>([\s\S]*?)<\/game_spec>/i);
+      if (specMatch) {
+        finalCode = specMatch[1].trim();
+      }
       
       setStep("🚀 Публикую в облако...");
       updateMessage(assistantId, {
