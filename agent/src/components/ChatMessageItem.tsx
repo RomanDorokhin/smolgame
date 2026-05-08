@@ -11,6 +11,7 @@ interface ChatMessageItemProps {
   message: ChatMessage;
   onRetry?: () => void;
   onSend?: (content: string) => void;
+  onSwitchTab?: (tab: "chat" | "studio") => void;
   isLast?: boolean;
 }
 
@@ -28,7 +29,7 @@ type DeployState =
   | { phase: "ready"; pagesUrl: string; repoUrl: string }
   | { phase: "error"; message: string };
 
-export function ChatMessageItem({ message, onRetry, onSend, isLast }: ChatMessageItemProps) {
+export function ChatMessageItem({ message, onRetry, onSend, onSwitchTab, isLast }: ChatMessageItemProps) {
   const [copied, setCopied] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
   const [deployState, setDeployState] = useState<DeployState>({ phase: "idle" });

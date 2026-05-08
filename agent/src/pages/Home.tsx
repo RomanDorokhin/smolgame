@@ -54,6 +54,7 @@ export default function Home() {
   const [activeTab, setActiveTab] = useState<"chat" | "studio">("chat");
   const [myGames, setMyGames] = useState<any[]>([]);
   const [loadingGames, setLoadingGames] = useState(false);
+  const [studioGame, setStudioGame] = useState<{ title: string; code: string } | null>(null);
   const [expandedProvider, setExpandedProvider] = useState<APIProvider | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
 
@@ -228,7 +229,15 @@ export default function Home() {
                           message={message as any}
                           isLast={i === messages.length - 1}
                           onSend={sendMessage}
-                          onSwitchTab={setActiveTab}
+                          onSwitchTab={(tab) => {
+                            if (tab === "studio" && message.gameCode) {
+                              setStudioGame({ 
+                                title: message.content.split("\n")[0].replace(/^✅\s*/, "") || "Новая игра", 
+                                code: message.gameCode 
+                              });
+                            }
+                            setActiveTab(tab);
+                          }}
                         />
                       ))}
                       {isRunning && step && (
@@ -244,56 +253,133 @@ export default function Home() {
               </ScrollArea>
             ) : (
               <ScrollArea className="h-full bg-[#0d0e14]">
-                <div className="max-w-2xl mx-auto px-6 py-10">
-                  <div className="flex items-center justify-between mb-8">
-                    <div>
-                      <h2 className="text-2xl font-black mb-1">Студия</h2>
-                      <p className="text-xs text-white/40 uppercase tracking-widest font-bold">Ваши опубликованные игры</p>
-                    </div>
-                    <Button variant="ghost" size="sm" onClick={loadMyGames} className="text-[#a3b8d4]">Обновить</Button>
-                  </div>
-                  {loadingGames ? (
-                    <div className="flex items-center justify-center py-20">
-                      <div className="w-6 h-6 border-2 border-[#a3b8d4] border-t-transparent rounded-full animate-spin" />
-                    </div>
-                  ) : myGames.length > 0 ? (
-                    <div className="grid gap-4">
-                      {myGames.map((game) => (
-                        <div key={game.id} className="group relative flex flex-col p-4 rounded-2xl bg-[#13141a] border border-white/5 hover:border-white/10 transition-all">
-                          <div className="flex items-start justify-between gap-4 mb-4">
-                            <div className="flex-1 min-w-0">
-                              <h3 className="font-bold text-lg text-white group-hover:text-blue-400 transition-colors truncate">{game.title}</h3>
-                              <p className="text-xs text-white/40 line-clamp-2 mt-1">{game.description || "Без описания"}</p>
-                            </div>
-                            <div className="w-16 h-16 rounded-xl bg-white/5 flex items-center justify-center text-2xl shrink-0">
-                              {game.genreEmoji || "🎮"}
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-2 mt-auto">
-                            <Button
-                              className="flex-1 bg-white/5 hover:bg-white/10 text-white text-[10px] font-black uppercase tracking-widest h-10 rounded-xl"
-                              onClick={() => window.open(game.url, "_blank")}
-                            >
-                              <Play size={14} className="mr-2" /> Играть
-                            </Button>
-                            <Button
-                              className="flex-1 bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 text-[10px] font-black uppercase tracking-widest h-10 rounded-xl border border-blue-500/20"
-                              onClick={() => {
-                                setActiveTab("chat");
-                                sendMessage(`Улучши игру "${game.title}". Репозиторий: ${game.repoUrl || game.url}`);
-                              }}
-                            >
-                              <Pencil size={14} className="mr-2" /> Переделать
-                            </Button>
+                <div className="max-w-4xl mx-auto px-6 py-10 h-full flex flex-col">
+                  {studioGame ? (
+                    <div className="flex-1 flex flex-col gap-6 animate-in slide-in-from-right duration-300">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-4">
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            onClick={() => setStudioGame(null)}
+                            className="w-10 h-10 p-0 rounded-xl bg-white/5 text-[#a3b8d4]"
+                          >
+                            <RotateCcw size={18} className="-rotate-90" />
+                          </Button>
+                          <div>
+                            <h2 className="text-xl font-black">{studioGame.title}</h2>
+                            <p className="text-[10px] text-white/40 uppercase tracking-widest font-black">Режим редактирования</p>
                           </div>
                         </div>
-                      ))}
+                        <div className="flex items-center gap-2">
+                          <Button 
+                            className="bg-blue-600 hover:bg-blue-700 text-white text-[10px] font-black uppercase tracking-widest h-10 px-6 rounded-xl"
+                            onClick={() => {
+                              setActiveTab("chat");
+                              sendMessage(`Добавь в игру "${studioGame.title}" новую функцию: `);
+                            }}
+                          >
+                            <Pencil size={14} className="mr-2" /> Доработать
+                          </Button>
+                        </div>
+                      </div>
+
+                      <div className="flex-1 grid grid-cols-1 lg:grid-cols-2 gap-6 min-h-[500px]">
+                        <div className="relative rounded-3xl overflow-hidden bg-black border border-white/10 shadow-2xl group">
+                          <iframe
+                            title="Studio Preview"
+                            srcDoc={studioGame.code}
+                            className="w-full h-full border-none"
+                            sandbox="allow-scripts allow-pointer-lock"
+                          />
+                          <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <div className="bg-black/80 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/10 text-[9px] font-bold text-[#22c55e] uppercase tracking-widest">Live Preview</div>
+                          </div>
+                        </div>
+                        <div className="bg-[#13141a] rounded-3xl border border-white/5 flex flex-col overflow-hidden">
+                          <div className="px-5 py-3 border-b border-white/5 flex items-center justify-between">
+                            <span className="text-[10px] font-black uppercase tracking-widest text-white/20">Исходный код</span>
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              className="h-7 text-[9px] text-[#a3b8d4]"
+                              onClick={() => {
+                                navigator.clipboard.writeText(studioGame.code);
+                              }}
+                            >
+                              Копировать
+                            </Button>
+                          </div>
+                          <ScrollArea className="flex-1">
+                            <pre className="p-5 text-[11px] font-mono text-white/40 leading-relaxed overflow-x-auto">
+                              <code>{studioGame.code}</code>
+                            </pre>
+                          </ScrollArea>
+                        </div>
+                      </div>
                     </div>
                   ) : (
-                    <div className="py-20 text-center border-2 border-dashed border-white/5 rounded-3xl">
-                      <Layout className="w-12 h-12 text-white/10 mx-auto mb-4" />
-                      <p className="text-white/40 font-medium">У вас пока нет опубликованных игр</p>
-                    </div>
+                    <>
+                      <div className="flex items-center justify-between mb-8">
+                        <div>
+                          <h2 className="text-2xl font-black mb-1">Студия</h2>
+                          <p className="text-xs text-white/40 uppercase tracking-widest font-bold">Ваши опубликованные игры</p>
+                        </div>
+                        <Button variant="ghost" size="sm" onClick={loadMyGames} className="text-[#a3b8d4]">Обновить</Button>
+                      </div>
+                      {loadingGames ? (
+                        <div className="flex items-center justify-center py-20">
+                          <div className="w-6 h-6 border-2 border-[#a3b8d4] border-t-transparent rounded-full animate-spin" />
+                        </div>
+                      ) : myGames.length > 0 ? (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          {myGames.map((game) => (
+                            <div key={game.id} className="group relative flex flex-col p-5 rounded-2xl bg-[#13141a] border border-white/5 hover:border-white/10 transition-all">
+                              <div className="flex items-start justify-between gap-4 mb-4">
+                                <div className="flex-1 min-w-0">
+                                  <h3 className="font-bold text-lg text-white group-hover:text-blue-400 transition-colors truncate">{game.title}</h3>
+                                  <p className="text-xs text-white/40 line-clamp-2 mt-1">{game.description || "Без описания"}</p>
+                                </div>
+                                <div className="w-14 h-14 rounded-xl bg-white/5 flex items-center justify-center text-2xl shrink-0">
+                                  {game.genreEmoji || "🎮"}
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-2 mt-auto">
+                                <Button
+                                  className="flex-1 bg-white/5 hover:bg-white/10 text-white text-[10px] font-black uppercase tracking-widest h-10 rounded-xl"
+                                  onClick={() => window.open(game.url, "_blank")}
+                                >
+                                  <Play size={14} className="mr-2" /> Играть
+                                </Button>
+                                <Button
+                                  className="flex-1 bg-blue-600/10 hover:bg-blue-600/20 text-blue-400 text-[10px] font-black uppercase tracking-widest h-10 rounded-xl border border-blue-500/10"
+                                  onClick={() => {
+                                    setStudioGame({ title: game.title, code: "<!-- Loading code from GitHub... -->" });
+                                    // Here we would normally fetch the code, but for now we'll switch and show the placeholder
+                                    // In a real app we'd fetch index.html from the repo
+                                    setActiveTab("studio");
+                                  }}
+                                >
+                                  <Pencil size={14} className="mr-2" /> Править
+                                </Button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="py-20 text-center border-2 border-dashed border-white/5 rounded-3xl">
+                          <Layout className="w-12 h-12 text-white/10 mx-auto mb-4" />
+                          <p className="text-white/40 font-medium text-sm">У вас пока нет опубликованных игр</p>
+                          <Button 
+                            variant="link" 
+                            onClick={() => setActiveTab("chat")}
+                            className="text-blue-400 text-xs font-black uppercase tracking-widest mt-2"
+                          >
+                            Создать первую игру
+                          </Button>
+                        </div>
+                      )}
+                    </>
                   )}
                 </div>
               </ScrollArea>
