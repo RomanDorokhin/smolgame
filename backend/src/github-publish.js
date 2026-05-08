@@ -52,32 +52,38 @@ export async function publishGameToGithub(req, env) {
 
   await upsertUser(env.DB, user);
 
-  let row;
-  try {
-    row = await env.DB.prepare(
-      `SELECT github_login AS login, github_access_token_enc AS enc
-         FROM users WHERE id = ?`
-    ).bind(user.id).first();
-  } catch (e) {
-    if (!isMissingColumnError(e)) throw e;
-    row = await env.DB.prepare(`SELECT github_login AS login FROM users WHERE id = ?`).bind(user.id).first();
-    if (row) row.enc = null;
-  }
+  let token = env.COMMITS_GITHUB_TOKEN;
+  let owner = 'orokhin731-commits';
 
-  if (!row?.login) {
-    return error('Сначала привяжи GitHub (кнопка «Войти через GitHub»).', 403);
-  }
-  if (!row.enc) {
-    return error(
-      'На сервере не хранится токен GitHub (нужна миграция D1: колонка github_access_token_enc). Выполни в консоли D1 SQL из backend/migrations/0003_github_access_token.sql и снова войди через GitHub.',
-      503
-    );
-  }
-
-  const secret = githubClientSecret(env);
-  const token = await decryptGithubToken(String(row.enc), secret);
   if (!token) {
-    return error('Сессия GitHub устарела. Отвяжи и снова войди через GitHub.', 401);
+    let row;
+    try {
+      row = await env.DB.prepare(
+        `SELECT github_login AS login, github_access_token_enc AS enc
+           FROM users WHERE id = ?`
+      ).bind(user.id).first();
+    } catch (e) {
+      if (!isMissingColumnError(e)) throw e;
+      row = await env.DB.prepare(`SELECT github_login AS login FROM users WHERE id = ?`).bind(user.id).first();
+      if (row) row.enc = null;
+    }
+
+    if (!row?.login) {
+      return error('Сначала привяжи GitHub (кнопка «Войти через GitHub») или настрой COMMITS_GITHUB_TOKEN на сервере.', 403);
+    }
+    if (!row.enc) {
+      return error(
+        'На сервере не хранится токен GitHub (нужна миграция D1: колонка github_access_token_enc). Выполни в консоли D1 SQL из backend/migrations/0003_github_access_token.sql и снова войди через GitHub.',
+        503
+      );
+    }
+
+    const secret = githubClientSecret(env);
+    token = await decryptGithubToken(String(row.enc), secret);
+    if (!token) {
+      return error('Сессия GitHub устарела. Отвяжи и снова войди через GitHub.', 401);
+    }
+    owner = String(row.login);
   }
 
   let body;
@@ -124,7 +130,7 @@ export async function publishGameToGithub(req, env) {
   }
   if (total > 5_000_000) return error('Суммарный размер файлов слишком большой (макс 5 MB)');
 
-  const owner = String(row.login);
+  // owner is already set either to 'orokhin731-commits' or user's login.
 
   let repoDescription = rawDesc
     ? `${rawTitle} — ${rawDesc}`

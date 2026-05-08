@@ -86,30 +86,6 @@ export default function Home() {
           </div>
         )}
 
-        {/* GitHub Auth Gate */}
-        {!authLoading && !user?.isGithubConnected && (
-          <div className="absolute inset-0 z-[60] flex flex-col items-center justify-center bg-[#0a0b0e] p-6 text-center animate-in fade-in duration-300">
-            <div className="w-20 h-20 bg-white/5 rounded-3xl flex items-center justify-center mb-6 border border-white/10">
-              <Github size={40} className="text-white" />
-            </div>
-            <h2 className="text-2xl font-bold text-white mb-2 tracking-tight">Подключи GitHub, чтобы начать</h2>
-            <p className="text-sm text-white/50 max-w-[280px] mb-8 leading-relaxed text-center">
-              Для создания и публикации игр Агенту необходим доступ к твоему GitHub аккаунту.
-            </p>
-            <Button 
-              onClick={login} 
-              className="h-12 px-8 bg-white text-black hover:bg-white/90 rounded-2xl font-bold text-base transition-all active:scale-95 flex items-center gap-2"
-            >
-              <Github size={20} />
-              Войти через GitHub
-            </Button>
-            
-            {loginError && (
-              <p className="mt-4 text-[11px] text-red-400 font-medium max-w-[240px] leading-relaxed text-center">{loginError}</p>
-            )}
-          </div>
-        )}
-
         {/* Minimal Header Controls */}
         <div className="flex items-center justify-between px-4 py-3 z-30 shrink-0">
             <div className="flex items-center gap-2">

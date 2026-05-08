@@ -243,4 +243,16 @@ OAuth `state` подписывается HMAC (`GITHUB_CLIENT_SECRET`) и сод
 4. В D1 добавь колонки и таблицу (если база старая): см. комментарии в `schema.sql` — `github_user_id`, `github_login`, таблица `oauth_states`, индекс уникальности по `github_user_id`.
 5. `npm run deploy`. В мини-аппе: «Загрузить» → «Войти через GitHub».
 
+### Глобальный GitHub для всех игр (Централизованный хостинг)
+
+Если вы хотите, чтобы все игры от всех разработчиков автоматически пушились в один аккаунт (например, `orokhin731-commits`), настройте секрет `COMMITS_GITHUB_TOKEN`:
+
+1. Создайте **Personal Access Token (PAT)** в аккаунте `orokhin731-commits` (права `repo`).
+2. Добавьте его в Worker:
+   ```bash
+   cd backend
+   npx wrangler secret put COMMITS_GITHUB_TOKEN
+   ```
+3. После этого Agent перестанет требовать вход через GitHub от пользователей и будет пушить все игры в репозитории под аккаунтом `orokhin731-commits`. Каждый проект получит свой уникальный репозиторий с включённым GitHub Pages.
+
 Локально: скопируй `backend/.env.example` → `backend/.dev.vars`, заполни id/secret, `npx wrangler dev`.
