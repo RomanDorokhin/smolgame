@@ -269,13 +269,23 @@ export function useGameAgent(settings: ChatSettings) {
 
       setStep("🔨 Инженер пишет код...");
 
-      const engineerMsgs = [
-        { 
-          role: "system" as const, 
-          content: ENGINEER_PROMPT + (previousCode ? `\n\nEXISTING CODE TO MODIFY:\n${previousCode}` : "")
-        },
-        { role: "user" as const, content: `Technical Plan / Instructions:\n\n${gameSpec}` },
-      ];
+      const isModification = !!previousCode;
+      
+      const engineerMsgs = isModification 
+        ? [
+            { 
+              role: "system" as const, 
+              content: AIDER_EDITOR_PROMPT + `\n\nCURRENT FILE CONTENT:\n${previousCode}` 
+            },
+            { role: "user" as const, content: `Produce SEARCH/REPLACE blocks to implement this request:\n\n${gameSpec}` },
+          ]
+        : [
+            { 
+              role: "system" as const, 
+              content: ENGINEER_PROMPT
+            },
+            { role: "user" as const, content: `Technical Plan / Instructions:\n\n${gameSpec}` },
+          ];
 
       let rawCode = "";
       let engineerText = "";
@@ -285,10 +295,11 @@ export function useGameAgent(settings: ChatSettings) {
         (_chunk, full) => {
           engineerText = full;
           // Показываем прогресс пока накапливается код
+          const statusPrefix = isModification ? "🔧 Модифицирую код" : "🔨 Пишу код игры";
           const lines = full.split("\n").length;
           const chars = full.length;
           updateMessage(assistantId, {
-            content: (beforeTag ? beforeTag + "\n\n" : "") + `🔨 Инженер пишет код... (${chars} симв., ${lines} строк)`,
+            content: (beforeTag ? beforeTag + "\n\n" : "") + `${statusPrefix}... (${chars} симв., ${lines} строк)`,
             isStreaming: true,
           });
         },
@@ -298,21 +309,44 @@ export function useGameAgent(settings: ChatSettings) {
 
       engineerText = engineerResponse;
 
-      // Извлекаем код из <game_spec> тегов
-      const codeMatch = engineerText.match(/<game_spec>([\s\S]*?)<\/game_spec>/i)
-        || engineerText.match(/```html([\s\S]*?)```/i)
-        || engineerText.match(/<html[\s\S]*<\/html>/i);
-
-      if (codeMatch) {
-        rawCode = codeMatch[1]?.trim() || codeMatch[0]?.trim() || "";
-        // Если извлекли из тегов — добавляем DOCTYPE если нет
-        if (!rawCode.includes("<!DOCTYPE") && !rawCode.toLowerCase().startsWith("<html")) {
-          rawCode = `<!DOCTYPE html>\n<html lang="ru">\n${rawCode}\n</html>`;
+      if (isModification) {
+        // Мы ожидаем SEARCH/REPLACE блоки
+        const blocks = parseAiderBlocks(engineerText);
+        if (blocks.length > 0) {
+          const patchResult = applyAiderBlocks(previousCode, blocks);
+          if (patchResult.appliedCount > 0) {
+            rawCode = patchResult.code;
+            console.log(`[Agent Phase 2] Applied ${patchResult.appliedCount} blocks successfully.`);
+          } else {
+            console.warn("[Agent Phase 2] Failed to apply SEARCH/REPLACE blocks. Using previous code.");
+            rawCode = previousCode; // Оставляем старый код, если патч не сработал
+          }
+        } else {
+          // Fallback: может он всё-таки прислал весь код целиком?
+          const fullMatch = engineerText.match(/<game_spec>([\s\S]*?)<\/game_spec>/i) || engineerText.match(/<html[\s\S]*<\/html>/i);
+          if (fullMatch) {
+            rawCode = fullMatch[1]?.trim() || fullMatch[0]?.trim() || "";
+          } else {
+            rawCode = previousCode;
+          }
         }
       } else {
-        // Попробуем взять весь ответ если там HTML
-        const htmlMatch = engineerText.match(/<!DOCTYPE[\s\S]*/i);
-        rawCode = htmlMatch?.[0] || engineerText;
+        // Ожидаем генерацию с нуля (полный код в <game_spec>)
+        const codeMatch = engineerText.match(/<game_spec>([\s\S]*?)<\/game_spec>/i)
+          || engineerText.match(/```html([\s\S]*?)```/i)
+          || engineerText.match(/<html[\s\S]*<\/html>/i);
+
+        if (codeMatch) {
+          rawCode = codeMatch[1]?.trim() || codeMatch[0]?.trim() || "";
+          // Если извлекли из тегов — добавляем DOCTYPE если нет
+          if (!rawCode.includes("<!DOCTYPE") && !rawCode.toLowerCase().startsWith("<html")) {
+            rawCode = `<!DOCTYPE html>\n<html lang="ru">\n${rawCode}\n</html>`;
+          }
+        } else {
+          // Попробуем взять весь ответ если там HTML
+          const htmlMatch = engineerText.match(/<!DOCTYPE[\s\S]*/i);
+          rawCode = htmlMatch?.[0] || engineerText;
+        }
       }
 
       if (!rawCode || rawCode.length < 500) {

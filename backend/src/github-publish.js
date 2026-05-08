@@ -141,12 +141,10 @@ export async function publishGameToGithub(req, env) {
 
   let repoName = '';
   let cr = { ok: false, status: 0, data: null };
-  for (let attempt = 0; attempt < 6; attempt++) {
-    const slug = newId()
-      .toLowerCase()
-      .replace(/[^a-z0-9]/g, '')
-      .slice(0, 14);
-    const repo = `smolgame-${slug || 'game'}-${attempt}`;
+  for (let attempt = 0; attempt < 10; attempt++) {
+    const slug = (Date.now().toString(36) + newId().toLowerCase().replace(/[^a-z0-9]/g, ''))
+      .slice(0, 16);
+    const repo = `smolgame-${slug || 'game'}`;
     cr = await ghJson(
       'https://api.github.com/user/repos',
       {
@@ -165,10 +163,12 @@ export async function publishGameToGithub(req, env) {
       repoName = cr.data?.name || repo;
       break;
     }
-    const msg = String(cr.data?.message || cr.data?.errors?.[0]?.message || '');
-    const dup = cr.status === 422 && /already exists|name already/i.test(msg);
+    const msg = String(cr.data?.message || '');
+    const errors = Array.isArray(cr.data?.errors) ? cr.data.errors.map(e => e.message).join(', ') : '';
+    const fullMsg = errors ? `${msg}: ${errors}` : msg;
+    const dup = cr.status === 422 && /already exists|name already/i.test(fullMsg);
     if (dup && attempt < 5) continue;
-    return error(msg.slice(0, 200) || 'create repo failed', cr.status >= 400 ? cr.status : 502);
+    return error(fullMsg.slice(0, 200) || 'create repo failed', cr.status >= 400 ? cr.status : 502);
   }
   const fullName = cr.data?.full_name || `${owner}/${repoName}`;
 
