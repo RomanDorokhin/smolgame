@@ -251,6 +251,17 @@ export function ChatMessageItem({ message, onRetry, onSend, onSwitchTab, isLast 
                 {copied ? <Check size={14} /> : <Copy size={14} />}
                 <span className="ml-2">{copied ? "Скопировано" : "Копировать"}</span>
               </Button>
+              {htmlCode && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 px-3 text-[10px] font-bold uppercase tracking-widest text-green-500 hover:text-green-400 bg-green-500/5 border border-green-500/10 rounded-xl transition-all"
+                  onClick={() => setShowPreview(true)}
+                >
+                  <Play size={14} fill="currentColor" />
+                  <span className="ml-2">Быстрый просмотр</span>
+                </Button>
+              )}
               {onRetry && (
                 <Button
                   variant="ghost"
