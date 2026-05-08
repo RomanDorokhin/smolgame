@@ -136,6 +136,9 @@ export class SmolGameAPI {
     }
 
     if (!response.ok) {
+      if (response.status === 401) {
+        throw new Error('Сессия Telegram устарела. Пожалуйста, полностью перезапусти приложение SmolGame.');
+      }
       const errorMsg = (typeof data === 'object' ? data?.error : data) || response.statusText || 'Unknown error';
       throw new Error(`${errorMsg} (Status: ${response.status})`);
     }
