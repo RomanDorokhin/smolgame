@@ -410,6 +410,14 @@ export function useGameAgent(settings: ChatSettings) {
       if (specMatch) {
         finalCode = specMatch[1].trim();
       }
+
+      // САНИТАЙЗЕР: Исправляем частые ошибки нейронки
+      finalCode = finalCode
+        // 1. Принудительно меняем PixiJS на стабильную v6
+        .replace(/https:\/\/pixijs\.download\/release\/pixi\.js/g, "https://cdnjs.cloudflare.com/ajax/libs/pixi.js/6.5.10/pixi.min.js")
+        // 2. Вычищаем случайные Markdown-теги внутри кода (```javascript, ```css и т.д.)
+        .replace(/```[a-z]*\n/gi, '')
+        .replace(/```/g, '');
       
       setStep("🚀 Публикую в облако...");
       updateMessage(assistantId, {
