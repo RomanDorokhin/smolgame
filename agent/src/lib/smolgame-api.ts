@@ -109,13 +109,18 @@ export class SmolGameAPI {
       headers['x-telegram-init-data'] = initData;
     }
 
-    if (options.body && !(options.body instanceof FormData)) {
+    let body = options.body;
+    if (body && !(body instanceof FormData) && typeof body !== 'string') {
+      headers['Content-Type'] = 'application/json';
+      body = JSON.stringify(body);
+    } else if (body && typeof body === 'string') {
       headers['Content-Type'] = 'application/json';
     }
 
     const response = await fetch(`${API_BASE}${finalPath}`, {
       ...options,
       headers,
+      body
     });
 
     const contentType = response.headers.get('content-type');
