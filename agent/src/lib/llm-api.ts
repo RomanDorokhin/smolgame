@@ -98,12 +98,12 @@ const MODELS_LIST_URLS: Record<string, string> = {
 };
 
 export const DEFAULT_MODELS: Record<string, string[]> = {
-  openrouter: ["google/gemini-2.0-flash-exp", "meta-llama/llama-3.3-70b-instruct", "google/gemini-flash-1.5"],
-  groq: ["llama-3.3-70b-versatile", "llama-3.1-70b-versatile", "mixtral-8x7b-32768"],
-  gemini: ["gemini-2.0-flash-exp", "gemini-2.0-flash", "gemini-1.5-flash"],
-  together: ["meta-llama/Llama-3.3-70B-Instruct-Turbo", "meta-llama/Llama-3.1-70B-Instruct-Turbo", "mistralai/Mixtral-8x7B-Instruct-v0.1"],
-  sambanova: ["Meta-Llama-3.1-70B-Instruct", "Meta-Llama-3.1-405B-Instruct"],
-  glhf: ["hf:meta-llama/Llama-3.1-405B-Instruct", "hf:meta-llama/Llama-3.1-70B-Instruct"],
+  openrouter: ["google/gemini-2.0-flash-001", "meta-llama/llama-3.3-70b-instruct", "google/gemini-2.0-pro-exp-02-05:free"],
+  groq: ["llama-3.3-70b-versatile", "llama-3.1-70b-versatile"],
+  gemini: ["gemini-2.0-flash", "gemini-2.0-flash-lite-preview-02-05", "gemini-1.5-flash"],
+  together: ["meta-llama/Llama-3.3-70B-Instruct-Turbo", "meta-llama/Llama-3.1-70B-Instruct-Turbo"],
+  sambanova: ["Meta-Llama-3.3-70B-Instruct", "Meta-Llama-3.1-70B-Instruct-Reference"],
+  glhf: ["hf:meta-llama/Llama-3.1-405B-Instruct", "hf:meta-llama/Llama-3.3-70B-Instruct"],
   huggingface: ["meta-llama/Llama-3.2-11B-Vision-Instruct", "Qwen/Qwen2.5-72B-Instruct"],
   deepseek: ["deepseek-chat"],
   custom: ["gpt-3.5-turbo"],
