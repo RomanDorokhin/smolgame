@@ -456,6 +456,7 @@ ${feedback}
 
     try {
       let systemPrompt = "";
+      let isComplete = false;
 
       if (isEditMode && session?.editTarget) {
         systemPrompt = AIDER_EDITOR_PROMPT + `\n\nCURRENT FILE CONTENT (${session.editTarget.path}):\n\`\`\`html\n${session.editTarget.currentCode}\n\`\`\``;
@@ -463,8 +464,7 @@ ${feedback}
         if (!orchestratorRef.current) orchestratorRef.current = new GameFlowOrchestratorV2("user-1", sessionId);
         const orchestrator = orchestratorRef.current;
         const currentAnswers = orchestrator.getSession().answers || {};
-        const isComplete = orchestrator.isInterviewComplete();
-        
+        isComplete = orchestrator.isInterviewComplete();
         const FIELD_NAMES: Record<string, string> = { genre: "Жанр", mechanics: "Механика", visuals: "Визуал", audience: "Аудитория", story: "Сюжет", progression: "Прогрессия", special_features: "Фишки" };
         const missingFields = ['genre', 'mechanics', 'visuals', 'audience', 'story', 'progression', 'special_features'].filter(f => !(currentAnswers as any)[f]);
         const nextField = missingFields[0];
