@@ -12,6 +12,7 @@ import { generateStream, pool, DEFAULT_MODELS } from "../lib/llm-api";
 import type { APIProvider } from "../lib/llm-api";
 import { runGamePipeline } from "../lib/core/gameGenerationPipelinePro";
 import { GameTestingFrameworkPro } from "../lib/core/gameTestingFrameworkPro";
+import { parseAiderBlocks, applyAiderBlocks, AIDER_EDITOR_PROMPT } from "../lib/aider-utils";
 import { SmolGameAPI } from "../lib/smolgame-api";
 import type { ChatSettings } from "../types/chat";
 
@@ -395,26 +396,26 @@ NEXT_STEPS: [What to fix exactly]`;
 
         while (score < 80 && attempts < maxAttempts) {
           attempts++;
-          setStep(`🔧 Авто-исправление (попытка ${attempts}/${maxAttempts})...`);
+          setStep(`🔧 Модульный ремонт (попытка ${attempts}/${maxAttempts})...`);
           
           updateMessage(assistantId, {
-            content: (beforeTag ? beforeTag + "\n\n" : "") + `⚠️ **Качество: ${score}/100**. Исправляю замечания (${attempts}/${maxAttempts})...`,
+            content: (beforeTag ? beforeTag + "\n\n" : "") + `⚠️ **Качество: ${score}/100**. Исправляю только проблемные места (${attempts}/${maxAttempts})...`,
             isStreaming: true,
           });
 
           const fixMsgs = [
             { 
               role: "system" as const, 
-              content: ENGINEER_PROMPT + `\n\nCRITICAL FAILURE: YOUR PREVIOUS CODE FAILED QUALITY GATE (Score: ${score}/100).\n\nFIX THESE SPECIFIC ISSUES:\n${pipeline.nextSteps.join("\n")}\n\nEXISTING CODE:\n${finalCode}` 
+              content: AIDER_EDITOR_PROMPT + `\n\nCURRENT FILE CONTENT:\n${finalCode}\n\nFIX THESE ISSUES:\n${pipeline.nextSteps.join("\n")}` 
             },
-            { role: "user" as const, content: `REPAIR THE CODE. Return the COMPLETE fixed HTML in <game_spec> tags. NO PLACEHOLDERS.` },
+            { role: "user" as const, content: `Produce SEARCH/REPLACE blocks to fix the issues mentioned above. Do not rewrite the whole file.` },
           ];
 
-          const { text: fixedResponse } = await streamWithFallback(
+          const { text: fixResponse } = await streamWithFallback(
             fixMsgs,
             (_chunk, full) => {
               updateMessage(assistantId, {
-                content: (beforeTag ? beforeTag + "\n\n" : "") + `🔧 Исправляю... (${full.length} симв.)`,
+                content: (beforeTag ? beforeTag + "\n\n" : "") + `🔧 Применяю исправления... (${full.length} симв.)`,
                 isStreaming: true,
               });
             },
@@ -422,25 +423,33 @@ NEXT_STEPS: [What to fix exactly]`;
             usedProvider
           );
 
-          const fixedCodeMatch = fixedResponse.match(/<game_spec>([\s\S]*?)<\/game_spec>/i) 
-            || fixedResponse.match(/<html[\s\S]*<\/html>/i);
-          
-          if (fixedCodeMatch) {
-            finalCode = fixedCodeMatch[1]?.trim() || fixedCodeMatch[0]?.trim();
-            // Перепроверяем финальный вариант
-            pipeline = await runGamePipeline("agent-game", finalCode);
-            score = pipeline.finalScore;
-            
-            // Снова спрашиваем критика (опционально, но для скора полезно)
-            const { text: reCritique } = await streamWithFallback([
-              { role: "system", content: "Rate this code 0-100. Return JSON: {\"realScore\": number}" },
-              { role: "user", content: finalCode }
-            ], () => {}, signal, usedProvider);
-            try {
-              const r = JSON.parse(reCritique.match(/\{[\s\S]*\}/)?.[0] || "{}");
-              if (r.realScore) score = r.realScore;
-            } catch(e) {}
+          // Пробуем применить блоки
+          const blocks = parseAiderBlocks(fixResponse);
+          if (blocks.length > 0) {
+            const patchResult = applyAiderBlocks(finalCode, blocks);
+            if (patchResult.appliedCount > 0) {
+              finalCode = patchResult.code;
+              console.log(`[Agent] Applied ${patchResult.appliedCount} blocks successfully.`);
+            } else {
+              console.warn("[Agent] Failed to apply any SEARCH/REPLACE blocks. Falling back to full rewrite...");
+              // Fallback to full rewrite if diff failed
+              const fallbackMsgs = [
+                { role: "system", content: ENGINEER_PROMPT + `\n\nEXISTING CODE:\n${finalCode}\n\nISSUE:\n${pipeline.nextSteps.join("\n")}` },
+                { role: "user", content: "SEARCH/REPLACE failed. Return the COMPLETE fixed HTML now." }
+              ];
+              const { text: fullFix } = await streamWithFallback(fallbackMsgs, () => {}, signal, usedProvider);
+              const fullMatch = fullFix.match(/<game_spec>([\s\S]*?)<\/game_spec>/i) || fullFix.match(/<html[\s\S]*<\/html>/i);
+              if (fullMatch) finalCode = fullMatch[1]?.trim() || fullMatch[0]?.trim();
+            }
+          } else {
+            // Если блоков вообще нет, значит он прислал полный код (не послушался)
+            const fullMatch = fixResponse.match(/<game_spec>([\s\S]*?)<\/game_spec>/i) || fixResponse.match(/<html[\s\S]*<\/html>/i);
+            if (fullMatch) finalCode = fullMatch[1]?.trim() || fullMatch[0]?.trim();
           }
+
+          // Перепроверяем финальный вариант
+          pipeline = await runGamePipeline("agent-game", finalCode);
+          score = pipeline.finalScore;
         }
 
         updateMessage(assistantId, {
@@ -492,8 +501,9 @@ NEXT_STEPS: [What to fix exactly]`;
         });
       } catch (pubErr: any) {
         console.error("[Agent] Publication failed:", pubErr);
+        const errMsg = pubErr.message || "Ошибка сети или сервера";
         updateMessage(assistantId, {
-          content: (beforeTag ? beforeTag + "\n\n" : "") + `✅ **Игра готова! (Качество: ${score}/100)**\n\n⚠️ **Публикация не удалась**, но ты всё равно можешь запустить её в Студии!`,
+          content: (beforeTag ? beforeTag + "\n\n" : "") + `✅ **Игра готова! (Качество: ${score}/100)**\n\n⚠️ **Публикация не удалась:** ${errMsg}\n\nТы всё равно можешь запустить её в Студии!`,
           gameCode: finalCode,
           isStreaming: false,
         });
