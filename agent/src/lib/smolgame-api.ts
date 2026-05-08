@@ -235,6 +235,16 @@ export class SmolGameAPI {
   }
 
   /**
+   * Delete game from database and GitHub
+   */
+  static async deleteGame(gameId: string) {
+    return this.apiFetch(`/api/games/${gameId}`, {
+      method: 'DELETE',
+      body: { deleteGithubRepo: true }
+    });
+  }
+
+  /**
    * Poll GitHub Pages URL until it becomes available (up to ~3 min)
    * Resolves with true when page responds OK, false on timeout.
    */

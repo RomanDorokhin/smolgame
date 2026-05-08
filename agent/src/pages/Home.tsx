@@ -5,7 +5,7 @@ import { ChatInput } from "@/components/ChatInput";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
-import { Menu, Sparkles, Github, Layout, MessageSquare, Play, Pencil, RotateCcw, X, ChevronDown, ChevronUp, Key } from "lucide-react";
+import { Menu, Sparkles, Github, Layout, MessageSquare, Play, Pencil, RotateCcw, X, ChevronDown, ChevronUp, Key, Trash2 } from "lucide-react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { SmolGameAPI } from "@/lib/smolgame-api";
 import { Component, type ReactNode } from "react";
@@ -335,12 +335,26 @@ export default function Home() {
                                   className="flex-1 bg-blue-600/10 hover:bg-blue-600/20 text-blue-400 text-[10px] font-black uppercase tracking-widest h-10 rounded-xl border border-blue-500/10"
                                   onClick={() => {
                                     setStudioGame({ title: game.title, code: "<!-- Loading code from GitHub... -->" });
-                                    // Here we would normally fetch the code, but for now we'll switch and show the placeholder
-                                    // In a real app we'd fetch index.html from the repo
                                     setActiveTab("studio");
                                   }}
                                 >
                                   <Pencil size={14} className="mr-2" /> Править
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  className="w-10 h-10 p-0 shrink-0 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-xl border border-red-500/10"
+                                  onClick={async () => {
+                                    if (window.confirm("Удалить игру навсегда? Это удалит её из базы и сотрет репозиторий с GitHub.")) {
+                                      try {
+                                        await SmolGameAPI.deleteGame(game.id);
+                                        loadMyGames();
+                                      } catch (err) {
+                                        alert("Ошибка при удалении: " + (err as Error).message);
+                                      }
+                                    }
+                                  }}
+                                >
+                                  <Trash2 size={16} />
                                 </Button>
                               </div>
                             </div>
