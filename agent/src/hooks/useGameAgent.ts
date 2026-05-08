@@ -103,14 +103,20 @@ Output the full code inside <game_spec> tags.`;
 
 const REFINER_PROMPT = `You are the Elite Game Refiner. Take this draft and turn it into a PREMIUM mobile game.
 
-STRICT RULES:
-1. NO BACKEND: This is a 100% static game for GitHub Pages. Use ONLY client-side JavaScript. No server-side code.
-2. STRUCTURE: Split into modular files (index.html, js/game.js, css/style.css) using <file path="..."> tags.
-3. JUICE: Add particles, screen shake, and smooth animations to make the game addictive and fun.
-4. PHONE-FIRST: Perfect touch controls and UI layout for mobile phones.
-5. NO BUGS: Ensure the game is 100% complete and runs perfectly on any browser.
+STRICT OUTPUT FORMAT:
+You MUST split the code into separate files using this EXACT format:
+<game_spec>
+<file path="index.html">...</file>
+<file path="js/game.js">...</file>
+<file path="css/style.css">...</file>
+</game_spec>
 
-Output the code inside <game_spec> tags.`;
+RULES:
+1. NO BACKEND: Static game for GitHub Pages. Client-side ONLY.
+2. STRUCTURE: Modularize everything. Logic in js/game.js, styles in css/style.css.
+3. JUICE: Add animations, screen shake, and particles. Make it addictive.
+4. PHONE-FIRST: Perfect touch controls and 9:16 layout.
+5. COMPLETE: 100% finished, no placeholders, no bugs.`;
 
 export function useGameAgent(settings: ChatSettings) {
   const [messages, setMessages] = useState<AgentMessage[]>(() => {
