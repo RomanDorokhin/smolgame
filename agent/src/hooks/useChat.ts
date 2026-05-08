@@ -180,31 +180,21 @@ export function useChat() {
       // 1. Generate the code directly using the LLM pool with Bulldozer logic
       setGenerationStep(`Генерация кода (запуск цикла отказоустойчивости)...`);
       
-      const generationPrompt = `You are the OpenGame Core Agent. You MUST build the game according to the OPENGAME DEBUG PROTOCOL.
-
-PHASE 1: PRE-BUILD VERIFICATION (OPENGAME STANDARDS)
-Before outputting code, verify:
-- ANIMATION SYSTEM: 3-Layer check (asset-pack -> animations -> code keys).
-- CONFIG ALIGNMENT: All gameConfig.json keys MUST match code references.
-- UI COMPONENTS: Must have Start, HUD, and Game Over screens.
-- MOBILE OPTIMIZATION: Portrait mode, touch-first inputs (>44px targets).
-- SCENE MANAGEMENT: All scenes MUST be registered in a central game config.
-
-PHASE 2: CORE IMPLEMENTATION RULES
-- SINGLE-FILE: HTML + CSS + JS in one self-contained block.
-- PERFORMANCE: Use requestAnimationFrame. Avoid global leaks.
-- ERROR HANDLING: Wrap critical game loops in try-catch for "Skill Debug" compliance.
-- REPLAYABILITY: Persistent high scores in localStorage.
-
-PHASE 3: EXECUTION & AUTO-DEPLOY
-Write the COMPLETE code. Include a <thought> block first where you verify the checklist above.
-Your goal is to pass the internal Quality Gate (60+) and trigger an IMMEDIATE GitHub push. Do NOT ask for manual testing.
-
-SPECIFICATION:
-${prompt}
-
-[PIPELINE_START]
-Output within <game_spec> tags.`;
+      const generationPrompt = `You are the OpenGame ELITE ARCHITECT. You MUST build a FULLY FUNCTIONAL, POLISHED, and COMPLETE game.
+      
+      STRICT RULES:
+      1. NO SKELETONS: All functions MUST be fully implemented.
+      2. NO PLACEHOLDERS: Never use comments like "handle logic here".
+      3. SINGLE-FILE: HTML + CSS + JS in one block. 
+      4. MOBILE-FIRST: Large touch controls, tested for portrait mode.
+      5. SURREALISTIC: Use vibrant colors and creative animations.
+      
+      TECHNICAL:
+      - Use requestAnimationFrame.
+      - Add "Start", "HUD", and "Game Over" screens.
+      - Save High Scores in localStorage.
+      
+      Output within <game_spec> tags. COMPLETE code ONLY.`;
 
       let attempts = 0;
 

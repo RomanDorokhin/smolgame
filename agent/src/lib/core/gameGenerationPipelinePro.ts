@@ -250,6 +250,18 @@ export class GameGenerationPipelinePro {
         critical: true,
       },
       {
+        name: 'Minimum code size',
+        status: this.gameCode.length > 2000 ? 'pass' : 'fail',
+        message: 'Game code is too short, likely a skeleton or placeholder',
+        critical: true,
+      },
+      {
+        name: 'Game Loop Integrity',
+        status: (this.gameCode.includes('requestAnimationFrame') || this.gameCode.includes('setInterval')) ? 'pass' : 'fail',
+        message: 'Game must have a working animation loop',
+        critical: true,
+      },
+      {
         name: 'Playable',
         status: testReport.isPlayable ? 'pass' : 'fail',
         message: 'Game must be playable',
