@@ -12,6 +12,7 @@ interface ChatMessageItemProps {
   onRetry?: () => void;
   onSend?: (content: string) => void;
   onSwitchTab?: (tab: "chat" | "studio") => void;
+  onLoadStudio?: (title: string, code: string) => void;
   isLast?: boolean;
 }
 

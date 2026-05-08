@@ -54,9 +54,20 @@ export default function Home() {
   const [activeTab, setActiveTab] = useState<"chat" | "studio">("chat");
   const [myGames, setMyGames] = useState<any[]>([]);
   const [loadingGames, setLoadingGames] = useState(false);
-  const [studioGame, setStudioGame] = useState<{ title: string; code: string } | null>(null);
+  const [studioGame, setStudioGame] = useState<{ title: string; code: string } | null>(() => {
+    const saved = localStorage.getItem("smol_studio_game_v1");
+    return saved ? JSON.parse(saved) : null;
+  });
   const [expandedProvider, setExpandedProvider] = useState<APIProvider | null>(null);
+  const [isCleaning, setIsCleaning] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
+
+  // Сохраняем состояние Студии
+  useEffect(() => {
+    if (studioGame) {
+      localStorage.setItem("smol_studio_game_v1", JSON.stringify(studioGame));
+    }
+  }, [studioGame]);
 
   const updateSettings = (patch: Partial<ChatSettings>) => {
     setSettings(prev => {
@@ -70,6 +81,24 @@ export default function Home() {
     const next = { ...settings, keys: { ...settings.keys, [provider]: key } };
     saveSettings(next);
     setSettings(next);
+  };
+
+  const handleCleanup = async () => {
+    if (!confirm("Удалить ВСЕ твои репозитории на GitHub? Это действие нельзя отменить.")) return;
+    setIsCleaning(true);
+    try {
+      const data = await SmolGameAPI.getMyGames();
+      const games = data.games || [];
+      for (const game of games) {
+        if (game.id) await SmolGameAPI.deleteGame(game.id);
+      }
+      alert(`Удалено игр: ${games.length}`);
+      loadMyGames();
+    } catch (e) {
+      alert("Ошибка при очистке");
+    } finally {
+      setIsCleaning(false);
+    }
   };
 
   useEffect(() => {
@@ -145,6 +174,18 @@ export default function Home() {
                   })}
                 </div>
               </ScrollArea>
+
+              <div className="p-4 border-t border-white/5 space-y-2">
+                <Button
+                  onClick={handleCleanup}
+                  disabled={isCleaning}
+                  variant="outline"
+                  className="w-full justify-start gap-3 bg-red-500/5 border-red-500/10 hover:bg-red-500/10 text-red-400/70 h-12 rounded-xl"
+                >
+                  <Trash2 size={18} /> {isCleaning ? "Удаляю..." : "Очистить репозитории"}
+                </Button>
+                <p className="text-[10px] text-white/20 text-center uppercase tracking-widest font-bold">Опасная зона</p>
+              </div>
 
             </div>
           </div>
@@ -229,15 +270,8 @@ export default function Home() {
                           message={message as any}
                           isLast={i === messages.length - 1}
                           onSend={sendMessage}
-                          onSwitchTab={(tab) => {
-                            if (tab === "studio" && message.gameCode) {
-                              setStudioGame({ 
-                                title: message.content.split("\n")[0].replace(/^✅\s*/, "") || "Новая игра", 
-                                code: message.gameCode 
-                              });
-                            }
-                            setActiveTab(tab);
-                          }}
+                          onSwitchTab={setActiveTab}
+                          onLoadStudio={(title, code) => setStudioGame({ title, code })}
                         />
                       ))}
                       {isRunning && step && (
