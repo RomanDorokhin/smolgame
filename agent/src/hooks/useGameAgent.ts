@@ -11,6 +11,7 @@ import { useState, useRef, useCallback } from "react";
 import { generateStream, pool, DEFAULT_MODELS } from "../lib/llm-api";
 import type { APIProvider } from "../lib/llm-api";
 import { runGamePipeline } from "../lib/core/gameGenerationPipelinePro";
+import { GameTestingFrameworkPro } from "../lib/core/gameTestingFrameworkPro";
 import { SmolGameAPI } from "../lib/smolgame-api";
 import type { ChatSettings } from "../types/chat";
 
@@ -339,51 +340,60 @@ export function useGameAgent(settings: ChatSettings) {
         pipeline = await runGamePipeline("agent-game", rawCode);
         score = pipeline.finalScore;
 
-        // --- ШАГ 2: Умная проверка (Нейро-критик) ---
-        setStep("🧠 Нейро-критик...");
-        const criticMsgs = [
-          { 
-            role: "system" as const, 
-            content: `You are the SmolGame BRUTAL CRITIC. Your mission is to DESTROY fake, skeleton, or template code.
-            
-            STRICT RULES:
-            - If you see "// handle logic here" or placeholders -> Score 0.
-            - If it's a generic "Clicker" template when the user asked for "3D Tetris" -> Score 0.
-            - If the game loop is just empty requestAnimationFrame -> Score 0.
-            - If there is no logic for winning/losing -> Score 20 max.
-            
-            BE SKEPTICAL. BE MEAN. We only want REAL functional games.
-            
-            Return JSON:
-            {
-              "isFake": boolean,
-              "realScore": number (0-100),
-              "issues": string[],
-              "verdict": "string"
-            }` 
-          },
-          { role: "user" as const, content: `Review this code for a "${gameSpec.slice(0, 50)}...":\n\n${rawCode}` },
-        ];
-
-        const { text: criticResponse } = await streamWithFallback(criticMsgs, () => {}, signal, usedProvider);
+        // --- ШАГ 3.1: Тестирование в реальном времени (Runtime Test) ---
+        setStep("🕵️ Тестирую запуск игры...");
+        const tester = new GameTestingFrameworkPro(assistantId, rawCode);
+        const testReport = await tester.runAllTests();
         
-        try {
-          const critique = JSON.parse(criticResponse.match(/\{[\s\S]*\}/)?.[0] || "{}");
-          if (critique.isFake || critique.realScore < score) {
-            score = critique.realScore;
-            if (critique.issues) {
-              pipeline.nextSteps = [...(pipeline.nextSteps || []), ...critique.issues];
-            }
-          }
-        } catch (e) {
-          console.error("Critic JSON parse failed", e);
-        }
+        console.log("[Agent] Runtime Test Report:", testReport);
+
+        // --- ШАГ 3.2: AI-Критик (Вердикт) ---
+        setStep("⚖️ Финальная проверка качества...");
+        
+        const criticPrompt = `You are a brutal game critic and technical lead.
+Review this game code:
+${rawCode.slice(0, 5000)}
+
+Technical Test Report:
+${testReport.summary}
+
+Regex Validation Score: ${score}/100
+
+CRITICAL RULES:
+1. If the Technical Test Report says 'NOT PLAYABLE' or has 'JS Errors' > 0, the score is 0.
+2. If it's a skeletal template with "// implement logic here", the score is 0.
+3. Check if the game matches the prompt: "${gameSpec}"
+
+Response format:
+SCORE: [0-100]
+CRITIQUE: [Your brutal feedback]
+NEXT_STEPS: [What to fix exactly]`;
+
+        let criticResponse = "";
+        await streamWithFallback(
+          [{ role: "user", content: criticPrompt }],
+          (_c, full) => { criticResponse = full; },
+          signal,
+          usedProvider
+        );
+        
+        const criticScoreMatch = criticResponse.match(/SCORE:\s*(\d+)/);
+        const criticScore = parseInt(criticScoreMatch?.[1] || "0");
+        const critique = criticResponse.split("CRITIQUE:")[1]?.split("NEXT_STEPS:")[0]?.trim() || "";
+        const nextSteps = criticResponse.split("NEXT_STEPS:")[1]?.trim() || "";
+
+        const finalScore = Math.min(score, criticScore);
+        pipeline.finalScore = finalScore;
+        pipeline.critique = critique;
+        pipeline.nextSteps = [nextSteps];
+        score = finalScore;
+        finalCode = rawCode;
 
         // --- ШАГ 3: Авто-исправление (на основе критики) ---
         let attempts = 0;
         const maxAttempts = 2;
 
-        while (score < 80 && attempts < maxAttempts && pipeline.nextSteps && pipeline.nextSteps.length > 0) {
+        while (score < 80 && attempts < maxAttempts) {
           attempts++;
           setStep(`🔧 Авто-исправление (попытка ${attempts}/${maxAttempts})...`);
           
