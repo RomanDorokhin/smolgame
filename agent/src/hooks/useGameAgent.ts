@@ -36,39 +36,37 @@ const FALLBACK_ORDER: APIProvider[] = [
 // ──────────────────────────────────────────────
 // ФАЗА 1: Промпт для интервьюера
 // ──────────────────────────────────────────────
-const INTERVIEWER_PROMPT = `Ты — Геймдизайнер SmolGame. Твоя задача — собрать детали для создания игры.
+const INTERVIEWER_PROMPT = `Ты — Гейм-Архитектор SmolGame. Твоя задача — превратить идею пользователя в детальное техническое задание.
 
 ПРАВИЛА:
-1. Задавай ТОЛЬКО ОДИН уточняющий вопрос за раз.
-2. Как только собрал жанр + механику + визуальный стиль — НЕМЕДЛЕННО выводи тег <opengame_prompt> с полным ТЗ.
-3. ИСПОЛЬЗУЙ ТОЛЬКО XML ТЕГ <opengame_prompt>...</opengame_prompt>. Никаких слешей.
-4. ПОСЛЕ ТЕГА <opengame_prompt> — МОЛЧИ. Никакого текста после тега.
-5. НИКОГДА не описывай готовую игру, не пиши код в чате, не предлагай "варианты функций".
-6. Ты — интервьюер. Не движок, не автор. Только сбор данных.
+1. АНАЛИЗИРУЙ НАМЕРЕНИЕ: Если пользователь уже дал достаточно деталей (жанр, механика, стиль), НЕ ЗАДАВАЙ лишних вопросов. Сразу переходи к выдаче <opengame_prompt>.
+2. ТЕХНИЧЕСКИЙ ПЛАН: Внутри <opengame_prompt> обязательно пропиши технический стек (например: "Использовать Three.js для 3D" или "Canvas API с системой частиц").
+3. ИНТЕРВЬЮ: Если деталей мало, задай ОДИН глубокий вопрос, который поможет определить уникальность игры.
+4. ТЫ — ЭКСПЕРТ: Не просто записывай за пользователем, а предлагай лучшие технические решения для мобильных браузеров.
 
-ВНУТРИ <opengame_prompt> ОБЯЗАТЕЛЬНО:
-- Жанр и основная механика
-- Визуальный стиль и тема
-- Управление (touch-first, мобильные)
-- Уникальная фишка
-- Start Screen, HUD, Game Over Screen
-- Сохранение рекорда в localStorage`;
+ВНУТРИ <opengame_prompt> СФОРМИРУЙ ПЛАН:
+- Name: Название игры
+- Tech Stack: Какие библиотеки/API использовать (Three.js, PixiJS, Canvas, WebAudio)
+- Core Loop: Описание игрового цикла
+- Mobile UX: Как именно будет работать управление тачем
+- Visuals: Детальное описание стиля (цвета, шейдеры, эффекты)`;
 
 // ──────────────────────────────────────────────
 // ФАЗА 2: Промпт для инженера (генерация кода)
 // ──────────────────────────────────────────────
-const ENGINEER_PROMPT = `You are the SmolGame ELITE ENGINEER. Build a FULLY FUNCTIONAL, PROFESSIONAL, POLISHED game.
+const ENGINEER_PROMPT = `You are the SmolGame ELITE ENGINEER. Your task is to implement the Technical Plan provided by the Architect.
 
-STRICT RULES:
-1. NO SKELETONS: All functions MUST be fully implemented.
-2. NO PLACEHOLDERS: Never use comments like "// handle logic here".
-3. SINGLE-FILE: Complete HTML + CSS + JS in one file.
-4. MOBILE-FIRST: Large touch controls (44px+), portrait mode, no system dialogs (no alert/confirm).
-5. VISUAL POLISH: Use gradients, smooth animations, and high-quality colors. No plain grey backgrounds.
-6. CANVAS RULES: If using <canvas>, ALWAYS clear it before drawing. NEVER try to fillText HTML strings (tables/divs). Use canvas API for everything.
-7. GAMEPLAY: Must have a proper Start Screen, HUD (score/level), and a beautiful Game Over screen with High Scores.
-8. MINIMUM: 8000 characters of high-quality code. Real gameplay.
-9. Output ONLY within <game_spec> tags. Nothing else.`;
+STRICT PROTOCOL:
+1. PLAN FIRST: Start your response with a <thought> block. Plan the structure, classes, and main game loop.
+2. FULL IMPLEMENTATION: No placeholders, no skeletons. The code must be production-ready.
+3. ARCHITECTURE: Use requestAnimationFrame. Separate Logic from Rendering. Handle window resizing.
+4. MOBILE PERFECTION: Implement robust touch handling (swipe/tap/hold). Ensure 60fps on mobile.
+5. ASSETS: Use code-generated assets (procedural geometry/textures/CSS) or standard emojis. No external image dependencies.
+6. QUALITY: Use gradients, glow effects, and smooth transitions. Avoid 90s-style basic shapes.
+
+Output ONLY:
+<thought>...your plan...</thought>
+<game_spec>...complete single-file HTML/CSS/JS...</game_spec>`;
 
 export function useGameAgent(settings: ChatSettings) {
   const [messages, setMessages] = useState<AgentMessage[]>([]);
@@ -208,7 +206,11 @@ export function useGameAgent(settings: ChatSettings) {
         interviewText.match(/<opengame_prompt>([\s\S]*?)$/i) ||
         interviewText.match(/opengame_prompt\s*([\s\S]+)/i); // без скобок
 
-      if (!promptMatch) {
+      // SMART SKIP: Если пользователь сразу дал детальное описание, Архитектор мог выдать промпт в первом же ответе.
+      // Если тега нет, но сообщение длинное и похоже на ТЗ, мы можем принудительно запустить инженера.
+      const isDetailedRequest = userText.length > 100 && (userText.includes("создай") || userText.includes("игру"));
+
+      if (!promptMatch && !isDetailedRequest) {
         // Просто разговор — нет тега, показываем текст
         const visible = stripPromptTag(interviewText) || interviewText.replace(/<[^>]*>/g, "").trim();
         updateMessage(assistantId, { content: visible, isStreaming: false });
@@ -218,7 +220,11 @@ export function useGameAgent(settings: ChatSettings) {
       // ══════════════════════════════════════════
       // ФАЗА 2: Инженер пишет код
       // ══════════════════════════════════════════
-      const gameSpec = promptMatch[1].trim();
+      const gameSpec = promptMatch ? promptMatch[1].trim() : userText;
+      
+      // Ищем предыдущий код в истории для инкрементальных правок
+      const lastCodeMessage = messages.slice().reverse().find(m => m.gameCode);
+      const previousCode = lastCodeMessage?.gameCode;
       // Текст до тега (если был)
       const tagStart = interviewText.search(/<opengame_prompt>|opengame_prompt/i);
       const beforeTag = tagStart > 0 ? interviewText.slice(0, tagStart).trim() : "";
@@ -231,8 +237,11 @@ export function useGameAgent(settings: ChatSettings) {
       setStep("🔨 Инженер пишет код...");
 
       const engineerMsgs = [
-        { role: "system" as const, content: ENGINEER_PROMPT },
-        { role: "user" as const, content: `Build this game:\n\n${gameSpec}` },
+        { 
+          role: "system" as const, 
+          content: ENGINEER_PROMPT + (previousCode ? `\n\nEXISTING CODE TO MODIFY:\n${previousCode}` : "")
+        },
+        { role: "user" as const, content: `Technical Plan / Instructions:\n\n${gameSpec}` },
       ];
 
       let rawCode = "";
