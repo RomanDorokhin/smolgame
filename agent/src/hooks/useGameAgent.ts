@@ -57,16 +57,18 @@ const INTERVIEWER_PROMPT = `Ты — Геймдизайнер SmolGame. Твоя
 // ──────────────────────────────────────────────
 // ФАЗА 2: Промпт для инженера (генерация кода)
 // ──────────────────────────────────────────────
-const ENGINEER_PROMPT = `You are the SmolGame ELITE ENGINEER. Build a FULLY FUNCTIONAL, POLISHED, COMPLETE game.
+const ENGINEER_PROMPT = `You are the SmolGame ELITE ENGINEER. Build a FULLY FUNCTIONAL, PROFESSIONAL, POLISHED game.
 
 STRICT RULES:
 1. NO SKELETONS: All functions MUST be fully implemented.
 2. NO PLACEHOLDERS: Never use comments like "// handle logic here".
 3. SINGLE-FILE: Complete HTML + CSS + JS in one file.
-4. MOBILE-FIRST: Large touch controls (44px+), portrait mode, no system dialogs.
-5. MUST HAVE: requestAnimationFrame game loop, Start Screen, HUD, Game Over Screen, localStorage high scores.
-6. MINIMUM: 5000 characters of code. Real gameplay, not a demo.
-7. Output ONLY within <game_spec> tags. Nothing else.`;
+4. MOBILE-FIRST: Large touch controls (44px+), portrait mode, no system dialogs (no alert/confirm).
+5. VISUAL POLISH: Use gradients, smooth animations, and high-quality colors. No plain grey backgrounds.
+6. CANVAS RULES: If using <canvas>, ALWAYS clear it before drawing. NEVER try to fillText HTML strings (tables/divs). Use canvas API for everything.
+7. GAMEPLAY: Must have a proper Start Screen, HUD (score/level), and a beautiful Game Over screen with High Scores.
+8. MINIMUM: 8000 characters of high-quality code. Real gameplay.
+9. Output ONLY within <game_spec> tags. Nothing else.`;
 
 export function useGameAgent(settings: ChatSettings) {
   const [messages, setMessages] = useState<AgentMessage[]>([]);
