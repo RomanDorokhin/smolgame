@@ -93,21 +93,21 @@ body,
   --tg-glass-inset: inset 0 1px 0 rgba(255, 255, 255, 0.06);
 }
 
-:root.theme-light {
-  --bg: #f2f3f5;
-  --surface: #ffffff;
-  --surface-elevated: #ffffff;
-  --border: rgba(0, 0, 0, 0.08);
-  --text: #1c1c1e;
-  --muted: #8e8e93;
+:root.theme-light, :root {
+  --bg: #0a0b0e;
+  --surface: #13141a;
+  --surface-elevated: #1c1e26;
+  --border: rgba(255, 255, 255, 0.08);
+  --text: #ffffff;
+  --muted: rgba(255, 255, 255, 0.42);
   
-  --accent: #007aff;
-  --accent-soft: rgba(0, 122, 255, 0.08);
+  --accent: #a3b8d4;
+  --accent-soft: rgba(163, 184, 212, 0.14);
   
-  --cta-bg: linear-gradient(180deg, #007aff 0%, #006ce6 100%);
-  --cta-bg-strong: linear-gradient(180deg, #006ce6 0%, #005bb5 100%);
-  --cta-bg-solid: #007aff;
-  --cta-border: rgba(0, 0, 0, 0.05);
+  --cta-bg: linear-gradient(180deg, #2f323a 0%, #22252c 55%, #1a1c22 100%);
+  --cta-bg-strong: linear-gradient(180deg, #3a4050 0%, #2a2f3a 52%, #1e222c 100%);
+  --cta-bg-solid: #282b34;
+  --cta-border: rgba(255, 255, 255, 0.11);
   --cta-highlight: rgba(255, 255, 255, 0.15);
   
   --tg-glass-bg: rgba(255, 255, 255, 0.88);
