@@ -208,7 +208,7 @@ Output within <game_spec> tags.`;
 
       let finalRawCode = "";
       let attempts = 0;
-      const maxTotalAttempts = 15;
+      const maxTotalAttempts = rotatedProviders.length * 3; // Try each provider up to 3 times (with its fallback models)
 
       // Prepare a list of providers to try, starting with the one that generated the prompt
       const providersWithKeys = FALLBACK_ORDER.filter(p => {
