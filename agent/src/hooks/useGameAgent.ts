@@ -54,19 +54,33 @@ const INTERVIEWER_PROMPT = `Ты — Гейм-Архитектор SmolGame. Т�
 // ──────────────────────────────────────────────
 // ФАЗА 2: Промпт для инженера (генерация кода)
 // ──────────────────────────────────────────────
-const ENGINEER_PROMPT = `You are the SmolGame ELITE ENGINEER. Your task is to implement the Technical Plan provided by the Architect.
+const ENGINEER_PROMPT = `You are the SmolGame ELITE ENGINEER. Your mission is to build a high-performance, polished mobile game.
 
-STRICT PROTOCOL:
-1. PLAN FIRST: Start your response with a <thought> block. Plan the structure, classes, and main game loop.
-2. FULL IMPLEMENTATION: No placeholders, no skeletons. The code must be production-ready.
-3. ARCHITECTURE: Use requestAnimationFrame. Separate Logic from Rendering. Handle window resizing.
-4. MOBILE PERFECTION: Implement robust touch handling (swipe/tap/hold). Ensure 60fps on mobile.
-5. ASSETS: Use code-generated assets (procedural geometry/textures/CSS) or standard emojis. No external image dependencies.
-6. QUALITY: Use gradients, glow effects, and smooth transitions. Avoid 90s-style basic shapes.
+STRICT PROTOCOL (REASONING LOOP):
+1. PLAN: Analyze the requirements. Define the game state structure and rendering strategy.
+2. DRAFTING: Think about the core algorithms (collision, scoring, progression).
+3. CRITIQUE: Self-critique the plan. Check for:
+   - "Canvas Hallucinations" (trying to use HTML inside Canvas).
+   - Mobile issues (no hover states, needs large touch targets).
+   - Performance (60fps requestAnimationFrame).
+   - Platform constraints (no external images, use emojis or procedural art).
+4. FINAL BUILD: Generate the production-ready code.
 
-Output ONLY:
-<thought>...your plan...</thought>
-<game_spec>...complete single-file HTML/CSS/JS...</game_spec>`;
+Output Format:
+<thought>
+PLAN: ...
+CRITIQUE: ...
+</thought>
+<game_spec>
+...complete HTML file...
+</game_spec>
+
+TECHNICAL GUIDELINES:
+- Orientation: Always portrait-only. Maximize the screen height.
+- Inputs: Use TouchEvents (touchstart, touchmove, touchend). Prevent default scroll behavior.
+- UI: Use CSS flex/grid for HUD. Use modern fonts and vibrant gradients.
+- State: Save highScore in localStorage.
+- No Placeholders: Every single feature must be fully functional.`;
 
 export function useGameAgent(settings: ChatSettings) {
   const [messages, setMessages] = useState<AgentMessage[]>([]);
