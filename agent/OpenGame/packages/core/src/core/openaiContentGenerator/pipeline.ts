@@ -180,8 +180,8 @@ export class ContentGenerationPipeline {
       collectedGeminiResponses[collectedGeminiResponses.length - 1]
         .candidates?.[0]?.finishReason;
 
-    if (isFinishChunk) {
-      // This is a finish reason chunk
+    if (isFinishChunk && !hasPendingFinish) {
+      // This is the FIRST finish reason chunk
       collectedGeminiResponses.push(response);
       setPendingFinish(response);
       return false; // Don't yield yet, wait for potential subsequent chunks to merge
@@ -192,6 +192,8 @@ export class ContentGenerationPipeline {
       const mergedResponse = new GenerateContentResponse();
 
       // Keep the finish reason from the previous chunk
+      // If the current response has meaningful candidates (not just the fallback empty text),
+      // we might want to merge them, but for finish chunks, the parts are usually empty.
       mergedResponse.candidates = lastResponse.candidates;
 
       // Merge usage metadata if this chunk has it
@@ -212,7 +214,10 @@ export class ContentGenerationPipeline {
         mergedResponse;
 
       setPendingFinish(mergedResponse);
-      return true; // Yield the merged response
+      
+      // If this is ANOTHER finish chunk (e.g. OpenRouter double finish chunks),
+      // keep holding it. Otherwise, yield it.
+      return !isFinishChunk;
     }
 
     // Normal chunk - collect and yield
