@@ -763,45 +763,9 @@ To help you check their settings, I can read their contents. Which one would you
 `.trim();
 
 function getToolCallExamples(model?: string): string {
-  // Check for environment variable override first
-  const toolCallStyle = process.env['QWEN_CODE_TOOL_CALL_STYLE'];
-  if (toolCallStyle) {
-    switch (toolCallStyle.toLowerCase()) {
-      case 'qwen-coder':
-        return qwenCoderToolCallExamples;
-      case 'qwen-vl':
-        return qwenVlToolCallExamples;
-      case 'general':
-        return generalToolCallExamples;
-      default:
-        console.warn(
-          `Unknown QWEN_CODE_TOOL_CALL_STYLE value: ${toolCallStyle}. Using model-based detection.`,
-        );
-        break;
-    }
-  }
-
-  // Enhanced regex-based model detection
-  if (model && model.length < 100) {
-    // Match qwen*-coder patterns (e.g., qwen3-coder, qwen2.5-coder, qwen-coder)
-    if (/qwen[^-]*-coder/i.test(model)) {
-      return qwenCoderToolCallExamples;
-    }
-    // Match qwen*-vl patterns (e.g., qwen-vl, qwen2-vl, qwen3-vl)
-    if (/qwen[^-]*-vl/i.test(model)) {
-      return qwenVlToolCallExamples;
-    }
-    // Match coder-model pattern (same as qwen3-coder)
-    if (/coder-model/i.test(model)) {
-      return qwenCoderToolCallExamples;
-    }
-    // Match vision-model pattern (same as qwen3-vl)
-    if (/vision-model/i.test(model)) {
-      return qwenVlToolCallExamples;
-    }
-  }
-
-  return generalToolCallExamples;
+  // Return empty string to prevent the model from using XML tool calls.
+  // We want the model to rely exclusively on the native JSON tool calling API.
+  return '';
 }
 
 /**
