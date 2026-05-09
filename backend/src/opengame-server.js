@@ -50,9 +50,9 @@ const server = http.createServer(async (req, res) => {
       const agentDir = '/root/smolgame-frontend/agent/OpenGame';
       const cliBin = path.join(agentDir, 'dist/cli.js');
 
-      // Форматируем ключ для логов (скрываем часть)
-      const rawKey = keys?.openai || keys?.openrouter || '';
-      const formattedKey = rawKey; 
+      // Используем любой доступный ключ как "заглушку" для CLI, 
+      // реальная авторизация пройдет через прокси
+      const formattedKey = keys?.openrouter || keys?.openai || keys?.groq || 'dummy-key'; 
 
       const envVars = {
         ...process.env,
@@ -95,10 +95,6 @@ const server = http.createServer(async (req, res) => {
       });
 
       child.stderr.on('data', (data) => {
-        const str = data.toString();
-        if (str.includes('[OpenGame Error]')) {
-          console.error(`[CLI Error]: ${str}`);
-        }
         res.write(data);
       });
 
@@ -120,7 +116,6 @@ const server = http.createServer(async (req, res) => {
           res.write(`\n\n[ERROR] OpenGame generation failed with code ${code}\n`);
         }
         res.end();
-        // sessions.delete(sessionId); // Keep for a while?
       });
 
     } catch (e) {
@@ -131,7 +126,7 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
-  // LLM PROXY FOR OPENGAME
+  // LLM PROXY (ПЕРЕВОДЧИК С OPENAI ПРОТОКОЛА НА ЛЮБЫЕ КЛЮЧИ)
   if (pathname === '/api/llm-proxy/chat/completions' && req.method === 'POST') {
     const authHeader = req.headers['authorization'] || '';
     if (!authHeader) {
@@ -152,10 +147,11 @@ const server = http.createServer(async (req, res) => {
 
     try {
       const body = await readJson();
-      let lastError = "";
+      let lastError = "No provider succeeded";
 
+      // Пробуем провайдеров по очереди
       for (const provider of session.providers) {
-        const apiKey = session.keys[provider] || process.env.OPENROUTER_API_KEY;
+        const apiKey = session.keys[provider];
         if (!apiKey) continue;
 
         let providerUrl = "";
@@ -165,7 +161,9 @@ const server = http.createServer(async (req, res) => {
         if (provider === "groq") {
           providerUrl = "https://api.groq.com/openai/v1/chat/completions";
           headers["Authorization"] = `Bearer ${apiKey}`;
-          finalBody.model = "llama-3.3-70b-versatile"; 
+          if (!finalBody.model || finalBody.model === 'dynamic-model') {
+            finalBody.model = "llama-3.3-70b-versatile"; 
+          }
         } else if (provider === "openrouter") {
           providerUrl = "https://openrouter.ai/api/v1/chat/completions";
           headers["Authorization"] = `Bearer ${apiKey}`;
@@ -180,13 +178,11 @@ const server = http.createServer(async (req, res) => {
           if (!finalBody.model || finalBody.model === 'dynamic-model') {
             finalBody.model = "gpt-4o";
           }
+        } else if (provider === "anthropic") {
+           // Для Anthropic нужен другой прокси или конвертация, 
+           // но если у пользователя ключ OpenRouter — он и так сработает выше.
+           continue; 
         }
-
-        if (finalBody.tools && finalBody.tools.length > 0 && !finalBody.tool_choice) {
-          finalBody.tool_choice = "required";
-        }
-
-        if (finalBody.temperature === undefined) finalBody.temperature = 0;
 
         console.log(`[Proxy] Trying ${provider} for session ${sessionId}`);
 
@@ -223,10 +219,12 @@ const server = http.createServer(async (req, res) => {
             return;
           } else {
             const errText = await fetchRes.text();
-            lastError = `${provider} HTTP ${fetchRes.status}: ${errText}`;
+            lastError = `${provider} error: ${errText}`;
+            console.error(`[Proxy] ${provider} failed:`, errText);
           }
         } catch (e) {
-          lastError = `${provider} error: ${e.message}`;
+          lastError = `${provider} exception: ${e.message}`;
+          console.error(`[Proxy] ${provider} exception:`, e);
         }
       }
 
