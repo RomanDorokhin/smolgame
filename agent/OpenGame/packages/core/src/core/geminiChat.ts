@@ -611,18 +611,20 @@ export class GeminiChat {
       .trim();
 
     // Record assistant turn with raw Content and metadata
-    if (thoughtContentPart || contentText || hasToolCall || usageMetadata) {
+    const messageParts = [
+      ...(thoughtContentPart ? [thoughtContentPart] : []),
+      ...(contentText ? [{ text: contentText }] : []),
+      ...(hasToolCall
+        ? contentParts
+            .filter((part) => part.functionCall)
+            .map((part) => ({ functionCall: part.functionCall }))
+        : []),
+    ];
+
+    if (messageParts.length > 0 || usageMetadata) {
       this.chatRecordingService?.recordAssistantTurn({
         model,
-        message: [
-          ...(thoughtContentPart ? [thoughtContentPart] : []),
-          ...(contentText ? [{ text: contentText }] : []),
-          ...(hasToolCall
-            ? contentParts
-                .filter((part) => part.functionCall)
-                .map((part) => ({ functionCall: part.functionCall }))
-            : []),
-        ],
+        message: messageParts.length > 0 ? messageParts : undefined,
         tokens: usageMetadata,
       });
     }
