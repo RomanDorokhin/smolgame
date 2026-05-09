@@ -62,6 +62,7 @@ const server = http.createServer(async (req, res) => {
         // Провайдер для LLM — проксируем через наш 127.0.0.1:3001
         OPENGAME_REASONING_PROVIDER: 'openai-compat',
         OPENGAME_REASONING_API_KEY: formattedKey,
+        REASONING_MODEL_API_KEY: formattedKey, // Добавили этот вариант
         OPENGAME_REASONING_BASE_URL: 'http://127.0.0.1:8880/api/llm-proxy',
         OPENGAME_REASONING_MODEL: 'dynamic-model',
         OPENAI_API_KEY: formattedKey,
