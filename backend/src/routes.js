@@ -35,7 +35,8 @@ const PUBLISHED_FEED_SQL = `
     LIMIT ?1 OFFSET ?2`;
 
 async function publishedFeedGamesQuery(db, limit, offset, orderBy = 'g.created_at DESC') {
-  const sql = PUBLISHED_FEED_SQL.replace(/ORDER\s+BY\s+g\.created_at\s+DESC/i, `ORDER BY ${orderBy}`);
+  const safeOrder = orderBy === 'RANDOM()' ? 'RANDOM()' : 'g.created_at DESC';
+  const sql = PUBLISHED_FEED_SQL.replace(/ORDER\s+BY\s+g\.created_at\s+DESC/i, `ORDER BY ${safeOrder}`);
   return db.prepare(sql).bind(limit, offset).all();
 }
 
@@ -143,19 +144,13 @@ export async function getFeed(req, env) {
   let followedSet = new Set();
   let bookmarkedSet = new Set();
   if (userId) {
-    const likes = await env.DB
-      .prepare(`SELECT game_id FROM likes WHERE user_id = ?`)
-      .bind(userId).all();
+    const [likes, follows, bookmarks] = await Promise.all([
+      env.DB.prepare(`SELECT game_id FROM likes WHERE user_id = ?`).bind(userId).all(),
+      env.DB.prepare(`SELECT author_id FROM follows WHERE user_id = ?`).bind(userId).all(),
+      env.DB.prepare(`SELECT game_id FROM bookmarks WHERE user_id = ?`).bind(userId).all()
+    ]);
     likedSet = new Set((likes.results || []).map(r => r.game_id));
-
-    const follows = await env.DB
-      .prepare(`SELECT author_id FROM follows WHERE user_id = ?`)
-      .bind(userId).all();
     followedSet = new Set((follows.results || []).map(r => r.author_id));
-
-    const bookmarks = await env.DB
-      .prepare(`SELECT game_id FROM bookmarks WHERE user_id = ?`)
-      .bind(userId).all();
     bookmarkedSet = new Set((bookmarks.results || []).map(r => r.game_id));
   }
 
@@ -1107,10 +1102,15 @@ export async function deleteGame(req, env, gameId) {
 
   let deleteGithubRepo = false;
   try {
-    const body = await req.json();
+    const body = await req.json().catch(() => ({}));
     deleteGithubRepo = Boolean(body?.deleteGithubRepo);
   } catch {
     deleteGithubRepo = false;
+  }
+  // Fallback to query param because DELETE body is often stripped
+  if (!deleteGithubRepo) {
+    const url = new URL(req.url);
+    deleteGithubRepo = url.searchParams.get('deleteGithubRepo') === 'true';
   }
 
   let githubDeleted = false;

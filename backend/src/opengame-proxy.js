@@ -1,6 +1,8 @@
 import { error } from './http.js';
+import fs from 'fs/promises';
 import { spawn } from 'child_process';
 import path from 'path';
+import os from 'os';
 
 // Хранилище временных сессий для ключей
 const sessions = new Map();
@@ -25,20 +27,26 @@ export async function generateOpenGame(req, env) {
   // Запускаем OpenGame как child process
   // Мы передаем sessionId как API-ключ, а наш прокси-URL как BASE_URL
   const openGameDir = path.resolve('/root/smolgame-frontend/agent/OpenGame');
+  const tempGameDir = path.join(os.tmpdir(), `opengame-${sessionId}`);
+  
+  await fs.mkdir(tempGameDir, { recursive: true });
   
   const envVars = {
     ...process.env,
     OPENGAME_REASONING_PROVIDER: 'openai-compat',
-    OPENGAME_REASONING_API_KEY: sessionId, // <-- OpenGame пошлет его в заголовке Authorization
-    OPENGAME_REASONING_BASE_URL: 'http://localhost:3001/api/llm-proxy', // <-- Стучится к нам!
+    OPENGAME_REASONING_API_KEY: sessionId, 
+    OPENGAME_REASONING_BASE_URL: 'http://localhost:3001/api/llm-proxy', 
     OPENGAME_REASONING_MODEL: 'dynamic-model'
   };
 
   return new Response(new ReadableStream({
     start(controller) {
-      const child = spawn('npm', ['run', 'start', '--', '--prompt', prompt], {
-        cwd: openGameDir,
-        env: envVars
+      // Требуем от OpenGame создать один файл (Single-file)
+      const fullPrompt = `${prompt}\n\n(IMPORTANT: You must write the ENTIRE game in a single index.html file including all CSS and JS, do not create separate files.)`;
+      
+      const child = spawn('npm', ['run', 'start', '--', '--prompt', fullPrompt, '--yolo'], {
+        cwd: tempGameDir, // Запускаем в пустой папке
+        env: { ...envVars, PATH: process.env.PATH + ':' + path.join(openGameDir, 'node_modules', '.bin') }
       });
 
       child.stdout.on('data', (data) => {
@@ -49,9 +57,21 @@ export async function generateOpenGame(req, env) {
         console.error(`[OpenGame Error]: ${data}`);
       });
 
-      child.on('close', (code) => {
+      child.on('close', async (code) => {
         // Очищаем сессию
         sessions.delete(sessionId);
+        
+        try {
+          // Читаем сгенерированный код
+          const indexPath = path.join(tempGameDir, 'index.html');
+          const finalCode = await fs.readFile(indexPath, 'utf-8');
+          
+          // Отправляем специальный маркер с кодом
+          controller.enqueue(new TextEncoder().encode(`\n\n===OPEN_GAME_RESULT===\n${finalCode}`));
+        } catch (e) {
+          controller.enqueue(new TextEncoder().encode(`\n\n===OPEN_GAME_RESULT_ERROR===\nCould not read index.html: ${e.message}`));
+        }
+        
         controller.close();
       });
     }

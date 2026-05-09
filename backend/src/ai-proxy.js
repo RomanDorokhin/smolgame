@@ -103,7 +103,7 @@ async function handleGoogle(messages, model, stream, env) {
 
 function forwardResponse(response, stream) {
   if (!response.ok) {
-    return response;
+    return error(`AI provider error: ${response.status} ${response.statusText}`, 502);
   }
 
   if (!stream) {

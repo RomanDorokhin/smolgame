@@ -399,6 +399,7 @@ export function useGameAgent(settings: ChatSettings) {
         .replace(/height:\s*canvas\.height/g, "height: window.innerHeight")
         .replace(/```[a-z]*\n/gi, '').replace(/```/g, '');
       
+      try {
         updateMessage(assistantId, {
           content: (beforeTag ? beforeTag + "\n\n" : "") + `✅ **Игра создана!**\n\n🚀 **Публикую на платформу...**`,
           gameCode: finalCode,

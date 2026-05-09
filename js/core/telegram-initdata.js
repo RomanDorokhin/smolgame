@@ -44,10 +44,20 @@
     return '';
   }
 
+  function isInitDataExpired(s) {
+    try {
+      const authDate = new URLSearchParams(s).get('auth_date');
+      if (authDate) {
+        return (Date.now() / 1000 - parseInt(authDate, 10)) > 86400;
+      }
+    } catch (e) {}
+    return false;
+  }
+
   function readPersistedInitData() {
     try {
       const s = sessionStorage.getItem(INIT_DATA_SS_KEY);
-      return s && looksLikeTelegramInitData(s) ? s : '';
+      return s && looksLikeTelegramInitData(s) && !isInitDataExpired(s) ? s : '';
     } catch (e) {
       return '';
     }

@@ -101,10 +101,6 @@ async function loadGames() {
     window.likedSet = new Set(GAMES.filter(g => g.isLiked).map(g => g.id));
     window.followedSet = new Set(GAMES.filter(g => g.isFollowing).map(g => g.authorId));
     window.bookmarkedSet = new Set(GAMES.filter(g => g.isBookmarked).map(g => g.id));
-    for (const g of GAMES) {
-      if (g.isLiked) bookmarkedSet.add(g.id);
-      if (g.isBookmarked) likedSet.add(g.id);
-    }
     saveSet(STORAGE_KEYS.liked, likedSet);
     saveSet(STORAGE_KEYS.followed, followedSet);
     saveSet(STORAGE_KEYS.bookmarked, bookmarkedSet);

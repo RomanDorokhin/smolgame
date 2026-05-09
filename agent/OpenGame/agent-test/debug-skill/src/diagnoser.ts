@@ -294,11 +294,23 @@ function parseLLMDiagnosis(
   }
 }
 
+const diagnosisCache = new Map<string, string>();
+const MAX_CACHE_SIZE = 500;
+
 async function callLLM(
   config: LLMConfig,
   systemPrompt: string,
   userPrompt: string,
 ): Promise<string | null> {
+  const cacheKey = `${config.modelName}:${userPrompt}`;
+  if (diagnosisCache.has(cacheKey)) {
+    // move to end to simulate LRU
+    const val = diagnosisCache.get(cacheKey)!;
+    diagnosisCache.delete(cacheKey);
+    diagnosisCache.set(cacheKey, val);
+    return val;
+  }
+
   const payload = {
     model: config.modelName,
     messages: [
@@ -323,5 +335,14 @@ async function callLLM(
   if (!response.ok) return null;
 
   const data = (await response.json()) as ChatCompletionResponse;
-  return data.choices?.[0]?.message?.content ?? null;
+  const result = data.choices?.[0]?.message?.content ?? null;
+  
+  if (result) {
+    if (diagnosisCache.size >= MAX_CACHE_SIZE) {
+      diagnosisCache.delete(diagnosisCache.keys().next().value!);
+    }
+    diagnosisCache.set(cacheKey, result);
+  }
+
+  return result;
 }

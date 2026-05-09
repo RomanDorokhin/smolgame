@@ -90,7 +90,7 @@ const WEBKIT_NETWORK_ERR_MSG =
   'Сеть/WebView: не удалось связаться с API. Подожди минуту, выключи VPN, обнови мини-апп (закрой полностью). Если с телефона работает — обнови Worker: backend → git pull && npx wrangler deploy.';
 
 function _needsTelegramAuth(path, method) {
-  if (method !== 'GET' && method !== 'POST' && method !== 'DELETE' && method !== 'PATCH') return false;
+  if (method !== 'GET' && method !== 'POST' && method !== 'DELETE' && method !== 'PATCH' && method !== 'PUT') return false;
   if (path.startsWith('/api/feed')) return false;
   if (path.startsWith('/api/games/') && method === 'GET') return false;
   if (path.startsWith('/api/users/') && method === 'GET') return false;

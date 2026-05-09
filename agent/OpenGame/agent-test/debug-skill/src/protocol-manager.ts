@@ -19,7 +19,21 @@ import {
 export async function loadOrInitProtocol(): Promise<DebugProtocol> {
   try {
     const raw = await fs.readFile(PROTOCOL_JSON_PATH, 'utf-8');
-    return JSON.parse(raw) as DebugProtocol;
+    const protocol = JSON.parse(raw) as DebugProtocol;
+    
+    const thirtyDaysAgo = Date.now() - 30 * 24 * 60 * 60 * 1000;
+    const initialCount = protocol.entries.length;
+    protocol.entries = protocol.entries.filter((e) => {
+      const dateStr = e.lastMatchedAt || e.createdAt;
+      if (!dateStr) return true;
+      return new Date(dateStr).getTime() > thirtyDaysAgo;
+    });
+    
+    if (protocol.entries.length < initialCount) {
+      console.log(`[ProtocolManager] Expired ${initialCount - protocol.entries.length} old entries.`);
+    }
+    
+    return protocol;
   } catch {
     console.log('[ProtocolManager] No live protocol found, initializing from seed...');
     return initFromSeed();

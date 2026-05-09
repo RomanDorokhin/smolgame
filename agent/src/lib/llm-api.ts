@@ -215,7 +215,7 @@ export async function* generateStream(
 
   if (config.provider === "openrouter") {
     headers["HTTP-Referer"] = window.location.origin;
-    headers["X-Title"] = "Smol Architect";
+    headers["X-Title"] = "agent-smol";
   }
 
   const body = {
