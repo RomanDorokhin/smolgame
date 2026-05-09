@@ -92,6 +92,7 @@ const server = http.createServer(async (req, res) => {
         '--auth-type', 'openai',
         '--openai-api-key', formattedKey,
         '--openai-base-url', 'http://127.0.0.1:8880/api/llm-proxy',
+        '--',
         fullPrompt
       ], {
         cwd: tempGameDir,
