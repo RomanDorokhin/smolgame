@@ -25,10 +25,19 @@ const server = http.createServer(async (req, res) => {
 
   // Parse JSON body helper
   const readJson = () => new Promise((resolve, reject) => {
-    let body = '';
-    req.on('data', chunk => body += chunk);
+    let data = '';
+    req.on('data', chunk => data += chunk);
     req.on('end', () => {
-      try { resolve(JSON.parse(body)); } catch (e) { reject(e); }
+      if (!data) {
+        console.error('[Proxy] Empty body received');
+        return reject(new Error('Empty body'));
+      }
+      try { 
+        resolve(JSON.parse(data)); 
+      } catch (e) { 
+        console.error('[Proxy] JSON Parse Error. Raw body:', data);
+        reject(e); 
+      }
     });
   });
 
