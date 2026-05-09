@@ -14,11 +14,19 @@ const FEED_PAGE_SIZE = 15;
 const FEED_VERTICAL = true;
 const FEED_DISCOVERY_DESC_MAX = 96;
 
-window.feedHasMore = true;
-window.feedLoadingMore = false;
-/** Сколько опубликованных игр уже подгружено (без очереди модерации в начале). */
-window.feedPublishedLoaded = 0;
-window.currentIdx = 0;
+var GAMES = [];
+var slides = [];
+var feedHasMore = true;
+var feedLoadingMore = false;
+var feedPublishedLoaded = 0;
+var currentIdx = 0;
+
+window.GAMES = GAMES;
+window.slides = slides;
+window.feedHasMore = feedHasMore;
+window.feedLoadingMore = feedLoadingMore;
+window.feedPublishedLoaded = feedPublishedLoaded;
+window.currentIdx = currentIdx;
 
 function feedEl() {
   return document.getElementById('feed');
@@ -98,12 +106,21 @@ async function loadGames() {
     }
     window.feedHasMore = data?.hasMore !== false;
 
-    window.likedSet = new Set(GAMES.filter(g => g.isLiked).map(g => g.id));
-    window.followedSet = new Set(GAMES.filter(g => g.isFollowing).map(g => g.authorId));
-    window.bookmarkedSet = new Set(GAMES.filter(g => g.isBookmarked).map(g => g.id));
-    saveSet(STORAGE_KEYS.liked, likedSet);
-    saveSet(STORAGE_KEYS.followed, followedSet);
-    saveSet(STORAGE_KEYS.bookmarked, bookmarkedSet);
+    // Merge into existing sets instead of overwriting, to preserve previous items
+    if (Array.isArray(window.GAMES)) {
+      window.GAMES.forEach(g => {
+        if (g.isLiked) {
+          window.likedSet.add(g.id);
+          window.bookmarkedSet.add(g.id);
+        }
+        if (g.isFollowing && g.authorId) window.followedSet.add(g.authorId);
+        if (g.isBookmarked) window.bookmarkedSet.add(g.id);
+      });
+    }
+    
+    saveSet(STORAGE_KEYS.liked, window.likedSet);
+    saveSet(STORAGE_KEYS.followed, window.followedSet);
+    saveSet(STORAGE_KEYS.bookmarked, window.bookmarkedSet);
   } catch (e) {
     window.GAMES = [];
     window.feedHasMore = false;
