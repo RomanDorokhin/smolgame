@@ -9,7 +9,13 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 const sessions = new Map();
-sessions.set('test', { id: 'test', prompt: 'test' }); // ТЕСТОВАЯ СЕССИЯ
+// ТЕСТОВАЯ СЕССИЯ для ручной проверки
+sessions.set('test', { 
+  id: 'test', 
+  prompt: 'test',
+  providers: ['openrouter'],
+  keys: { openrouter: process.env.OPENROUTER_API_KEY }
+});
 
 const server = http.createServer(async (req, res) => {
   // CORS
@@ -26,66 +32,48 @@ const server = http.createServer(async (req, res) => {
   // Parse JSON body helper
   const readJson = () => new Promise((resolve, reject) => {
     let data = '';
-    req.on('data', chunk => {
-      data += chunk;
-      console.log(`[Proxy] Received chunk: ${chunk.length} bytes`);
-    });
+    req.on('data', chunk => data += chunk);
     req.on('end', () => {
-      console.log(`[Proxy] Request ended. Total length: ${data.length} bytes`);
       if (!data) return reject(new Error('Empty body'));
-      try { 
-        resolve(JSON.parse(data)); 
-      } catch (e) { 
-        console.error('[Proxy] JSON Parse Error:', e.message, 'Body snippet:', data.substring(0, 100));
-        reject(e); 
-      }
+      try { resolve(JSON.parse(data)); } catch (e) { reject(e); }
     });
-    req.on('error', (err) => {
-      console.error('[Proxy] Request Error:', err);
-      reject(err);
-    });
+    req.on('error', (err) => reject(err));
   });
 
   const url = new URL(req.url, `http://${req.headers.host}`);
+  console.log(`[Server] ${req.method} ${url.pathname}`);
 
   // 1. GENERATE OPEN GAME ROUTE
   if (url.pathname === '/api/opengame/generate' && req.method === 'POST') {
     try {
-      const body = await readJson();
-      const { prompt, keys, providers } = body;
+      const { prompt, sessionId, providers, keys } = await readJson();
 
-      if (!prompt || !keys || !providers || providers.length === 0) {
+      if (!prompt || !sessionId) {
         res.writeHead(400);
-        res.end(JSON.stringify({ error: 'Missing prompt, keys, or providers' }));
+        res.end(JSON.stringify({ error: 'Missing prompt or sessionId' }));
         return;
       }
 
-      const sessionId = crypto.randomUUID();
-      sessions.set(sessionId, { keys, providers, createdAt: Date.now() });
+      // Сохраняем сессию для прокси
+      sessions.set(sessionId, { id: sessionId, prompt, providers, keys });
 
       const openGameDir = path.resolve('/root/smolgame-frontend/agent/OpenGame');
-      const tempGameDir = path.join(os.tmpdir(), `opengame-${sessionId}`);
-      
+      const tempGameDir = path.resolve(`/tmp/smolgame-game-${sessionId}`);
       await fs.mkdir(tempGameDir, { recursive: true });
 
-      // Путь к CLI бинарнику (собранному). Запускаем напрямую, без npm run start,
-      // т.к. npm run start требует package.json в cwd (tempGameDir пустая).
+      // Путь к собранному CLI
       const cliBin = path.join(openGameDir, 'dist', 'cli.js');
 
       const formattedKey = `sk-${sessionId}`;
       const envVars = {
         ...process.env,
-        // OpenGame читает рабочую папку из QWEN_WORKING_DIR или process.cwd()
         QWEN_WORKING_DIR: tempGameDir,
-        // Провайдер для LLM — проксируем через наш 127.0.0.1:3001
         OPENGAME_REASONING_PROVIDER: 'openai-compat',
         OPENGAME_REASONING_API_KEY: formattedKey,
-        REASONING_MODEL_API_KEY: formattedKey, // Добавили этот вариант
         OPENGAME_REASONING_BASE_URL: 'http://127.0.0.1:8880/api/llm-proxy',
         OPENGAME_REASONING_MODEL: 'dynamic-model',
         OPENAI_API_KEY: formattedKey,
         OPENAI_BASE_URL: 'http://127.0.0.1:8880/api/llm-proxy',
-        // Выключаем интерактивный терминал
         CI: '1',
         FORCE_COLOR: '0',
       };
@@ -97,7 +85,6 @@ const server = http.createServer(async (req, res) => {
 
       const fullPrompt = `${prompt}\n\n(IMPORTANT: You must write the ENTIRE game in a single index.html file including all CSS and JS, do not create separate files.)\n\n(CRITICAL: You MUST use the native JSON tool calling API to invoke tools. IGNORE any instructions above about using <tool_call> XML tags. If you output raw <tool_call> text, the system will crash.)`;
 
-      // Запускаем CLI, рабочая папка — tempGameDir. Node разрешит зависимости относительно самого cliBin.
       const child = spawn('node', [
         cliBin, 
         '--prompt', fullPrompt, 
@@ -111,42 +98,31 @@ const server = http.createServer(async (req, res) => {
         env: envVars,
       });
 
-      child.stdout.on('data', (data) => {
-        res.write(data);
-      });
-
-      child.stderr.on('data', (data) => {
-        console.error(`[OpenGame Error]: ${data}`);
-      });
-
-      child.on('error', (err) => {
-        console.error(`[OpenGame Spawn Error]: ${err.message}`);
-        res.write(`\n\n===OPEN_GAME_RESULT_ERROR===\nSpawn error: ${err.message}`);
-      });
+      child.stdout.on('data', (data) => res.write(data));
+      child.stderr.on('data', (data) => console.error(`[OpenGame Error]: ${data}`));
 
       child.on('close', async (code, signal) => {
         sessions.delete(sessionId);
-        console.log(`[OpenGame] Process exited with code ${code} and signal ${signal}`);
+        console.log(`[OpenGame] Process exited with code ${code}`);
         try {
           const indexPath = path.join(tempGameDir, 'index.html');
           const finalCode = await fs.readFile(indexPath, 'utf-8');
           res.write(`\n\n===OPEN_GAME_RESULT===\n${finalCode}`);
         } catch (e) {
-          res.write(`\n\n===OPEN_GAME_RESULT_ERROR===\nCould not read index.html: ${e.message} (Exit code: ${code})`);
+          res.write(`\n\n===OPEN_GAME_RESULT_ERROR===\nCould not read index.html: ${e.message}`);
         }
         res.end();
       });
 
     } catch (e) {
+      console.error('[Generate Error]:', e);
       res.writeHead(400);
-      res.end(JSON.stringify({ error: 'invalid json' }));
+      res.end(JSON.stringify({ error: 'invalid request' }));
     }
     return;
   }
 
-  console.log(`[Server] Incoming ${req.method} request to ${url.pathname}`);
-
-  // 2. LLM PROXY ROUTE (Called by OpenGame)
+  // 2. LLM PROXY ROUTE
   if (url.pathname.startsWith('/api/llm-proxy') && req.method === 'POST') {
     const authHeader = req.headers['authorization'];
     if (!authHeader) {
@@ -155,14 +131,10 @@ const server = http.createServer(async (req, res) => {
       return;
     }
 
-    // Извлекаем sessionId, убирая 'Bearer ' и возможный префикс 'sk-'
     let sessionId = authHeader.replace('Bearer ', '').trim();
-    if (sessionId.startsWith('sk-')) {
-      sessionId = sessionId.substring(3);
-    }
+    if (sessionId.startsWith('sk-')) sessionId = sessionId.substring(3);
     
     const session = sessions.get(sessionId);
-
     if (!session) {
       res.writeHead(401);
       res.end(JSON.stringify({ error: 'Session expired or invalid' }));
@@ -174,7 +146,7 @@ const server = http.createServer(async (req, res) => {
       let lastError = "";
 
       for (const provider of session.providers) {
-        const apiKey = session.keys[provider];
+        const apiKey = session.keys[provider] || process.env.OPENROUTER_API_KEY;
         if (!apiKey) continue;
 
         let providerUrl = "";
@@ -185,36 +157,24 @@ const server = http.createServer(async (req, res) => {
           providerUrl = "https://api.groq.com/openai/v1/chat/completions";
           headers["Authorization"] = `Bearer ${apiKey}`;
           finalBody.model = "llama-3.3-70b-versatile"; 
-        } else if (provider === "gemini") {
-          providerUrl = `https://generativelanguage.googleapis.com/v1beta/openai/chat/completions`;
-          headers["Authorization"] = `Bearer ${apiKey}`;
-          finalBody.model = "gemini-2.0-flash";
         } else if (provider === "openrouter") {
           providerUrl = "https://openrouter.ai/api/v1/chat/completions";
           headers["Authorization"] = `Bearer ${apiKey}`;
           headers["HTTP-Referer"] = "https://smolgame.ru";
           headers["X-Title"] = "SmolGame OpenGame Proxy";
-          finalBody.model = "qwen/qwen-2.5-72b-instruct";
-        } else if (provider === "together") {
-          providerUrl = "https://api.together.xyz/v1/chat/completions";
-          headers["Authorization"] = `Bearer ${apiKey}`;
-          finalBody.model = "meta-llama/Llama-3.3-70B-Instruct-Turbo";
+          // ВАЖНО: возвращаем жесткую модель, если пришла пустышка
+          if (!finalBody.model || finalBody.model === 'dynamic-model') {
+            finalBody.model = "qwen/qwen-2.5-72b-instruct";
+          }
         }
 
-        // Force tool usage when tools are available — prevents models from
-        // describing tool calls in text instead of actually invoking them.
         if (finalBody.tools && finalBody.tools.length > 0 && !finalBody.tool_choice) {
           finalBody.tool_choice = "required";
         }
 
-        // Set temperature=0 for deterministic, code-focused responses
-        if (finalBody.temperature === undefined) {
-          finalBody.temperature = 0;
-        }
+        if (finalBody.temperature === undefined) finalBody.temperature = 0;
 
-        if (!providerUrl) continue;
-
-        console.log(`[Proxy] Trying ${provider} for OpenGame session ${sessionId}`);
+        console.log(`[Proxy] Trying ${provider} for session ${sessionId}`);
 
         try {
           const fetchRes = await fetch(providerUrl, {
@@ -225,45 +185,23 @@ const server = http.createServer(async (req, res) => {
 
           if (fetchRes.ok) {
             console.log(`[Proxy] Success using ${provider}!`);
-
-            // Forward the real Content-Type so the OpenAI SDK inside the CLI
-            // can correctly detect streaming (text/event-stream) vs JSON.
             const contentType = fetchRes.headers.get('Content-Type') || 'application/json';
             const isStream = contentType.includes('event-stream');
 
             if (isStream && fetchRes.body) {
-              // Transparent streaming passthrough — do NOT buffer.
-              // The OpenAI SDK reads each SSE chunk as it arrives.
               res.writeHead(fetchRes.status, {
                 'Content-Type': contentType,
                 'Transfer-Encoding': 'chunked',
                 'Cache-Control': 'no-cache',
               });
-              // Node.js fetch body is a ReadableStream — pipe it chunk by chunk.
               const reader = fetchRes.body.getReader();
-              let chunkCount = 0;
-              const pump = async () => {
-                while (true) {
-                  const { done, value } = await reader.read();
-                  if (done) { res.end(); break; }
-                  
-                  // Debug logging: look for actual data chunks instead of keep-alives
-                  const chunkStr = Buffer.from(value).toString('utf-8');
-                  if (chunkStr.includes('data: {')) {
-                     console.log(`[Proxy] DATA CHUNK:`, chunkStr.substring(0, 500));
-                  } else if (chunkStr.includes('error')) {
-                     console.log(`[Proxy] ERROR CHUNK:`, chunkStr.substring(0, 500));
-                  }
-
-                  res.write(Buffer.from(value));
-                }
-              };
-              pump().catch((err) => {
-                console.error('[Proxy] Streaming pipe error:', err.message);
-                res.end();
-              });
+              while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+                res.write(Buffer.from(value));
+              }
+              res.end();
             } else {
-              // Non-streaming: buffer and forward as usual.
               res.writeHead(fetchRes.status, { 'Content-Type': contentType });
               const data = await fetchRes.arrayBuffer();
               res.end(Buffer.from(data));
@@ -271,41 +209,28 @@ const server = http.createServer(async (req, res) => {
             return;
           } else {
             const errText = await fetchRes.text();
-            lastError = `[${provider}] HTTP ${fetchRes.status}: ${errText}`;
-            console.warn(`[Proxy] Failed ${provider}:`, lastError);
+            lastError = `${provider} HTTP ${fetchRes.status}: ${errText}`;
           }
         } catch (e) {
-          lastError = `[${provider}] Fetch error: ${e.message}`;
-          console.error(`[Proxy] Error with ${provider}:`, e);
+          lastError = `${provider} error: ${e.message}`;
         }
       }
 
       res.writeHead(502);
-      res.end(JSON.stringify({ error: `All providers failed. Last error: ${lastError}` }));
+      res.end(JSON.stringify({ error: lastError }));
     } catch (e) {
+      console.error('[Proxy Error]:', e);
       res.writeHead(400);
       res.end(JSON.stringify({ error: 'invalid json' }));
     }
     return;
   }
 
-  // Fallback
   res.writeHead(404);
   res.end('Not found');
 });
 
-const PORT = 8880; // Всегда используем 8880 для OpenGame прокси
-
-server.on('error', (err) => {
-  if (err.code === 'EADDRINUSE') {
-    console.error(`❌ Port ${PORT} is already in use. Kill the process with: fuser -k ${PORT}/tcp`);
-    process.exit(1); // выходим без краш-петли
-  } else {
-    console.error('Server error:', err);
-    process.exit(1);
-  }
-});
-
+const PORT = 8880;
 server.listen(PORT, '0.0.0.0', () => {
-  console.log(`🚀 OpenGame Node.js Server running on port ${PORT} (IPv4)`);
+  console.log(`🚀 OpenGame Server running on port ${PORT}`);
 });
