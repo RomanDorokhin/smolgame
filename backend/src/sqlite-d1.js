@@ -27,16 +27,20 @@ class D1PreparedStatementMock {
   }
 
   bind(...args) {
-    return new D1PreparedStatementMock(this.stmt, args);
+    // В D1 .bind() заменяет старые параметры новыми
+    this.params = args;
+    return this;
   }
 
-  async all() {
-    const results = this.stmt.all(...this.params);
+  async all(...args) {
+    const finalParams = args.length > 0 ? args : this.params;
+    const results = this.stmt.all(...finalParams);
     return { results, success: true };
   }
 
-  async run() {
-    const info = this.stmt.run(...this.params);
+  async run(...args) {
+    const finalParams = args.length > 0 ? args : this.params;
+    const info = this.stmt.run(...finalParams);
     return { success: true, meta: info };
   }
 
