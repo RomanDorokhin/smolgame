@@ -300,10 +300,12 @@ export function useGameAgent(settings: ChatSettings) {
       
       let rawCode = "";
 
+      let progressInterval: any;
+
       if (isModification) {
         // Симуляция плавного прогресса для UX
         let simulatedProgress = 0;
-        const progressInterval = setInterval(() => {
+        progressInterval = setInterval(() => {
           simulatedProgress += Math.random() * 5;
           if (simulatedProgress > 95) simulatedProgress = 95;
           updateMessage(assistantId, {
@@ -322,6 +324,8 @@ export function useGameAgent(settings: ChatSettings) {
           signal,
           usedProvider
         );
+
+        clearInterval(progressInterval);
 
         const blocks = parseAiderBlocks(modificationText);
         if (blocks.length > 0) {
@@ -420,13 +424,14 @@ export function useGameAgent(settings: ChatSettings) {
         });
       }
 
-    } catch (e: any) {
-      updateMessage(assistantId, { content: `❌ Ошибка: ${e.message}`, isStreaming: false });
-    } finally {
-      setIsRunning(false);
-      setStep("");
-      setTargetRepo(null);
-    }
+      } catch (e: any) {
+        if (typeof progressInterval !== 'undefined') clearInterval(progressInterval);
+        updateMessage(assistantId, { content: `❌ Ошибка: ${e.message}`, isStreaming: false });
+      } finally {
+        setIsRunning(false);
+        setStep("");
+        setTargetRepo(null);
+      }
   }, [isRunning, settings, addMessage, updateMessage, getActiveProviders, streamWithFallback]);
 
   const stop = useCallback(() => { abortRef.current?.abort(); setIsRunning(false); setStep(""); }, []);

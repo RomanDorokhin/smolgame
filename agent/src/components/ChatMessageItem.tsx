@@ -173,15 +173,17 @@ export function ChatMessageItem({ message, onSend, onSwitchTab, isLast }: ChatMe
               <div className="bg-[#1c1e26] border border-white/5 rounded-2xl p-6 shadow-2xl">
                 {deployState.phase === "ready" ? (
                   <Button
-                    className="w-full h-14 bg-[#22c55e] hover:bg-[#16a34a] text-white font-black uppercase tracking-[0.3em] text-[14px] rounded-2xl gap-3 shadow-[0_12px_24px_-6px_rgba(34,197,94,0.5)]"
+                    className="w-full h-14 bg-[#22c55e] hover:bg-[#16a34a] text-white font-black uppercase tracking-[0.3em] text-[14px] rounded-2xl gap-3 shadow-[0_12px_24px_-6px_rgba(34,197,94,0.5)] transition-all active:scale-95"
                     onClick={() => {
-                      console.log("Play button clicked. Code length:", htmlCode?.length);
-                      if (htmlCode && onLoadStudio) {
-                        onLoadStudio("Generated Game", htmlCode);
+                      console.log("Play button clicked for message:", message.id);
+                      const code = message.gameCode || message.content.match(/```html\n([\s\S]*?)```/)?.[1];
+                      
+                      if (code && onLoadStudio) {
+                        onLoadStudio(message.id.slice(0, 8), code);
                         if (onSwitchTab) onSwitchTab("studio");
                       } else {
-                        console.error("Cannot play: htmlCode or onLoadStudio is missing");
-                        alert("Код игры еще не готов или произошла ошибка загрузки.");
+                        console.error("No game code found in message:", message);
+                        alert("Упс! Код этой игры не найден в истории. Попробуй попросить Агента сгенерировать его еще раз или проверь раздел 'Черновики' в сайдбаре.");
                       }
                     }}
                   >
