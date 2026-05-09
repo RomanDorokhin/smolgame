@@ -52,7 +52,7 @@ const server = http.createServer(async (req, res) => {
 
       // Путь к CLI бинарнику (собранному). Запускаем напрямую, без npm run start,
       // т.к. npm run start требует package.json в cwd (tempGameDir пустая).
-      const cliBin = path.join(openGameDir, 'packages', 'cli', 'dist', 'index.js');
+      const cliBin = path.join(openGameDir, 'dist', 'cli.js');
 
       const envVars = {
         ...process.env,
