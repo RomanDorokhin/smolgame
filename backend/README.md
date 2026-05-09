@@ -68,7 +68,7 @@ npm run deploy
 В конце wrangler напишет URL, что-то вроде:
 
 ```
-https://smolgame.dorokhin731.workers.dev
+https://smolgame.ru
 ```
 
 Если он совпадает с `API_BASE` в `js/api.js` — всё, фронт уже подключён.

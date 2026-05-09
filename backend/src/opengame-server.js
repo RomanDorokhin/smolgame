@@ -106,7 +106,7 @@ const server = http.createServer(async (req, res) => {
             const htmlPath = path.join(tempGameDir, 'index.html');
             if (fs.existsSync(htmlPath)) {
               const content = fs.readFileSync(htmlPath, 'utf-8');
-              res.write(`\n\n[SUCCESS] Game generated! Length: ${content.length}\n`);
+              res.write(`\n===OPEN_GAME_RESULT===\n${content}`);
             } else {
               res.write(`\n\n[ERROR] index.html not found in ${tempGameDir}\n`);
             }

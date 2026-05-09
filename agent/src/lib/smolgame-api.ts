@@ -1,6 +1,4 @@
-/**
- * SmolGame API Client
- * Integrated with smolgame.dorokhin731.workers.dev backend
+ * Integrated with smolgame.ru backend
  */
 
 const API_BASE = 'https://smolgame.ru';

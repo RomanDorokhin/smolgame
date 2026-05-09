@@ -117,7 +117,7 @@ async function route(req, env, pathname) {
       try { JSON.parse(rawBody); } catch {
         return error('Invalid JSON in request body', 400);
       }
-      const vpsResp = await fetch('http://89.167.94.140:8880/api/opengame/generate', {
+      const vpsResp = await fetch('http://127.0.0.1:8880/api/opengame/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: rawBody,

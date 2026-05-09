@@ -22,6 +22,13 @@ jobs:
             git reset --hard
             git pull origin main
             
+            # Сборка Агента (фронтенд)
+            echo "Building Agent..."
+            cd /root/smolgame-frontend/agent
+            npm install
+            npm run build
+            cd /root/smolgame-frontend
+
             # Обновляем статику (Фронтенд)
             echo "Copying frontend files..."
             cp /root/smolgame-frontend/index.html /var/www/smolgame/frontend/index.html
@@ -29,10 +36,9 @@ jobs:
             cp -r /root/smolgame-frontend/js/* /var/www/smolgame/frontend/js/
             cp -r /root/smolgame-frontend/assets/* /var/www/smolgame/frontend/assets/ 2>/dev/null || true
             mkdir -p /var/www/smolgame/frontend/agent-v3/assets
-            cp /root/smolgame-frontend/agent-v3/assets/index.js /var/www/smolgame/frontend/agent-v3/assets/ 2>/dev/null || true
-            cp /root/smolgame-frontend/agent-v3/assets/index.css /var/www/smolgame/frontend/agent-v3/assets/ 2>/dev/null || true
+            cp -r /root/smolgame-frontend/agent-v3/assets/* /var/www/smolgame/frontend/agent-v3/assets/
             
-            # Настраиваем API URL для фронтенда
+            # Настраиваем API URL для ленты (не минифицированной)
             sed -i 's|https://smolgame.dorokhin731.workers.dev|/api|g' /var/www/smolgame/frontend/index.html
             find /var/www/smolgame/frontend/js -name "*.js" -exec sed -i 's|https://smolgame.dorokhin731.workers.dev|/api|g' {} \;
             sed -i "s|'/api';|'';|g" /var/www/smolgame/frontend/js/core/api.js

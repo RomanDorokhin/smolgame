@@ -68,7 +68,7 @@ export function useAuth() {
   const login = async () => {
     setLoginError(null);
     const webId = SmolGameAPI.getWebId();
-    const API_BASE = 'https://smolgame.dorokhin731.workers.dev';
+    const API_BASE = 'https://smolgame.ru';
     
     // Use Telegram WebApp native method if available
     const tg = (window as any).Telegram?.WebApp;

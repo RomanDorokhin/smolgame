@@ -38,14 +38,14 @@ GITHUB_CLIENT_ID = "Ov23linmpKR0Bab5Fogn"
 # Публичный URL бакета R2 (R2 → smolgame-images → Settings → Public access → r2.dev). Без слэша в конце.
 PUBLIC_IMAGE_BASE_URL = "https://pub-9c943142cdab48678d0f35f859561262.r2.dev"
 # Если Worker на своём домене, укажи полный origin без слэша (иначе берётся из запроса).
-# GITHUB_OAUTH_REDIRECT_BASE = "https://smolgame.dorokhin731.workers.dev"
+# GITHUB_OAUTH_REDIRECT_BASE = "https://smolgame.ru"
 
 # ───────────────────────────────────────────────
 # Секреты (НЕ здесь, положить отдельной командой — переживают deploy):
 #   npx wrangler secret put TELEGRAM_BOT_TOKEN
 #   npx wrangler secret put GITHUB_CLIENT_SECRET
 # Токен нужен для валидации initData от Telegram WebApp.
-# Callback в GitHub OAuth App: https://smolgame.dorokhin731.workers.dev/auth/github/callback
+# Callback в GitHub OAuth App: https://smolgame.ru/auth/github/callback
 # Локально: backend/.dev.vars см. .env.example
 #
 # Webhook чата (/start): см. раздел «Telegram: ответ на /start» в README — TELEGRAM_WEBHOOK_SECRET.

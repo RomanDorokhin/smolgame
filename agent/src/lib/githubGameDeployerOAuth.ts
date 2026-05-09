@@ -5,7 +5,7 @@
 
 import { GitHubOAuthClient } from './githubOAuthClient';
 
-const SMOLGAME_API_URL = 'https://smolgame.dorokhin731.workers.dev';
+const SMOLGAME_API_URL = 'https://smolgame.ru';
 
 export interface DeploymentConfig {
   token: string; // OAuth access token
