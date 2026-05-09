@@ -43,20 +43,18 @@ const makeId = () => Math.random().toString(36).substring(2, 9);
 // ──────────────────────────────────────────────
 
 // ФАЗА 1: Интервьюер (Архитектор)
-const INTERVIEWER_PROMPT = `You are the Expert Game Architect. Your goal is to gather requirements for a high-quality mobile web game.
+const INTERVIEWER_PROMPT = `You are a Senior Game Producer. Your goal is to get started AS FAST AS POSSIBLE.
+- If the user's idea is clear, skip questions and just say: "I've got it! Starting the engine..." and output ONLY the <plan> block.
+- Only ask questions if the idea is completely vague.
+- Limit yourself to 1-2 most critical questions max.
+- Always output a <plan> if you have enough info.
 
-GUIDELINES:
-1. UNLIMITED POTENTIAL: You can create anything from simple 2D to advanced 3D experiences.
-2. TECHNOLOGY: Use any modern web technology (HTML5, JavaScript, WebGL, Three.js, Phaser, etc.).
-3. Ask ONLY 1-2 most important questions at a time.
-4. Once you have a clear vision, output the game specification inside <opengame_prompt> tags.
-
-The <opengame_prompt> must include:
-- MANDATORY DIRECTIVE: "СДЕЛАЙ ИГРУ МИРОВОГО УРОВНЯ ОТ НАЧАЛА И ДО КОНЦА"
-- Name: Название
-- Tech Stack: Recommended libraries (Three.js for 3D, PixiJS for 2D, etc.)
-- Core Loop: Цикл
-- Visuals: Style and effects`;
+Output format for planning:
+<plan>
+- Core Loop: ...
+- Tech: ...
+- Style: ...
+</plan>`;
 
 const ENGINEER_PROMPT = `You are a Visionary Game Developer and Master Architect. Your goal is to create a masterpiece: a world-class, high-fidelity mobile game.
 
@@ -259,16 +257,16 @@ export function useGameAgent(settings: ChatSettings) {
 
       const stripPromptTag = (text: string) =>
         text
-          .replace(/<opengame_prompt>([\s\S]*?)<\/opengame_prompt>/gi, "")
-          .replace(/<\/?opengame_prompt>/gi, "")
-          .replace(/opengame_prompt[\s\S]*/i, "")
+          .replace(/<plan>([\s\S]*?)<\/plan>/gi, "")
+          .replace(/<\/?plan>/gi, "")
+          .replace(/plan[\s\S]*/i, "")
           .trim();
 
       const { text: interviewText, provider: usedProvider } = await streamWithFallback(
         interviewMsgs,
         (_chunk, full) => {
           if (signal.aborted) return;
-          const hasTag = /<opengame_prompt>/i.test(full) || /opengame_prompt/i.test(full);
+          const hasTag = /<plan>/i.test(full) || /plan/i.test(full);
           const visible = stripPromptTag(full);
           updateMessage(assistantId, {
             content: hasTag ? (visible || "🚀 ТЗ собрано! Подключаю инженера...") : (visible || "🤔 ..."),
@@ -281,9 +279,9 @@ export function useGameAgent(settings: ChatSettings) {
       chatHistory.current.push({ role: "assistant", content: interviewText });
 
       const promptMatch =
-        interviewText.match(/<opengame_prompt>([\s\S]*?)<\/opengame_prompt>/i) ||
-        interviewText.match(/<opengame_prompt>([\s\S]*?)$/i) ||
-        interviewText.match(/opengame_prompt\s*([\s\S]+)/i);
+        interviewText.match(/<plan>([\s\S]*?)<\/plan>/i) ||
+        interviewText.match(/<plan>([\s\S]*?)$/i) ||
+        interviewText.match(/plan\s*([\s\S]+)/i);
 
       const isDetailedRequest = userText.length > 100 && (userText.includes("создай") || userText.includes("игру"));
 
@@ -296,18 +294,24 @@ export function useGameAgent(settings: ChatSettings) {
       const gameSpec = promptMatch ? promptMatch[1].trim() : userText;
       const lastCodeMessage = messages.slice().reverse().find(m => m.gameCode);
       const previousCode = lastCodeMessage?.gameCode;
-      const tagStart = interviewText.search(/<opengame_prompt>|opengame_prompt/i);
+      const tagStart = interviewText.search(/<plan>|plan/i);
       const beforeTag = tagStart > 0 ? interviewText.slice(0, tagStart).trim() : "";
       const isModification = !!previousCode;
       
       let rawCode = "";
 
       if (isModification) {
-        updateMessage(assistantId, {
-          content: (beforeTag ? beforeTag + "\n\n" : "") + "🔧 Модифицирую код...",
-          isStreaming: true,
-        });
-        setStep("🔧 Модификация...");
+        // Симуляция плавного прогресса для UX
+        let simulatedProgress = 0;
+        const progressInterval = setInterval(() => {
+          simulatedProgress += Math.random() * 5;
+          if (simulatedProgress > 95) simulatedProgress = 95;
+          updateMessage(assistantId, {
+            content: (beforeTag ? beforeTag + "\n\n" : "") + `🤖 **OpenGame в процессе...**\n\nЯ проектирую архитектуру и пишу код твоей игры мирового уровня.`,
+            progress: Math.floor(simulatedProgress),
+            isStreaming: true
+          });
+        }, 800);
 
         const { text: modificationText } = await streamWithFallback(
           [

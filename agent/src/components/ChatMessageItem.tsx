@@ -3,6 +3,7 @@ import remarkGfm from "remark-gfm";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Copy, Check, User, Bot, Play, X, Github, Loader2, Clock, ExternalLink } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
 import type { AgentMessage } from "@/hooks/useGameAgent";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { SmolGameAPI } from "@/lib/smolgame-api";
@@ -72,46 +73,60 @@ export function ChatMessageItem({ message, onSend, onSwitchTab, isLast }: ChatMe
           ) : (
             <div className="markdown-content text-white/90">
               {message.content ? (
-                <ReactMarkdown
-                  remarkPlugins={[remarkGfm]}
-                  components={{
-                    ul: ({ node, children, ...props }) => {
-                      if (isLast && onSend) return <ul className="m-0 p-0 mt-4 mb-2 space-y-2 flex flex-col items-start w-full" {...props}>{children}</ul>;
-                      return <ul className="list-disc pl-4 mt-2 mb-4 space-y-1 text-white/80" {...props}>{children}</ul>;
-                    },
-                    ol: ({ node, children, ...props }) => {
-                      if (isLast && onSend) return <ol className="m-0 p-0 mt-4 mb-2 space-y-2 flex flex-col items-start w-full" {...props}>{children}</ol>;
-                      return <ol className="list-decimal pl-4 mt-2 mb-4 space-y-1 text-white/80" {...props}>{children}</ol>;
-                    },
-                    li: ({ node, children, ...props }) => {
-                      if (isLast && onSend) {
-                        const text = extractTextFromNode(node).trim();
-                        return (
-                          <li className="list-none w-full" {...props}>
-                            <button
-                              onClick={() => onSend(text)}
-                              className="text-left w-full px-4 py-3 bg-[#13141a] hover:bg-[#a3b8d4]/10 border border-white/5 hover:border-[#a3b8d4]/30 rounded-xl text-sm transition-all text-white/80 hover:text-white font-medium group flex items-center justify-between"
-                            >
-                              <span>{children}</span>
-                              <span className="opacity-0 group-hover:opacity-100 shrink-0 text-[#a3b8d4] text-[10px] uppercase font-black tracking-widest ml-4 transition-opacity">
-                                Выбрать
-                              </span>
-                            </button>
-                          </li>
-                        );
-                      }
-                      return <li className="mb-1" {...props}>{children}</li>;
-                    },
-                  }}
-                >
-                  {(() => {
-                    const filtered = message.content
-                      .replace(/<game_spec>[\s\S]*?(?:<\/game_spec>|$)/g, "")
-                      .replace(/<thought>[\s\S]*?(?:<\/thought>|$)/g, "")
-                      .trim();
-                    return filtered || message.content;
-                  })()}
-                </ReactMarkdown>
+                <>
+                  <ReactMarkdown
+                    remarkPlugins={[remarkGfm]}
+                    components={{
+                      ul: ({ node, children, ...props }) => {
+                        if (isLast && onSend) return <ul className="m-0 p-0 mt-4 mb-2 space-y-2 flex flex-col items-start w-full" {...props}>{children}</ul>;
+                        return <ul className="list-disc pl-4 mt-2 mb-4 space-y-1 text-white/80" {...props}>{children}</ul>;
+                      },
+                      ol: ({ node, children, ...props }) => {
+                        if (isLast && onSend) return <ol className="m-0 p-0 mt-4 mb-2 space-y-2 flex flex-col items-start w-full" {...props}>{children}</ol>;
+                        return <ol className="list-decimal pl-4 mt-2 mb-4 space-y-1 text-white/80" {...props}>{children}</ol>;
+                      },
+                      li: ({ node, children, ...props }) => {
+                        if (isLast && onSend) {
+                          const text = extractTextFromNode(node).trim();
+                          return (
+                            <li className="list-none w-full" {...props}>
+                              <button
+                                onClick={() => onSend(text)}
+                                className="text-left w-full px-4 py-3 bg-[#13141a] hover:bg-[#a3b8d4]/10 border border-white/5 hover:border-[#a3b8d4]/30 rounded-xl text-sm transition-all text-white/80 hover:text-white font-medium group flex items-center justify-between"
+                              >
+                                <span>{children}</span>
+                                <span className="opacity-0 group-hover:opacity-100 shrink-0 text-[#a3b8d4] text-[10px] uppercase font-black tracking-widest ml-4 transition-opacity">
+                                  Выбрать
+                                </span>
+                              </button>
+                            </li>
+                          );
+                        }
+                        return <li className="mb-1" {...props}>{children}</li>;
+                      },
+                    }}
+                  >
+                    {(() => {
+                      const filtered = message.content
+                        .replace(/<game_spec>[\s\S]*?(?:<\/game_spec>|$)/g, "")
+                        .replace(/<thought>[\s\S]*?(?:<\/thought>|$)/g, "")
+                        .replace(/<plan>[\s\S]*?(?:<\/plan>|$)/g, "")
+                        .trim();
+                      return filtered || message.content;
+                    })()}
+                  </ReactMarkdown>
+
+                  {message.progress !== undefined && message.isStreaming && (
+                    <div className="mt-6 space-y-3 p-4 bg-white/5 border border-white/5 rounded-2xl animate-in fade-in slide-in-from-bottom-2 duration-500">
+                      <div className="flex justify-between items-center mb-1">
+                        <span className="text-[10px] font-black uppercase tracking-widest text-[#a3b8d4]">Создание игры</span>
+                        <span className="text-[10px] font-black text-white">{message.progress}%</span>
+                      </div>
+                      <Progress value={message.progress} className="h-1.5 bg-white/5" />
+                      <p className="text-[9px] text-white/30 uppercase tracking-tighter">Движок: OpenGame Core v4.3</p>
+                    </div>
+                  )}
+                </>
               ) : isStreaming ? (
                 <div className="flex items-center gap-1.5 text-[#a3b8d4]">
                   <div className="w-1.5 h-1.5 rounded-full bg-[#a3b8d4] animate-bounce [animation-delay:0ms]" />
