@@ -13,7 +13,6 @@ import { submitHtmlGame, serveHostedGame } from './hosted-games.js';
 import { publishGameToGithub, getGameFileFromGithub, updateGameFileOnGithub } from './github-publish.js';
 import { telegramWebhook } from './telegram-webhook.js';
 import { handleAiChat } from './ai-proxy.js';
-import { generateOpenGame, proxyOpenGameLLM } from './opengame-proxy.js';
 
 export default {
   async fetch(req, env, ctx) {
@@ -110,8 +109,14 @@ async function route(req, env, pathname) {
   if (pathname === '/auth/github/callback' && m === 'GET') return githubOAuthCallback(req, env);
   if (pathname === '/auth/github/done' && m === 'GET') return githubOAuthDonePage(req, env);
   if (pathname === '/api/ai/chat' && m === 'POST') return handleAiChat(req, env);
-  if (pathname === '/api/opengame/generate' && m === 'POST') return generateOpenGame(req, env);
-  if (pathname === '/api/llm-proxy/chat/completions' && m === 'POST') return proxyOpenGameLLM(req, env);
+  if (pathname === '/api/opengame/generate' && m === 'POST') {
+    // ПРОКСИРУЕМ ЗАПРОС НА VPS NODE.JS СЕРВЕР Т.К. CF WORKERS НЕ МОГУТ SPAWN ПРОЦЕССЫ
+    return fetch('http://89.167.94.140:3001/api/opengame/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(await req.json())
+    });
+  }
 
   let match;
   if ((match = pathname.match(/^\/api\/games\/([^/]+)$/))) {
