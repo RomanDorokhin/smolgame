@@ -4,6 +4,9 @@ import { spawn } from 'child_process';
 import path from 'path';
 import os from 'os';
 import crypto from 'crypto';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 const sessions = new Map();
 sessions.set('test', { id: 'test', prompt: 'test' }); // ТЕСТОВАЯ СЕССИЯ
