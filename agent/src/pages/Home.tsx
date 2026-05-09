@@ -245,7 +245,7 @@ export default function Home() {
                       <div className="w-16 h-16 rounded-2xl bg-[#13141a] border border-white/5 flex items-center justify-center mx-auto mb-6">
                         <Sparkles className="w-8 h-8 text-[#a3b8d4]" />
                       </div>
-                      <h2 className="text-2xl font-black mb-2">Smol-agent</h2>
+                      <h2 className="text-2xl font-black mb-2">agent-smol</h2>
                       <p className="text-sm text-white/40 max-w-xs mx-auto mb-10">Опишите идею игры, и я помогу её реализовать.</p>
                       <div className="space-y-2">
                         {[
@@ -308,10 +308,12 @@ export default function Home() {
                         <div className="flex items-center gap-2">
                           <Button 
                             className="bg-blue-600 hover:bg-blue-700 text-white text-[10px] font-black uppercase tracking-widest h-10 px-6 rounded-xl"
-                            onClick={() => {
-                              setActiveTab("chat");
-                              sendMessage(`Добавь в игру "${studioGame.title}" новую функцию: `);
-                            }}
+                              onClick={() => {
+                                const repoMatch = studioGame.code.match(/https:\/\/github\.com\/([^/]+\/[^/"]+)/);
+                                const repo = repoMatch ? repoMatch[1] : undefined;
+                                setActiveTab("chat");
+                                sendMessage(`Добавь в игру "${studioGame.title}" новую функцию: `, repo);
+                              }}
                           >
                             <Pencil size={14} className="mr-2" /> Доработать
                           </Button>
@@ -367,9 +369,35 @@ export default function Home() {
                                 </Button>
                                 <Button
                                   className="flex-1 bg-blue-600/10 hover:bg-blue-600/20 text-blue-400 text-[10px] font-black uppercase tracking-widest h-10 rounded-xl border border-blue-500/10"
-                                  onClick={() => {
+                                  onClick={async () => {
                                     setStudioGame({ title: game.title, code: "<!-- Loading code from GitHub... -->" });
                                     setActiveTab("studio");
+                                    try {
+                                      const url = new URL(game.url);
+                                      let fileContent = "";
+
+                                      // Поддержка как старых GitHub-игр, так и новых локальных
+                                      if (url.hostname.includes('github.io')) {
+                                        const owner = url.hostname.split('.')[0];
+                                        const repo = url.pathname.split('/').filter(Boolean)[0];
+                                        const repoFullName = `${owner}/${repo}`;
+                                        const fileData = await SmolGameAPI.getGameFileFromGithub(repoFullName, "index.html");
+                                        fileContent = fileData?.content || "";
+                                      } else {
+                                        // Локальный сервер
+                                        const fetchUrl = game.url.endsWith('/') ? game.url + 'index.html' : game.url + '/index.html';
+                                        const response = await fetch(fetchUrl);
+                                        if (response.ok) fileContent = await response.text();
+                                      }
+
+                                      if (fileContent) {
+                                        setStudioGame({ title: game.title, code: fileContent });
+                                      } else {
+                                        setStudioGame({ title: game.title, code: "<!-- Error: Could not load code from server. Check if index.html exists. -->" });
+                                      }
+                                    } catch (err) {
+                                      setStudioGame({ title: game.title, code: "<!-- Ошибка загрузки кода с GitHub -->" });
+                                    }
                                   }}
                                 >
                                   <Pencil size={14} className="mr-2" /> Править
@@ -377,8 +405,9 @@ export default function Home() {
                                 <Button
                                   className="flex-1 bg-purple-600/10 hover:bg-purple-600/20 text-purple-400 text-[10px] font-black uppercase tracking-widest h-10 rounded-xl border border-purple-500/10"
                                   onClick={() => {
+                                    const repo = game.url ? game.url.split('/').filter(Boolean).slice(-1)[0] : undefined;
                                     setActiveTab("chat");
-                                    sendMessage(`Улучши игру "${game.title}". Добавь в неё 'Сок' (Juice): частицы, спецэффекты, систему очков, уровни сложности и сделай геймплей более глубоким и интересным. Отполируй визуальную часть и управление.`);
+                                    sendMessage(`Улучши игру "${game.title}". Добавь в неё 'Сок' (Juice): частицы, спецэффекты, систему очков, уровни сложности и сделай геймплей более глубоким и интересным. Отполируй визуальную часть и управление.`, repo);
                                   }}
                                 >
                                   <Sparkles size={14} className="mr-2" /> Улучшить
@@ -435,7 +464,7 @@ export default function Home() {
                   placeholder={isRunning ? "Агент думает..." : "Опишите игру..."}
                 />
                 <div className="mt-3 text-[9px] text-center text-white/10 uppercase tracking-[0.2em] font-black">
-                  Smol Architect v4.1 • Phase: Plan + Code • Engine: LLM-API v3
+                  agent-smol v4.1 • Phase: Plan + Code • Engine: LLM-API v3
                 </div>
               </div>
             </div>
