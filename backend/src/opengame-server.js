@@ -89,14 +89,20 @@ const server = http.createServer(async (req, res) => {
         console.error(`[OpenGame Error]: ${data}`);
       });
 
-      child.on('close', async (code) => {
+      child.on('error', (err) => {
+        console.error(`[OpenGame Spawn Error]: ${err.message}`);
+        res.write(`\n\n===OPEN_GAME_RESULT_ERROR===\nSpawn error: ${err.message}`);
+      });
+
+      child.on('close', async (code, signal) => {
         sessions.delete(sessionId);
+        console.log(`[OpenGame] Process exited with code ${code} and signal ${signal}`);
         try {
           const indexPath = path.join(tempGameDir, 'index.html');
           const finalCode = await fs.readFile(indexPath, 'utf-8');
           res.write(`\n\n===OPEN_GAME_RESULT===\n${finalCode}`);
         } catch (e) {
-          res.write(`\n\n===OPEN_GAME_RESULT_ERROR===\nCould not read index.html: ${e.message}`);
+          res.write(`\n\n===OPEN_GAME_RESULT_ERROR===\nCould not read index.html: ${e.message} (Exit code: ${code})`);
         }
         res.end();
       });
