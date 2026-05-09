@@ -167,7 +167,7 @@ const server = http.createServer(async (req, res) => {
           headers["Authorization"] = `Bearer ${apiKey}`;
           headers["HTTP-Referer"] = "https://smolgame.ru";
           headers["X-Title"] = "SmolGame OpenGame Proxy";
-          finalBody.model = "meta-llama/llama-3.3-70b-instruct";
+          finalBody.model = "qwen/qwen-2.5-72b-instruct";
         } else if (provider === "together") {
           providerUrl = "https://api.together.xyz/v1/chat/completions";
           headers["Authorization"] = `Bearer ${apiKey}`;
