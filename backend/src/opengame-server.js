@@ -22,11 +22,23 @@ const server = http.createServer(async (req, res) => {
   }
 
   const readJson = () => new Promise((resolve, reject) => {
-    let body = '';
-    req.on('data', chunk => { body += chunk; });
+    const chunks = [];
+    req.on('data', chunk => { chunks.push(chunk); });
     req.on('end', () => {
-      try { resolve(JSON.parse(body)); }
-      catch (e) { reject(e); }
+      const buffer = Buffer.concat(chunks);
+      const rawBody = buffer.toString('utf-8');
+      try {
+        if (!rawBody) {
+          resolve(null);
+          return;
+        }
+        resolve(JSON.parse(rawBody));
+      } catch (e) {
+        console.error('[JSON Parse Error]:', e.message);
+        console.error('[Raw Body Snapshot]:', rawBody.slice(0, 1000));
+        e.rawBody = rawBody;
+        reject(e);
+      }
     });
   });
 
@@ -167,8 +179,14 @@ const server = http.createServer(async (req, res) => {
     }
 
     try {
+      console.log(`[Proxy] Body reading for session: ${sessionId}...`);
       const body = await readJson();
+      if (!body) {
+        throw new Error('Empty body received from CLI');
+      }
+      
       let lastError = "No provider succeeded";
+      // ... (rest of the logic remains)
 
       for (const provider of session.providers) {
         const apiKey = session.keys[provider];
@@ -247,9 +265,14 @@ const server = http.createServer(async (req, res) => {
       res.writeHead(502);
       res.end(JSON.stringify({ error: lastError }));
     } catch (e) {
-      console.error('[Proxy Error]:', e);
       res.writeHead(400);
-      res.end(JSON.stringify({ error: 'invalid json' }));
+      const errorDetail = {
+        error: 'invalid json',
+        message: e.message,
+        bodyPreview: e.rawBody ? e.rawBody.slice(0, 200) : 'empty'
+      };
+      console.error('[Proxy Error Details]:', errorDetail);
+      res.end(JSON.stringify(errorDetail));
     }
     return;
   }
