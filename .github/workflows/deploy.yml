@@ -43,11 +43,12 @@ jobs:
             find /var/www/smolgame/frontend/js -name "*.js" -exec sed -i 's|https://smolgame.dorokhin731.workers.dev|/api|g' {} \;
             sed -i "s|'/api';|'';|g" /var/www/smolgame/frontend/js/core/api.js
             
-            # Подготавливаем OpenGame (устанавливаем зависимости)
-            echo "Installing OpenGame dependencies..."
+            # Подготавливаем OpenGame (собираем CLI)
+            echo "Building OpenGame CLI..."
             if [ -d "/root/smolgame-frontend/agent/OpenGame" ]; then
               cd /root/smolgame-frontend/agent/OpenGame
-              npm install --omit=dev
+              npm install
+              npm run bundle
             fi
 
             # Перезапускаем Бэкенд
