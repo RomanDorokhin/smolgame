@@ -220,12 +220,10 @@ const server = http.createServer(async (req, res) => {
                   const { done, value } = await reader.read();
                   if (done) { res.end(); break; }
                   
-                  // Debug logging for the first few chunks to inspect tool_calls format
-                  if (chunkCount < 5) {
+                  // Debug logging for the first few chunks to inspect format
+                  if (chunkCount < 3) {
                      const chunkStr = Buffer.from(value).toString('utf-8');
-                     if (chunkStr.includes('tool_calls') || chunkStr.includes('function')) {
-                        console.log(`[Proxy] SSE Chunk ${chunkCount}:`, chunkStr);
-                     }
+                     console.log(`[Proxy] RAW SSE Chunk ${chunkCount}:`, chunkStr.substring(0, 500));
                   }
                   chunkCount++;
 
