@@ -3,7 +3,7 @@
  * Integrated with smolgame.dorokhin731.workers.dev backend
  */
 
-const API_BASE = 'https://smolgame.dorokhin731.workers.dev';
+const API_BASE = 'https://smolgame.ru';
 const INIT_DATA_SS_KEY = 'smolgame:tgInitData:v1';
 const WEB_ID_LS_KEY = 'smolgame:webId:v1';
 const PENDING_GAME_LS_KEY = 'smolgame:pendingGame:v1';
