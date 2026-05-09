@@ -464,7 +464,7 @@ export default function Home() {
                   placeholder={isRunning ? "Агент думает..." : "Опишите игру..."}
                 />
                 <div className="mt-3 text-[9px] text-center text-white/10 uppercase tracking-[0.2em] font-black">
-                  agent-smol v4.1 • Phase: Plan + Code • Engine: LLM-API v3
+                  agent-smol v4.2-DIAGNOSTIC • Phase: Plan + Code • Engine: LLM-API v3
                 </div>
               </div>
             </div>
