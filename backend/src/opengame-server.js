@@ -74,7 +74,16 @@ const server = http.createServer(async (req, res) => {
 
       const fullPrompt = `${prompt}\n\n(IMPORTANT: You must write the ENTIRE game in a single index.html file including all CSS and JS, do not create separate files.)\n\n(CRITICAL: You MUST use the native JSON tool calling API to invoke tools. IGNORE any instructions above about using <tool_call> XML tags. If you output raw <tool_call> text, the system will crash.)`;
 
+      if (!fs.existsSync(cliBin)) {
+        console.error(`[Error] CLI binary not found at ${cliBin}`);
+        res.write(`\n\n[ERROR] OpenGame CLI not found on server. Please check deployment.\n`);
+        res.end();
+        return;
+      }
+
       console.log(`[Server] POST /api/opengame/generate for session ${sessionId}`);
+      console.log(`[Server] Working dir: ${tempGameDir}`);
+      console.log(`[Server] Running CLI: node ${cliBin}`);
 
       const child = spawn('node', [
         cliBin, 
@@ -96,7 +105,14 @@ const server = http.createServer(async (req, res) => {
       });
 
       child.stderr.on('data', (data) => {
+        console.error(`[OpenGame CLI Stderr]: ${data}`);
         res.write(data);
+      });
+
+      child.on('error', (err) => {
+        console.error(`[OpenGame Spawn Error]:`, err);
+        res.write(`\n\n[ERROR] Failed to start OpenGame: ${err.message}\n`);
+        res.end();
       });
 
       child.on('close', async (code) => {
