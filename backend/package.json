@@ -3,7 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "description": "SmolGame API on Cloudflare Workers + D1",
+  "type": "module",
   "scripts": {
+    "start": "node src/node-server.js",
     "dev": "npx wrangler dev",
     "deploy": "npx wrangler deploy",
     "db:create": "npx wrangler d1 create smolgame",
