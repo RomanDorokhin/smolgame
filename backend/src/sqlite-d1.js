@@ -34,13 +34,18 @@ class D1PreparedStatementMock {
 
   async all(...args) {
     const finalParams = args.length > 0 ? args : this.params;
-    const results = this.stmt.all(...finalParams);
+    // better-sqlite3 может упасть, если параметров больше, чем ? в SQL.
+    // Отрезаем лишние, если нужно.
+    const expectedCount = this.stmt.reader ? this.stmt.reader : 0; 
+    const slicedParams = finalParams.slice(0, this.stmt.length);
+    const results = this.stmt.all(...slicedParams);
     return { results, success: true };
   }
 
   async run(...args) {
     const finalParams = args.length > 0 ? args : this.params;
-    const info = this.stmt.run(...finalParams);
+    const slicedParams = finalParams.slice(0, this.stmt.length);
+    const info = this.stmt.run(...slicedParams);
     return { success: true, meta: info };
   }
 

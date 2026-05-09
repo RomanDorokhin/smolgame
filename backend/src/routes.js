@@ -32,7 +32,7 @@ const PUBLISHED_FEED_SQL = `
      LEFT JOIN users u ON u.id = g.author_id
     WHERE g.status = 'published'
     ORDER BY g.created_at DESC
-    LIMIT ?1 OFFSET ?2`;
+    LIMIT ? OFFSET ?`;
 
 async function publishedFeedGamesQuery(db, limit, offset, orderBy = 'g.created_at DESC') {
   const safeOrder = orderBy === 'RANDOM()' ? 'RANDOM()' : 'g.created_at DESC';
