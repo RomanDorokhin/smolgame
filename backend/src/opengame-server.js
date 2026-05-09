@@ -6,6 +6,7 @@ import os from 'os';
 import crypto from 'crypto';
 
 const sessions = new Map();
+sessions.set('test', { id: 'test', prompt: 'test' }); // ТЕСТОВАЯ СЕССИЯ
 
 const server = http.createServer(async (req, res) => {
   // CORS
