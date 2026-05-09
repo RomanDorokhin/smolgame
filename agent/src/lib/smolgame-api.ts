@@ -193,13 +193,10 @@ export class SmolGameAPI {
    */
   static async generateWithOpenGame(payload: {
     prompt: string;
-    apiKey: string;
-    model?: string;
-    provider?: string;
-  }): Promise<{ success: boolean; code: string; gameId: string }> {
-    // Note: In production this would be a real URL, for now we use localhost
-    const OPENGAME_API = 'http://localhost:3001';
-    const response = await fetch(`${OPENGAME_API}/api/generate`, {
+    keys: Record<string, string>;
+    providers: string[];
+  }): Promise<ReadableStreamDefaultReader<Uint8Array>> {
+    const response = await fetch(`${API_BASE}/api/opengame/generate`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
@@ -210,7 +207,12 @@ export class SmolGameAPI {
       throw new Error(error.error || 'OpenGame generation failed');
     }
 
-    return response.json();
+    if (!response.body) {
+      throw new Error('No body returned from stream');
+    }
+
+    // Возвращаем поток (stream) для чтения вывода терминала OpenGame
+    return response.body.getReader();
   }
 
   /**
@@ -220,6 +222,7 @@ export class SmolGameAPI {
     files: Array<{ path: string; content: string }>;
     gameTitle: string;
     gameDescription?: string;
+    repo?: string; // Optional: "owner/repo" to update
   }) {
     // ── САНИТАЙЗЕР МЕТАДАННЫХ ───────────────────────────────────────────
     // Убираем JSON, лишние скобки и артефакты, которые рвут верстку ленты
@@ -239,7 +242,8 @@ export class SmolGameAPI {
     const body = {
       files: payload.files,
       gameTitle: sanitizedTitle,
-      gameDescription: sanitizedDescription
+      gameDescription: sanitizedDescription,
+      repo: payload.repo
     };
 
     return this.apiFetch('/api/github/publish-game', {
@@ -252,9 +256,8 @@ export class SmolGameAPI {
    * Delete game from database and GitHub
    */
   static async deleteGame(gameId: string) {
-    return this.apiFetch(`/api/games/${gameId}`, {
-      method: 'DELETE',
-      body: { deleteGithubRepo: true }
+    return this.apiFetch(`/api/games/${gameId}?deleteGithubRepo=true`, {
+      method: 'DELETE'
     });
   }
 
