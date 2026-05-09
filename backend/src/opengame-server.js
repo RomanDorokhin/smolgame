@@ -214,10 +214,21 @@ const server = http.createServer(async (req, res) => {
               });
               // Node.js fetch body is a ReadableStream — pipe it chunk by chunk.
               const reader = fetchRes.body.getReader();
+              let chunkCount = 0;
               const pump = async () => {
                 while (true) {
                   const { done, value } = await reader.read();
                   if (done) { res.end(); break; }
+                  
+                  // Debug logging for the first few chunks to inspect tool_calls format
+                  if (chunkCount < 5) {
+                     const chunkStr = Buffer.from(value).toString('utf-8');
+                     if (chunkStr.includes('tool_calls') || chunkStr.includes('function')) {
+                        console.log(`[Proxy] SSE Chunk ${chunkCount}:`, chunkStr);
+                     }
+                  }
+                  chunkCount++;
+
                   res.write(Buffer.from(value));
                 }
               };
