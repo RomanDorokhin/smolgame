@@ -140,9 +140,16 @@ export function ChatMessageItem({ message, onSend, onSwitchTab, isLast }: ChatMe
                   variant="ghost"
                   size="sm"
                   className="h-8 px-3 text-[10px] font-bold uppercase tracking-widest text-blue-400 hover:text-blue-300 bg-blue-500/5 border border-blue-500/10 rounded-xl transition-all"
-                  onClick={() => setShowPreview(true)}
+                  onClick={() => {
+                    if (onLoadStudio && htmlCode) {
+                      onLoadStudio("Generated Game", htmlCode);
+                    }
+                    if (onSwitchTab) {
+                      onSwitchTab("studio");
+                    }
+                  }}
                 >
-                  <Play size={14} className="mr-2" /> Предпросмотр
+                  <Play size={14} className="mr-2" /> Студия
                 </Button>
               )}
             </div>
@@ -152,7 +159,14 @@ export function ChatMessageItem({ message, onSend, onSwitchTab, isLast }: ChatMe
                 {deployState.phase === "ready" ? (
                   <Button
                     className="w-full h-14 bg-[#22c55e] hover:bg-[#16a34a] text-white font-black uppercase tracking-[0.3em] text-[14px] rounded-2xl gap-3 shadow-[0_12px_24px_-6px_rgba(34,197,94,0.5)]"
-                    onClick={() => deployState.pagesUrl && window.open(deployState.pagesUrl, '_blank')}
+                    onClick={() => {
+                      if (onLoadStudio && htmlCode) {
+                        onLoadStudio("Generated Game", htmlCode);
+                      }
+                      if (onSwitchTab) {
+                        onSwitchTab("studio");
+                      }
+                    }}
                   >
                     <Play size={22} fill="currentColor" className="ml-1" /> ИГРАТЬ
                   </Button>
@@ -192,8 +206,19 @@ export function ChatMessageItem({ message, onSend, onSwitchTab, isLast }: ChatMe
                     {(deployState.pagesUrl || deployState.repoUrl) && (
                       <div className="grid grid-cols-2 gap-2">
                         {deployState.pagesUrl && (
-                          <Button variant="outline" className="h-10 text-[10px] font-black uppercase" onClick={() => window.open(deployState.pagesUrl, "_blank")}>
-                            <ExternalLink size={14} className="mr-2" /> Web
+                          <Button 
+                            variant="outline" 
+                            className="h-10 text-[10px] font-black uppercase" 
+                            onClick={() => {
+                              if (onLoadStudio && htmlCode) {
+                                onLoadStudio("Generated Game", htmlCode);
+                              }
+                              if (onSwitchTab) {
+                                onSwitchTab("studio");
+                              }
+                            }}
+                          >
+                            <Play size={14} className="mr-2" /> Студия
                           </Button>
                         )}
                         {deployState.repoUrl && (

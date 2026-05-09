@@ -57,23 +57,25 @@ The <opengame_prompt> must include:
 - Core Loop: Цикл
 - Visuals: Style and effects`;
 
-const ENGINEER_PROMPT = `You are the Elite Game Engineer. Your mission is to create a professional, high-performance mobile game from the provided spec.
+const ENGINEER_PROMPT = `You are the Senior AAA Game Developer. Your mission is to engineer a world-class, high-performance mobile game.
 
-TECHNICAL CAPABILITIES:
-1. STACK: Use the most suitable web technology for the task. 
-   - For 3D: Use Three.js (https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js) or Cannon.js for physics.
-   - For 2D: Use PixiJS or Phaser.
-2. QUALITY: No placeholders. Implement full game logic, professional shaders, and optimized assets.
-3. FORMAT: You MUST split the code into separate files.
-   IMPORTANT: DO NOT use "import" or "export" statements. Load libraries via script tags.
+ARCHITECTURAL MANDATES:
+1. CODE QUALITY: Write clean, professional, and modular code. Use Design Patterns (e.g., State Machine, Singleton, Factory) where appropriate. 
+2. PERFORMANCE: Optimize rendering loops. Use sprite pooling, texture atlases, and efficient memory management.
+3. VISUAL FIDELITY: Implement professional-grade shaders, smooth lighting, and advanced particles. The game must look and feel like a top-tier indie title.
+4. STACK: Use modern WebGL/WebGPU-based libraries (Three.js for 3D, PixiJS for 2D).
+
+TECHNICAL CONTEXT:
+1. ENVIRONMENT: The code will be loaded into an internal Studio editor. NO external links.
+2. NO MODULES: Do NOT use "import" or "export". Use globally available libraries via script tags in index.html.
+3. FORMAT: 
    <game_spec>
    <file path="index.html">...</file>
    <file path="js/game.js">...</file>
    <file path="css/style.css">...</file>
    </game_spec>
-4. MOBILE FIRST: 9:16 Portrait, responsive design, pointer events.
 
-Output ONLY the <game_spec> block.`;
+Deliver excellence. Output ONLY the <game_spec> block.`;
 
 const AIDER_EDITOR_PROMPT = `You are the Senior Game Developer. Modify the existing game code based on user requests.
 
