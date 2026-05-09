@@ -198,9 +198,39 @@ const server = http.createServer(async (req, res) => {
 
           if (fetchRes.ok) {
             console.log(`[Proxy] Success using ${provider}!`);
-            res.writeHead(fetchRes.status, { 'Content-Type': 'application/json' });
-            const data = await fetchRes.arrayBuffer();
-            res.end(Buffer.from(data));
+
+            // Forward the real Content-Type so the OpenAI SDK inside the CLI
+            // can correctly detect streaming (text/event-stream) vs JSON.
+            const contentType = fetchRes.headers.get('Content-Type') || 'application/json';
+            const isStream = contentType.includes('event-stream');
+
+            if (isStream && fetchRes.body) {
+              // Transparent streaming passthrough — do NOT buffer.
+              // The OpenAI SDK reads each SSE chunk as it arrives.
+              res.writeHead(fetchRes.status, {
+                'Content-Type': contentType,
+                'Transfer-Encoding': 'chunked',
+                'Cache-Control': 'no-cache',
+              });
+              // Node.js fetch body is a ReadableStream — pipe it chunk by chunk.
+              const reader = fetchRes.body.getReader();
+              const pump = async () => {
+                while (true) {
+                  const { done, value } = await reader.read();
+                  if (done) { res.end(); break; }
+                  res.write(Buffer.from(value));
+                }
+              };
+              pump().catch((err) => {
+                console.error('[Proxy] Streaming pipe error:', err.message);
+                res.end();
+              });
+            } else {
+              // Non-streaming: buffer and forward as usual.
+              res.writeHead(fetchRes.status, { 'Content-Type': contentType });
+              const data = await fetchRes.arrayBuffer();
+              res.end(Buffer.from(data));
+            }
             return;
           } else {
             const errText = await fetchRes.text();
