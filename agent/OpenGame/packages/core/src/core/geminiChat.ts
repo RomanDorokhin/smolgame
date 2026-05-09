@@ -77,6 +77,7 @@ function isValidResponse(response: GenerateContentResponse): boolean {
   }
 
   if (response.candidates === undefined || response.candidates.length === 0) {
+    console.log(`[GeminiChat] isValidResponse: rejected because no candidates`);
     return false;
   }
 
@@ -85,7 +86,11 @@ function isValidResponse(response: GenerateContentResponse): boolean {
   }
 
   const content = response.candidates[0]?.content;
-  return content !== undefined && isValidContent(content);
+  const validContent = content !== undefined && isValidContent(content);
+  if (!validContent) {
+     console.log(`[GeminiChat] isValidResponse: rejected because invalid content. parts length=${content?.parts?.length}`);
+  }
+  return validContent;
 }
 
 export function isValidNonThoughtTextPart(part: Part): boolean {
@@ -636,13 +641,14 @@ export class GeminiChat {
     // We throw an error only when there's no tool call AND:
     // - No finish reason, OR
     // - Empty response text (e.g., only thoughts with no actual content)
+    console.log(`[GeminiChat] Stream Validation Check: hasToolCall=${hasToolCall}, hasFinishReason=${hasFinishReason}, contentText.length=${contentText?.length}`);
     if (!hasToolCall && (!hasFinishReason || !contentText)) {
       if (!hasFinishReason) {
         throw new InvalidStreamError(
           'Model stream ended without a finish reason.',
           'NO_FINISH_REASON',
         );
-      } else {
+        console.log(`[GeminiChat] Throwing InvalidStreamError: hasToolCall is false and contentText is empty! allModelParts.length=${allModelParts.length}`);
         throw new InvalidStreamError(
           'Model stream ended with empty response text.',
           'NO_RESPONSE_TEXT',
