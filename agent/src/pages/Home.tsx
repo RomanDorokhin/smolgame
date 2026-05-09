@@ -5,11 +5,14 @@ import { ChatInput } from "@/components/ChatInput";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
-import { Menu, Sparkles, Github, Layout, MessageSquare, Play, Pencil, RotateCcw, X, ChevronDown, ChevronUp, Key, Trash2 } from "lucide-react";
+import { Menu, Sparkles, Github, Layout, MessageSquare, Play, Pencil, RotateCcw, X, ChevronDown, ChevronUp, Key, Trash2, Save, FileCode, Monitor, Smartphone, Maximize2, ExternalLink, ArrowLeft, Loader2, CheckCircle2 } from "lucide-react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { SmolGameAPI } from "@/lib/smolgame-api";
 import { Component, type ReactNode } from "react";
 import type { ChatSettings, APIProvider } from "@/types/chat";
+import Editor from "@monaco-editor/react";
+import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
+import { Progress } from "@/components/ui/progress";
 
 function loadSettings(): ChatSettings {
   const saved = localStorage.getItem("smol_chat_settings_v3");
@@ -60,6 +63,8 @@ export default function Home() {
   });
   const [expandedProvider, setExpandedProvider] = useState<APIProvider | null>(null);
   const [isCleaning, setIsCleaning] = useState(false);
+  const [publishProgress, setPublishProgress] = useState<{ status: string; progress: number } | null>(null);
+  const [studioMode, setStudioMode] = useState<"code" | "preview" | "split">("split");
   const bottomRef = useRef<HTMLDivElement>(null);
 
   // Сохраняем состояние Студии
@@ -279,223 +284,233 @@ export default function Home() {
                         />
                       ))}
                       {isRunning && step && (
-                        <div className="flex items-center gap-3 py-4 text-[#a3b8d4] animate-pulse">
-                          <div className="w-1.5 h-1.5 rounded-full bg-[#a3b8d4] animate-bounce" />
-                          <span className="text-[11px] font-bold uppercase tracking-tighter">{step}</span>
-                        </div>
-                      )}
-                      <div ref={bottomRef} />
+                        <div className="flex items-center gap-3 py-4 text            ) : (
+              <div className="h-full flex flex-col bg-[#0a0b0e]">
+                {/* Studio Header / Breadcrumbs */}
+                <div className="flex items-center justify-between px-6 py-4 border-b border-white/5 bg-[#0d0e14]">
+                  <div className="flex items-center gap-4">
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      onClick={() => setStudioGame(null)}
+                      className="h-9 w-9 p-0 rounded-xl bg-white/5 text-white/40 hover:text-white"
+                    >
+                      <ArrowLeft size={16} />
+                    </Button>
+                    <div className="flex flex-col">
+                      <div className="flex items-center gap-2 text-[10px] text-white/30 uppercase font-black tracking-widest">
+                        <span>Студия</span>
+                        <span>/</span>
+                        <span className="text-[#a3b8d4]">{studioGame ? "Редактор" : "Мои игры"}</span>
+                      </div>
+                      <h2 className="text-sm font-bold text-white truncate max-w-[200px]">
+                        {studioGame ? studioGame.title : "Ваша галерея"}
+                      </h2>
+                    </div>
+                  </div>
+
+                  {studioGame && (
+                    <div className="flex items-center gap-2">
+                      <div className="flex bg-[#13141a] p-1 rounded-xl border border-white/5 mr-4">
+                        <button 
+                          onClick={() => setStudioMode("code")}
+                          className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${studioMode === "code" ? "bg-white/10 text-white" : "text-white/40"}`}
+                        >
+                          Код
+                        </button>
+                        <button 
+                          onClick={() => setStudioMode("split")}
+                          className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${studioMode === "split" ? "bg-white/10 text-white" : "text-white/40"}`}
+                        >
+                          Сплит
+                        </button>
+                        <button 
+                          onClick={() => setStudioMode("preview")}
+                          className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${studioMode === "preview" ? "bg-white/10 text-white" : "text-white/40"}`}
+                        >
+                          Превью
+                        </button>
+                      </div>
+
+                      <Button 
+                        variant="ghost"
+                        size="sm"
+                        className="h-9 px-3 bg-white/5 border border-white/5 text-[9px] font-black uppercase text-[#a3b8d4] rounded-xl"
+                        onClick={() => {
+                          const blob = new Blob([studioGame.code], { type: 'text/html' });
+                          window.open(URL.createObjectURL(blob), '_blank');
+                        }}
+                      >
+                        <ExternalLink size={14} className="mr-2" /> Тест
+                      </Button>
+
+                      <Button 
+                        disabled={!!publishProgress}
+                        className="h-9 px-4 bg-green-600 hover:bg-green-700 text-white text-[9px] font-black uppercase tracking-widest rounded-xl shadow-lg shadow-green-900/20"
+                        onClick={async () => {
+                          if (!window.confirm("Опубликовать игру в общую ленту?")) return;
+                          setPublishProgress({ status: "Инициализация...", progress: 10 });
+                          try {
+                            setPublishProgress({ status: "Сборка репозитория...", progress: 30 });
+                            await new Promise(r => setTimeout(r, 800));
+                            setPublishProgress({ status: "Загрузка кода...", progress: 60 });
+                            
+                            await SmolGameAPI.publishGame({
+                              gameTitle: studioGame.title,
+                              files: [{ path: "index.html", content: studioGame.code }],
+                              gameDescription: "Создано и отполировано в Студии SmolGame."
+                            });
+                            
+                            setPublishProgress({ status: "Активация GitHub Pages...", progress: 90 });
+                            await new Promise(r => setTimeout(r, 1000));
+                            setPublishProgress({ status: "Готово!", progress: 100 });
+                            setTimeout(() => setPublishProgress(null), 2000);
+                            loadMyGames();
+                          } catch (err) {
+                            alert("Ошибка: " + (err as Error).message);
+                            setPublishProgress(null);
+                          }
+                        }}
+                      >
+                        {publishProgress ? (
+                          <><Loader2 size={14} className="mr-2 animate-spin" /> {publishProgress.status}</>
+                        ) : (
+                          <><Play size={14} className="mr-2" /> Опубликовать</>
+                        )}
+                      </Button>
                     </div>
                   )}
+
+                  {!studioGame && (
+                    <Button variant="ghost" size="sm" onClick={loadMyGames} className="text-[#a3b8d4] text-[10px] font-black uppercase">Обновить</Button>
+                  )}
                 </div>
-              </ScrollArea>
-            ) : (
-              <ScrollArea className="h-full bg-[#0d0e14]">
-                <div className="max-w-4xl mx-auto px-6 py-10 h-full flex flex-col">
+
+                {publishProgress && (
+                  <div className="px-6 py-2 bg-green-500/5 border-b border-white/5">
+                    <Progress value={publishProgress.progress} className="h-1 bg-green-500/10" />
+                  </div>
+                )}
+
+                <div className="flex-1 overflow-hidden">
                   {studioGame ? (
-                    <div className="flex-1 flex flex-col gap-6 animate-in slide-in-from-right duration-300">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-4">
-                          <Button 
-                            variant="ghost" 
-                            size="sm" 
-                            onClick={() => setStudioGame(null)}
-                            className="w-10 h-10 p-0 rounded-xl bg-white/5 text-[#a3b8d4]"
-                          >
-                            <RotateCcw size={18} className="-rotate-90" />
-                          </Button>
-                          <div>
-                            <h2 className="text-xl font-black">{studioGame.title}</h2>
-                            <p className="text-[10px] text-white/40 uppercase tracking-widest font-black">Режим редактирования</p>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Button 
-                            variant="ghost"
-                            size="sm"
-                            className="h-10 px-4 text-[10px] font-black uppercase tracking-widest text-[#a3b8d4] hover:text-white bg-white/5 border border-white/5 rounded-xl transition-all"
-                            onClick={() => {
-                              const code = studioGame.code;
-                              const blob = new Blob([code], { type: 'text/html' });
-                              const url = URL.createObjectURL(blob);
-                              window.open(url, '_blank');
-                            }}
-                          >
-                            <ExternalLink size={14} className="mr-2" /> Тест
-                          </Button>
-                          <Button 
-                            className="bg-purple-600 hover:bg-purple-700 text-white text-[10px] font-black uppercase tracking-widest h-10 px-6 rounded-xl"
-                            onClick={() => {
-                              const repoMatch = studioGame.code.match(/https:\/\/github\.com\/([^/]+\/[^/"]+)/);
-                              const repo = repoMatch ? repoMatch[1] : undefined;
-                              setActiveTab("chat");
-                              sendMessage(`Улучши игру "${studioGame.title}". Добавь в неё 'Сок' (Juice) и сделай геймплей мирового уровня.`, repo);
-                            }}
-                          >
-                            <Sparkles size={14} className="mr-2" /> Улучшить
-                          </Button>
-                          <Button 
-                            className="bg-green-600 hover:bg-green-700 text-white text-[10px] font-black uppercase tracking-widest h-10 px-6 rounded-xl shadow-[0_8px_16px_-4px_rgba(34,197,94,0.4)]"
-                            onClick={async () => {
-                              if (!window.confirm("Опубликовать эту версию в общую ленту SmolGame?")) return;
-                              try {
-                                const btn = document.activeElement as HTMLButtonElement;
-                                btn.disabled = true;
-                                btn.innerText = "ПУБЛИКАЦИЯ...";
-                                
-                                await SmolGameAPI.publishGame({
-                                  gameTitle: studioGame.title,
-                                  files: [{ path: "index.html", content: studioGame.code }],
-                                  gameDescription: "Опубликовано из Студии SmolGame."
-                                });
-                                
-                                alert("Игра успешно опубликована в ленту!");
-                                loadMyGames();
-                              } catch (err) {
-                                alert("Ошибка публикации: " + (err as Error).message);
-                              } finally {
-                                const btn = document.activeElement as HTMLButtonElement;
-                                if (btn) {
-                                  btn.disabled = false;
-                                  btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-play mr-2"><polygon points="6 3 20 12 6 21 6 3"/></svg> ОПУБЛИКОВАТЬ`;
-                                }
-                              }
-                            }}
-                          >
-                            <Play size={14} className="mr-2" /> ОПУБЛИКОВАТЬ
-                          </Button>
-                        </div>
-                      </div>
-
-                      <div className="flex-1 flex justify-center min-h-[600px] py-4">
-                        <div className="relative w-full max-w-[400px] aspect-[9/16] rounded-[2rem] overflow-hidden bg-black border-[8px] border-[#13141a] shadow-2xl shadow-blue-900/20 group">
-                          <iframe
-                            title="Studio Preview"
-                            srcDoc={studioGame.code}
-                            className="w-full h-full border-none bg-[#0a0b0e]"
-                            sandbox="allow-scripts allow-pointer-lock allow-same-origin"
-                          />
-                          <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <div className="bg-black/80 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/10 text-[9px] font-bold text-[#22c55e] uppercase tracking-widest">Mobile Preview</div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  ) : (
-                    <>
-                      <div className="flex items-center justify-between mb-8">
-                        <div>
-                          <h2 className="text-2xl font-black mb-1">Студия</h2>
-                          <p className="text-xs text-white/40 uppercase tracking-widest font-bold">Ваши опубликованные игры</p>
-                        </div>
-                        <Button variant="ghost" size="sm" onClick={loadMyGames} className="text-[#a3b8d4]">Обновить</Button>
-                      </div>
-                      {loadingGames ? (
-                        <div className="flex items-center justify-center py-20">
-                          <div className="w-6 h-6 border-2 border-[#a3b8d4] border-t-transparent rounded-full animate-spin" />
-                        </div>
-                      ) : myGames.length > 0 ? (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          {myGames.map((game) => (
-                            <div key={game.id} className="group relative flex flex-col p-5 rounded-2xl bg-[#13141a] border border-white/5 hover:border-white/10 transition-all">
-                              <div className="flex items-start justify-between gap-4 mb-4">
-                                <div className="flex-1 min-w-0">
-                                  <h3 className="font-bold text-lg text-white group-hover:text-blue-400 transition-colors truncate">{game.title}</h3>
-                                  <p className="text-xs text-white/40 line-clamp-2 mt-1">{game.description || "Без описания"}</p>
-                                </div>
-                                <div className="w-14 h-14 rounded-xl bg-white/5 flex items-center justify-center text-2xl shrink-0">
-                                  {game.genreEmoji || "🎮"}
-                                </div>
-                              </div>
-                              <div className="flex items-center gap-2 mt-auto">
-                                <Button
-                                  className="flex-1 bg-white/5 hover:bg-white/10 text-white text-[10px] font-black uppercase tracking-widest h-10 rounded-xl"
-                                  onClick={() => window.open(game.url, "_blank")}
-                                >
-                                  <Play size={14} className="mr-2" /> Играть
-                                </Button>
-                                <Button
-                                  className="flex-1 bg-blue-600/10 hover:bg-blue-600/20 text-blue-400 text-[10px] font-black uppercase tracking-widest h-10 rounded-xl border border-blue-500/10"
-                                  onClick={async () => {
-                                    setStudioGame({ title: game.title, code: "<!-- Loading code from GitHub... -->" });
-                                    setActiveTab("studio");
-                                    try {
-                                      const url = new URL(game.url);
-                                      let fileContent = "";
-
-                                      // Поддержка как старых GitHub-игр, так и новых локальных
-                                      if (url.hostname.includes('github.io')) {
-                                        const owner = url.hostname.split('.')[0];
-                                        const repo = url.pathname.split('/').filter(Boolean)[0];
-                                        const repoFullName = `${owner}/${repo}`;
-                                        const fileData = await SmolGameAPI.getGameFileFromGithub(repoFullName, "index.html");
-                                        fileContent = fileData?.content || "";
-                                      } else {
-                                        // Локальный сервер
-                                        const fetchUrl = game.url.endsWith('/') ? game.url + 'index.html' : game.url + '/index.html';
-                                        const response = await fetch(fetchUrl);
-                                        if (response.ok) fileContent = await response.text();
-                                      }
-
-                                      if (fileContent) {
-                                        setStudioGame({ title: game.title, code: fileContent });
-                                      } else {
-                                        setStudioGame({ title: game.title, code: "<!-- Error: Could not load code from server. Check if index.html exists. -->" });
-                                      }
-                                    } catch (err) {
-                                      setStudioGame({ title: game.title, code: "<!-- Ошибка загрузки кода с GitHub -->" });
-                                    }
-                                  }}
-                                >
-                                  <Pencil size={14} className="mr-2" /> Править
-                                </Button>
-                                <Button
-                                  className="flex-1 bg-purple-600/10 hover:bg-purple-600/20 text-purple-400 text-[10px] font-black uppercase tracking-widest h-10 rounded-xl border border-purple-500/10"
-                                  onClick={() => {
-                                    const repo = game.url ? game.url.split('/').filter(Boolean).slice(-1)[0] : undefined;
-                                    setActiveTab("chat");
-                                    sendMessage(`Улучши игру "${game.title}". Добавь в неё 'Сок' (Juice): частицы, спецэффекты, систему очков, уровни сложности и сделай геймплей более глубоким и интересным. Отполируй визуальную часть и управление.`, repo);
-                                  }}
-                                >
-                                  <Sparkles size={14} className="mr-2" /> Улучшить
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  className="w-10 h-10 p-0 shrink-0 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-xl border border-red-500/10"
-                                  onClick={async () => {
-                                    if (window.confirm("Удалить игру навсегда? Это удалит её из базы и сотрет репозиторий с GitHub.")) {
-                                      try {
-                                        await SmolGameAPI.deleteGame(game.id);
-                                        loadMyGames();
-                                      } catch (err) {
-                                        alert("Ошибка при удалении: " + (err as Error).message);
-                                      }
-                                    }
-                                  }}
-                                >
-                                  <Trash2 size={16} />
-                                </Button>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <div className="py-20 text-center border-2 border-dashed border-white/5 rounded-3xl">
-                          <Layout className="w-12 h-12 text-white/10 mx-auto mb-4" />
-                          <p className="text-white/40 font-medium text-sm">У вас пока нет опубликованных игр</p>
-                          <Button 
-                            variant="link" 
-                            onClick={() => setActiveTab("chat")}
-                            className="text-blue-400 text-xs font-black uppercase tracking-widest mt-2"
-                          >
-                            Создать первую игру
-                          </Button>
-                        </div>
+                    <PanelGroup direction="horizontal" className="h-full">
+                      {(studioMode === "code" || studioMode === "split") && (
+                        <>
+                          <Panel defaultSize={50} minSize={20}>
+                            <Editor
+                              theme="vs-dark"
+                              defaultLanguage="html"
+                              value={studioGame.code}
+                              onChange={(val) => setStudioGame({ ...studioGame, code: val || "" })}
+                              options={{
+                                minimap: { enabled: false },
+                                fontSize: 13,
+                                lineNumbers: "on",
+                                roundedSelection: true,
+                                scrollBeyondLastLine: false,
+                                automaticLayout: true,
+                                padding: { top: 20 },
+                                fontFamily: "JetBrains Mono, Menlo, monospace"
+                              }}
+                            />
+                          </Panel>
+                          {studioMode === "split" && <PanelResizeHandle className="w-1 bg-white/5 hover:bg-blue-500/50 transition-colors" />}
+                        </>
                       )}
-                    </>
+                      {(studioMode === "preview" || studioMode === "split") && (
+                        <Panel defaultSize={50} minSize={20}>
+                          <div className="h-full flex flex-col items-center justify-center bg-[#07080a] p-8">
+                            <div className="relative w-full max-w-[380px] aspect-[9/16] rounded-[2.5rem] border-[10px] border-[#1a1b26] bg-black shadow-2xl overflow-hidden group">
+                              <iframe
+                                title="Studio Live Preview"
+                                srcDoc={studioGame.code}
+                                className="w-full h-full border-none"
+                                sandbox="allow-scripts allow-pointer-lock allow-same-origin"
+                              />
+                              <div className="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-6 bg-[#1a1b26] rounded-b-2xl z-10" />
+                            </div>
+                            <div className="mt-6 flex items-center gap-4 text-white/20">
+                              <Smartphone size={16} />
+                              <span className="text-[10px] font-black uppercase tracking-widest">Mobile Viewport</span>
+                            </div>
+                          </div>
+                        </Panel>
+                      )}
+                    </PanelGroup>
+                  ) : (
+                    <ScrollArea className="h-full">
+                      <div className="max-w-5xl mx-auto px-6 py-10">
+                        {loadingGames ? (
+                          <div className="flex items-center justify-center py-20">
+                            <div className="w-6 h-6 border-2 border-[#a3b8d4] border-t-transparent rounded-full animate-spin" />
+                          </div>
+                        ) : myGames.length > 0 ? (
+                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            {myGames.map((game) => (
+                              <div key={game.id} className="group flex flex-col p-6 rounded-3xl bg-[#13141a] border border-white/5 hover:border-blue-500/20 transition-all hover:translate-y-[-4px]">
+                                <div className="flex items-start justify-between mb-6">
+                                  <div className="w-16 h-16 rounded-2xl bg-white/5 flex items-center justify-center text-3xl shrink-0 group-hover:scale-110 transition-transform">
+                                    {game.genreEmoji || "🎮"}
+                                  </div>
+                                  <div className="flex gap-1">
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      className="w-9 h-9 p-0 rounded-xl bg-red-500/5 text-red-500/40 hover:text-red-500 hover:bg-red-500/10"
+                                      onClick={async () => {
+                                        if (window.confirm("Удалить игру?")) {
+                                          await SmolGameAPI.deleteGame(game.id);
+                                          loadMyGames();
+                                        }
+                                      }}
+                                    >
+                                      <Trash2 size={16} />
+                                    </Button>
+                                  </div>
+                                </div>
+                                <h3 className="font-black text-lg text-white mb-2 group-hover:text-blue-400 transition-colors">{game.title}</h3>
+                                <p className="text-xs text-white/30 line-clamp-2 mb-8 leading-relaxed">{game.description || "Готовая к игре разработка."}</p>
+                                
+                                <div className="flex items-center gap-2 mt-auto pt-4 border-t border-white/5">
+                                  <Button 
+                                    className="flex-1 h-10 bg-white/5 hover:bg-white/10 text-white text-[9px] font-black uppercase rounded-xl"
+                                    onClick={() => window.open(game.url, "_blank")}
+                                  >
+                                    Играть
+                                  </Button>
+                                  <Button 
+                                    className="flex-1 h-10 bg-blue-600/10 hover:bg-blue-600/20 text-blue-400 text-[9px] font-black uppercase rounded-xl border border-blue-500/10"
+                                    onClick={async () => {
+                                      setStudioGame({ title: game.title, code: "<!-- Загрузка кода... -->" });
+                                      try {
+                                        const response = await fetch(game.url.endsWith('/') ? game.url + 'index.html' : game.url + '/index.html');
+                                        const code = await response.text();
+                                        setStudioGame({ title: game.title, code });
+                                      } catch {
+                                        setStudioGame({ title: game.title, code: "<!-- Ошибка загрузки кода -->" });
+                                      }
+                                    }}
+                                  >
+                                    Править
+                                  </Button>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="py-20 text-center border-2 border-dashed border-white/5 rounded-[3rem]">
+                            <Layout className="w-16 h-16 text-white/5 mx-auto mb-6" />
+                            <h3 className="text-xl font-bold mb-2">Здесь пока пусто</h3>
+                            <p className="text-white/30 text-sm max-w-xs mx-auto mb-8">Создайте свою первую игру в чате с Агентом!</p>
+                            <Button onClick={() => setActiveTab("chat")} className="bg-blue-600 hover:bg-blue-700 text-white font-black uppercase tracking-widest px-8 rounded-2xl">В Чат</Button>
+                          </div>
+                        )}
+                      </div>
+                    </ScrollArea>
                   )}
                 </div>
-              </ScrollArea>
+              </div>
             )}
           </div>
 
