@@ -54,16 +54,17 @@ const server = http.createServer(async (req, res) => {
       // т.к. npm run start требует package.json в cwd (tempGameDir пустая).
       const cliBin = path.join(openGameDir, 'dist', 'cli.js');
 
+      const formattedKey = `sk-${sessionId}`;
       const envVars = {
         ...process.env,
         // OpenGame читает рабочую папку из QWEN_WORKING_DIR или process.cwd()
         QWEN_WORKING_DIR: tempGameDir,
         // Провайдер для LLM — проксируем через наш 127.0.0.1:3001
         OPENGAME_REASONING_PROVIDER: 'openai-compat',
-        OPENGAME_REASONING_API_KEY: sessionId,
+        OPENGAME_REASONING_API_KEY: formattedKey,
         OPENGAME_REASONING_BASE_URL: 'http://127.0.0.1:8880/api/llm-proxy',
         OPENGAME_REASONING_MODEL: 'dynamic-model',
-        OPENAI_API_KEY: sessionId,
+        OPENAI_API_KEY: formattedKey,
         OPENAI_BASE_URL: 'http://127.0.0.1:8880/api/llm-proxy',
         // Выключаем интерактивный терминал
         CI: '1',
@@ -84,7 +85,7 @@ const server = http.createServer(async (req, res) => {
         '--yolo',
         '--debug',
         '--auth-type', 'openai',
-        '--openai-api-key', sessionId,
+        '--openai-api-key', formattedKey,
         '--openai-base-url', 'http://127.0.0.1:8880/api/llm-proxy'
       ], {
         cwd: tempGameDir,
@@ -133,7 +134,12 @@ const server = http.createServer(async (req, res) => {
       return;
     }
 
-    const sessionId = authHeader.replace('Bearer ', '').trim();
+    // Извлекаем sessionId, убирая 'Bearer ' и возможный префикс 'sk-'
+    let sessionId = authHeader.replace('Bearer ', '').trim();
+    if (sessionId.startsWith('sk-')) {
+      sessionId = sessionId.substring(3);
+    }
+    
     const session = sessions.get(sessionId);
 
     if (!session) {
