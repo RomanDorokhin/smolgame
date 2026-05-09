@@ -830,8 +830,11 @@ export class OpenAIContentConverter {
         const completedToolCalls =
           this.streamingToolCallParser.getCompletedToolCalls();
 
+        console.log(`[Converter] stream complete. finish_reason=${choice.finish_reason}, completedToolCalls.length=${completedToolCalls.length}`);
+
         for (const toolCall of completedToolCalls) {
           if (toolCall.name) {
+            console.log(`[Converter] emitting tool call: ${toolCall.name}, args length: ${JSON.stringify(toolCall.args).length}`);
             parts.push({
               functionCall: {
                 id:
@@ -841,6 +844,8 @@ export class OpenAIContentConverter {
                 args: toolCall.args,
               },
             });
+          } else {
+             console.log(`[Converter] skipped tool call due to missing name! index=${toolCall.index}, id=${toolCall.id}`);
           }
         }
 
