@@ -227,9 +227,13 @@ export default function Home() {
               {activeTab === "chat" && messages.length > 0 && (
                 <Button variant="ghost" size="sm"
                   className="h-9 px-3 bg-[#13141a] border border-white/5 rounded-xl text-[9px] font-black uppercase tracking-widest text-white/30 hover:text-white transition-all ml-2"
-                  onClick={reset}
+                  onClick={() => {
+                    if (window.confirm("Очистить текущий чат и начать заново?")) {
+                      reset();
+                    }
+                  }}
                 >
-                  <RotateCcw size={12} className="mr-2" /> Новый
+                  <RotateCcw size={12} className="mr-2" /> Стереть чат
                 </Button>
               )}
             </div>
@@ -307,15 +311,58 @@ export default function Home() {
                         </div>
                         <div className="flex items-center gap-2">
                           <Button 
-                            className="bg-blue-600 hover:bg-blue-700 text-white text-[10px] font-black uppercase tracking-widest h-10 px-6 rounded-xl"
-                              onClick={() => {
-                                const repoMatch = studioGame.code.match(/https:\/\/github\.com\/([^/]+\/[^/"]+)/);
-                                const repo = repoMatch ? repoMatch[1] : undefined;
-                                setActiveTab("chat");
-                                sendMessage(`Добавь в игру "${studioGame.title}" новую функцию: `, repo);
-                              }}
+                            variant="ghost"
+                            size="sm"
+                            className="h-10 px-4 text-[10px] font-black uppercase tracking-widest text-[#a3b8d4] hover:text-white bg-white/5 border border-white/5 rounded-xl transition-all"
+                            onClick={() => {
+                              const code = studioGame.code;
+                              const blob = new Blob([code], { type: 'text/html' });
+                              const url = URL.createObjectURL(blob);
+                              window.open(url, '_blank');
+                            }}
                           >
-                            <Pencil size={14} className="mr-2" /> Доработать
+                            <ExternalLink size={14} className="mr-2" /> Тест
+                          </Button>
+                          <Button 
+                            className="bg-purple-600 hover:bg-purple-700 text-white text-[10px] font-black uppercase tracking-widest h-10 px-6 rounded-xl"
+                            onClick={() => {
+                              const repoMatch = studioGame.code.match(/https:\/\/github\.com\/([^/]+\/[^/"]+)/);
+                              const repo = repoMatch ? repoMatch[1] : undefined;
+                              setActiveTab("chat");
+                              sendMessage(`Улучши игру "${studioGame.title}". Добавь в неё 'Сок' (Juice) и сделай геймплей мирового уровня.`, repo);
+                            }}
+                          >
+                            <Sparkles size={14} className="mr-2" /> Улучшить
+                          </Button>
+                          <Button 
+                            className="bg-green-600 hover:bg-green-700 text-white text-[10px] font-black uppercase tracking-widest h-10 px-6 rounded-xl shadow-[0_8px_16px_-4px_rgba(34,197,94,0.4)]"
+                            onClick={async () => {
+                              if (!window.confirm("Опубликовать эту версию в общую ленту SmolGame?")) return;
+                              try {
+                                const btn = document.activeElement as HTMLButtonElement;
+                                btn.disabled = true;
+                                btn.innerText = "ПУБЛИКАЦИЯ...";
+                                
+                                await SmolGameAPI.publishGame({
+                                  gameTitle: studioGame.title,
+                                  files: [{ path: "index.html", content: studioGame.code }],
+                                  gameDescription: "Опубликовано из Студии SmolGame."
+                                });
+                                
+                                alert("Игра успешно опубликована в ленту!");
+                                loadMyGames();
+                              } catch (err) {
+                                alert("Ошибка публикации: " + (err as Error).message);
+                              } finally {
+                                const btn = document.activeElement as HTMLButtonElement;
+                                if (btn) {
+                                  btn.disabled = false;
+                                  btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-play mr-2"><polygon points="6 3 20 12 6 21 6 3"/></svg> ОПУБЛИКОВАТЬ`;
+                                }
+                              }
+                            }}
+                          >
+                            <Play size={14} className="mr-2" /> ОПУБЛИКОВАТЬ
                           </Button>
                         </div>
                       </div>
