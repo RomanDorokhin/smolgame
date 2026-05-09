@@ -278,7 +278,7 @@ const server = http.createServer(async (req, res) => {
   res.end('Not found');
 });
 
-const PORT = process.env.PORT || 8880;
+const PORT = 8880; // Всегда используем 8880 для OpenGame прокси
 
 server.on('error', (err) => {
   if (err.code === 'EADDRINUSE') {
