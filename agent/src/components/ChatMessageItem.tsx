@@ -160,11 +160,13 @@ export function ChatMessageItem({ message, onSend, onSwitchTab, isLast }: ChatMe
                   <Button
                     className="w-full h-14 bg-[#22c55e] hover:bg-[#16a34a] text-white font-black uppercase tracking-[0.3em] text-[14px] rounded-2xl gap-3 shadow-[0_12px_24px_-6px_rgba(34,197,94,0.5)]"
                     onClick={() => {
-                      if (onLoadStudio && htmlCode) {
+                      console.log("Play button clicked. Code length:", htmlCode?.length);
+                      if (htmlCode && onLoadStudio) {
                         onLoadStudio("Generated Game", htmlCode);
-                      }
-                      if (onSwitchTab) {
-                        onSwitchTab("studio");
+                        if (onSwitchTab) onSwitchTab("studio");
+                      } else {
+                        console.error("Cannot play: htmlCode or onLoadStudio is missing");
+                        alert("Код игры еще не готов или произошла ошибка загрузки.");
                       }
                     }}
                   >
