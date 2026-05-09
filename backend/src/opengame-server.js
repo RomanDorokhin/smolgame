@@ -87,12 +87,12 @@ const server = http.createServer(async (req, res) => {
 
       const child = spawn('node', [
         cliBin, 
-        '--prompt', fullPrompt, 
         '--yolo',
         '--debug',
         '--auth-type', 'openai',
         '--openai-api-key', formattedKey,
-        '--openai-base-url', 'http://127.0.0.1:8880/api/llm-proxy'
+        '--openai-base-url', 'http://127.0.0.1:8880/api/llm-proxy',
+        fullPrompt
       ], {
         cwd: tempGameDir,
         env: envVars,
