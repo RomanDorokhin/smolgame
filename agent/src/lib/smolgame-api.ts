@@ -195,11 +195,11 @@ export class SmolGameAPI {
     prompt: string;
     keys: Record<string, string>;
     providers: string[];
-  }): Promise<ReadableStreamDefaultReader<Uint8Array>> {
+    const webId = this.getWebId();
     const response = await fetch(`${API_BASE}/api/opengame/generate`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
+      body: JSON.stringify({ ...payload, sessionId: webId }),
     });
 
     if (!response.ok) {
