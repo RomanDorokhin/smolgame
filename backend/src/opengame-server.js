@@ -1,26 +1,18 @@
-import http from 'http';
-import fs from 'fs/promises';
-import { spawn } from 'child_process';
-import path from 'path';
-import os from 'os';
-import crypto from 'crypto';
-import dotenv from 'dotenv';
+const http = require('http');
+const { spawn } = require('child_process');
+const fs = require('fs');
+const path = require('path');
+const { parse } = require('url');
 
-dotenv.config();
-
+// Simple session store
 const sessions = new Map();
-// ТЕСТОВАЯ СЕССИЯ для ручной проверки
-sessions.set('test', { 
-  id: 'test', 
-  prompt: 'test',
-  providers: ['openrouter'],
-  keys: { openrouter: process.env.OPENROUTER_API_KEY }
-});
 
 const server = http.createServer(async (req, res) => {
+  const { pathname } = parse(req.url, true);
+
   // CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, DELETE');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
   if (req.method === 'OPTIONS') {
@@ -29,24 +21,19 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
-  // Parse JSON body helper
   const readJson = () => new Promise((resolve, reject) => {
-    let data = '';
-    req.on('data', chunk => data += chunk);
+    let body = '';
+    req.on('data', chunk => { body += chunk; });
     req.on('end', () => {
-      if (!data) return reject(new Error('Empty body'));
-      try { resolve(JSON.parse(data)); } catch (e) { reject(e); }
+      try { resolve(JSON.parse(body)); }
+      catch (e) { reject(e); }
     });
-    req.on('error', (err) => reject(err));
   });
 
-  const url = new URL(req.url, `http://${req.headers.host}`);
-  console.log(`[Server] ${req.method} ${url.pathname}`);
-
-  // 1. GENERATE OPEN GAME ROUTE
-  if (url.pathname === '/api/opengame/generate' && req.method === 'POST') {
+  if (pathname === '/api/opengame/generate' && req.method === 'POST') {
     try {
-      const { prompt, sessionId, providers, keys } = await readJson();
+      const body = await readJson();
+      const { prompt, keys, providers, sessionId } = body;
 
       if (!prompt || !sessionId) {
         res.writeHead(400);
@@ -54,17 +41,19 @@ const server = http.createServer(async (req, res) => {
         return;
       }
 
-      // Сохраняем сессию для прокси
-      sessions.set(sessionId, { id: sessionId, prompt, providers, keys });
+      // Сохраняем ключи для прокси
+      sessions.set(sessionId, { keys, providers });
 
-      const openGameDir = path.resolve('/root/smolgame-frontend/agent/OpenGame');
-      const tempGameDir = path.resolve(`/tmp/smolgame-game-${sessionId}`);
-      await fs.mkdir(tempGameDir, { recursive: true });
+      const tempGameDir = path.join('/tmp', `smolgame-game-${sessionId}`);
+      if (!fs.existsSync(tempGameDir)) fs.mkdirSync(tempGameDir, { recursive: true });
 
-      // Путь к собранному CLI
-      const cliBin = path.join(openGameDir, 'dist', 'cli.js');
+      const agentDir = '/root/smolgame-frontend/agent/OpenGame';
+      const cliBin = path.join(agentDir, 'dist/cli.js');
 
-      const formattedKey = `sk-${sessionId}`;
+      // Форматируем ключ для логов (скрываем часть)
+      const rawKey = keys?.openai || keys?.openrouter || '';
+      const formattedKey = rawKey; 
+
       const envVars = {
         ...process.env,
         QWEN_WORKING_DIR: tempGameDir,
@@ -85,6 +74,8 @@ const server = http.createServer(async (req, res) => {
 
       const fullPrompt = `${prompt}\n\n(IMPORTANT: You must write the ENTIRE game in a single index.html file including all CSS and JS, do not create separate files.)\n\n(CRITICAL: You MUST use the native JSON tool calling API to invoke tools. IGNORE any instructions above about using <tool_call> XML tags. If you output raw <tool_call> text, the system will crash.)`;
 
+      console.log(`[Server] POST /api/opengame/generate for session ${sessionId}`);
+
       const child = spawn('node', [
         cliBin, 
         '--yolo',
@@ -99,33 +90,50 @@ const server = http.createServer(async (req, res) => {
         env: envVars,
       });
 
-      child.stdout.on('data', (data) => res.write(data));
-      child.stderr.on('data', (data) => console.error(`[OpenGame Error]: ${data}`));
+      child.stdout.on('data', (data) => {
+        res.write(data);
+      });
 
-      child.on('close', async (code, signal) => {
-        sessions.delete(sessionId);
+      child.stderr.on('data', (data) => {
+        const str = data.toString();
+        if (str.includes('[OpenGame Error]')) {
+          console.error(`[CLI Error]: ${str}`);
+        }
+        res.write(data);
+      });
+
+      child.on('close', async (code) => {
         console.log(`[OpenGame] Process exited with code ${code}`);
-        try {
-          const indexPath = path.join(tempGameDir, 'index.html');
-          const finalCode = await fs.readFile(indexPath, 'utf-8');
-          res.write(`\n\n===OPEN_GAME_RESULT===\n${finalCode}`);
-        } catch (e) {
-          res.write(`\n\n===OPEN_GAME_RESULT_ERROR===\nCould not read index.html: ${e.message}`);
+        if (code === 0) {
+          try {
+            const htmlPath = path.join(tempGameDir, 'index.html');
+            if (fs.existsSync(htmlPath)) {
+              const content = fs.readFileSync(htmlPath, 'utf-8');
+              res.write(`\n\n[SUCCESS] Game generated! Length: ${content.length}\n`);
+            } else {
+              res.write(`\n\n[ERROR] index.html not found in ${tempGameDir}\n`);
+            }
+          } catch (e) {
+            res.write(`\n\n[ERROR] Failed to read result: ${e.message}\n`);
+          }
+        } else {
+          res.write(`\n\n[ERROR] OpenGame generation failed with code ${code}\n`);
         }
         res.end();
+        // sessions.delete(sessionId); // Keep for a while?
       });
 
     } catch (e) {
       console.error('[Generate Error]:', e);
-      res.writeHead(400);
-      res.end(JSON.stringify({ error: 'invalid request' }));
+      res.writeHead(500);
+      res.end(JSON.stringify({ error: e.message }));
     }
     return;
   }
 
-  // 2. LLM PROXY ROUTE
-  if (url.pathname.startsWith('/api/llm-proxy') && req.method === 'POST') {
-    const authHeader = req.headers['authorization'];
+  // LLM PROXY FOR OPENGAME
+  if (pathname === '/api/llm-proxy/chat/completions' && req.method === 'POST') {
+    const authHeader = req.headers['authorization'] || '';
     if (!authHeader) {
       res.writeHead(401);
       res.end(JSON.stringify({ error: 'No authorization header' }));
@@ -163,9 +171,14 @@ const server = http.createServer(async (req, res) => {
           headers["Authorization"] = `Bearer ${apiKey}`;
           headers["HTTP-Referer"] = "https://smolgame.ru";
           headers["X-Title"] = "SmolGame OpenGame Proxy";
-          // ВАЖНО: возвращаем жесткую модель, если пришла пустышка
           if (!finalBody.model || finalBody.model === 'dynamic-model') {
             finalBody.model = "anthropic/claude-3.5-sonnet";
+          }
+        } else if (provider === "openai") {
+          providerUrl = "https://api.openai.com/v1/chat/completions";
+          headers["Authorization"] = `Bearer ${apiKey}`;
+          if (!finalBody.model || finalBody.model === 'dynamic-model') {
+            finalBody.model = "gpt-4o";
           }
         }
 
