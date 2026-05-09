@@ -164,7 +164,7 @@ const server = http.createServer(async (req, res) => {
           headers["X-Title"] = "SmolGame OpenGame Proxy";
           // ВАЖНО: возвращаем жесткую модель, если пришла пустышка
           if (!finalBody.model || finalBody.model === 'dynamic-model') {
-            finalBody.model = "qwen/qwen-2.5-72b-instruct";
+            finalBody.model = "anthropic/claude-3.5-sonnet";
           }
         }
 
