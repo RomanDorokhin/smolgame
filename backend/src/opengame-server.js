@@ -41,7 +41,7 @@ const server = http.createServer(async (req, res) => {
         return;
       }
 
-      // Сохраняем ключи для прокси
+      // Сохраняем реальные ключи в сессию, индексируем по sessionId
       sessions.set(sessionId, { keys, providers });
 
       const tempGameDir = path.join('/tmp', `smolgame-game-${sessionId}`);
@@ -50,16 +50,18 @@ const server = http.createServer(async (req, res) => {
       const agentDir = '/root/smolgame-frontend/agent/OpenGame';
       const cliBin = path.join(agentDir, 'dist/cli.js');
 
-      const formattedKey = keys?.openrouter || keys?.openai || keys?.groq || 'dummy-key'; 
+      // ВАЖНО: В качестве "ключа" для CLI передаем sk- + sessionId.
+      // Наш прокси потом вырежет sessionId из этого ключа.
+      const proxyAuthKey = `sk-${sessionId}`;
 
       const envVars = {
         ...process.env,
         QWEN_WORKING_DIR: tempGameDir,
         OPENGAME_REASONING_PROVIDER: 'openai-compat',
-        OPENGAME_REASONING_API_KEY: formattedKey,
+        OPENGAME_REASONING_API_KEY: proxyAuthKey,
         OPENGAME_REASONING_BASE_URL: 'http://127.0.0.1:8880/api/llm-proxy',
         OPENGAME_REASONING_MODEL: 'dynamic-model',
-        OPENAI_API_KEY: formattedKey,
+        OPENAI_API_KEY: proxyAuthKey,
         OPENAI_BASE_URL: 'http://127.0.0.1:8880/api/llm-proxy',
         CI: '1',
         FORCE_COLOR: '0',
@@ -74,20 +76,18 @@ const server = http.createServer(async (req, res) => {
 
       console.log(`[Server] POST /api/opengame/generate for session ${sessionId}`);
 
-      // Запускаем БЕЗ позиционного аргумента, промпт отправим в stdin
       const child = spawn('node', [
         cliBin, 
         '--yolo',
         '--debug',
         '--auth-type', 'openai',
-        '--openai-api-key', formattedKey,
+        '--openai-api-key', proxyAuthKey,
         '--openai-base-url', 'http://127.0.0.1:8880/api/llm-proxy'
       ], {
         cwd: tempGameDir,
         env: envVars,
       });
 
-      // Передаем промпт через stdin
       child.stdin.write(fullPrompt);
       child.stdin.end();
 
@@ -100,7 +100,7 @@ const server = http.createServer(async (req, res) => {
       });
 
       child.on('close', async (code) => {
-        console.log(`[OpenGame] Process exited with code ${code}`);
+        console.log(`[OpenGame] Process exited with code ${code} for session ${sessionId}`);
         if (code === 0) {
           try {
             const htmlPath = path.join(tempGameDir, 'index.html');
@@ -136,13 +136,17 @@ const server = http.createServer(async (req, res) => {
       return;
     }
 
+    // Вырезаем sessionId из ключа (например, из "Bearer sk-xyz" получаем "xyz")
     let sessionId = authHeader.replace('Bearer ', '').trim();
     if (sessionId.startsWith('sk-')) sessionId = sessionId.substring(3);
     
+    console.log(`[Proxy] Incoming request for session ID: ${sessionId}`);
+
     const session = sessions.get(sessionId);
     if (!session) {
+      console.error(`[Proxy Error] Session not found: ${sessionId}`);
       res.writeHead(401);
-      res.end(JSON.stringify({ error: 'Session expired or invalid' }));
+      res.end(JSON.stringify({ error: `Session ${sessionId} not found` }));
       return;
     }
 
@@ -180,7 +184,7 @@ const server = http.createServer(async (req, res) => {
           }
         }
 
-        console.log(`[Proxy] Trying ${provider} for session ${sessionId}`);
+        console.log(`[Proxy] Forwarding to ${provider} using real key`);
 
         try {
           const fetchRes = await fetch(providerUrl, {
