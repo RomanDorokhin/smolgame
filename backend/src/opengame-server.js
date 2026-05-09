@@ -139,8 +139,10 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  console.log(`[Server] Incoming ${req.method} request to ${url.pathname}`);
+
   // 2. LLM PROXY ROUTE (Called by OpenGame)
-  if (url.pathname === '/api/llm-proxy/chat/completions' && req.method === 'POST') {
+  if (url.pathname.startsWith('/api/llm-proxy') && req.method === 'POST') {
     const authHeader = req.headers['authorization'];
     if (!authHeader) {
       res.writeHead(401);
