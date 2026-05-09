@@ -65,6 +65,8 @@ export default function Home() {
   const [isCleaning, setIsCleaning] = useState(false);
   const [publishProgress, setPublishProgress] = useState<{ status: string; progress: number } | null>(null);
   const [studioMode, setStudioMode] = useState<"code" | "preview" | "split">("split");
+  const [userHasScrolled, setUserHasScrolled] = useState(false);
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   // Сохраняем состояние Студии
@@ -119,9 +121,30 @@ export default function Home() {
     finally { setLoadingGames(false); }
   };
 
+  // Smart Autoscroll Logic
+  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    const target = e.currentTarget;
+    const isAtBottom = target.scrollHeight - target.scrollTop <= target.clientHeight + 100;
+    setUserHasScrolled(!isAtBottom);
+  };
+
   useEffect(() => {
+    if (!userHasScrolled && isRunning) {
+      bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [messages, isRunning, userHasScrolled]);
+
+  const scrollToBottom = () => {
+    setUserHasScrolled(false);
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, isRunning]);
+  };
+
+  const GENRE_PRESETS = [
+    { title: "Бесконечный Раннер", emoji: "🏃", prompt: "Создай бесконечный раннер в стиле киберпанк. Игрок должен уворачиваться от препятствий и собирать неоновые сферы." },
+    { title: "Физический Пазл", emoji: "🧩", prompt: "Создай пазл на основе физики, где нужно докатить шар до цели, используя различные блоки и механизмы." },
+    { title: "Космический Шутер", emoji: "🚀", prompt: "Создай космический шутер с видом сверху. Улучшение оружия, разные типы врагов и босс в конце." },
+    { title: "RPG Кликер", emoji: "⚔️", prompt: "Создай RPG кликер. Игрок сражается с монстрами, зарабатывает золото и прокачивает героя и его навыки." }
+  ];
 
   return (
     <ErrorBoundary>
@@ -247,42 +270,55 @@ export default function Home() {
           {/* Content */}
           <div className="flex-1 overflow-hidden relative">
             {activeTab === "chat" ? (
-              <ScrollArea className="h-full">
-                <div className="max-w-2xl mx-auto px-4 pb-10">
+              <ScrollArea className="h-full" onScroll={handleScroll}>
+                <div className="max-w-4xl mx-auto px-4 md:px-8 pb-10">
                   {messages.length === 0 ? (
-                    <div className="py-10 text-center">
-                      <div className="w-16 h-16 rounded-2xl bg-[#13141a] border border-white/5 flex items-center justify-center mx-auto mb-6">
-                        <Sparkles className="w-8 h-8 text-[#a3b8d4]" />
+                    <div className="min-h-[600px] flex flex-col items-center justify-center">
+                      <div className="w-16 h-16 rounded-3xl bg-blue-600/10 flex items-center justify-center mb-8 animate-pulse">
+                        <Sparkles className="text-blue-500 w-8 h-8" />
                       </div>
-                      <h2 className="text-2xl font-black mb-2">agent-smol</h2>
-                      <p className="text-sm text-white/40 max-w-xs mx-auto mb-10">Опишите идею игры, и я помогу её реализовать.</p>
-                      <div className="space-y-2">
-                        {[
-                          { icon: "🚀", text: "Придумай идею для моей первой игры" },
-                          { icon: "🐱", text: "Сделай игру про кота-путешественника" },
-                          { icon: "🛡️", text: "Простая RPG механика" }
-                        ].map((item, i) => (
-                          <button key={i} onClick={() => sendMessage(item.text)}
-                            className="w-full flex items-center gap-4 p-4 rounded-xl bg-[#13141a] border border-white/5 hover:border-[#a3b8d4]/30 transition-all text-left group"
+                      <h2 className="text-2xl font-black text-white mb-2 text-center tracking-tight">Создай свою игру</h2>
+                      <p className="text-white/30 text-sm mb-12 text-center max-w-sm font-medium uppercase tracking-widest text-[10px]">
+                        Выбери жанр или опиши свою идею в чате ниже
+                      </p>
+                      
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 w-full">
+                        {GENRE_PRESETS.map((preset) => (
+                          <button
+                            key={preset.title}
+                            onClick={() => sendMessage(preset.prompt)}
+                            className="flex flex-col items-center p-6 bg-[#13141a] border border-white/5 rounded-[2rem] hover:border-blue-500/30 hover:bg-blue-500/5 transition-all group hover:-translate-y-1"
                           >
-                            <span className="text-lg opacity-70 group-hover:opacity-100">{item.icon}</span>
-                            <span className="text-sm font-medium text-white/60 group-hover:text-white">{item.text}</span>
+                            <span className="text-4xl mb-4 group-hover:scale-110 transition-transform">{preset.emoji}</span>
+                            <span className="text-[10px] font-black uppercase tracking-widest text-white/40 group-hover:text-blue-400">{preset.title}</span>
                           </button>
                         ))}
                       </div>
                     </div>
                   ) : (
-                    <div className="space-y-6 pt-6">
-                      {messages.map((message, i) => (
+                    <div className="space-y-6 pt-10">
+                      {messages.map((m, i) => (
                         <ChatMessageItem
-                          key={message.id}
-                          message={message as any}
+                          key={m.id || i}
+                          message={m}
                           isLast={i === messages.length - 1}
                           onSend={sendMessage}
                           onSwitchTab={setActiveTab}
                           onLoadStudio={(title, code) => setStudioGame({ title, code })}
                         />
                       ))}
+                      
+                      {userHasScrolled && isRunning && (
+                        <div className="fixed bottom-32 left-1/2 -translate-x-1/2 z-50">
+                          <Button 
+                            onClick={scrollToBottom}
+                            className="bg-blue-600 hover:bg-blue-700 text-white rounded-full px-4 h-9 text-[10px] font-black uppercase tracking-widest shadow-xl shadow-blue-900/40 animate-in fade-in slide-in-from-bottom-4"
+                          >
+                            Вниз <ChevronDown size={14} className="ml-2" />
+                          </Button>
+                        </div>
+                      )}
+                      
                       {isRunning && step && (
                         <div className="flex items-center gap-3 py-4 text-[#a3b8d4] animate-pulse">
                           <div className="w-1.5 h-1.5 rounded-full bg-[#a3b8d4] animate-bounce" />
