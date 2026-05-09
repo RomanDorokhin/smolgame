@@ -61,10 +61,10 @@ const server = http.createServer(async (req, res) => {
         // Провайдер для LLM — проксируем через наш 127.0.0.1:3001
         OPENGAME_REASONING_PROVIDER: 'openai-compat',
         OPENGAME_REASONING_API_KEY: sessionId,
-        OPENGAME_REASONING_BASE_URL: 'http://127.0.0.1:8080/api/llm-proxy',
+        OPENGAME_REASONING_BASE_URL: 'http://127.0.0.1:8880/api/llm-proxy',
         OPENGAME_REASONING_MODEL: 'dynamic-model',
         OPENAI_API_KEY: sessionId,
-        OPENAI_BASE_URL: 'http://127.0.0.1:8080/api/llm-proxy',
+        OPENAI_BASE_URL: 'http://127.0.0.1:8880/api/llm-proxy',
         // Выключаем интерактивный терминал
         CI: '1',
         FORCE_COLOR: '0',
@@ -85,7 +85,7 @@ const server = http.createServer(async (req, res) => {
         '--debug',
         '--auth-type', 'openai',
         '--openai-api-key', sessionId,
-        '--openai-base-url', 'http://127.0.0.1:8080/api/llm-proxy'
+        '--openai-base-url', 'http://127.0.0.1:8880/api/llm-proxy'
       ], {
         cwd: tempGameDir,
         env: envVars,
@@ -215,7 +215,7 @@ const server = http.createServer(async (req, res) => {
   res.end('Not found');
 });
 
-const PORT = process.env.PORT || 8080;
+const PORT = process.env.PORT || 8880;
 
 server.on('error', (err) => {
   if (err.code === 'EADDRINUSE') {
