@@ -159,7 +159,8 @@ const server = http.createServer(async (req, res) => {
           headers["Authorization"] = `Bearer ${apiKey}`;
           finalBody.model = "llama-3.3-70b-versatile"; 
         } else if (provider === "gemini") {
-          providerUrl = `https://generativelanguage.googleapis.com/v1beta/openai/chat/completions?key=${apiKey}`;
+          providerUrl = `https://generativelanguage.googleapis.com/v1beta/openai/chat/completions`;
+          headers["Authorization"] = `Bearer ${apiKey}`;
           finalBody.model = "gemini-2.0-flash";
         } else if (provider === "openrouter") {
           providerUrl = "https://openrouter.ai/api/v1/chat/completions";
