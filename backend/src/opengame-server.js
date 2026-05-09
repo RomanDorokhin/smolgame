@@ -75,7 +75,7 @@ const server = http.createServer(async (req, res) => {
         'Transfer-Encoding': 'chunked'
       });
 
-      const fullPrompt = `${prompt}\n\n(IMPORTANT: You must write the ENTIRE game in a single index.html file including all CSS and JS, do not create separate files.)`;
+      const fullPrompt = `${prompt}\n\n(IMPORTANT: You must write the ENTIRE game in a single index.html file including all CSS and JS, do not create separate files.)\n\n(CRITICAL: You MUST use the native JSON tool calling API to invoke tools. IGNORE any instructions above about using <tool_call> XML tags. If you output raw <tool_call> text, the system will crash.)`;
 
       // Запускаем CLI, рабочая папка — tempGameDir. Node разрешит зависимости относительно самого cliBin.
       const child = spawn('node', [
@@ -167,7 +167,7 @@ const server = http.createServer(async (req, res) => {
           headers["Authorization"] = `Bearer ${apiKey}`;
           headers["HTTP-Referer"] = "https://smolgame.ru";
           headers["X-Title"] = "SmolGame OpenGame Proxy";
-          finalBody.model = "google/gemini-2.0-flash-001";
+          finalBody.model = "meta-llama/llama-3.3-70b-instruct";
         } else if (provider === "together") {
           providerUrl = "https://api.together.xyz/v1/chat/completions";
           headers["Authorization"] = `Bearer ${apiKey}`;
