@@ -75,9 +75,9 @@ const server = http.createServer(async (req, res) => {
 
       const fullPrompt = `${prompt}\n\n(IMPORTANT: You must write the ENTIRE game in a single index.html file including all CSS and JS, do not create separate files.)`;
 
-      // Запускаем CLI из openGameDir (там есть все зависимости), рабочая папка — tempGameDir через env
+      // Запускаем CLI, рабочая папка — tempGameDir. Node разрешит зависимости относительно самого cliBin.
       const child = spawn('node', [cliBin, '--prompt', fullPrompt, '--yolo'], {
-        cwd: openGameDir,
+        cwd: tempGameDir,
         env: envVars,
       });
 
