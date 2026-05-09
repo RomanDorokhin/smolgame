@@ -1,8 +1,8 @@
-const http = require('http');
-const { spawn } = require('child_process');
-const fs = require('fs');
-const path = require('path');
-const { parse } = require('url');
+import http from 'http';
+import { spawn } from 'child_process';
+import fs from 'fs';
+import path from 'path';
+import { parse } from 'url';
 
 // Simple session store
 const sessions = new Map();
@@ -178,10 +178,6 @@ const server = http.createServer(async (req, res) => {
           if (!finalBody.model || finalBody.model === 'dynamic-model') {
             finalBody.model = "gpt-4o";
           }
-        } else if (provider === "anthropic") {
-           // Для Anthropic нужен другой прокси или конвертация, 
-           // но если у пользователя ключ OpenRouter — он и так сработает выше.
-           continue; 
         }
 
         console.log(`[Proxy] Trying ${provider} for session ${sessionId}`);
