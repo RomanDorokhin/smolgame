@@ -217,6 +217,6 @@ server.on('error', (err) => {
   }
 });
 
-server.listen(PORT, () => {
-  console.log(`🚀 OpenGame Node.js Server running on port ${PORT}`);
+server.listen(PORT, '0.0.0.0', () => {
+  console.log(`🚀 OpenGame Node.js Server running on port ${PORT} (IPv4)`);
 });
