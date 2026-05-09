@@ -265,7 +265,17 @@ const server = http.createServer(async (req, res) => {
       }
 
       res.writeHead(502);
-      res.end(JSON.stringify({ error: lastError }));
+      if (jsonBody.error === 'invalid json') {
+        console.error('[Proxy] CLI sent invalid JSON');
+        const preview = (jsonBody.rawBody || '').slice(0, 200).replace(/\n/g, ' ');
+        return res.status(400).json({ 
+          error: `Engine JSON Error: ${preview}...`, 
+          message: 'The OpenGame engine sent malformed data to the proxy.',
+          bodyPreview: jsonBody.rawBody
+        });
+      };
+      console.error('[Proxy Error Details]:', errorDetail);
+      res.end(JSON.stringify(errorDetail));
     } catch (e) {
       res.writeHead(400);
       const errorDetail = {

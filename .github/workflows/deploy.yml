@@ -56,6 +56,10 @@ jobs:
             find /var/www/smolgame/frontend/js -name "*.js" -exec sed -i 's|https://smolgame.dorokhin731.workers.dev|/api|g' {} \;
             sed -i "s|'/api';|'';|g" /var/www/smolgame/frontend/js/core/api.js
             
+            # Сброс кэша Агента в screens.js
+            echo "Busting Agent cache in screens.js..."
+            sed -i "s|?v=[0-9A-Za-z-]*|?v=$(date +%s)|g" /var/www/smolgame/frontend/js/ui/screens.js
+            
             # Подготавливаем OpenGame (собираем CLI)
             echo "Building OpenGame CLI..."
             if [ -d "/root/smolgame-frontend/agent/OpenGame" ]; then
