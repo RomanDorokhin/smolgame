@@ -63,7 +63,10 @@ STRICT MANDATE: "СДЕЛАЙ ИГРУ МИРОВОГО УРОВНЯ ОТ НАЧ
 
 1. CODE QUALITY: Write clean, professional, and modular code. Use Design Patterns (e.g., State Machine, Singleton, Factory) where appropriate. 
 2. PERFORMANCE: Optimize rendering loops. Use sprite pooling, texture atlases, and efficient memory management.
-3. VISUAL FIDELITY: Implement professional-grade shaders, smooth lighting, and advanced particles. The game must look and feel like a top-tier indie title.
+3. VISUAL FIDELITY & DIVERSITY: Implement professional-grade shaders, smooth lighting, and advanced particles. 
+   - AVOID GENERIC LOOKS: Every game must have a unique color palette and custom UI style. 
+   - NO DEFAULT BACKGROUNDS: Avoid plain black/gray backgrounds unless requested. Use gradients, textures, or dynamic environments.
+   - BRANDING: Add a unique game title screen and UI that matches the game's theme.
 4. STACK: Use modern WebGL/WebGPU-based libraries (Three.js for 3D, PixiJS for 2D).
 
 TECHNICAL CONTEXT:
@@ -396,58 +399,23 @@ export function useGameAgent(settings: ChatSettings) {
         .replace(/```[a-z]*\n/gi, '').replace(/```/g, '');
       
       try {
-        updateMessage(assistantId, {
-          content: (beforeTag ? beforeTag + "\n\n" : "") + `✅ **Игра создана!**\n\n🚀 **Публикую на платформу...**`,
-          gameCode: finalCode,
-          isStreaming: true,
-          deployState: { phase: "deploying", status: "Отправка в репозиторий..." }
-        });
-
-        const titleMatch = gameSpec.match(/(?:название|title|game)[\s:]*([^\n.]{3,40})/i);
-        const gameTitle = titleMatch?.[1]?.trim() || "SmolGame";
-
         const parsedFiles = parseMultiFile(finalCode);
-        const filesToPublish = parsedFiles.length > 0 ? parsedFiles : [{ path: "index.html", content: finalCode }];
+        const codeForPreview = parsedFiles.length > 0 ? mergeFilesForPreview(parsedFiles) : finalCode;
 
-        const publishResult = await SmolGameAPI.publishGame({
-          gameTitle,
-          files: filesToPublish,
-          gameDescription: "Создано через SmolGame AI Agent.",
-          repo: targetRepo || undefined
-        });
-
-        const pagesUrl = publishResult.pagesUrl;
-        const repoUrl = publishResult.repo ? `https://github.com/${publishResult.repo}` : "";
-
-        setStep("🚀 Ожидаю активации GitHub Pages...");
         updateMessage(assistantId, {
+          content: (beforeTag ? beforeTag + "\n\n" : "") + `✅ **Черновик игры готов!**\n\n🛠 **Код загружен в Студию.** Внеси правки и нажми «Опубликовать», чтобы игра появилась в общей ленте.`,
+          gameCode: codeForPreview,
+          isStreaming: false,
           deployState: { 
-            phase: "waiting_pages", 
-            pagesUrl, 
-            repoUrl, 
-            attempt: 1, 
-            maxAttempts: 30 
+            phase: "ready", 
+            status: "Черновик готов",
+            pagesUrl: "", // Нет ссылки до публикации
           }
         });
 
-        await SmolGameAPI.pollPagesReady(pagesUrl, (attempt, max) => {
-          updateMessage(assistantId, {
-            deployState: { 
-              phase: "waiting_pages", 
-              pagesUrl, 
-              repoUrl, 
-              attempt, 
-              maxAttempts: max 
-            }
-          });
-        });
+        // Автоматически загружаем в студию (через пропсы ChatMessageItem или внешнее событие)
+        console.log("Game draft ready for Studio");
 
-        updateMessage(assistantId, {
-          content: (beforeTag ? beforeTag + "\n\n" : "") + `✅ **Игра готова!**\n\n✨ **Игра опубликована!** Нажми «ИГРАТЬ».`,
-          gameCode: parsedFiles.length > 0 ? mergeFilesForPreview(parsedFiles) : finalCode,
-          deployState: { phase: "ready", pagesUrl, repoUrl },
-          isStreaming: false,
-        });
       } catch (pubErr: any) {
         updateMessage(assistantId, { 
           content: `⚠️ Публикация не удалась: ${pubErr.message}`, 
