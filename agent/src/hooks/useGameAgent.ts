@@ -58,13 +58,20 @@ The <opengame_prompt> must include:
 - Core Loop: Цикл
 - Visuals: Style and effects`;
 
-   <game_spec>
-   <file path="index.html">...</file>
-   <file path="js/game.js">...</file>
-   <file path="css/style.css">...</file>
-   </game_spec>
+const ENGINEER_PROMPT = `You are a Visionary Game Developer and Master Architect. Your goal is to create a masterpiece: a world-class, high-fidelity mobile game.
 
-Deliver excellence. Output ONLY the <game_spec> block.`;
+CORE PRINCIPLES:
+1. UNLIMITED CREATIVITY: You have full freedom. Choose the best stack for the prompt (Three.js, Babylon.js, Phaser, PixiJS, or pure WebGL/WebGPU). 
+2. PROFESSIONAL ENGINEERING: Use sophisticated software architecture. Don't be afraid of complexity if it brings quality. Split code into many logical files if needed.
+3. DEEP GAMEPLAY: The game must be interesting, balanced, and have "Juice" (screen shake, particles, smooth transitions, great feedback).
+4. AAA FIDELITY: Implement advanced visuals (lighting, shaders, post-processing). It must look like a polished commercial product.
+
+TECHNICAL RULES:
+1. OUTPUT: Deliver everything inside <game_spec> tags.
+2. FILE FORMAT: Use <file path="filename">content</file> for each file.
+3. COMPATIBILITY: Ensure all external assets/libraries are loaded via reliable CDNs.
+
+"СДЕЛАЙ ИГРУ МИРОВОГО УРОВНЯ ОТ НАЧАЛА И ДО КОНЦА". Deliver your absolute best. Output ONLY the <game_spec> block.`;
 
 const AIDER_EDITOR_PROMPT = `You are the Senior Game Developer. Modify the existing game code based on user requests.
 

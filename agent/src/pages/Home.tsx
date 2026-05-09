@@ -11,7 +11,7 @@ import { SmolGameAPI } from "@/lib/smolgame-api";
 import { Component, type ReactNode } from "react";
 import type { ChatSettings, APIProvider } from "@/types/chat";
 import Editor from "@monaco-editor/react";
-import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
+import { Panel, Group as PanelGroup, Separator as PanelResizeHandle } from "react-resizable-panels";
 import { Progress } from "@/components/ui/progress";
 
 function loadSettings(): ChatSettings {
@@ -284,7 +284,17 @@ export default function Home() {
                         />
                       ))}
                       {isRunning && step && (
-                        <div className="flex items-center gap-3 py-4 text            ) : (
+                        <div className="flex items-center gap-3 py-4 text-[#a3b8d4] animate-pulse">
+                          <div className="w-1.5 h-1.5 rounded-full bg-[#a3b8d4] animate-bounce" />
+                          <span className="text-[11px] font-bold uppercase tracking-tighter">{step}</span>
+                        </div>
+                      )}
+                      <div ref={bottomRef} />
+                    </div>
+                  )}
+                </div>
+              </ScrollArea>
+            ) : (
               <div className="h-full flex flex-col bg-[#0a0b0e]">
                 {/* Studio Header / Breadcrumbs */}
                 <div className="flex items-center justify-between px-6 py-4 border-b border-white/5 bg-[#0d0e14]">

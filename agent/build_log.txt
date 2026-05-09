@@ -1,0 +1,28 @@
+
+> open-smol-game@0.0.0 build
+> vite build
+
+vite v7.3.2 building client environment for production...
+transforming...
+✓ 1998 modules transformed.
+✗ Build failed in 3.90s
+error during build:
+src/pages/Home.tsx (14:16): "PanelGroup" is not exported by "node_modules/react-resizable-panels/dist/react-resizable-panels.js", imported by "src/pages/Home.tsx".
+file: /Users/romandorohin/smolgame-2/agent/src/pages/Home.tsx:14:16
+
+12: import type { ChatSettings, APIProvider } from "@/types/chat";
+13: import Editor from "@monaco-editor/react";
+14: import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
+                    ^
+15: import { Progress } from "@/components/ui/progress";
+
+    at getRollupError (file:///Users/romandorohin/smolgame-2/agent/node_modules/rollup/dist/es/shared/parseAst.js:406:41)
+    at error (file:///Users/romandorohin/smolgame-2/agent/node_modules/rollup/dist/es/shared/parseAst.js:402:42)
+    at Module.error (file:///Users/romandorohin/smolgame-2/agent/node_modules/rollup/dist/es/shared/node-entry.js:17390:16)
+    at Module.traceVariable (file:///Users/romandorohin/smolgame-2/agent/node_modules/rollup/dist/es/shared/node-entry.js:17823:29)
+    at ModuleScope.findVariable (file:///Users/romandorohin/smolgame-2/agent/node_modules/rollup/dist/es/shared/node-entry.js:15413:39)
+    at FunctionScope.findVariable (file:///Users/romandorohin/smolgame-2/agent/node_modules/rollup/dist/es/shared/node-entry.js:5682:38)
+    at FunctionBodyScope.findVariable (file:///Users/romandorohin/smolgame-2/agent/node_modules/rollup/dist/es/shared/node-entry.js:5682:38)
+    at Identifier.bind (file:///Users/romandorohin/smolgame-2/agent/node_modules/rollup/dist/es/shared/node-entry.js:5449:40)
+    at CallExpression.bind (file:///Users/romandorohin/smolgame-2/agent/node_modules/rollup/dist/es/shared/node-entry.js:2827:28)
+    at CallExpression.bind (file:///Users/romandorohin/smolgame-2/agent/node_modules/rollup/dist/es/shared/node-entry.js:12522:15)
