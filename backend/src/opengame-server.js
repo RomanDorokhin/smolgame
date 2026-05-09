@@ -81,7 +81,7 @@ const server = http.createServer(async (req, res) => {
         '--prompt', fullPrompt, 
         '--yolo',
         '--debug',
-        '--auth-type', 'useOpenAI',
+        '--auth-type', 'openai',
         '--openai-api-key', sessionId,
         '--openai-base-url', 'http://127.0.0.1:8080/api/llm-proxy'
       ], {
