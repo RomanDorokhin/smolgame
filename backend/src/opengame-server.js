@@ -63,6 +63,8 @@ const server = http.createServer(async (req, res) => {
         OPENGAME_REASONING_API_KEY: sessionId,
         OPENGAME_REASONING_BASE_URL: 'http://127.0.0.1:8080/api/llm-proxy',
         OPENGAME_REASONING_MODEL: 'dynamic-model',
+        OPENAI_API_KEY: sessionId,
+        OPENAI_BASE_URL: 'http://127.0.0.1:8080/api/llm-proxy',
         // Выключаем интерактивный терминал
         CI: '1',
         FORCE_COLOR: '0',
