@@ -541,8 +541,16 @@ export class GeminiChat {
             hasToolCall = true;
           }
 
-          // Collect all parts for recording
-          allModelParts.push(...content.parts);
+          // Collect all parts for recording — only include non-empty text
+          // and functionCall parts (skip the empty placeholder text parts
+          // that the converter may inject for empty-content tool_call chunks)
+          for (const part of content.parts) {
+            if (part.functionCall) {
+              allModelParts.push(part);
+            } else if (part.text !== '') {
+              allModelParts.push(part);
+            }
+          }
         }
       }
 
