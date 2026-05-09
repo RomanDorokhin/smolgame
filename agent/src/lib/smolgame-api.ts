@@ -202,24 +202,23 @@ export class SmolGameAPI {
     });
 
     if (!response.ok) {
-      // Пробуем прочитать понятное сообщение от сервера
       let serverMessage = '';
       try {
         const errData = await response.json();
-        serverMessage = errData?.error || '';
+        if (typeof errData === 'object') {
+          serverMessage = errData.error || errData.message || JSON.stringify(errData);
+        } else {
+          serverMessage = String(errData);
+        }
       } catch {
         try {
-          serverMessage = (await response.text()).slice(0, 200);
-        } catch { /* ignore */ }
+          serverMessage = (await response.text()).slice(0, 500);
+        } catch { 
+          serverMessage = `HTTP ${response.status} ${response.statusText}`;
+        }
       }
 
-      if (response.status === 503) {
-        throw new Error(serverMessage || 'Сервер генерации временно недоступен. Попробуй позже.');
-      }
-      if (response.status === 400) {
-        throw new Error(serverMessage || 'Неверные параметры запроса.');
-      }
-      throw new Error(serverMessage || 'OpenGame generation failed');
+      throw new Error(serverMessage || `Generation failed (Status: ${response.status})`);
     }
 
     if (!response.body) {

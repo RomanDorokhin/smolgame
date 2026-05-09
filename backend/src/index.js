@@ -117,11 +117,12 @@ async function route(req, env, pathname) {
       try { JSON.parse(rawBody); } catch {
         return error('Invalid JSON in request body', 400);
       }
-      const vpsResp = await fetch('http://89.167.94.140:8880/api/opengame/generate', {
+      const vpsResp = await fetch('http://127.0.0.1:8880/api/opengame/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: rawBody,
       });
+      console.log(`[Proxy] VPS response status: ${vpsResp.status}`);
       // Пробрасываем ответ VPS (в т.ч. streaming) напрямую, только добавляем CORS
       const origin = resolveCorsOrigin(req, env);
       const respHeaders = new Headers(vpsResp.headers);
@@ -132,7 +133,7 @@ async function route(req, env, pathname) {
     } catch (e) {
       console.error('[opengame/generate] VPS proxy error:', e);
       const msg = String(e?.message || e || '').slice(0, 200);
-      return error(`Сервер генерации недоступен: ${msg || 'connection refused'}`, 503);
+      return error(`Сервер генерации недоступен (Proxy Error): ${msg || 'connection refused'}`, 503);
     }
   }
 
