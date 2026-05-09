@@ -220,12 +220,13 @@ const server = http.createServer(async (req, res) => {
                   const { done, value } = await reader.read();
                   if (done) { res.end(); break; }
                   
-                  // Debug logging for the first few chunks to inspect format
-                  if (chunkCount < 3) {
-                     const chunkStr = Buffer.from(value).toString('utf-8');
-                     console.log(`[Proxy] RAW SSE Chunk ${chunkCount}:`, chunkStr.substring(0, 500));
+                  // Debug logging: look for actual data chunks instead of keep-alives
+                  const chunkStr = Buffer.from(value).toString('utf-8');
+                  if (chunkStr.includes('data: {')) {
+                     console.log(`[Proxy] DATA CHUNK:`, chunkStr.substring(0, 500));
+                  } else if (chunkStr.includes('error')) {
+                     console.log(`[Proxy] ERROR CHUNK:`, chunkStr.substring(0, 500));
                   }
-                  chunkCount++;
 
                   res.write(Buffer.from(value));
                 }
