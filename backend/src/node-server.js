@@ -30,11 +30,11 @@ const env = {
 // Запускаем HTTP сервер
 const server = http.createServer(async (req, res) => {
   try {
-    // Оборачиваем базовый Node.js req в объект Request (Web API)
     const host = req.headers.host || 'localhost:3001';
     const protocol = req.headers['x-forwarded-proto'] || 'http';
     const url = new URL(req.url, `${protocol}://${host}`);
     
+    console.log(`[API Request] ${req.method} ${url.pathname}`);
     // Считываем тело запроса (если есть)
     const chunks = [];
     for await (const chunk of req) {
