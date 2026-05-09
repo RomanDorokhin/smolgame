@@ -1,7 +1,7 @@
  * Integrated with smolgame.ru backend
  */
 
-const API_BASE = 'https://smolgame.ru';
+const API_BASE = '';
 const INIT_DATA_SS_KEY = 'smolgame:tgInitData:v1';
 const WEB_ID_LS_KEY = 'smolgame:webId:v1';
 const PENDING_GAME_LS_KEY = 'smolgame:pendingGame:v1';

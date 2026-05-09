@@ -59,8 +59,9 @@ const server = http.createServer(async (req, res) => {
       const tempGameDir = path.join('/tmp', `smolgame-game-${sessionId}`);
       if (!fs.existsSync(tempGameDir)) fs.mkdirSync(tempGameDir, { recursive: true });
 
-      const agentDir = '/root/smolgame-frontend/agent/OpenGame';
+      const agentDir = path.resolve(__dirname, '../../agent/OpenGame');
       const cliBin = path.join(agentDir, 'dist/cli.js');
+      console.log(`[OpenGame] Using CLI at: ${cliBin}`);
 
       // ВАЖНО: В качестве "ключа" для CLI передаем sk- + sessionId.
       // Наш прокси потом вырежет sessionId из этого ключа.
@@ -107,6 +108,7 @@ const server = http.createServer(async (req, res) => {
       ], {
         cwd: tempGameDir,
         env: envVars,
+        shell: true
       });
 
       child.stdin.write(fullPrompt);

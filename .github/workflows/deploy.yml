@@ -54,11 +54,13 @@ jobs:
               npm run bundle
             fi
 
-            # Перезапускаем Бэкенд
-            echo "Restarting backend..."
+            # Перезапускаем сервисы
+            echo "Restarting services..."
             cd /root/smolgame-frontend/backend
             npm install
             pm2 restart smolgame-api
             pm2 start src/opengame-server.js --name opengame-server || pm2 restart opengame-server
+            
+            echo "Deployment finished successfully!"
             
             echo "✅ Deployment successful!"
