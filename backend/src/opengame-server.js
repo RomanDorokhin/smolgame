@@ -50,12 +50,22 @@ const server = http.createServer(async (req, res) => {
       
       await fs.mkdir(tempGameDir, { recursive: true });
 
+      // Путь к CLI бинарнику (собранному). Запускаем напрямую, без npm run start,
+      // т.к. npm run start требует package.json в cwd (tempGameDir пустая).
+      const cliBin = path.join(openGameDir, 'packages', 'cli', 'dist', 'index.js');
+
       const envVars = {
         ...process.env,
+        // OpenGame читает рабочую папку из QWEN_WORKING_DIR или process.cwd()
+        QWEN_WORKING_DIR: tempGameDir,
+        // Провайдер для LLM — проксируем через наш 127.0.0.1:3001
         OPENGAME_REASONING_PROVIDER: 'openai-compat',
         OPENGAME_REASONING_API_KEY: sessionId,
-        OPENGAME_REASONING_BASE_URL: 'http://127.0.0.1:3001/api/llm-proxy', 
-        OPENGAME_REASONING_MODEL: 'dynamic-model'
+        OPENGAME_REASONING_BASE_URL: 'http://127.0.0.1:3001/api/llm-proxy',
+        OPENGAME_REASONING_MODEL: 'dynamic-model',
+        // Выключаем интерактивный терминал
+        CI: '1',
+        FORCE_COLOR: '0',
       };
 
       res.writeHead(200, {
@@ -64,10 +74,11 @@ const server = http.createServer(async (req, res) => {
       });
 
       const fullPrompt = `${prompt}\n\n(IMPORTANT: You must write the ENTIRE game in a single index.html file including all CSS and JS, do not create separate files.)`;
-      
-      const child = spawn('npm', ['run', 'start', '--', '--prompt', fullPrompt, '--yolo'], {
-        cwd: tempGameDir,
-        env: { ...envVars, PATH: process.env.PATH + ':' + path.join(openGameDir, 'node_modules', '.bin') }
+
+      // Запускаем CLI из openGameDir (там есть все зависимости), рабочая папка — tempGameDir через env
+      const child = spawn('node', [cliBin, '--prompt', fullPrompt, '--yolo'], {
+        cwd: openGameDir,
+        env: envVars,
       });
 
       child.stdout.on('data', (data) => {

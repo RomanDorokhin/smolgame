@@ -111,11 +111,29 @@ async function route(req, env, pathname) {
   if (pathname === '/api/ai/chat' && m === 'POST') return handleAiChat(req, env);
   if (pathname === '/api/opengame/generate' && m === 'POST') {
     // ПРОКСИРУЕМ ЗАПРОС НА VPS NODE.JS СЕРВЕР Т.К. CF WORKERS НЕ МОГУТ SPAWN ПРОЦЕССЫ
-    return fetch('http://89.167.94.140:3001/api/opengame/generate', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(await req.json())
-    });
+    try {
+      const rawBody = await req.text();
+      // Проверяем что тело — валидный JSON перед отправкой
+      try { JSON.parse(rawBody); } catch {
+        return error('Invalid JSON in request body', 400);
+      }
+      const vpsResp = await fetch('http://89.167.94.140:3001/api/opengame/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: rawBody,
+      });
+      // Пробрасываем ответ VPS (в т.ч. streaming) напрямую, только добавляем CORS
+      const origin = resolveCorsOrigin(req, env);
+      const respHeaders = new Headers(vpsResp.headers);
+      respHeaders.set('access-control-allow-origin', origin === '*' || !origin ? '*' : origin);
+      respHeaders.set('access-control-allow-methods', 'GET,POST,DELETE,OPTIONS,PATCH');
+      respHeaders.set('access-control-allow-headers', 'content-type, x-telegram-init-data, x-web-id');
+      return new Response(vpsResp.body, { status: vpsResp.status, headers: respHeaders });
+    } catch (e) {
+      console.error('[opengame/generate] VPS proxy error:', e);
+      const msg = String(e?.message || e || '').slice(0, 200);
+      return error(`Сервер генерации недоступен: ${msg || 'connection refused'}`, 503);
+    }
   }
 
   let match;
