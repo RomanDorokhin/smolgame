@@ -1,3 +1,4 @@
+/**
  * Integrated with smolgame.ru backend
  */
 
