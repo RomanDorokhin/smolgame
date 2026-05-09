@@ -76,7 +76,15 @@ const server = http.createServer(async (req, res) => {
       const fullPrompt = `${prompt}\n\n(IMPORTANT: You must write the ENTIRE game in a single index.html file including all CSS and JS, do not create separate files.)`;
 
       // Запускаем CLI, рабочая папка — tempGameDir. Node разрешит зависимости относительно самого cliBin.
-      const child = spawn('node', [cliBin, '--prompt', fullPrompt, '--yolo'], {
+      const child = spawn('node', [
+        cliBin, 
+        '--prompt', fullPrompt, 
+        '--yolo',
+        '--debug',
+        '--auth-type', 'useOpenAI',
+        '--openai-api-key', sessionId,
+        '--openai-base-url', 'http://127.0.0.1:8080/api/llm-proxy'
+      ], {
         cwd: tempGameDir,
         env: envVars,
       });
