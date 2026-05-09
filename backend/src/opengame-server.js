@@ -116,8 +116,28 @@ const server = http.createServer(async (req, res) => {
       child.stdin.write(fullPrompt);
       child.stdin.end();
 
+      let rejectionCount = 0;
+        
       child.stdout.on('data', (data) => {
-        res.write(data);
+          const output = data.toString();
+          console.log(`[OpenGame STDOUT] ${output}`);
+          
+          if (output.includes('rejected because invalid content')) {
+              rejectionCount++;
+          }
+          
+          // Если слишком много отказов от нейросети (фильтры безопасности)
+          if (rejectionCount > 10) {
+              console.error("Too many rejections from AI provider. Likely safety filter.");
+              child.kill();
+              if (!res.headersSent) {
+                  res.write(`===OPEN_GAME_RESULT_ERROR=== Нейросеть отклонила запрос из-за фильтров безопасности (слишком много 'invalid content'). Попробуй изменить описание игры.`);
+                  res.end();
+              }
+              return;
+          }
+
+          res.write(output);
       });
 
       child.stderr.on('data', (data) => {
