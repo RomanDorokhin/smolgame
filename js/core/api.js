@@ -11,7 +11,7 @@
 
 const PROD_API_BASE =
   (typeof window !== 'undefined' && window.SMOLGAME_API_BASE) ||
-  'https://smolgame.dorokhin731.workers.dev';
+  'https://smolgame.ru';
 const API_BASE = ['localhost', '127.0.0.1'].includes(location.hostname)
   ? 'http://127.0.0.1:8787'
   : PROD_API_BASE;
