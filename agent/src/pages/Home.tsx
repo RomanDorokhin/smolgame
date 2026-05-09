@@ -54,22 +54,64 @@ export default function Home() {
   const { messages, isRunning, step, sendMessage, stop, reset } = useGameAgent(settings);
   const { user, isAuthenticated, isLoading: authLoading, login } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<"chat" | "studio">("chat");
+  const [activeTab, setActiveTab] = useState<"chat" | "studio">(() => {
+    return (localStorage.getItem("smolgame_active_tab") as "chat" | "studio") || "chat";
+  });
   const [myGames, setMyGames] = useState<any[]>([]);
   const [loadingGames, setLoadingGames] = useState(false);
   const [studioGame, setStudioGame] = useState<{ title: string; code: string } | null>(() => {
     const saved = localStorage.getItem("smol_studio_game_v1");
     return saved ? JSON.parse(saved) : null;
   });
+
+  // Sync activeTab to localStorage
+  useEffect(() => {
+    localStorage.setItem("smolgame_active_tab", activeTab);
+  }, [activeTab]);
+
+  // Sync studioGame to localStorage
+  useEffect(() => {
+    if (studioGame) {
+      localStorage.setItem("smol_studio_game_v1", JSON.stringify(studioGame));
+    } else {
+      localStorage.removeItem("smol_studio_game_v1");
+    }
+  }, [studioGame]);
   const [expandedProvider, setExpandedProvider] = useState<APIProvider | null>(null);
   const [isCleaning, setIsCleaning] = useState(false);
   const [publishProgress, setPublishProgress] = useState<{ status: string; progress: number } | null>(null);
   const [studioMode, setStudioMode] = useState<"code" | "preview" | "split">("split");
   const [userHasScrolled, setUserHasScrolled] = useState(false);
+  const [isPurging, setIsPurging] = useState(false);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
 
-  // Сохраняем состояние Студии
+  const handlePurgeCache = async () => {
+    if (!window.confirm("Это удалит кэши моделей и браузера на сервере (около 1.5 ГБ). Это освободит место, но следующая генерация может занять больше времени. Продолжить?")) return;
+    setIsPurging(true);
+    try {
+      const resp = await fetch(`https://smolgame.ru/api/opengame/purge-cache`, { method: "POST" });
+      if (resp.ok) alert("Серверный кэш очищен!");
+      else alert("Ошибка при очистке.");
+    } catch (e) { alert("Ошибка сети."); }
+    finally { setIsPurging(false); }
+  };
+
+  const drafts = messages
+    .filter(m => m.role === "assistant" && m.gameCode)
+    .map(m => ({
+      id: m.id,
+      title: m.content.split("\n")[0].replace(/[#*]/g, "").trim() || "Новая игра",
+      code: m.gameCode!,
+      timestamp: m.timestamp
+    }))
+    .reverse();
+
+  // Сохраняем состояние Студии и вкладки
+  useEffect(() => {
+    localStorage.setItem("smolgame_active_tab", activeTab);
+  }, [activeTab]);
+
   useEffect(() => {
     if (studioGame) {
       localStorage.setItem("smol_studio_game_v1", JSON.stringify(studioGame));
@@ -204,17 +246,52 @@ export default function Home() {
               </ScrollArea>
 
               <div className="p-4 border-t border-white/5 space-y-2">
+                {drafts.length > 0 && (
+                  <div className="mb-6">
+                    <p className="text-[10px] text-white/30 uppercase tracking-widest font-bold mb-3">Твои черновики</p>
+                    <div className="space-y-1">
+                      {drafts.map(d => (
+                        <button
+                          key={d.id}
+                          onClick={() => {
+                            setStudioGame({ title: d.title, code: d.code });
+                            setActiveTab("studio");
+                            setSidebarOpen(false);
+                          }}
+                          className="w-full flex items-center gap-3 p-2 rounded-xl hover:bg-white/5 transition-all group text-left"
+                        >
+                          <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center text-blue-400 group-hover:bg-blue-500 group-hover:text-white transition-all">
+                            <Play size={12} fill="currentColor" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-[11px] font-bold truncate text-white/70 group-hover:text-white">{d.title}</p>
+                            <p className="text-[8px] text-white/20 uppercase font-black">{new Date(d.timestamp).toLocaleDateString()}</p>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <Button
+                  onClick={handlePurgeCache}
+                  disabled={isPurging}
+                  variant="outline"
+                  className="w-full justify-start gap-3 bg-amber-500/5 border-amber-500/10 hover:bg-amber-500/10 text-amber-400/70 h-10 rounded-xl text-[10px] font-bold uppercase"
+                >
+                  <Trash2 size={16} /> {isPurging ? "Чищу..." : "Очистить кэш сервера (1.5GB)"}
+                </Button>
+
                 <Button
                   onClick={handleCleanup}
                   disabled={isCleaning}
                   variant="outline"
-                  className="w-full justify-start gap-3 bg-red-500/5 border-red-500/10 hover:bg-red-500/10 text-red-400/70 h-12 rounded-xl"
+                  className="w-full justify-start gap-3 bg-red-500/5 border-red-500/10 hover:bg-red-500/10 text-red-400/70 h-10 rounded-xl text-[10px] font-bold uppercase"
                 >
-                  <Trash2 size={18} /> {isCleaning ? "Удаляю..." : "Очистить репозитории"}
+                  <Trash2 size={16} /> {isCleaning ? "Удаляю..." : "Очистить репозитории"}
                 </Button>
-                <p className="text-[10px] text-white/20 text-center uppercase tracking-widest font-bold">Опасная зона</p>
+                <p className="text-[10px] text-white/20 text-center uppercase tracking-widest font-bold mt-2">Опасная зона</p>
               </div>
-
             </div>
           </div>
         )}

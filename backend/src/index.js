@@ -137,6 +137,22 @@ async function route(req, env, pathname) {
     }
   }
 
+  if (pathname === '/api/opengame/purge-cache' && m === 'POST') {
+    try {
+      const vpsResp = await fetch('http://127.0.0.1:8880/api/opengame/purge-cache', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      });
+      const origin = resolveCorsOrigin(req, env);
+      const respHeaders = new Headers(vpsResp.headers);
+      respHeaders.set('access-control-allow-origin', origin === '*' || !origin ? '*' : origin);
+      return new Response(vpsResp.body, { status: vpsResp.status, headers: respHeaders });
+    } catch (e) {
+      console.error('[Purge Proxy Error]:', e);
+      return error(`VPS purge proxy failed: ${e.message}`, 502);
+    }
+  }
+
   let match;
   if ((match = pathname.match(/^\/api\/games\/([^/]+)$/))) {
     if (m === 'GET') return getGameById(req, env, match[1]);

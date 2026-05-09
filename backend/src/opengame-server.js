@@ -23,6 +23,33 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  if (pathname === '/api/opengame/purge-cache' && req.method === 'POST') {
+    try {
+      const home = process.env.HOME || '/Users/romandorohin';
+      const caches = [
+        path.join(home, '.cache/huggingface'),
+        path.join(home, '.cache/puppeteer'),
+        path.join(home, '.opengame')
+      ];
+
+      console.log("[Server] Purging caches...");
+      for (const c of caches) {
+        if (fs.existsSync(c)) {
+          fs.rmSync(c, { recursive: true, force: true });
+          console.log(`[Server] Deleted cache: ${c}`);
+        }
+      }
+      
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: true, message: 'Caches purged' }));
+    } catch (e) {
+      console.error('[Purge Error]:', e);
+      res.writeHead(500);
+      res.end(JSON.stringify({ error: e.message }));
+    }
+    return;
+  }
+
   const readJson = () => new Promise((resolve, reject) => {
     const chunks = [];
     req.on('data', chunk => { chunks.push(chunk); });
@@ -168,6 +195,17 @@ const server = http.createServer(async (req, res) => {
         } else {
           res.write(`\n\n[ERROR] OpenGame generation failed with code ${code}\n`);
         }
+        
+        // --- ЧИСТКА МУСОРА ---
+        try {
+            if (fs.existsSync(tempGameDir)) {
+                fs.rmSync(tempGameDir, { recursive: true, force: true });
+                console.log(`[Server] Cleaned up temp directory: ${tempGameDir}`);
+            }
+        } catch (err) {
+            console.error(`[Server] Failed to cleanup temp directory: ${err.message}`);
+        }
+
         res.end();
       });
 

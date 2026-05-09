@@ -31,6 +31,10 @@ interface ChatSidebarProps {
   onUpdateSettings: (settings: Partial<ChatSettings>) => void;
   onFactoryReset: () => void;
   usage: UsageStats;
+  drafts: { id: string, title: string, code: string, timestamp: number }[];
+  onLoadDraft: (code: string) => void;
+  onPurgeServerCache: () => void;
+  isPurging?: boolean;
 }
 
 export function ChatSidebar({
@@ -46,6 +50,10 @@ export function ChatSidebar({
   onUpdateSettings,
   onFactoryReset,
   usage,
+  drafts,
+  onLoadDraft,
+  onPurgeServerCache,
+  isPurging,
 }: ChatSidebarProps) {
   const [confirmClear, setConfirmClear] = useState(false);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
@@ -271,8 +279,18 @@ export function ChatSidebar({
                 <Button
                   variant="ghost"
                   size="sm"
+                  onClick={onPurgeServerCache}
+                  disabled={isPurging}
+                  className="w-full justify-start gap-2 text-[11px] text-amber-500 hover:text-amber-400 hover:bg-amber-500/10 h-8 font-bold uppercase tracking-tighter"
+                >
+                  <Trash2 size={14} />
+                  {isPurging ? "Cleaning Cache..." : "Purge Server Cache"}
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
                   onClick={onFactoryReset}
-                  className="w-full justify-start gap-2 text-[11px] text-destructive hover:text-destructive hover:bg-destructive/10 h-8 font-bold uppercase tracking-tighter"
+                  className="w-full justify-start gap-2 text-[11px] text-destructive hover:text-destructive hover:bg-destructive/10 h-8 font-bold uppercase tracking-tighter mt-1"
                 >
                   <RotateCcw size={14} />
                   Factory Reset
@@ -347,6 +365,29 @@ export function ChatSidebar({
                     )}
                   </button>
                 ))
+              )}
+
+              {drafts.length > 0 && (
+                <div className="mt-8">
+                  <label className="text-[10px] font-black uppercase text-white/30 ml-1 mb-2 block">Recent Drafts</label>
+                  <div className="space-y-1">
+                    {drafts.map((draft) => (
+                      <button
+                        key={draft.id}
+                        onClick={() => onLoadDraft(draft.code)}
+                        className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left bg-blue-500/5 border border-blue-500/10 hover:border-blue-500/30 transition-all group"
+                      >
+                        <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center text-blue-400 group-hover:bg-blue-500 group-hover:text-white transition-all">
+                          <Play size={14} fill="currentColor" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-[11px] font-bold truncate text-white/80 group-hover:text-white">{draft.title}</p>
+                          <p className="text-[8px] opacity-40 uppercase font-black">{new Date(draft.timestamp).toLocaleDateString()}</p>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
               )}
               
               {/* Quota Stats moved here for sessions tab */}
