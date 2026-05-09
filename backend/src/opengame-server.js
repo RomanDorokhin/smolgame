@@ -174,6 +174,17 @@ const server = http.createServer(async (req, res) => {
           finalBody.model = "meta-llama/Llama-3.3-70B-Instruct-Turbo";
         }
 
+        // Force tool usage when tools are available — prevents models from
+        // describing tool calls in text instead of actually invoking them.
+        if (finalBody.tools && finalBody.tools.length > 0 && !finalBody.tool_choice) {
+          finalBody.tool_choice = "required";
+        }
+
+        // Set temperature=0 for deterministic, code-focused responses
+        if (finalBody.temperature === undefined) {
+          finalBody.temperature = 0;
+        }
+
         if (!providerUrl) continue;
 
         console.log(`[Proxy] Trying ${provider} for OpenGame session ${sessionId}`);
