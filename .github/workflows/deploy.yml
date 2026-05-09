@@ -35,8 +35,11 @@ jobs:
             cp /root/smolgame-frontend/styles.css /var/www/smolgame/frontend/styles.css
             cp -r /root/smolgame-frontend/js/* /var/www/smolgame/frontend/js/
             cp -r /root/smolgame-frontend/assets/* /var/www/smolgame/frontend/assets/ 2>/dev/null || true
-            mkdir -p /var/www/smolgame/frontend/agent-v3/assets
-            cp -r /root/smolgame-frontend/agent-v3/assets/* /var/www/smolgame/frontend/agent-v3/assets/
+            
+            # Обновляем Агент (целиком с index.html)
+            echo "Copying Agent-v3 files..."
+            mkdir -p /var/www/smolgame/frontend/agent-v3
+            cp -r /root/smolgame-frontend/agent-v3/* /var/www/smolgame/frontend/agent-v3/
             
             # Настраиваем API URL для ленты (не минифицированной)
             sed -i 's|https://smolgame.dorokhin731.workers.dev|/api|g' /var/www/smolgame/frontend/index.html
