@@ -23,19 +23,13 @@ jobs:
             git pull origin main
             
             # Сборка Агента (фронтенд)
-            echo "--- DEBUG: Verifying source code on VPS ---"
             cd /root/smolgame-frontend/agent
-            ls -la src/lib/smolgame-api.ts
-            grep "const API_BASE =" src/lib/smolgame-api.ts
-            
-            echo "--- DEBUG: Cleaning and Building Agent ---"
+            echo "--- Building Agent ---"
             rm -rf node_modules dist ../agent-v3
             npm install
             npm run build || { echo "Agent build FAILED"; exit 1; }
             
             cd /root/smolgame-frontend
-            echo "--- DEBUG: Verifying build output ---"
-            ls -la agent-v3/assets/
             
             # Обновляем статику (Фронтенд)
             echo "Copying frontend files..."
