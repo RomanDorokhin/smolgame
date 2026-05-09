@@ -848,6 +848,14 @@ export class OpenAIContentConverter {
         this.streamingToolCallParser.reset();
       }
 
+      // Guard: some models (e.g. Llama 3.3 via OpenRouter) return only tool_calls
+      // with no text content. The Gemini SDK crashes if parts is an empty array.
+      // Add a placeholder empty text part to avoid the "partOrString cannot be an
+      // empty array" error in ChatRecordingService.recordAssistantTurn.
+      if (parts.length === 0) {
+        parts.push({ text: '' });
+      }
+
       // Only include finishReason key if finish_reason is present
       const candidate: Candidate = {
         content: {
