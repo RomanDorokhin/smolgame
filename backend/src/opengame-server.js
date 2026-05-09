@@ -50,8 +50,6 @@ const server = http.createServer(async (req, res) => {
       const agentDir = '/root/smolgame-frontend/agent/OpenGame';
       const cliBin = path.join(agentDir, 'dist/cli.js');
 
-      // Используем любой доступный ключ как "заглушку" для CLI, 
-      // реальная авторизация пройдет через прокси
       const formattedKey = keys?.openrouter || keys?.openai || keys?.groq || 'dummy-key'; 
 
       const envVars = {
@@ -76,19 +74,22 @@ const server = http.createServer(async (req, res) => {
 
       console.log(`[Server] POST /api/opengame/generate for session ${sessionId}`);
 
+      // Запускаем БЕЗ позиционного аргумента, промпт отправим в stdin
       const child = spawn('node', [
         cliBin, 
         '--yolo',
         '--debug',
         '--auth-type', 'openai',
         '--openai-api-key', formattedKey,
-        '--openai-base-url', 'http://127.0.0.1:8880/api/llm-proxy',
-        '--',
-        fullPrompt
+        '--openai-base-url', 'http://127.0.0.1:8880/api/llm-proxy'
       ], {
         cwd: tempGameDir,
         env: envVars,
       });
+
+      // Передаем промпт через stdin
+      child.stdin.write(fullPrompt);
+      child.stdin.end();
 
       child.stdout.on('data', (data) => {
         res.write(data);
@@ -126,7 +127,7 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
-  // LLM PROXY (ПЕРЕВОДЧИК С OPENAI ПРОТОКОЛА НА ЛЮБЫЕ КЛЮЧИ)
+  // LLM PROXY
   if (pathname === '/api/llm-proxy/chat/completions' && req.method === 'POST') {
     const authHeader = req.headers['authorization'] || '';
     if (!authHeader) {
@@ -149,7 +150,6 @@ const server = http.createServer(async (req, res) => {
       const body = await readJson();
       let lastError = "No provider succeeded";
 
-      // Пробуем провайдеров по очереди
       for (const provider of session.providers) {
         const apiKey = session.keys[provider];
         if (!apiKey) continue;
