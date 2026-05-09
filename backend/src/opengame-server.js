@@ -200,6 +200,17 @@ const server = http.createServer(async (req, res) => {
 });
 
 const PORT = process.env.PORT || 3001;
+
+server.on('error', (err) => {
+  if (err.code === 'EADDRINUSE') {
+    console.error(`❌ Port ${PORT} is already in use. Kill the process with: fuser -k ${PORT}/tcp`);
+    process.exit(1); // выходим без краш-петли
+  } else {
+    console.error('Server error:', err);
+    process.exit(1);
+  }
+});
+
 server.listen(PORT, () => {
   console.log(`🚀 OpenGame Node.js Server running on port ${PORT}`);
 });
