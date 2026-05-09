@@ -1,0 +1,46 @@
+name: Deploy to VPS
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_IP }}
+          username: root
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            # Переходим в репозиторий на сервере и подтягиваем изменения
+            cd /root/smolgame-frontend
+            git reset --hard
+            git pull origin main
+            
+            # Обновляем статику (Фронтенд)
+            echo "Copying frontend files..."
+            cp /root/smolgame-frontend/index.html /var/www/smolgame/frontend/index.html
+            cp /root/smolgame-frontend/styles.css /var/www/smolgame/frontend/styles.css
+            cp -r /root/smolgame-frontend/js/* /var/www/smolgame/frontend/js/
+            cp -r /root/smolgame-frontend/assets/* /var/www/smolgame/frontend/assets/ 2>/dev/null || true
+            mkdir -p /var/www/smolgame/frontend/agent-v3/assets
+            cp /root/smolgame-frontend/agent-v3/assets/index.js /var/www/smolgame/frontend/agent-v3/assets/ 2>/dev/null || true
+            cp /root/smolgame-frontend/agent-v3/assets/index.css /var/www/smolgame/frontend/agent-v3/assets/ 2>/dev/null || true
+            
+            # Настраиваем API URL для фронтенда
+            sed -i 's|https://smolgame.dorokhin731.workers.dev|/api|g' /var/www/smolgame/frontend/index.html
+            find /var/www/smolgame/frontend/js -name "*.js" -exec sed -i 's|https://smolgame.dorokhin731.workers.dev|/api|g' {} \;
+            sed -i "s|'/api';|'';|g" /var/www/smolgame/frontend/js/core/api.js
+            
+            # Перезапускаем Бэкенд
+            echo "Restarting backend..."
+            cd /root/smolgame-frontend/backend
+            npm install
+            pm2 restart smolgame-api
+            
+            echo "✅ Deployment successful!"
