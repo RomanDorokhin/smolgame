@@ -24,7 +24,7 @@ const extractTextFromNode = (node: any): string => {
   return "";
 };
 
-export function ChatMessageItem({ message, onSend, onSwitchTab, isLast }: ChatMessageItemProps) {
+export function ChatMessageItem({ message, onSend, onSwitchTab, onLoadStudio, isLast }: ChatMessageItemProps) {
   const [copied, setCopied] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
   const { isGithubConnected } = useAuth();
