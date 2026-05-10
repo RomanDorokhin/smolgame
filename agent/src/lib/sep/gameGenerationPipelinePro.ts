@@ -29,6 +29,7 @@ export interface PipelineResult {
 export interface PipelineOptions {
   onProgress?: (message: string) => void;
   goldenSeeds: Record<string, string>;
+  generateFn: (messages: any[]) => Promise<string>;
 }
 
 const DIRECTOR_PROMPT = (request: string, seeds: string[]) => `
@@ -54,16 +55,16 @@ export async function generateGame(userRequest: string, options: PipelineOptions
   try {
     // 1. Director
     log("🎬 Director: Designing game concept...");
-    const gdd = await generateText([{ role: 'system', content: DIRECTOR_PROMPT(userRequest, Object.keys(goldenSeeds)) }], { provider: 'groq' });
+    const gdd = await options.generateFn([{ role: 'system', content: DIRECTOR_PROMPT(userRequest, Object.keys(goldenSeeds)) }]);
     
     // 2. Designer
     log("🎨 Designer: Creating GameConfig JSON...");
-    const configStr = await generateText([{ role: 'system', content: DESIGNER_PROMPT(gdd) }], { provider: 'groq' });
+    const configStr = await options.generateFn([{ role: 'system', content: DESIGNER_PROMPT(gdd) }]);
     const gameConfig = JSON.parse(configStr.replace(/```json|```/g, ''));
 
     // 3. Coder (Custom Hooks)
     log("💻 Coder: Generating custom logic hooks...");
-    const hooksStr = await generateText([{ role: 'system', content: CODER_PROMPT(configStr) }], { provider: 'groq' });
+    const hooksStr = await options.generateFn([{ role: 'system', content: CODER_PROMPT(configStr) }]);
     const hooks = JSON.parse(hooksStr.replace(/```json|```/g, '') || "{}");
     gameConfig.mechanics = hooks;
 

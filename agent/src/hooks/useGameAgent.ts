@@ -374,7 +374,14 @@ export function useGameAgent(settings: ChatSettings) {
         const seedContent = ULTIMATE_RUNNER_SEED;
         let progressLogs = "";
 
+        // Wrapper for generateGame that implements fallback
+        const generateWithFallback = async (msgs: any[]) => {
+          const result = await streamWithFallback(msgs, () => {}, signal, usedProvider);
+          return result.text;
+        };
+
         const result = await generateGame(gameSpec, {
+          generateFn: generateWithFallback,
           goldenSeeds: { "ultimate-runner-seed": seedContent },
           onProgress: (msg) => {
             progressLogs += `> ${msg}\n`;
