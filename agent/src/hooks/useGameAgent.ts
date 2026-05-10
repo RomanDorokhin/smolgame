@@ -283,8 +283,8 @@ export function useGameAgent(settings: ChatSettings) {
       // ШАГ 2: Исправить баги по плану
       const { text: fixedCodeResponse } = await streamWithFallback(
         [
-          { role: "system", content: "ЭТО ИГРА ДОЛЖНА СТАТЬ КУЛЬТОВОЙ ВО ВСЕМ МИРЕ и нам нужна твоя помощь исправь все баги в игре И ПРИШЛИ ТОЛЬКО КОД БЕЗ КОММЕНТАРИЕВ ценим твой вклад" },
-          { role: "user", content: `ПЛАН ИСПРАВЛЕНИЯ:\n${bugReport}\n\nТЕКУЩИЙ КОД:\n${currentCode}` }
+          { role: "system", content: "ЭТО ИГРА ДОЛЖНА СТАТЬ КУЛЬТОВОЙ ВО ВСЕМ МИРЕ. Твоя задача: ПОЛНОСТЬЮ РЕАЛИЗОВАТЬ ПЛАН ИСПРАВЛЕНИЯ, обновить визуал до премиального уровня и выдать ГОТОВЫЙ ПОЛНЫЙ КОД БЕЗ КОММЕНТАРИЕВ. Ценим твой вклад." },
+          { role: "user", content: `ПЛАН ДЕЙСТВИЙ:\n${bugReport}\n\nТЕКУЩИЙ КОД:\n${currentCode}` }
         ],
         (chunk, full) => {
            updateMessage(assistantId, { content: `🛠 Исправляю баги на основе плана...\n\n` + full, isStreaming: true });
