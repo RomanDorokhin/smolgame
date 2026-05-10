@@ -61,23 +61,39 @@ Output ONLY JSON:
 
 const CODER_PROMPT = (gameParams: GameParams, goldenSeedContent: string) => `
 GameCoder: Integrate GameParams into Golden Seed. 
-RULES:
-1. Use 'Smol.W', 'Smol.H', 'Smol.GY' for dimensions.
-2. 'Smol.Audio.tone(f, dur, vol, type)' -> dur is in SECONDS (e.g. 0.1).
-3. 'Smol.Effects.addParallaxLayer' -> CALL ONLY ONCE outside loops.
-4. 'Smol.init' options: { update: (dt, frame) => {}, render: (ctx, w, h, gy, frame) => {} }.
-5. Use 'Smol.Input.bind(() => { if(Smol.State.is("intro")) Smol.State.set("playing"); })' for taps.
+STRICT BOILERPLATE (COPY THIS STRUCTURE):
+\`\`\`javascript
+// 1. Setup Parallax (ONCE)
+GameParams.parallaxLayers.forEach(l => Smol.Effects.addParallaxLayer(l.img, l.speed));
 
-Example Structure:
-Smol.Effects.addParallaxLayer(url, speed); // ONCE
+// 2. Init Engine
 Smol.init("gameCanvas", {
-  update: (dt) => { if(Smol.State.is("playing")) { player.y += player.vy * dt; } },
-  render: (ctx, w, h, gy) => {
+  update: (dt, f) => {
+    if (Smol.State.is("intro")) return;
+    // Physics, Collisions (Smol.Physics.hits), Score
+  },
+  render: (ctx, w, h, gy, f) => {
+    ctx.clearRect(0, 0, w, h);
     Smol.Effects.applyScreenShake();
-    Smol.Effects.renderParallax(1);
-    ctx.fillRect(player.x, player.y, 40, 40);
+    Smol.Effects.renderParallax(1); // Call ONCE
+    
+    // Draw with Glow
+    Smol.Render.gl(color, 15);
+    ctx.fillStyle = color;
+    ctx.fillRect(x, y, w, h); 
+    Smol.Render.ngl();
+
+    Smol.Render.text(txt, x, y, ...);
+    Smol.Render.vignette(); Smol.Render.scanlines();
   }
 });
+
+// 3. Input
+Smol.Input.bind(() => {
+  if(Smol.State.is("intro")) Smol.State.set("playing");
+  if(Smol.State.is("playing")) player.jump();
+});
+\`\`\`
 
 Params: ${JSON.stringify(gameParams)}
 Seed: ${goldenSeedContent}
