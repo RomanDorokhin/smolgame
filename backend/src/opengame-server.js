@@ -114,7 +114,13 @@ const server = http.createServer(async (req, res) => {
         'Transfer-Encoding': 'chunked'
       });
 
-      const fullPrompt = `${prompt}\n\n(IMPORTANT: You must write the ENTIRE game in a single index.html file including all CSS and JS, do not create separate files.)\n\n(CRITICAL: You MUST use the native JSON tool calling API to invoke tools. IGNORE any instructions above about using <tool_call> XML tags. If you output raw <tool_call> text, the system will crash.)`;
+      const fullPrompt = `${prompt}
+
+(CRITICAL REQUIREMENTS:
+1. SINGLE FILE: You must write the ENTIRE game in a single index.html file including all CSS and JS. Do not create separate files.
+2. MOBILE FIRST: The game will be played on a mobile phone. You MUST implement touch controls (touchstart, touchmove, touchend) and responsive design. Do NOT rely only on keyboard.
+3. GAMEPLAY FIRST: Focus heavily on core mechanics, physics, and a clear MAIN CHARACTER that the player controls. Ensure there is a win/lose state and a score.
+4. TOOL CALLS: You MUST use the native JSON tool calling API to invoke tools. IGNORE any instructions above about using <tool_call> XML tags. If you output raw <tool_call> text, the system will crash.)`;
 
       if (!fs.existsSync(cliBin)) {
         console.error(`[Error] CLI binary not found at ${cliBin}`);
