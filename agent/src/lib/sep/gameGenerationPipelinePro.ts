@@ -127,6 +127,34 @@ ${JSON.stringify(validationReport, null, 2)}
 If the game is not valid (report.isValid === false) or the juiceScore is below 85, or securityScore is below 90, provide detailed, actionable feedback to the GamePolisher on how to improve the code. Focus on specific Smol-Core functions to use or security patterns to avoid. Otherwise, respond with "APPROVED".
 `;
 
+function extractCodeBlock(text: string, tag?: string): string {
+  if (tag) {
+    const regex = new RegExp(`<${tag}>([\\s\\S]*?)<\\/${tag}>`, 'i');
+    const match = text.match(regex);
+    if (match) return match[1].trim();
+  }
+  
+  // Try to find markdown code blocks
+  const markdownRegex = /```(?:json|xml|html|javascript|typescript)?\s*([\s\S]*?)```/gi;
+  const markdownMatch = markdownRegex.exec(text);
+  if (markdownMatch) return markdownMatch[1].trim();
+
+  // If it looks like JSON but has text around it
+  if (text.includes('{') && text.includes('}')) {
+    const start = text.indexOf('{');
+    const end = text.lastIndexOf('}');
+    const potentialJson = text.substring(start, end + 1).trim();
+    try {
+      JSON.parse(potentialJson);
+      return potentialJson;
+    } catch (e) {
+      // Not valid JSON, continue to other methods
+    }
+  }
+  
+  return text.trim();
+}
+
 export async function generateGame(userRequest: string, options: PipelineOptions): Promise<PipelineResult> {
   const debugLog: string[] = [];
   const errors: string[] = [];
@@ -146,36 +174,43 @@ export async function generateGame(userRequest: string, options: PipelineOptions
   try {
     // --- Stage 1: GameDirector (Conceptualization) ---
     log("Stage 1: GameDirector - Conceptualizing game design...");
-    const directorResponse = await generateText(DIRECTOR_PROMPT(userRequest, Object.keys(goldenSeeds)), config, "You are a professional Game Director.");
+    let directorResponse = await generateText(DIRECTOR_PROMPT(userRequest, Object.keys(goldenSeeds)), config, "You are a professional Game Director. Return ONLY valid XML.");
+    directorResponse = extractCodeBlock(directorResponse, "GameDesignDoc");
+    
     try {
       const parser = new DOMParser();
       const xmlDoc = parser.parseFromString(directorResponse, "text/xml");
       const getTagContent = (tagName: string) => xmlDoc.getElementsByTagName(tagName)[0]?.textContent || "";
+      
+      const seed = getTagContent("GoldenSeed");
       gdd = {
         coreLoop: getTagContent("CoreLoop"),
         visualStyle: getTagContent("VisualStyle"),
         atmosphere: getTagContent("Atmosphere"),
         keyMechanics: Array.from(xmlDoc.getElementsByTagName("Mechanic")).map(el => el.textContent || ""),
-        goldenSeed: getTagContent("GoldenSeed")
+        goldenSeed: seed || "ultimate-runner-seed"
       };
+      
       if (!goldenSeeds[gdd.goldenSeed]) {
-        addError(`GameDirector selected unknown Golden Seed: ${gdd.goldenSeed}. Falling back to 'ultimate-runner-seed'.`);
-        gdd.goldenSeed = 'ultimate-runner-seed'; // Fallback
+        addWarning(`Unknown Golden Seed: '${gdd.goldenSeed}'. Using fallback.`);
+        gdd.goldenSeed = 'ultimate-runner-seed';
       }
-      log("GameDesignDoc generated successfully.");
+      log(`GameDesignDoc generated. Seed: ${gdd.goldenSeed}`);
     } catch (e) {
-      addError(`Failed to parse GameDirector response: ${e}. Response: ${directorResponse}`);
+      addError(`Failed to parse GameDirector XML: ${e}.`);
       return { isSuccess: false, generatedCode: null, validationReport: null, errors, warnings, debugLog };
     }
 
     // --- Stage 2: GameDesigner (Parameter Generation) ---
     log("Stage 2: GameDesigner - Generating game parameters...");
-    const designerResponse = await generateText(DESIGNER_PROMPT(gdd), config, "You are a professional Game Designer.");
+    let designerResponse = await generateText(DESIGNER_PROMPT(gdd), config, "You are a professional Game Designer. Return ONLY valid JSON.");
+    designerResponse = extractCodeBlock(designerResponse);
+    
     try {
       gameParams = JSON.parse(designerResponse);
       log("GameParams generated successfully.");
     } catch (e) {
-      addError(`Failed to parse GameDesigner response: ${e}. Response: ${designerResponse}`);
+      addError(`Failed to parse GameDesigner JSON: ${e}.`);
       return { isSuccess: false, generatedCode: null, validationReport: null, errors, warnings, debugLog };
     }
 
@@ -186,7 +221,8 @@ export async function generateGame(userRequest: string, options: PipelineOptions
       addError(`Golden Seed content for '${gdd.goldenSeed}' not found.`);
       return { isSuccess: false, generatedCode: null, validationReport: null, errors, warnings, debugLog };
     }
-    rawGameCode = await generateText(CODER_PROMPT(gameParams, goldenSeedContent), config, "You are an expert Game Programmer.");
+    rawGameCode = await generateText(CODER_PROMPT(gameParams, goldenSeedContent), config, "You are an expert Game Programmer. Return ONLY the complete HTML.");
+    rawGameCode = extractCodeBlock(rawGameCode);
     log("Raw game code generated.");
 
     // --- Stage 4 & 5: GamePolisher & GameQA (Iterative Polish and Validation) ---
@@ -196,21 +232,21 @@ export async function generateGame(userRequest: string, options: PipelineOptions
 
     while (qaLoops < maxQaLoops) {
       log(`Stage 4: GamePolisher - Polishing game code (QA Loop ${qaLoops + 1}/${maxQaLoops})...`);
-      polishedGameCode = await generateText(POLISHER_PROMPT(polishedGameCode, qaFeedback), config, "You are a specialist Game Polisher.");
+      let polisherResponse = await generateText(POLISHER_PROMPT(polishedGameCode, qaFeedback), config, "You are a specialist Game Polisher. Return ONLY the complete HTML.");
+      polishedGameCode = extractCodeBlock(polisherResponse);
       log("Polished game code generated. Running QA...");
 
       validationReport = analyzeGameCode(polishedGameCode);
-      log(`QA Report: isValid=${validationReport.isValid}, juiceScore=${validationReport.juiceScore}, securityScore=${validationReport.securityScore}`);
-      validationReport.errors.forEach(e => addError(e));
-      validationReport.warnings.forEach(w => addWarning(w));
-
+      log(`QA Report: juiceScore=${validationReport.juiceScore}, securityScore=${validationReport.securityScore}`);
+      
       if (validationReport.isValid && validationReport.juiceScore >= 85 && validationReport.securityScore >= 90) {
         log("Stage 5: GameQA - Game APPROVED!");
         return { isSuccess: true, generatedCode: polishedGameCode, validationReport, errors, warnings, debugLog };
       } else {
-        qaFeedback = await generateText(QA_PROMPT(polishedGameCode, validationReport), config, "You are a strict Game QA Engineer.");
-        log(`QA Feedback: ${qaFeedback}`);
-        if (qaFeedback.includes("APPROVED")) {
+        let qaResponse = await generateText(QA_PROMPT(polishedGameCode, validationReport), config, "You are a strict Game QA Engineer.");
+        qaFeedback = qaResponse;
+        log(`QA Feedback received.`);
+        if (qaResponse.toUpperCase().includes("APPROVED")) {
           log("Stage 5: GameQA - Game APPROVED despite minor issues.");
           return { isSuccess: true, generatedCode: polishedGameCode, validationReport, errors, warnings, debugLog };
         }
@@ -218,7 +254,7 @@ export async function generateGame(userRequest: string, options: PipelineOptions
       }
     }
 
-    addError(`Game failed to pass QA after ${maxQaLoops} iterations. Final report: ${JSON.stringify(validationReport)}`);
+    addError(`Game failed to pass QA after ${maxQaLoops} iterations.`);
     return { isSuccess: false, generatedCode: polishedGameCode, validationReport, errors, warnings, debugLog };
 
   } catch (e: any) {
