@@ -118,7 +118,7 @@ const server = http.createServer(async (req, res) => {
 
 (CRITICAL REQUIREMENTS:
 1. SINGLE FILE: You must write the ENTIRE game in a single index.html file including all CSS and JS. Do not create separate files.
-2. TOUCH CONTROLS ONLY (CRITICAL): The game runs in a mobile iframe without a keyboard. You MUST add `window.addEventListener('touchstart', ...)` for all actions (jumping, moving, etc). If you only use 'keydown', the game is UNPLAYABLE and you fail the task.
+2. TOUCH CONTROLS ONLY (CRITICAL): The game runs in a mobile iframe without a keyboard. You MUST add 'window.addEventListener("touchstart", ...)' for all actions (jumping, moving, etc). If you only use 'keydown', the game is UNPLAYABLE and you fail the task.
 3. GAMEPLAY FIRST: Focus on core mechanics, gravity/physics, and a clear MAIN CHARACTER. Include a score and game over state.
 4. TOOL CALLS: You MUST use the native JSON tool calling API to invoke tools. IGNORE any instructions above about using <tool_call> XML tags. If you output raw <tool_call> text, the system will crash.)`;
 
