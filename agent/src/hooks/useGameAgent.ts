@@ -1,10 +1,11 @@
 import { useState, useCallback, useRef, useEffect } from "react";
-import { generateStream } from "@/lib/llm-api";
+import { generateStream, LLMConfig } from "@/lib/llm-api";
 import { SmolGameAPI } from "@/lib/smolgame-api";
 import type { APIProvider, ChatSettings } from "@/types/chat";
 import { pool } from "@/lib/llm-api";
-import { INTERVIEWER_PROMPT, ENGINEER_PROMPT, QA_PROMPT, AIDER_EDITOR_PROMPT } from "./agent_prompts";
-import { analyzeGameCode } from "@/lib/game-code-analyzer";
+import { INTERVIEWER_PROMPT, AIDER_EDITOR_PROMPT } from "./agent_prompts";
+import { generateGame } from "@/lib/sep/gameGenerationPipelinePro";
+import { analyzeGameCode } from "@/lib/sep/game-code-analyzer";
 
 // ──────────────────────────────────────────────
 // ТИПЫ
@@ -41,10 +42,6 @@ const DEFAULT_MODELS: Record<string, string[]> = {
 
 const makeId = () => Math.random().toString(36).substring(2, 9);
 
-// ──────────────────────────────────────────────
-// SAFE STORAGE HELPER
-// Fixes: localStorage crash in Telegram WebView
-// ──────────────────────────────────────────────
 const safeStorage = {
   set: (key: string, val: unknown): void => {
     try { localStorage.setItem(key, JSON.stringify(val)); } catch (_e) {}
@@ -59,39 +56,6 @@ const safeStorage = {
     try { localStorage.removeItem(key); } catch (_e) {}
   }
 };
-
-// ──────────────────────────────────────────────
-// ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ
-// ──────────────────────────────────────────────
-
-function parseMultiFile(text: string): { path: string; content: string }[] {
-  const files: { path: string; content: string }[] = [];
-  const fileRegex = /<file path="([^"]+)">([\s\S]*?)<\/file>/gi;
-  let match;
-  while ((match = fileRegex.exec(text)) !== null) {
-    files.push({ path: match[1], content: match[2].trim() });
-  }
-  return files;
-}
-
-function mergeFilesForPreview(files: { path: string; content: string }[]): string {
-  const htmlFile = files.find(f => f.path.endsWith(".html"));
-  if (!htmlFile) return files[0]?.content || "";
-
-  let merged = htmlFile.content;
-  files.forEach(f => {
-    if (f.path.endsWith(".js")) {
-      const fileName = f.path.split('/').pop() || f.path;
-      const scriptTag = new RegExp(`<script[^>]*src=["'][^"']*${fileName}["'][^>]*><\\/script>`, 'i');
-      merged = merged.replace(scriptTag, `<script>\n${f.content}\n</script>`);
-    } else if (f.path.endsWith(".css")) {
-      const fileName = f.path.split('/').pop() || f.path;
-      const linkTag = new RegExp(`<link[^>]*href=["'][^"']*${fileName}["'][^>]*>`, 'i');
-      merged = merged.replace(linkTag, `<style>\n${f.content}\n</style>`);
-    }
-  });
-  return merged;
-}
 
 function parseAiderBlocks(text: string): { search: string; replace: string }[] {
   const blocks: { search: string; replace: string }[] = [];
@@ -114,10 +78,6 @@ function applyAiderBlocks(code: string, blocks: { search: string; replace: strin
   }
   return { code: result, applied };
 }
-
-// ──────────────────────────────────────────────
-// HOOK
-// ──────────────────────────────────────────────
 
 export function useGameAgent(settings: ChatSettings) {
   const [messages, setMessages] = useState<AgentMessage[]>(() =>
@@ -153,6 +113,13 @@ export function useGameAgent(settings: ChatSettings) {
     });
   }, [settings]);
 
+  const getLLMConfig = useCallback((provider: string): LLMConfig => {
+    const apiKey = settings.keys[provider as keyof typeof settings.keys] as string;
+    const model = (settings.models?.[provider as keyof typeof settings.models] as string | undefined)
+      || DEFAULT_MODELS[provider]?.[0] || "gpt-3.5-turbo";
+    return { provider: provider as any, apiKey, model };
+  }, [settings]);
+
   const streamWithFallback = useCallback(async (
     msgs: { role: "user" | "assistant" | "system"; content: string }[],
     onChunk: (chunk: string, full: string) => void,
@@ -174,15 +141,13 @@ export function useGameAgent(settings: ChatSettings) {
       const status = pool.getStatus(providerId);
       if (status.state === "OPEN") continue;
 
-      const apiKey = settings.keys[providerId as keyof typeof settings.keys] as string;
-      const model = (settings.models?.[providerId as keyof typeof settings.models] as string | undefined)
-        || DEFAULT_MODELS[providerId]?.[0] || "gpt-3.5-turbo";
+      const config = getLLMConfig(providerId);
 
       try {
         if (i > 0) setStep(`🔄 Переключаюсь на ${providerId.toUpperCase()}...`);
 
         let fullText = "";
-        const stream = generateStream(msgs, { provider: providerId, apiKey, model }, signal);
+        const stream = generateStream(msgs, config, signal);
 
         for await (const chunk of stream) {
           if (signal.aborted) break;
@@ -200,7 +165,7 @@ export function useGameAgent(settings: ChatSettings) {
       }
     }
     throw new Error(`All providers failed. Last: ${lastError}`);
-  }, [settings, getActiveProviders]);
+  }, [settings, getActiveProviders, getLLMConfig]);
 
   const sendMessage = useCallback(async (userText: string, repoToUpdate?: string) => {
     if (isRunning) return;
@@ -215,7 +180,8 @@ export function useGameAgent(settings: ChatSettings) {
     abortRef.current = new AbortController();
     const signal = abortRef.current.signal;
 
-    if (getActiveProviders().length === 0) {
+    const activeProviders = getActiveProviders();
+    if (activeProviders.length === 0) {
       updateMessage(assistantId, {
         content: "❌ Нет API ключей. Открой настройки (≡) и добавь хотя бы один ключ.",
         isStreaming: false,
@@ -246,7 +212,7 @@ export function useGameAgent(settings: ChatSettings) {
           const hasTag = /<plan>/i.test(full) || /plan/i.test(full);
           const visible = stripPromptTag(full);
           updateMessage(assistantId, {
-            content: hasTag ? (visible || "🚀 ТЗ собрано! Подключаю инженера...") : (visible || "🤔 ..."),
+            content: hasTag ? (visible || "🚀 ТЗ собрано! Подключаю команду агентов SEP...") : (visible || "🤔 ..."),
             isStreaming: true,
           });
         },
@@ -265,6 +231,7 @@ export function useGameAgent(settings: ChatSettings) {
       if (!promptMatch && !isDetailedRequest) {
         const visible = stripPromptTag(interviewText) || interviewText.replace(/<[^>]*>/g, "").trim();
         updateMessage(assistantId, { content: visible, isStreaming: false });
+        setIsRunning(false);
         return;
       }
 
@@ -275,20 +242,14 @@ export function useGameAgent(settings: ChatSettings) {
       const beforeTag = tagStart > 0 ? interviewText.slice(0, tagStart).trim() : "";
       const isModification = !!previousCode;
 
-      let rawCode = "";
-      let progressInterval: ReturnType<typeof setInterval> | undefined;
+      let finalCode = "";
 
       if (isModification) {
-        let simulatedProgress = 0;
-        progressInterval = setInterval(() => {
-          simulatedProgress += Math.random() * 5;
-          if (simulatedProgress > 95) simulatedProgress = 95;
-          updateMessage(assistantId, {
-            content: (beforeTag ? beforeTag + "\n\n" : "") + `🤖 **Редактирую код...**`,
-            progress: Math.floor(simulatedProgress),
-            isStreaming: true
-          });
-        }, 800);
+        setStep("🤖 Редактирую код...");
+        updateMessage(assistantId, {
+          content: (beforeTag ? beforeTag + "\n\n" : "") + `🤖 **Редактирую код...**`,
+          isStreaming: true
+        });
 
         const { text: modificationText } = await streamWithFallback(
           [
@@ -300,142 +261,82 @@ export function useGameAgent(settings: ChatSettings) {
           usedProvider
         );
 
-        clearInterval(progressInterval);
-
         const blocks = parseAiderBlocks(modificationText);
         if (blocks.length > 0) {
-          rawCode = applyAiderBlocks(previousCode!, blocks).code;
+          finalCode = applyAiderBlocks(previousCode!, blocks).code;
         } else {
           const match = modificationText.match(/<game_spec>([\s\S]*?)<\/game_spec>/i) || modificationText.match(/<html[\s\S]*<\/html>/i);
-          rawCode = match ? (match[1] || match[0]) : previousCode!;
+          finalCode = match ? (match[1] || match[0]) : previousCode!;
         }
       } else {
+        // --- 5-STAGE SEP PIPELINE ---
+        setStep("🚀 Запуск SEP Pipeline...");
         updateMessage(assistantId, {
-          content: (beforeTag ? beforeTag + "\n\n" : "") + "🔨 Передаю задачу движку OpenGame...",
+          content: (beforeTag ? beforeTag + "\n\n" : "") + "🔨 **Подготовка команды агентов SEP...**",
           isStreaming: true,
         });
-        setStep("🚀 Запуск OpenGame...");
 
+        // Load golden seeds
+        let seedContent = "";
         try {
-          const activeProviders = getActiveProviders();
-          const reader = await SmolGameAPI.generateWithOpenGame({
-            prompt: gameSpec,
-            keys: settings.keys as Record<string, string>,
-            providers: activeProviders
-          });
+          // Use absolute path for smol-core.js in the seed
+          const resp = await fetch("/golden_seeds/ultimate-runner-seed.html");
+          seedContent = await resp.text();
+          seedContent = seedContent.replace('src="js/smol-core/smol-core.js"', 'src="https://smolgame.ru/agent-v3/js/smol-core/smol-core.js"');
+        } catch (e) {
+          console.error("Failed to load seed", e);
+        }
 
-          const decoder = new TextDecoder();
-          let fullConsole = "";
+        const config = getLLMConfig(usedProvider);
+        let progressLogs = "";
 
-          while (true) {
-            const { done, value } = await reader.read();
-            if (done) break;
-            if (signal.aborted) break;
-
-            const chunk = decoder.decode(value, { stream: true });
-
-            if (chunk.includes("===OPEN_GAME_RESULT_ERROR===")) {
-              throw new Error("OpenGame error: " + chunk.split("===OPEN_GAME_RESULT_ERROR===")[1]);
-            } else {
-              fullConsole += chunk;
-              if (fullConsole.includes("===OPEN_GAME_RESULT===")) continue;
-              const displayLogs = fullConsole.length > 500 ? "..." + fullConsole.slice(-500) : fullConsole;
-              updateMessage(assistantId, {
-                content: (beforeTag ? beforeTag + "\n\n" : "") + "🤖 **OpenGame работает:**\n\`\`\`bash\n" + displayLogs + "\n\`\`\`",
-                isStreaming: true
-              });
-            }
+        const result = await generateGame(gameSpec, {
+          config,
+          goldenSeeds: { "ultimate-runner-seed": seedContent },
+          onProgress: (msg) => {
+            progressLogs += `> ${msg}\n`;
+            updateMessage(assistantId, {
+              content: (beforeTag ? beforeTag + "\n\n" : "") + "🤖 **Логи SEP Engine:**\n\`\`\`bash\n" + progressLogs + "\n\`\`\`",
+              isStreaming: true
+            });
           }
+        });
 
-          if (fullConsole.includes("===OPEN_GAME_RESULT===")) {
-            rawCode = fullConsole.split("===OPEN_GAME_RESULT===")[1].trim();
-          } else if (fullConsole.includes("[ERROR] OpenGame generation failed")) {
-            throw new Error("OpenGame failed.");
-          }
-        } catch (e: unknown) {
-          updateMessage(assistantId, { content: "❌ Ошибка запуска OpenGame: " + (e as Error).message, isStreaming: false });
-          return;
+        if (result.isSuccess && result.generatedCode) {
+          finalCode = result.generatedCode;
+        } else {
+          throw new Error(result.errors.join("\n") || "SEP Pipeline failed.");
         }
       }
 
-      if (!rawCode || rawCode.length < 50) {
-        updateMessage(assistantId, { content: "❌ Ошибка генерации кода.", isStreaming: false });
-        return;
+      if (!finalCode || finalCode.length < 50) {
+        throw new Error("Empty code generated.");
       }
 
-      let finalCode = rawCode;
-      const specMatch = rawCode.match(/<game_spec>([\s\S]*?)<\/game_spec>/i);
-      if (specMatch) finalCode = specMatch[1].trim();
+      // Cleanup
+      finalCode = finalCode.replace(/```[a-z]*\n/gi, '').replace(/```/g, '');
 
-      finalCode = finalCode
-        .replace(/https:\/\/pixijs\.download\/release\/pixi\.js/g, "https://cdnjs.cloudflare.com/ajax/libs/pixi.js/6.5.10/pixi.min.js")
-        .replace(/width:\s*canvas\.width/g, "width: window.innerWidth")
-        .replace(/height:\s*canvas\.height/g, "height: window.innerHeight")
-        .replace(/```[a-z]*\n/gi, '').replace(/```/g, '');
+      // Final Analysis
+      const analysis = analyzeGameCode(finalCode);
+      const qualityNote = analysis.juiceScore < 85
+        ? `\n\n⚠️ *Качество:* Сочность ${analysis.juiceScore}% (рекомендуется добавить эффектов).`
+        : `\n\n✅ *Качество:* Сочность ${analysis.juiceScore}% - Отлично!`;
 
-      // ── PHASE 3: STATIC ANALYSIS (GOD MODE) ───────────
-      setStep("🔍 Проверяю качество кода...");
-      let analysis = analyzeGameCode(finalCode);
-
-      if (!analysis.passed || analysis.juiceScore < 85) {
-        setStep("🛠 Повышаю сочность игры (God Mode QA)...");
-        updateMessage(assistantId, {
-          content: (beforeTag ? beforeTag + "\n\n" : "") + `⚠️ Недостаточно сочности (Score: ${analysis.juiceScore}). Исправляю автоматически...`,
-          isStreaming: true
-        });
-
-        try {
-          const { text: qaText } = await streamWithFallback(
-            [
-              { role: "system", content: QA_PROMPT },
-              { role: "user", content: `Rewrite this code to add mandatory Juice (parallax, particles, shake, glow, audio):\n\n${finalCode}` }
-            ],
-            () => {},
-            signal,
-            usedProvider
-          );
-
-          const qaMatch = qaText.match(/<game_spec>([\s\S]*?)<\/game_spec>/i) || qaText.match(/<html[\s\S]*<\/html>/i);
-          if (qaMatch) {
-            finalCode = (qaMatch[1] || qaMatch[0]).trim();
-            analysis = analyzeGameCode(finalCode); // Final check
-          }
-        } catch (_qaErr) {}
-      }
-
-      // ── FINALIZE ────────────────────────────────────────
-      try {
-        const parsedFiles = parseMultiFile(finalCode);
-        const codeForPreview = parsedFiles.length > 0 ? mergeFilesForPreview(parsedFiles) : finalCode;
-
-        const qualityNote = analysis.juiceScore < 85
-          ? `\n\n⚠️ *Качество:* Сочность ${analysis.juiceScore}% (рекомендуется добавить эффектов).`
-          : `\n\n✅ *Качество:* Сочность ${analysis.juiceScore}% - Отлично!`;
-
-        updateMessage(assistantId, {
-          content: (beforeTag ? beforeTag + "\n\n" : "") + `✅ **Игра готова!**\n\n🛠 **Код в Студии.** Нажми «Опубликовать», чтобы выпустить игру.${qualityNote}`,
-          gameCode: codeForPreview,
-          isStreaming: false,
-          deployState: { phase: "ready", status: "Готово", pagesUrl: "" }
-        });
-
-      } catch (pubErr: unknown) {
-        updateMessage(assistantId, {
-          content: `⚠️ Ошибка публикации: ${(pubErr as Error).message}`,
-          deployState: { phase: "error", error: (pubErr as Error).message },
-          isStreaming: false
-        });
-      }
+      updateMessage(assistantId, {
+        content: (beforeTag ? beforeTag + "\n\n" : "") + `✅ **Игра готова!**\n\n🛠 **Код в Студии.** Нажми «Опубликовать», чтобы выпустить игру.${qualityNote}`,
+        gameCode: finalCode,
+        isStreaming: false,
+        deployState: { phase: "ready", status: "Готово", pagesUrl: "" }
+      });
 
     } catch (e: unknown) {
-      if (progressInterval !== undefined) clearInterval(progressInterval);
       updateMessage(assistantId, { content: `❌ Ошибка: ${(e as Error).message}`, isStreaming: false });
     } finally {
       setIsRunning(false);
       setStep("");
       setTargetRepo(null);
     }
-  }, [isRunning, settings, addMessage, updateMessage, getActiveProviders, streamWithFallback, messages]);
+  }, [isRunning, settings, addMessage, updateMessage, getActiveProviders, getLLMConfig, streamWithFallback, messages]);
 
   const stop = useCallback(() => {
     abortRef.current?.abort();

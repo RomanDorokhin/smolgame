@@ -283,3 +283,20 @@ export async function* generateStream(
     }
   }
 }
+
+export async function generateText(
+  prompt: string,
+  config: LLMConfig,
+  systemPrompt: string = "You are a helpful AI assistant."
+): Promise<string> {
+  const messages: ChatMessage[] = [
+    { role: "system", content: systemPrompt },
+    { role: "user", content: prompt }
+  ];
+
+  let fullText = "";
+  for await (const chunk of generateStream(messages, config)) {
+    fullText += chunk;
+  }
+  return fullText;
+}
