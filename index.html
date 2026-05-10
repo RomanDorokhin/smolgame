@@ -84,14 +84,19 @@
     <div class="action-icon" aria-hidden="true"><svg class="sg-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M15 5.25L21 12m0 0l-6 6.75M21 12H3" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
     <span class="action-label-num" id="playsCount">0</span>
   </div>
-  <!-- Три точки → меню -->
-  <div class="action-btn action-btn--more" id="sideActionMore">
-    <div class="action-icon" aria-hidden="true"><svg class="sg-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="5" r="1.5" fill="currentColor"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/><circle cx="12" cy="19" r="1.5" fill="currentColor"/></svg></div>
+  <!-- Жалоба -->
+  <div class="action-btn" data-action="report-game" data-i18n-title="report" title="Пожаловаться">
+    <div class="action-icon" aria-hidden="true">
+      <svg class="sg-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-10h.01M9 16h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </div>
+    <span class="action-label-num" data-i18n="report">Жалоба</span>
   </div>
-  <!-- Дроп-меню (скрыто по умолчанию) -->
-  <div class="side-action-popup" id="sideActionPopup" hidden>
-    <button type="button" class="side-action-popup-item side-action-popup-item--admin" id="adminDeleteBtn" data-action="admin-delete-game" style="color:#ff4d4d; display:none" data-i18n="admin_delete">🗑 Удалить игру</button>
-    <button type="button" class="side-action-popup-item" data-action="report-game" data-i18n="report">🚩 Пожаловаться</button>
+  <!-- Админ-удаление -->
+  <div class="action-btn action-btn--admin" id="adminDeleteBtn" data-action="admin-delete-game" style="display:none; color:#ff4d4d;" title="Удалить (Админ)">
+    <div class="action-icon">
+      <svg class="sg-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </div>
+    <span class="action-label-num">Admin</span>
   </div>
 </div>
 

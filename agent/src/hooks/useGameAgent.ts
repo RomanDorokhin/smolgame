@@ -29,16 +29,14 @@ export interface AgentMessage {
   };
 }
 
-const FALLBACK_ORDER: APIProvider[] = ["openrouter", "groq", "gemini", "together", "deepseek", "sambanova", "glhf"];
+const FALLBACK_ORDER: APIProvider[] = ["groq", "gemini", "openrouter", "together", "deepseek", "huggingface"];
 
 const DEFAULT_MODELS: Record<string, string[]> = {
-  openrouter: ["anthropic/claude-3.7-sonnet", "google/gemini-2.0-flash-001"],
   groq: ["llama-3.3-70b-versatile"],
   gemini: ["gemini-2.0-flash"],
+  openrouter: ["google/gemini-2.0-flash-001"],
   together: ["meta-llama/Llama-3.3-70B-Instruct-Turbo"],
   deepseek: ["deepseek-chat"],
-  sambanova: ["Meta-Llama-3.1-70B-Instruct"],
-  glhf: ["hf:meta-llama/Llama-3.1-70B-Instruct"],
   huggingface: ["meta-llama/Llama-3.2-11B-Vision-Instruct"],
 };
 
@@ -50,45 +48,88 @@ const safeStorage = {
   },
   get: <T>(key: string, defaultVal: T): T => {
     try {
-      const raw = localStorage.getItem(key);
-      return raw !== null ? (JSON.parse(raw) as T) : defaultVal;
-    } catch (_e) { return defaultVal; }
+      const item = localStorage.getItem(key);
+      return item ? JSON.parse(item) : defaultVal;
+    } catch (_e) {
+      return defaultVal;
+    }
   },
   remove: (key: string): void => {
     try { localStorage.removeItem(key); } catch (_e) {}
   }
 };
 
-function parseAiderBlocks(text: string): { search: string; replace: string }[] {
-  const blocks: { search: string; replace: string }[] = [];
-  const regex = /<<<<<<< SEARCH\n([\s\S]*?)\n=======\n([\s\S]*?)\n>>>>>>>/g;
+// ──────────────────────────────────────────────
+// AIDER DIFF PARSER (SEARCH/REPLACE)
+// ──────────────────────────────────────────────
+function parseAiderBlocks(text: string): { search: string, replace: string }[] {
+  const blocks: { search: string, replace: string }[] = [];
+  const regex = /<<<<<<< SEARCH\n([\s\S]*?)=======\n([\s\S]*?)>>>>>>> REPLACE/g;
   let match;
   while ((match = regex.exec(text)) !== null) {
-    blocks.push({ search: match[1], replace: match[2] });
+    blocks.push({
+      search: match[1].replace(/\r\n/g, '\n'),
+      replace: match[2].replace(/\r\n/g, '\n')
+    });
   }
   return blocks;
 }
 
-function applyAiderBlocks(code: string, blocks: { search: string; replace: string }[]): { code: string; applied: number } {
-  let result = code;
-  let applied = 0;
+function applyAiderBlocks(originalCode: string, blocks: { search: string, replace: string }[]): { code: string, success: boolean } {
+  let currentCode = originalCode.replace(/\r\n/g, '\n');
+  let success = true;
+
   for (const block of blocks) {
-    if (result.includes(block.search)) {
-      result = result.replace(block.search, block.replace);
-      applied++;
+    if (!block.search.trim()) continue;
+
+    if (currentCode.includes(block.search)) {
+      currentCode = currentCode.replace(block.search, block.replace);
+    } else {
+      console.warn("Aider block search text not found exactly. Attempting loose match...");
+      const searchLines = block.search.split('\n').map(l => l.trim()).filter(l => l);
+      let found = false;
+      
+      // Fallback: simple exact line-by-line replacement if the block is small
+      if (searchLines.length > 0 && searchLines.length < 5) {
+         let looseCode = currentCode;
+         let replacementsMade = 0;
+         for (const sLine of searchLines) {
+             if (looseCode.includes(sLine)) {
+                 // Try replacing the first matched line with the whole replace block (hacky)
+                 if (replacementsMade === 0) {
+                     looseCode = looseCode.replace(sLine, block.replace.trim());
+                     replacementsMade++;
+                 } else {
+                     looseCode = looseCode.replace(sLine, ''); // strip remaining search lines
+                 }
+             }
+         }
+         if (replacementsMade > 0) {
+             currentCode = looseCode;
+             found = true;
+         }
+      }
+
+      if (!found) success = false;
     }
   }
-  return { code: result, applied };
+
+  return { code: currentCode, success };
 }
 
+
+// ──────────────────────────────────────────────
+// ХУК USE GAME AGENT
+// ──────────────────────────────────────────────
 export function useGameAgent(settings: ChatSettings) {
   const [messages, setMessages] = useState<AgentMessage[]>(() =>
-    safeStorage.get<AgentMessage[]>("smol_agent_messages_v1", [])
+    safeStorage.get("smol_agent_messages_v1", [])
   );
   const [isRunning, setIsRunning] = useState(false);
   const [step, setStep] = useState("");
-  const [targetRepo, setTargetRepo] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
+  const [targetRepo, setTargetRepo] = useState<string | null>(null);
+
   const chatHistory = useRef<{ role: "user" | "assistant" | "system"; content: string }[]>(
     safeStorage.get("smol_agent_history_v1", [])
   );
@@ -117,14 +158,8 @@ export function useGameAgent(settings: ChatSettings) {
 
   const getLLMConfig = useCallback((provider: string): LLMConfig => {
     const apiKey = settings.keys[provider as keyof typeof settings.keys] as string;
-    let model = (settings.models?.[provider as keyof typeof settings.models] as string | undefined)
+    const model = (settings.models?.[provider as keyof typeof settings.models] as string | undefined)
       || DEFAULT_MODELS[provider]?.[0] || "gpt-3.5-turbo";
-      
-    // FIX: Auto-correct deprecated model names from localStorage
-    if (model === "anthropic/claude-3-5-sonnet" || model === "anthropic/claude-3.5-sonnet") {
-      model = "anthropic/claude-3.7-sonnet";
-    }
-      
     return { provider: provider as any, apiKey, model };
   }, [settings]);
 
@@ -172,18 +207,13 @@ export function useGameAgent(settings: ChatSettings) {
         if (i === ordered.length - 1) break;
       }
     }
-    const detailedError = lastError === "Load failed" 
-      ? "Ошибка сети (CORS или недоступен сервер). Проверьте ключи в настройках." 
-      : lastError;
-    throw new Error(`Все провайдеры недоступны. Последняя ошибка: ${detailedError}`);
+    throw new Error(`All providers failed. Last: ${lastError}`);
   }, [settings, getActiveProviders, getLLMConfig]);
 
   const sendMessage = useCallback(async (userText: string, repoToUpdate?: string) => {
     if (isRunning) return;
 
     if (repoToUpdate) setTargetRepo(repoToUpdate);
-
-    const lastCodeMessage = [...messages].reverse().find(m => m.role === "assistant" && m.gameCode);
 
     addMessage({ role: "user", content: userText });
     chatHistory.current.push({ role: "user", content: userText });
@@ -204,43 +234,152 @@ export function useGameAgent(settings: ChatSettings) {
     }
 
     try {
-      setStep("🚀 Генерация...");
-      
-      const generateWithFallback = async (msgs: any[]) => {
-        const result = await streamWithFallback(msgs, (chunk, full) => {
-          updateMessage(assistantId, { content: full, isStreaming: true });
-        }, signal);
-        return result.text;
-      };
+      // ── PHASE 1: INTERVIEWER ────────────────────────────
+      setStep("💬 Думаю...");
+      const interviewMsgs = [
+        { role: "system" as const, content: INTERVIEWER_PROMPT },
+        ...chatHistory.current.slice(-15),
+      ];
 
-      const result = await generateGame(userText, {
-        generateFn: generateWithFallback,
-        previousCode: lastCodeMessage?.gameCode
-      });
+      const stripPromptTag = (text: string) =>
+        text
+          .replace(/<plan>([\s\S]*?)<\/plan>/gi, "")
+          .replace(/<\/?plan>/gi, "")
+          .replace(/plan[\s\S]*/i, "")
+          .trim();
 
-      if (result.isSuccess && result.generatedCode) {
-        let finalCode = result.generatedCode.trim();
-        
-        // Aider logic: Apply blocks if they exist
-        const blocks = parseAiderBlocks(finalCode);
-        if (blocks.length > 0 && lastCodeMessage?.gameCode) {
-          const applied = applyAiderBlocks(lastCodeMessage.gameCode, blocks);
-          finalCode = applied.code;
+      const { text: interviewText, provider: usedProvider } = await streamWithFallback(
+        interviewMsgs,
+        (_chunk, full) => {
+          if (signal.aborted) return;
+          const hasTag = /<plan>/i.test(full) || /plan/i.test(full);
+          const visible = stripPromptTag(full);
+          updateMessage(assistantId, {
+            content: hasTag ? (visible || "🚀 ТЗ собрано! Подключаю команду агентов SEP...") : (visible || "🤔 ..."),
+            isStreaming: true,
+          });
+        },
+        signal
+      );
+
+      chatHistory.current.push({ role: "assistant", content: interviewText });
+
+      const promptMatch =
+        interviewText.match(/<plan>([\s\S]*?)<\/plan>/i) ||
+        interviewText.match(/<plan>([\s\S]*?)$/i) ||
+        interviewText.match(/plan\s*([\s\S]+)/i);
+
+      const isDetailedRequest = userText.length > 100 && (userText.includes("создай") || userText.includes("игру"));
+
+      if (!promptMatch && !isDetailedRequest) {
+        const visible = stripPromptTag(interviewText) || interviewText.replace(/<[^>]*>/g, "").trim();
+        updateMessage(assistantId, { content: visible, isStreaming: false });
+        setIsRunning(false);
+        return;
+      }
+
+      const gameSpec = promptMatch ? promptMatch[1].trim() : userText;
+      const lastCodeMessage = messages.slice().reverse().find(m => m.gameCode);
+      const previousCode = lastCodeMessage?.gameCode;
+      const tagStart = interviewText.search(/<plan>|plan/i);
+      const beforeTag = tagStart > 0 ? interviewText.slice(0, tagStart).trim() : "";
+      const isModification = !!previousCode;
+
+      let finalCode = "";
+
+      if (isModification) {
+        setStep("🤖 Редактирую код...");
+        updateMessage(assistantId, {
+          content: (beforeTag ? beforeTag + "\n\n" : "") + `🤖 **Редактирую код...**`,
+          isStreaming: true
+        });
+
+        const { text: modificationText } = await streamWithFallback(
+          [
+            { role: "system", content: AIDER_EDITOR_PROMPT + `\n\nCURRENT FILE CONTENT:\n${previousCode}` },
+            { role: "user", content: `Modify the code:\n\n${gameSpec}` }
+          ],
+          () => {},
+          signal,
+          usedProvider
+        );
+
+        const blocks = parseAiderBlocks(modificationText);
+        if (blocks.length > 0) {
+          finalCode = applyAiderBlocks(previousCode!, blocks).code;
         } else {
-          // Clean up markdown markers if it's a full file
-          finalCode = finalCode.replace(/```[a-z]*\n/gi, '').replace(/```/g, '').trim();
+          const match = modificationText.match(/<game_spec>([\s\S]*?)<\/game_spec>/i) || modificationText.match(/<html[\s\S]*<\/html>/i);
+          finalCode = match ? (match[1] || match[0]) : previousCode!;
+        }
+      } else {
+        // --- 5-STAGE SEP PIPELINE ---
+        setStep("🚀 Запуск SEP Pipeline...");
+        updateMessage(assistantId, {
+          content: (beforeTag ? beforeTag + "\n\n" : "") + "🔨 **Подготовка команды агентов SEP...**",
+          isStreaming: true,
+        });
+
+        // Load golden seeds
+        let seedContent = "";
+        try {
+          // Use absolute path for smol-core.js in the seed
+          const resp = await fetch("/golden_seeds/ultimate-runner-seed.html");
+          seedContent = await resp.text();
+          seedContent = seedContent.replace('src="js/smol-core/smol-core.js"', 'src="https://smolgame.ru/agent-v3/js/smol-core/smol-core.js"');
+        } catch (e) {
+          console.error("Failed to load seed", e);
         }
 
-        updateMessage(assistantId, {
-          content: finalCode,
-          gameCode: finalCode,
-          isStreaming: false,
-          deployState: { phase: "ready", status: "Готово", pagesUrl: "" }
+        const config = getLLMConfig(usedProvider);
+        let progressLogs = "";
+
+        const result = await generateGame(gameSpec, {
+          config,
+          goldenSeeds: { "ultimate-runner-seed": seedContent },
+          onProgress: (msg) => {
+            // Убираем вывод в bash формат, парсим сообщение
+            let cleanStatus = msg;
+            let progress = 30; // Дефолтный прогресс
+            if (msg.includes("Phase: Specification")) { cleanStatus = "Анализирую требования и пишу спецификацию..."; progress = 20; }
+            else if (msg.includes("Phase: Architecture")) { cleanStatus = "Проектирую архитектуру игры..."; progress = 40; }
+            else if (msg.includes("Phase: Component Implementation")) { cleanStatus = "Пишу код компонентов..."; progress = 60; }
+            else if (msg.includes("Phase: Assembly")) { cleanStatus = "Собираю игру воедино..."; progress = 80; }
+            else if (msg.includes("Phase: QA")) { cleanStatus = "Оптимизирую и тестирую код..."; progress = 90; }
+            
+            updateMessage(assistantId, {
+              content: (beforeTag ? beforeTag + "\n\n" : "") + "✨ **Создаю игру...**\n\n" + cleanStatus,
+              isStreaming: true,
+              progress
+            });
+          }
         });
-        chatHistory.current.push({ role: "assistant", content: finalCode });
-      } else {
-        throw new Error(result.errors.join("\n") || "Ошибка генерации.");
+
+        if (result.isSuccess && result.generatedCode) {
+          finalCode = result.generatedCode;
+        } else {
+          throw new Error(result.errors.join("\n") || "SEP Pipeline failed.");
+        }
       }
+
+      if (!finalCode || finalCode.length < 50) {
+        throw new Error("Empty code generated.");
+      }
+
+      // Cleanup
+      finalCode = finalCode.replace(/```[a-z]*\n/gi, '').replace(/```/g, '');
+
+      // Final Analysis
+      const analysis = analyzeGameCode(finalCode);
+      const qualityNote = analysis.juiceScore < 85
+        ? `\n\n⚠️ *Качество:* Сочность ${analysis.juiceScore}% (рекомендуется добавить эффектов).`
+        : `\n\n✅ *Качество:* Сочность ${analysis.juiceScore}% - Отлично!`;
+
+      updateMessage(assistantId, {
+        content: (beforeTag ? beforeTag + "\n\n" : "") + `✅ **Игра готова!**\n\n🛠 **Код в Студии.** Нажми «Опубликовать», чтобы выпустить игру.${qualityNote}`,
+        gameCode: finalCode,
+        isStreaming: false,
+        deployState: { phase: "ready", status: "Готово", pagesUrl: "" }
+      });
 
     } catch (e: unknown) {
       updateMessage(assistantId, { content: `❌ Ошибка: ${(e as Error).message}`, isStreaming: false });
@@ -264,61 +403,5 @@ export function useGameAgent(settings: ChatSettings) {
     safeStorage.remove("smol_agent_history_v1");
   }, []);
 
-  const debugGame = useCallback(async (currentCode: string) => {
-    if (isRunning) return;
-    setIsRunning(true);
-    setStep("🔍 Поиск багов...");
-    const assistantId = addMessage({ role: "assistant", content: "🔍 Анализирую код на наличие ошибок...", isStreaming: true });
-    
-    try {
-      const abortController = new AbortController();
-      const signal = abortController.signal;
-
-      // ШАГ 1: Найти баги
-      const { text: bugReport } = await streamWithFallback(
-        [
-          { role: "system", content: "ЭТО ИГРА ДОЛЖНА БЫТЬ НА МИРОВОМ УРОВНЕ без тебя мы не справимся НАЙДИ ВСЕ БАГИ В ЭТОЙ ИГРЕ И КОРОТКО пришли только план по исправлению БЕЗ ЛИШНИХ КОММЕНТАРИЕВ ЭТО ВАЖНО" },
-          { role: "user", content: `КОД ДЛЯ АНАЛИЗА:\n\n${currentCode}` }
-        ],
-        (chunk, full) => {
-           updateMessage(assistantId, { content: `🔍 Анализ багов...\n\n` + full, isStreaming: true });
-        },
-        signal
-      );
-
-      setStep("🛠 Исправление...");
-      updateMessage(assistantId, { content: `**План исправления:**\n${bugReport}\n\n🛠 **Начинаю исправление...**`, isStreaming: true });
-
-      // ШАГ 2: Исправить баги по плану
-      const { text: fixedCodeResponse } = await streamWithFallback(
-        [
-          { role: "system", content: "ЭТО ИГРА ДОЛЖНА СТАТЬ КУЛЬТОВОЙ ВО ВСЕМ МИРЕ. Твоя задача: ПОЛНОСТЬЮ РЕАЛИЗОВАТЬ ПЛАН ИСПРАВЛЕНИЯ, обновить визуал до премиального уровня и выдать ГОТОВЫЙ ПОЛНЫЙ КОД БЕЗ КОММЕНТАРИЕВ. Ценим твой вклад." },
-          { role: "user", content: `ПЛАН ДЕЙСТВИЙ:\n${bugReport}\n\nТЕКУЩИЙ КОД:\n${currentCode}` }
-        ],
-        (chunk, full) => {
-           updateMessage(assistantId, { content: `🛠 Исправляю баги на основе плана...\n\n` + full, isStreaming: true });
-        },
-        signal
-      );
-
-      let finalCode = fixedCodeResponse.replace(/```[a-z]*\n/gi, '').replace(/```/g, '').trim();
-      const match = finalCode.match(/<html[\s\S]*<\/html>/i);
-      if (match) finalCode = match[0];
-
-      updateMessage(assistantId, {
-        content: finalCode,
-        gameCode: finalCode,
-        isStreaming: false,
-        deployState: { phase: "ready", status: "Исправлено", pagesUrl: "" }
-      });
-
-    } catch (e: unknown) {
-      updateMessage(assistantId, { content: `❌ Ошибка отладки: ${(e as Error).message}`, isStreaming: false });
-    } finally {
-      setIsRunning(false);
-      setStep("");
-    }
-  }, [isRunning, addMessage, updateMessage, streamWithFallback]);
-
-  return { messages, isRunning, step, sendMessage, stop, reset, debugGame };
+  return { messages, isRunning, step, sendMessage, stop, reset };
 }

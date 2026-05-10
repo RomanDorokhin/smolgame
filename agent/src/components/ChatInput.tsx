@@ -9,10 +9,14 @@ interface ChatInputProps {
   isGenerating: boolean;
   disabled?: boolean;
   placeholder?: string;
+  value?: string;
+  onChange?: (val: string) => void;
 }
 
-export function ChatInput({ onSend, onStop, isGenerating, disabled, placeholder }: ChatInputProps) {
-  const [input, setInput] = useState("");
+export function ChatInput({ onSend, onStop, isGenerating, disabled, placeholder, value, onChange }: ChatInputProps) {
+  const [localInput, setLocalInput] = useState("");
+  const input = value !== undefined ? value : localInput;
+  const setInput = onChange || setLocalInput;
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {

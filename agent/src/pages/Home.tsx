@@ -5,7 +5,8 @@ import { ChatInput } from "@/components/ChatInput";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
-import { Menu, Sparkles, Github, Layout, MessageSquare, Play, Pencil, RotateCcw, X, ChevronDown, ChevronUp, Key, Trash2, Save, FileCode, Monitor, Smartphone, Maximize2, ExternalLink, ArrowLeft, Loader2, CheckCircle2, Activity } from "lucide-react";
+import { Menu, Sparkles, Github, Layout, MessageSquare, Play, Pencil, RotateCcw, X, ChevronDown, ChevronUp, Key, Trash2, Save, FileCode, Monitor, Smartphone, Maximize2, ExternalLink, ArrowLeft, Loader2, CheckCircle2, MoreVertical, Sparkles as SparkleIcon } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { SmolGameAPI } from "@/lib/smolgame-api";
 import { Component, type ReactNode } from "react";
@@ -51,7 +52,7 @@ class ErrorBoundary extends Component<{ children: ReactNode }, { hasError: boole
 
 export default function Home() {
   const [settings, setSettings] = useState<ChatSettings>(loadSettings);
-  const { messages, isRunning, step, sendMessage, stop, reset, debugGame } = useGameAgent(settings);
+  const { messages, isRunning, step, sendMessage, stop, reset } = useGameAgent(settings);
   const { user, isAuthenticated, isLoading: authLoading, login } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<"chat" | "studio">(() => {
@@ -80,27 +81,22 @@ export default function Home() {
   const [expandedProvider, setExpandedProvider] = useState<APIProvider | null>(null);
   const [isCleaning, setIsCleaning] = useState(false);
   const [publishProgress, setPublishProgress] = useState<{ status: string; progress: number } | null>(null);
-  const [studioMode, setStudioMode] = useState<"split" | "code" | "preview">("split");
-  const [showSettings, setShowSettings] = useState(false);
-  const [isPurging, setIsPurging] = useState(false);
+  const [studioMode, setStudioMode] = useState<"code" | "preview" | "split">("split");
   const [userHasScrolled, setUserHasScrolled] = useState(false);
-  const [iframeErrors, setIframeErrors] = useState<{message: string, count: number}[]>([]);
+  const [isPurging, setIsPurging] = useState(false);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [chatInputValue, setChatInputValue] = useState("");
+  const [studioSubTab, setStudioSubTab] = useState<"published" | "drafts">("published");
 
   useEffect(() => {
     if (studioGame?.code) {
-      const injectedCode = studioGame.code.replace(/<\/body>/i, `
+      // Пытаемся починить пустой canvas, если он не на 100%
+      const injectedCode = studioGame.code.includes('</body>') 
+        ? studioGame.code.replace(/<\/body>/i, `
         <script>
           (function() {
-            window.onerror = function(msg, url, line, col, error) {
-              window.parent.postMessage({ type: 'SMOLGAME_ERROR', message: msg, stack: error?.stack }, '*');
-              return false;
-            };
-            window.addEventListener('unhandledrejection', function(event) {
-              window.parent.postMessage({ type: 'SMOLGAME_ERROR', message: event.reason?.message || 'Unhandled Promise Rejection', stack: event.reason?.stack }, '*');
-            });
             const fixCanvas = () => {
               const canvases = document.querySelectorAll('canvas');
               canvases.forEach(c => {
@@ -116,7 +112,9 @@ export default function Home() {
             window.addEventListener('resize', fixCanvas);
           })();
         </script>
-      </body>`);
+      </body>`)
+        : `<html><body>${studioGame.code}</body></html>`;
+        
       const blob = new Blob([injectedCode], { type: 'text/html' });
       const url = URL.createObjectURL(blob);
       setPreviewUrl(url);
@@ -155,26 +153,8 @@ export default function Home() {
   useEffect(() => {
     if (studioGame) {
       localStorage.setItem("smol_studio_game_v1", JSON.stringify(studioGame));
-      setIframeErrors([]); // Сброс ошибок при смене игры
     }
   }, [studioGame]);
-
-  useEffect(() => {
-    const handleMessage = (event: MessageEvent) => {
-      if (event.data && event.data.type === 'SMOLGAME_ERROR') {
-        setIframeErrors(prev => {
-          const newMsg = event.data.message || "Unknown error";
-          const existing = prev.find(e => e.message === newMsg);
-          if (existing) {
-            return prev.map(e => e.message === newMsg ? { ...e, count: e.count + 1 } : e);
-          }
-          return [...prev, { message: newMsg, count: 1 }];
-        });
-      }
-    };
-    window.addEventListener('message', handleMessage);
-    return () => window.removeEventListener('message', handleMessage);
-  }, []);
 
   const updateSettings = (patch: Partial<ChatSettings>) => {
     setSettings(prev => {
@@ -240,10 +220,14 @@ export default function Home() {
   };
 
   const GENRE_PRESETS = [
-    { title: "Бесконечный Раннер", emoji: "🏃", prompt: "Создай бесконечный раннер в стиле киберпанк. Игрок должен уворачиваться от препятствий и собирать неоновые сферы." },
-    { title: "Физический Пазл", emoji: "🧩", prompt: "Создай пазл на основе физики, где нужно докатить шар до цели, используя различные блоки и механизмы." },
-    { title: "Космический Шутер", emoji: "🚀", prompt: "Создай космический шутер с видом сверху. Улучшение оружия, разные типы врагов и босс в конце." },
-    { title: "RPG Кликер", emoji: "⚔️", prompt: "Создай RPG кликер. Игрок сражается с монстрами, зарабатывает золото и прокачивает героя и его навыки." }
+    { title: "Бесконечный Раннер", emoji: "🏃", prompt: "Создай бесконечный раннер в стиле киберпанк с неоновыми цветами. Игрок управляет машиной, уворачивается от препятствий и собирает монеты. Добавь эффекты частиц." },
+    { title: "Tower Defense", emoji: "🏰", prompt: "Сделай простую Tower Defense игру. Враги идут по извилистой тропинке, игрок может ставить башни за монеты. Башни стреляют по врагам." },
+    { title: "Кликер (Idle)", emoji: "🖱️", prompt: "Создай залипательный Idle-кликер про добычу руды. По центру огромный камень. За клики дают руду, за руду можно покупать авто-буры и улучшать кирку." },
+    { title: "Головоломка 2048", emoji: "🧩", prompt: "Напиши клон игры 2048 с красивыми анимациями слияния плиток и современной цветовой палитрой." },
+    { title: "Космический Шутер", emoji: "🚀", prompt: "Космический шутер с видом сверху. Корабль стреляет автоматически, игрок управляет мышью. Враги наступают волнами, из них выпадают бонусы на оружие." },
+    { title: "Платформер", emoji: "🍄", prompt: "Классический 2D платформер с управлением на WASD/Стрелочки. Персонаж может прыгать, собирать ключи и открывать двери. Добавь пару типов врагов." },
+    { title: "Flappy Bird", emoji: "🐦", prompt: "Сделай точный клон Flappy Bird. Управление по клику или пробелу. Трубы генерируются бесконечно. Добавь систему очков и экран окончания игры." },
+    { title: "Змейка", emoji: "🐍", prompt: "Классическая игра змейка на сетке. Яблоки появляются в случайных местах. Сочные звуки поедания (или визуальные эффекты) и плавная анимация." }
   ];
 
   return (
@@ -421,7 +405,7 @@ export default function Home() {
                         {GENRE_PRESETS.map((preset) => (
                           <button
                             key={preset.title}
-                            onClick={() => sendMessage(preset.prompt)}
+                            onClick={() => setChatInputValue(preset.prompt)}
                             className="flex flex-col items-center p-6 bg-[#13141a] border border-white/5 rounded-[2rem] hover:border-blue-500/30 hover:bg-blue-500/5 transition-all group hover:-translate-y-1"
                           >
                             <span className="text-4xl mb-4 group-hover:scale-110 transition-transform">{preset.emoji}</span>
@@ -443,7 +427,6 @@ export default function Home() {
                             console.log("Studio received code. Title:", title, "Length:", code?.length);
                             setStudioGame({ title, code });
                           }}
-                          onDebug={debugGame}
                         />
                       ))}
                       
@@ -489,7 +472,7 @@ export default function Home() {
                         <span className="text-[#a3b8d4]">{studioGame ? "Редактор" : "Мои игры"}</span>
                       </div>
                       <h2 className="text-sm font-bold text-white truncate max-w-[200px]">
-                        {studioGame ? studioGame.title : "Ваша галерея"}
+                        {studioGame ? studioGame.title : "Управление проектами"}
                       </h2>
                     </div>
                   </div>
@@ -517,6 +500,39 @@ export default function Home() {
                         </button>
                       </div>
 
+                      {drafts.length > 0 && (
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="sm" className="h-9 px-3 bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/20 text-[9px] font-black uppercase rounded-xl mr-4">
+                              <RotateCcw size={14} className="mr-2" /> Версии
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="w-64 bg-[#13141a] border-white/10 rounded-xl overflow-hidden p-1 shadow-xl z-[100]">
+                            <div className="px-3 py-2 border-b border-white/5 mb-1">
+                              <span className="text-[10px] text-white/50 font-black uppercase tracking-widest">История черновиков</span>
+                            </div>
+                            <ScrollArea className="max-h-60">
+                              {drafts.map((d, idx) => (
+                                <DropdownMenuItem 
+                                  key={d.id}
+                                  className="text-xs text-white/80 focus:bg-white/10 focus:text-white rounded-lg cursor-pointer p-2 flex flex-col items-start gap-1 mb-1"
+                                  onClick={() => {
+                                    if(window.confirm("Восстановить код из этого черновика? Текущие несохраненные изменения будут потеряны.")) {
+                                      setStudioGame({ title: d.title, code: d.code });
+                                    }
+                                  }}
+                                >
+                                  <div className="flex i-center w-full items-center justify-between">
+                                    <span className="font-bold truncate max-w-[150px]">{d.title}</span>
+                                    <span className="text-[9px] text-white/30 uppercase">v{drafts.length - idx}</span>
+                                  </div>
+                                  <span className="text-[9px] text-white/40 font-mono">{new Date(d.timestamp).toLocaleTimeString()}</span>
+                                </DropdownMenuItem>
+                              ))}
+                            </ScrollArea>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      )}
 
                       <Button 
                         variant="ghost"
@@ -529,21 +545,6 @@ export default function Home() {
                       >
                         <ExternalLink size={14} className="mr-2" /> Тест
                       </Button>
-
-                      {iframeErrors.length > 0 && (
-                        <Button 
-                          className="h-9 px-4 bg-red-600/90 hover:bg-red-700 text-white text-[9px] font-black uppercase tracking-widest rounded-xl shadow-lg shadow-red-900/20"
-                          onClick={() => {
-                            const errorText = iframeErrors.map(e => e.message).join('\\n');
-                            sendMessage(`В игре произошли ошибки во время запуска (runtime errors):\n${errorText}\n\nПожалуйста, исправь их и перенеси инициализацию в правильное место. Верни полный исправленный HTML.`);
-                            setIframeErrors([]);
-                            setActiveTab("chat");
-                          }}
-                        >
-                          <Activity size={14} className="mr-2" />
-                          Автофикс ({iframeErrors.length})
-                        </Button>
-                      )}
 
                       <Button 
                         disabled={!!publishProgress}
@@ -583,7 +584,20 @@ export default function Home() {
                   )}
 
                   {!studioGame && (
-                    <Button variant="ghost" size="sm" onClick={loadMyGames} className="text-[#a3b8d4] text-[10px] font-black uppercase">Обновить</Button>
+                    <div className="flex bg-[#13141a] p-1 rounded-xl border border-white/5">
+                      <button 
+                        onClick={() => setStudioSubTab("published")}
+                        className={`px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${studioSubTab === "published" ? "bg-white/10 text-white" : "text-white/40 hover:text-white/60"}`}
+                      >
+                        Опубликованные
+                      </button>
+                      <button 
+                        onClick={() => setStudioSubTab("drafts")}
+                        className={`px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${studioSubTab === "drafts" ? "bg-white/10 text-white" : "text-white/40 hover:text-white/60"}`}
+                      >
+                        Черновики
+                      </button>
+                    </div>
                   )}
                 </div>
 
@@ -646,68 +660,123 @@ export default function Home() {
                   ) : (
                     <ScrollArea className="h-full">
                       <div className="max-w-5xl mx-auto px-6 py-10">
-                        {loadingGames ? (
+                        {loadingGames && studioSubTab === "published" ? (
                           <div className="flex items-center justify-center py-20">
                             <div className="w-6 h-6 border-2 border-[#a3b8d4] border-t-transparent rounded-full animate-spin" />
                           </div>
-                        ) : myGames.length > 0 ? (
+                        ) : (studioSubTab === "published" ? myGames.length > 0 : drafts.length > 0) ? (
                           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                            {myGames.map((game) => (
-                              <div key={game.id} className="group flex flex-col p-6 rounded-3xl bg-[#13141a] border border-white/5 hover:border-blue-500/20 transition-all hover:translate-y-[-4px]">
+                            {(studioSubTab === "published" ? myGames : drafts).map((game, idx) => {
+                              // Создаем градиент на основе индекса, чтобы карточки были разными
+                              const gradients = [
+                                "from-blue-500/10 to-purple-500/10",
+                                "from-green-500/10 to-emerald-500/10",
+                                "from-orange-500/10 to-red-500/10",
+                                "from-pink-500/10 to-rose-500/10",
+                                "from-cyan-500/10 to-blue-500/10"
+                              ];
+                              const bgGradient = gradients[idx % gradients.length];
+                              const isDraft = studioSubTab === "drafts";
+                              return (
+                              <div key={game.id} className={`group flex flex-col p-6 rounded-3xl bg-[#13141a] border border-white/5 hover:border-blue-500/20 transition-all hover:translate-y-[-4px] bg-gradient-to-br ${bgGradient}`}>
                                 <div className="flex items-start justify-between mb-6">
-                                  <div className="w-16 h-16 rounded-2xl bg-white/5 flex items-center justify-center text-3xl shrink-0 group-hover:scale-110 transition-transform">
+                                  <div className="w-16 h-16 rounded-2xl bg-black/20 flex items-center justify-center text-3xl shrink-0 group-hover:scale-110 transition-transform">
                                     {game.genreEmoji || "🎮"}
                                   </div>
                                   <div className="flex gap-1">
-                                    <Button
-                                      variant="ghost"
-                                      size="sm"
-                                      className="w-9 h-9 p-0 rounded-xl bg-red-500/5 text-red-500/40 hover:text-red-500 hover:bg-red-500/10"
-                                      onClick={async () => {
-                                        if (window.confirm("Удалить игру?")) {
-                                          await SmolGameAPI.deleteGame(game.id);
-                                          loadMyGames();
-                                        }
-                                      }}
-                                    >
-                                      <Trash2 size={16} />
-                                    </Button>
+                                    <DropdownMenu>
+                                      <DropdownMenuTrigger asChild>
+                                        <Button variant="ghost" size="sm" className="w-8 h-8 p-0 rounded-full hover:bg-white/10 text-white/40 hover:text-white">
+                                          <MoreVertical size={14} />
+                                        </Button>
+                                      </DropdownMenuTrigger>
+                                      <DropdownMenuContent align="end" className="w-40 bg-[#13141a] border-white/10 rounded-xl overflow-hidden p-1 shadow-xl">
+                                        <DropdownMenuItem 
+                                          className="text-xs font-bold text-white/80 focus:bg-white/10 focus:text-white rounded-lg cursor-pointer flex items-center gap-2 p-2"
+                                          onClick={async () => {
+                                            setStudioGame({ title: game.title, code: "<!-- Загрузка кода... -->" });
+                                            if (isDraft) {
+                                              setStudioGame({ title: game.title, code: game.code });
+                                            } else {
+                                              try {
+                                                const response = await fetch(game.url.endsWith('/') ? game.url + 'index.html' : game.url + '/index.html');
+                                                const code = await response.text();
+                                                setStudioGame({ title: game.title, code });
+                                              } catch {
+                                                setStudioGame({ title: game.title, code: "<!-- Ошибка загрузки кода -->" });
+                                              }
+                                            }
+                                          }}
+                                        >
+                                          <Pencil size={12} /> Править код
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem 
+                                          className="text-xs font-bold text-blue-400 focus:bg-blue-500/10 focus:text-blue-300 rounded-lg cursor-pointer flex items-center gap-2 p-2"
+                                          onClick={async () => {
+                                            if (isDraft) {
+                                              setStudioGame({ title: game.title, code: game.code });
+                                              setActiveTab("chat");
+                                              setChatInputValue("Добавь новые фичи, улучши графику и сделай игру сочнее.");
+                                            } else {
+                                              try {
+                                                const response = await fetch(game.url.endsWith('/') ? game.url + 'index.html' : game.url + '/index.html');
+                                                const code = await response.text();
+                                                setStudioGame({ title: game.title, code });
+                                                setActiveTab("chat");
+                                                setChatInputValue("Добавь новые фичи, улучши графику и сделай игру сочнее.");
+                                              } catch {
+                                                alert("Не удалось загрузить код игры для улучшения.");
+                                              }
+                                            }
+                                          }}
+                                        >
+                                          <SparkleIcon size={12} /> Улучшить
+                                        </DropdownMenuItem>
+                                        {!isDraft && (
+                                          <DropdownMenuItem 
+                                            className="text-xs font-bold text-red-400 focus:bg-red-500/10 focus:text-red-300 rounded-lg cursor-pointer flex items-center gap-2 p-2"
+                                            onClick={async () => {
+                                              if (window.confirm("Удалить игру?")) {
+                                                await SmolGameAPI.deleteGame(game.id);
+                                                loadMyGames();
+                                              }
+                                            }}
+                                          >
+                                            <Trash2 size={12} /> Удалить
+                                          </DropdownMenuItem>
+                                        )}
+                                      </DropdownMenuContent>
+                                    </DropdownMenu>
                                   </div>
                                 </div>
                                 <h3 className="font-black text-lg text-white mb-2 group-hover:text-blue-400 transition-colors">{game.title}</h3>
-                                <p className="text-xs text-white/30 line-clamp-2 mb-8 leading-relaxed">{game.description || "Готовая к игре разработка."}</p>
+                                <p className="text-xs text-white/40 line-clamp-2 mb-8 leading-relaxed font-medium">{game.description || (isDraft ? "Черновик игры." : "Готовая к игре разработка.")}</p>
                                 
-                                <div className="flex items-center gap-2 mt-auto pt-4 border-t border-white/5">
-                                  <Button 
-                                    className="flex-1 h-10 bg-white/5 hover:bg-white/10 text-white text-[9px] font-black uppercase rounded-xl"
-                                    onClick={() => window.open(game.url, "_blank")}
-                                  >
-                                    Играть
-                                  </Button>
-                                  <Button 
-                                    className="flex-1 h-10 bg-blue-600/10 hover:bg-blue-600/20 text-blue-400 text-[9px] font-black uppercase rounded-xl border border-blue-500/10"
-                                    onClick={async () => {
-                                      setStudioGame({ title: game.title, code: "<!-- Загрузка кода... -->" });
-                                      try {
-                                        const response = await fetch(game.url.endsWith('/') ? game.url + 'index.html' : game.url + '/index.html');
-                                        const code = await response.text();
-                                        setStudioGame({ title: game.title, code });
-                                      } catch {
-                                        setStudioGame({ title: game.title, code: "<!-- Ошибка загрузки кода -->" });
-                                      }
-                                    }}
-                                  >
-                                    Править
-                                  </Button>
+                                <div className="mt-auto pt-4 border-t border-white/5">
+                                  {isDraft ? (
+                                    <Button 
+                                      className="w-full h-12 bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 border border-blue-500/20 text-[12px] font-black uppercase tracking-[0.2em] rounded-xl transition-all"
+                                      onClick={() => setStudioGame({ title: game.title, code: game.code })}
+                                    >
+                                      <Pencil size={16} className="mr-2" /> В РЕДАКТОР
+                                    </Button>
+                                  ) : (
+                                    <Button 
+                                      className="w-full h-12 bg-[#22c55e] hover:bg-[#16a34a] text-white text-[12px] font-black uppercase tracking-[0.2em] rounded-xl shadow-[0_4px_14px_0_rgba(34,197,94,0.39)] hover:shadow-[0_6px_20px_rgba(34,197,94,0.23)] hover:-translate-y-0.5 transition-all"
+                                      onClick={() => window.open(game.url, "_blank")}
+                                    >
+                                      <Play size={16} fill="currentColor" className="mr-2" /> ИГРАТЬ
+                                    </Button>
+                                  )}
                                 </div>
                               </div>
-                            ))}
+                            )})}
                           </div>
                         ) : (
                           <div className="py-20 text-center border-2 border-dashed border-white/5 rounded-[3rem]">
                             <Layout className="w-16 h-16 text-white/5 mx-auto mb-6" />
-                            <h3 className="text-xl font-bold mb-2">Здесь пока пусто</h3>
-                            <p className="text-white/30 text-sm max-w-xs mx-auto mb-8">Создайте свою первую игру в чате с Агентом!</p>
+                            <h3 className="text-xl font-bold mb-2">{studioSubTab === "published" ? "Нет опубликованных игр" : "Нет черновиков"}</h3>
+                            <p className="text-white/30 text-sm max-w-xs mx-auto mb-8">{studioSubTab === "published" ? "Вы еще не опубликовали ни одной игры." : "Создайте свою первую игру в чате с Агентом!"}</p>
                             <Button onClick={() => setActiveTab("chat")} className="bg-blue-600 hover:bg-blue-700 text-white font-black uppercase tracking-widest px-8 rounded-2xl">В Чат</Button>
                           </div>
                         )}
@@ -723,6 +792,8 @@ export default function Home() {
           <div className="px-4 py-4 md:px-8 md:py-6 bg-[#0a0b0e] border-t border-white/5 shrink-0">
             <div className="max-w-2xl mx-auto">
               <ChatInput
+                value={chatInputValue}
+                onChange={setChatInputValue}
                 onSend={(text) => {
                   if (activeTab === "studio") setActiveTab("chat");
                   sendMessage(text);

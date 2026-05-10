@@ -13,6 +13,7 @@ import {
   LogOut,
   ChevronDown,
   ChevronUp,
+  Play
 } from "lucide-react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import type { ChatSession, ChatSettings, UsageStats, APIProvider } from "@/types/chat";
@@ -69,10 +70,7 @@ export function ChatSidebar({
     glhf: { url: "https://glhf.chat/settings/api", name: "GLHF", desc: "1. Войти\n2. Settings -> API\n💎 Огромные модели (405B) бесплатно" },
     deepseek: { url: "https://platform.deepseek.com/api_keys", name: "DeepSeek", desc: "1. Регистрация\n2. Create API Key\n🐳 Мощные и доступные модели" },
     openrouter: { url: "https://openrouter.ai/keys", name: "OpenRouter", desc: "1. Регистрация\n2. Нажать 'Create Key'\n💡 Один ключ для 100+ моделей (есть бесплатные)" },
-    huggingface: { url: "https://huggingface.co/settings/tokens", name: "HuggingFace", desc: "1. Settings -> Access Tokens\n2. Create New Token (Read)\n🤗 Тысячи моделей" },
-    custom: { url: "https://github.com/cheahjs/free-llm-api-resources", name: "Custom API", desc: "1. Найти бесплатный API по ссылке\n2. Вставить Base URL и любой ключ ниже" }
   };
-
 
   const handleClear = () => {
     if (confirmClear) {
@@ -289,12 +287,18 @@ export function ChatSidebar({
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={onFactoryReset}
-                  className="w-full justify-start gap-2 text-[11px] text-destructive hover:text-destructive hover:bg-destructive/10 h-8 font-bold uppercase tracking-tighter mt-1"
+                  onClick={() => {
+                    const pass = prompt("Введите слово DELETE для полного сброса всех проектов:");
+                    if (pass === "DELETE") {
+                      onFactoryReset();
+                    }
+                  }}
+                  className="w-full justify-start gap-2 text-[11px] text-white/30 hover:text-white/80 hover:bg-white/5 h-8 font-bold uppercase tracking-tighter mt-1"
                 >
                   <RotateCcw size={14} />
                   Factory Reset
                 </Button>
+                <p className="text-[8px] text-white/20 mt-1 px-2 text-center">Полный сброс (используйте только если есть ошибки кэша)</p>
               </div>
 
               {/* Quota Stats moved here for settings tab */}
@@ -418,4 +422,3 @@ export function ChatSidebar({
     </>
   );
 }
-

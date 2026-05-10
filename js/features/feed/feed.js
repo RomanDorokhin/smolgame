@@ -557,7 +557,7 @@ function updateOverlay() {
   const adminDeleteBtn = document.getElementById('adminDeleteBtn');
   if (adminDeleteBtn) {
     const isAdmin = document.body.classList.contains('is-admin');
-    adminDeleteBtn.style.display = isAdmin ? 'block' : 'none';
+    adminDeleteBtn.style.display = isAdmin ? 'flex' : 'none';
   }
 }
 
@@ -575,7 +575,8 @@ document.addEventListener('click', async e => {
   if (!confirm(confirmMsg)) return;
   
   try {
-    btn.disabled = true;
+    const icon = btn.querySelector('.action-icon');
+    if (icon) icon.style.opacity = '0.5';
     const res = await API.delete(g.id, { deleteGithubRepo: true });
     // apiFetch бросает ошибку при любом HTTP-сбое, поэтому здесь — всегда успех.
     let msg = '🗑 ' + (tf('profile_delete_done') || 'Game deleted');
@@ -588,8 +589,8 @@ document.addEventListener('click', async e => {
   } catch (err) {
     showToast('❌ ' + err.message);
   } finally {
-    btn.disabled = false;
-    document.getElementById('sideActionPopup')?.setAttribute('hidden', '');
+    const icon = btn.querySelector('.action-icon');
+    if (icon) icon.style.opacity = '1';
   }
 });
 
