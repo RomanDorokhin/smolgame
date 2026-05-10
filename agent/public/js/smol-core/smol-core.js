@@ -435,16 +435,26 @@ const Smol = (function() {
           .then(audioBuffer => { assetCache[url] = audioBuffer; return audioBuffer; });
       });
     },
-    // Placeholder for AI image/audio generation - requires backend integration
+    // Programmatic generation (Placeholder for real AI integration)
     generateImage(prompt, style = 'pixelart') {
-      console.warn(`Smol.Assets.generateImage: AI generation for '${prompt}' not yet implemented. Returning placeholder.`);
-      // In a real scenario, this would call a backend API that talks to DALL-E/Midjourney
-      return Promise.resolve('https://via.placeholder.com/64x64.png?text=AI_IMG');
+      // Create a deterministic color based on the prompt
+      let hash = 0;
+      for (let i = 0; i < prompt.length; i++) hash = prompt.charCodeAt(i) + ((hash << 5) - hash);
+      const color = `hsl(${Math.abs(hash) % 360}, 70%, 50%)`;
+      
+      // Return a 1x1 colored pixel as a data URL (canvas can scale this)
+      const canvas = document.createElement('canvas');
+      canvas.width = 32; canvas.height = 32;
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = color;
+      ctx.fillRect(0, 0, 32, 32);
+      ctx.fillStyle = 'rgba(255,255,255,0.3)';
+      ctx.fillRect(0,0,16,16); // Simple pattern
+      return Promise.resolve(canvas.toDataURL());
     },
     generateAudio(prompt, type = 'sfx') {
-      console.warn(`Smol.Assets.generateAudio: AI generation for '${prompt}' not yet implemented. Returning placeholder.`);
-      // In a real scenario, this would call a backend API that talks to a generative audio model
-      return Promise.resolve(S.Audio.sfx.score()); // Return a default SFX for now
+      // Return a generated tone function
+      return Promise.resolve(() => S.Audio.tone(400 + (prompt.length * 10), 0.2));
     }
   };
 
