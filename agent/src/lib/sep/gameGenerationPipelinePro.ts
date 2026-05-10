@@ -69,8 +69,10 @@ MANDATORY STRUCTURE (Do not change keys):
     "collectibleTypes": [{ "id": "c1", "color": "#HEX", "radius": 15, "scoreValue": 10, "spawnWeight": 1 }]
   },
   "visuals": {
+    "fontFamily": "Orbitron", // Options: 'Orbitron' (Sci-Fi), 'Rajdhani' (Tech), 'Inter' (Premium), 'Montserrat' (Clean), 'Bungee' (Arcade)
     "parallaxLayers": [{ "assetUrl": "url", "speed": 0.2, "alpha": 1 }],
-    "hudColor": "#HEX"
+    "hudColor": "#HEX",
+    "hudGlowColor": "#HEX"
   },
   "audio": {
     "sfx": { "jump": { "freq": 400 }, "score": { "freq": 800 }, "die": { "freq": 200 } }

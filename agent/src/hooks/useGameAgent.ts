@@ -281,7 +281,13 @@ export function useGameAgent(settings: ChatSettings) {
         .spinner { width: 50px; height: 50px; border: 5px solid #0FF; border-top-color: transparent; border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 20px; }
         @keyframes spin { to { transform: rotate(360deg); } }
     </style>
-    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <style>
+        body { margin: 0; overflow: hidden; background: #000; color: #fff; }
+        canvas { display: block; margin: auto; }
+        #loading-screen { position: absolute; inset: 0; background: #000; color: #0FF; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 1000; }
+        .spinner { width: 50px; height: 50px; border: 5px solid #0FF; border-top-color: transparent; border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 20px; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
 </head>
 <body>
     <div id="loading-screen"><div class="spinner"></div><div id="loading-text">SYNCING REALITY...</div></div>
@@ -295,6 +301,16 @@ export function useGameAgent(settings: ChatSettings) {
             console.error(m);
         };
         const cfg = JSON.parse(document.getElementById('game-config-json').textContent);
+        
+        // Dynamic Font Loader
+        if (cfg.visuals?.fontFamily) {
+            const fontName = cfg.visuals.fontFamily;
+            const link = document.createElement('link');
+            link.href = `https://fonts.googleapis.com/css2?family=${fontName.replace(/ /g, '+')}:wght@400;700&display=swap`;
+            link.rel = 'stylesheet';
+            document.head.appendChild(link);
+            document.body.style.fontFamily = `'${fontName}', sans-serif`;
+        }
         
         function bootGame() {
             if (typeof Smol === 'undefined') {

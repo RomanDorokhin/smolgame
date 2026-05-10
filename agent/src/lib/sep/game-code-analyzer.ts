@@ -77,6 +77,12 @@ export function analyzeGameCode(htmlContent: string): ValidationReport {
     }
   });
 
+  // Font bonus
+  if (htmlContent.includes("fontFamily") && !htmlContent.includes("Press Start 2P")) {
+      juice += 10;
+      report.features.push("Premium Typography");
+  }
+
   if (!foundCriticalLogic) {
       report.isValid = false;
       report.errors.push("Missing critical game logic hooks.");
