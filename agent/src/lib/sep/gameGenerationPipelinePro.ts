@@ -69,30 +69,39 @@ GameParams.parallaxLayers.forEach(l => Smol.Effects.addParallaxLayer(l.img, l.sp
 // 2. Init Engine
 Smol.init("gameCanvas", {
   update: (dt, f) => {
-    if (Smol.State.is("intro")) return;
-    // Physics, Collisions (Smol.Physics.hits), Score
+    if (!Smol.State.is("playing")) return;
+    // Game Logic: player.update(), spawn obstacles, check Smol.Physics.hits()
   },
   render: (ctx, w, h, gy, f) => {
     ctx.clearRect(0, 0, w, h);
     Smol.Effects.applyScreenShake();
-    Smol.Effects.renderParallax(1); // Call ONCE
+    Smol.Effects.renderParallax(1);
     
-    // Draw with Glow
-    Smol.Render.gl(color, 15);
-    ctx.fillStyle = color;
-    ctx.fillRect(x, y, w, h); 
-    Smol.Render.ngl();
+    if (Smol.State.is("intro")) {
+      Smol.Render.text("TAP TO START", w/2, h/2, "#FFF", 40, "#0FF", 20);
+    } else if (Smol.State.is("playing")) {
+      // Render Game Objects (player, obstacles)
+      Smol.Render.gl(color, 15);
+      ctx.fillRect(x, y, w, h); 
+      Smol.Render.ngl();
+      Smol.Render.text("Score: " + Math.floor(score), w/2, 50);
+    } else if (Smol.State.is("game_over")) {
+      Smol.Render.text("GAME OVER", w/2, h/2, "#F00", 50);
+      Smol.Render.text("TAP TO RESTART", w/2, h/2 + 60, "#FFF", 30);
+    }
 
-    Smol.Render.text(txt, x, y, ...);
     Smol.Render.vignette(); Smol.Render.scanlines();
   }
 });
 
-// 3. Input
+// 3. Input Handling
 Smol.Input.bind(() => {
-  if(Smol.State.is("intro")) Smol.State.set("playing");
-  if(Smol.State.is("playing")) player.jump();
+  if (Smol.State.is("intro")) Smol.State.set("playing");
+  if (Smol.State.is("game_over")) location.reload(); // Simple restart
+  if (Smol.State.is("playing")) player.jump();
 });
+
+Smol.State.set("intro");
 \`\`\`
 
 Params: ${JSON.stringify(gameParams)}
