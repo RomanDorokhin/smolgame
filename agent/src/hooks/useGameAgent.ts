@@ -263,40 +263,22 @@ export function useGameAgent(settings: ChatSettings) {
       const abortController = new AbortController();
       const signal = abortController.signal;
 
-      // ШАГ 1: Найти баги
+      // ОДИН ШАГ: Найти баги и дать обратную связь
       const { text: bugReport } = await streamWithFallback(
         [
           { role: "system", content: "ЭТО ИГРА ДОЛЖНА БЫТЬ НА МИРОВОМ УРОВНЕ без тебя мы не справимся НАЙДИ ВСЕ БАГИ В ЭТОЙ ИГРЕ пришли только план по исправлению" },
           { role: "user", content: `КОД ДЛЯ АНАЛИЗА:\n\n${currentCode}` }
         ],
-        () => {},
-        signal
-      );
-
-      setStep("🛠 Исправление...");
-      updateMessage(assistantId, { content: `Found bugs:\n${bugReport}\n\n🛠 Fixing...` });
-
-      // ШАГ 2: Исправить баги
-      const { text: fixedCodeResponse } = await streamWithFallback(
-        [
-          { role: "system", content: "ЭТО ИГРА ДОЛЖНА СТАТЬ КУЛЬТОВОЙ ВО ВСЕМ МИРЕ и нам нужна твоя помощь исправь все баги в игре И ПРИШЛИ ТОЛЬКО КОД БЕЗ КОММЕНТАРИЕВ ценим твой фклад" },
-          { role: "user", content: `СПИСОК БАГОВ:\n${bugReport}\n\nТЕКУЩИЙ КОД:\n${currentCode}` }
-        ],
         (chunk, full) => {
-           updateMessage(assistantId, { content: `🛠 Исправляю баги...\n\n` + full, isStreaming: true });
+           updateMessage(assistantId, { content: `🔍 Анализ багов...\n\n` + full, isStreaming: true });
         },
         signal
       );
 
-      let finalCode = fixedCodeResponse.replace(/```[a-z]*\n/gi, '').replace(/```/g, '').trim();
-      const match = finalCode.match(/<html[\s\S]*<\/html>/i);
-      if (match) finalCode = match[0];
-
       updateMessage(assistantId, {
-        content: finalCode,
-        gameCode: finalCode,
+        content: bugReport,
         isStreaming: false,
-        deployState: { phase: "ready", status: "Исправлено", pagesUrl: "" }
+        deployState: { phase: "idle" }
       });
 
     } catch (e: unknown) {
