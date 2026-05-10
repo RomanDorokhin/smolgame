@@ -547,12 +547,9 @@ export default function Home() {
                           <div className="h-full flex flex-col items-center justify-center bg-[#07080a] p-8">
                             <div className="relative w-full max-w-[380px] aspect-[9/16] rounded-[2.5rem] border-[10px] border-[#1a1b26] bg-black shadow-2xl overflow-hidden group">
                                 <iframe
-                                  key={studioGame.title + studioGame.code.length}
+                                  key={`preview-${studioGame.title}-${studioGame.code.length}-${Date.now()}`}
                                   title="Studio Live Preview"
-                                  srcDoc={studioGame.code
-                                    .replace(/window\.innerWidth/g, '(window.innerWidth || 380)')
-                                    .replace(/window\.innerHeight/g, '(window.innerHeight || 675)')
-                                  }
+                                  srcDoc={studioGame.code}
                                   className="w-full h-full border-none bg-black"
                                   sandbox="allow-scripts allow-pointer-lock allow-same-origin allow-modals"
                                 />
