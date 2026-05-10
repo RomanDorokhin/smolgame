@@ -83,6 +83,7 @@ export default function Home() {
   const [studioMode, setStudioMode] = useState<"split" | "code" | "preview">("split");
   const [showSettings, setShowSettings] = useState(false);
   const [isPurging, setIsPurging] = useState(false);
+  const [userHasScrolled, setUserHasScrolled] = useState(false);
   const [iframeErrors, setIframeErrors] = useState<{message: string, count: number}[]>([]);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
