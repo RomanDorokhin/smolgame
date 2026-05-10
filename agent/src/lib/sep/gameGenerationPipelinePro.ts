@@ -164,7 +164,7 @@ NEVER use window.alert() or confirm(). Use DOM/Canvas overlays instead.`,
       
       // Inject logic into skeleton
       const html = ultimateArcadeSkeleton.replace(
-        '// ─── OVERRIDE THESE ──────────────────────────────────────────',
+        /\/\/ ─── OVERRIDE THESE ──────────────────────────────────────────[\s\S]*?function draw\(\)\{\}/i,
         `// ─── INJECTED LOGIC ──────────────────────────────────────────\n${logic}`
       );
       
