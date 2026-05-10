@@ -16,11 +16,14 @@ h1{font-size:clamp(24px,8vw,48px);background:linear-gradient(45deg,#00ffcc,#0066
 #hud{position:fixed;top:20px;left:20px;right:20px;display:flex;justify-content:space-between;pointer-events:none;font-weight:900;text-shadow:0 0 10px #00ffcc}
 button{padding:18px 48px;border:none;border-radius:12px;background:linear-gradient(45deg,#00ffcc,#0066ff);color:#000;font-weight:900;font-size:20px;cursor:pointer;text-transform:uppercase;transition:transform 0.2s}
 button:active{transform:scale(0.95)}
+#joy-base{position:fixed;bottom:40px;left:40px;width:100px;height:100px;background:rgba(255,255,255,0.1);border-radius:50%;display:none;pointer-events:all;border:1px solid rgba(255,255,255,0.2)}
+#joy-stick{position:absolute;top:30px;left:30px;width:40px;height:40px;background:#00ffcc;border-radius:50%;box-shadow:0 0 20px #00ffcc}
 </style>
 </head>
 <body>
 <canvas id="c"></canvas>
 <div id="hud"><div id="score">000000</div><div id="best">HI: 000000</div></div>
+<div id="joy-base"><div id="joy-stick"></div></div>
 <div id="ui">
   <div id="start" class="screen active">
     <h1 id="title">TITLE</h1>
@@ -37,6 +40,7 @@ button:active{transform:scale(0.95)}
 <script>
 const canvas=document.getElementById('c'), ctx=canvas.getContext('2d');
 let W,H,scale=1,state='start',score=0,hi=0,shake=0;
+const cam={x:0,y:0,zoom:1}, joy={x:0,y:0,active:false};
 
 const safeStorage={
   set:(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}},
@@ -70,6 +74,7 @@ function showScreen(id){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   if(id)document.getElementById(id).classList.add('active');
   document.getElementById('hud').style.opacity=id?0:1;
+  document.getElementById('joy-base').style.display=(!id && joy.enabled)?'block':'none';
 }
 
 function startGame(){
@@ -94,7 +99,12 @@ function loop(){
   
   if(state==='play'){
     if(typeof update==='function')update();
+    ctx.save();
+    ctx.translate(W/2,H/2);
+    ctx.scale(cam.zoom,cam.zoom);
+    ctx.translate(-cam.x,-cam.y);
     if(typeof draw==='function')draw();
+    ctx.restore();
     document.getElementById('score').innerText=String(score).padStart(6,'0');
   }
 
@@ -102,14 +112,27 @@ function loop(){
   requestAnimationFrame(loop);
 }
 
-// ─── OVERRIDE THESE ──────────────────────────────────────────
-function init(){}
-function update(){}
-function draw(){ ctx.clearRect(0,0,W,H); }
-
+// ─── INPUT (JOYSTICK) ─────────────────────────────────────────
+const jBase=document.getElementById('joy-base'), jStick=document.getElementById('joy-stick');
+const handleJoy=(e)=>{
+  if(!joy.active)return;
+  const r=jBase.getBoundingClientRect(), cx=r.left+50, cy=r.top+50;
+  const dx=e.clientX-cx, dy=e.clientY-cy, d=Math.sqrt(dx*dx+dy*dy);
+  const m=Math.min(d,40);
+  joy.x=d?(dx/d)*(m/40):0; joy.y=d?(dy/d)*(m/40):0;
+  jStick.style.transform=`translate(${joy.x*40}px,${joy.y*40}px)`;
+};
 window.addEventListener('pointerdown',e=>{
-  if(state==='play'&&typeof onTouch==='function')onTouch(e);
+  if(e.target===jBase||jBase.contains(e.target)){joy.active=true;handleJoy(e);}
+  else if(state==='play'&&typeof onTouch==='function')onTouch(e);
 });
+window.addEventListener('pointermove',handleJoy);
+window.addEventListener('pointerup',()=>{joy.active=false;joy.x=0;joy.y=0;jStick.style.transform='';});
+
+// ─── OVERRIDE THESE ──────────────────────────────────────────
+function init(){ joy.enabled=false; } // Set joy.enabled=true if needed
+function update(){}
+function draw(){}
 
 requestAnimationFrame(loop);
 </script>
