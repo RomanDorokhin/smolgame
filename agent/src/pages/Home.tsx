@@ -534,7 +534,7 @@ export default function Home() {
                           className="h-9 px-4 bg-red-600/90 hover:bg-red-700 text-white text-[9px] font-black uppercase tracking-widest rounded-xl shadow-lg shadow-red-900/20"
                           onClick={() => {
                             const errorText = iframeErrors.map(e => e.message).join('\\n');
-                            sendMessage(\`В игре произошли ошибки во время запуска (runtime errors):\\n\${errorText}\\n\\nПожалуйста, исправь их и перенеси инициализацию в правильное место. Верни полный исправленный HTML.\`);
+                            sendMessage(`В игре произошли ошибки во время запуска (runtime errors):\n${errorText}\n\nПожалуйста, исправь их и перенеси инициализацию в правильное место. Верни полный исправленный HTML.`);
                             setIframeErrors([]);
                             setActiveTab("chat");
                           }}
