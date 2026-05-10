@@ -306,10 +306,10 @@ export function useGameAgent(settings: ChatSettings) {
         if (cfg.visuals?.fontFamily) {
             const fontName = cfg.visuals.fontFamily;
             const link = document.createElement('link');
-            link.href = `https://fonts.googleapis.com/css2?family=${fontName.replace(/ /g, '+')}:wght@400;700&display=swap`;
+            link.href = 'https://fonts.googleapis.com/css2?family=' + fontName.replace(/ /g, '+') + ':wght@400;700&display=swap';
             link.rel = 'stylesheet';
             document.head.appendChild(link);
-            document.body.style.fontFamily = `'${fontName}', sans-serif`;
+            document.body.style.fontFamily = "'" + fontName + "', sans-serif";
         }
         
         function bootGame() {
