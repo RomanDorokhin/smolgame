@@ -537,7 +537,7 @@ export default function Home() {
                             <div className="relative w-full max-w-[380px] aspect-[9/16] rounded-[2.5rem] border-[10px] border-[#1a1b26] bg-black shadow-2xl overflow-hidden group">
                                 <iframe
                                   title="Studio Live Preview"
-                                  srcDoc={studioGame.code}
+                                  srcDoc={studioGame.code.replace(/window\.innerWidth/g, '(window.innerWidth || 380)').replace(/window\.innerHeight/g, '(window.innerHeight || 675)')}
                                   className="w-full h-full border-none"
                                   sandbox="allow-scripts allow-pointer-lock allow-same-origin allow-modals"
                                 />

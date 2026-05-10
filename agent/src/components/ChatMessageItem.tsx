@@ -260,7 +260,7 @@ export function ChatMessageItem({ message, onSend, onSwitchTab, onLoadStudio, is
               <Button variant="ghost" className="absolute top-6 right-6 z-50 text-white" onClick={() => setShowPreview(false)}><X size={20} /></Button>
                 <iframe
                   title="Game Preview"
-                  srcDoc={htmlCode.includes("<!DOCTYPE") ? htmlCode : `<!DOCTYPE html><html><body style="margin:0;overflow:hidden;background:#000;">${htmlCode}</body></html>`}
+                  srcDoc={(htmlCode.includes("<!DOCTYPE") ? htmlCode : `<!DOCTYPE html><html><body style="margin:0;overflow:hidden;background:#000;">${htmlCode}</body></html>`).replace(/window\.innerWidth/g, '(window.innerWidth || 380)').replace(/window\.innerHeight/g, '(window.innerHeight || 675)')}
                   className="w-full h-full border-none"
                   sandbox="allow-scripts allow-pointer-lock allow-same-origin allow-modals"
                 />
