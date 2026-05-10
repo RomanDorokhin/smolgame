@@ -297,7 +297,7 @@ export function useGameAgent(settings: ChatSettings) {
 <body>
     <div id="loading-screen"><div class="spinner"></div><div>SYNCING REALITY...</div></div>
     <canvas id="gameCanvas"></canvas>
-    <script src="https://smolgame.ru/js/smol-core/smol-core.js"></script>
+    <script src="js/smol-core/smol-core.js" onerror="alert('CRITICAL: smol-core.js not found! Check your paths.')"></script>
     <!-- GAME_CONFIG_INJECTION_POINT -->
     <script>
         const cfg = JSON.parse(document.getElementById('game-config-json').textContent);
