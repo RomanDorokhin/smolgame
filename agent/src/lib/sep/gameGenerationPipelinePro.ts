@@ -108,6 +108,9 @@ export async function generateGame(
   options: PipelineOptions
 ): Promise<PipelineResult> {
   const { generateFn, previousCode, onProgress } = options;
+  if (typeof generateFn !== 'function') {
+    throw new Error('Pipeline error: generateFn is not a function. Check your interface implementation.');
+  }
 
   // EDIT MODE — user is tweaking an existing game
   if (previousCode) {

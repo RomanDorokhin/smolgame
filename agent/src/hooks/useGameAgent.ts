@@ -331,11 +331,14 @@ export function useGameAgent(settings: ChatSettings) {
         }
 
         const config = getLLMConfig(usedProvider);
-        let progressLogs = "";
+        
+        const pipelineGenerateFn = async (msgs: any[]) => {
+          const { text } = await streamWithFallback(msgs, () => {}, signal, usedProvider);
+          return text;
+        };
 
         const result = await generateGame(gameSpec, {
-          config,
-          goldenSeeds: { "ultimate-runner-seed": seedContent },
+          generateFn: pipelineGenerateFn,
           onProgress: (msg) => {
             // Убираем вывод в bash формат, парсим сообщение
             let cleanStatus = msg;
