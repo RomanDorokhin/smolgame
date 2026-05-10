@@ -56,6 +56,9 @@ function validate(html: string): string[] {
                                        errors.push('Must use requestAnimationFrame for game loop.');
   if (/location\.reload\s*\(\)/.test(html)) errors.push('FORBIDDEN: location.reload() — use resetGame() instead.');
   if (!html.includes('pointerdown'))   errors.push('Missing pointerdown — required for mobile touch.');
+  if (/(?:resizeCanvas|Game\.init)\s*\(\s*\);[\s\S]{0,2000}const\s+Game\s*=/.test(html)) {
+    errors.push('ReferenceError: You called resizeCanvas() or Game.init() BEFORE declaring "const Game". Move ALL initialization calls to the VERY END of the script after the Game object is defined to avoid Temporal Dead Zone errors.');
+  }
   return errors;
 }
 
@@ -106,6 +109,7 @@ Use SEARCH/REPLACE blocks or output the full new HTML. Code only, no explanation
                 `Below is a WORKING game skeleton. Customize it to match the user request.\n` +
                 `Keep ALL juice code (particles, screen shake, audio, safeStorage) EXACTLY as-is.\n` +
                 `Only replace the game-logic section (marked with REPLACE THIS SECTION comments).\n` +
+                `CRITICAL: DO NOT change the initialization order. DO NOT call resizeCanvas() or any functions before declaring 'const Game'. All initialization must happen at the VERY BOTTOM.\n` +
                 `NEVER use location.reload() — use resetGame() instead.\n` +
                 `NEVER add external libraries.\n` +
                 `Output ONLY the complete HTML file. No markdown. No explanations.\n\n` +
