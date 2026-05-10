@@ -61,25 +61,31 @@ Output ONLY JSON:
 
 const CODER_PROMPT = (gameParams: GameParams, goldenSeedContent: string) => `
 GameCoder: Integrate GameParams into Golden Seed. 
-STRICT RULES:
-1. Use ONLY Smol-Core API. NO standard 'new Audio()', 'requestAnimationFrame', or manual 'ctx' loops.
-2. Use 'Smol.init(canvasId, {update, render})' for game loop.
-3. Use 'Smol.Audio.tone(freq, dur, vol, type, targetFreq)' for SFX.
-4. Use 'Smol.Effects' for everything: 'addParallaxLayer', 'burst' (particles), 'shakeScreen', 'renderParallax'.
-5. Use 'Smol.Physics.hits(a, b, pad)' for collisions.
-6. Use 'Smol.Render' for juice: 'gl' (glow), 'text' (neon text), 'vignette', 'scanlines'.
+REAL SMOL-CORE API (USE ONLY THESE):
+- Smol.init(id, {update: (dt, f)=>{}, render: (ctx, w, h, gy, f)=>{}, groundYRatio: 0.76})
+- Smol.Input.bind(() => { /* action on tap/space */ }); Smol.Input.isDown('Space')
+- Smol.Audio.tone(freq, dur, vol, type, sweepFreq); Smol.Audio.sfx.jump(isDouble); Smol.Audio.sfx.die();
+- Smol.Physics.hits(a, b, padding); // a,b must have x,y,w,h
+- Smol.Effects.burst(x, y, count, colors, gravity); // particles
+- Smol.Effects.shakeScreen(intensity, duration); 
+- Smol.Effects.applyScreenShake(); // CALL IN RENDER
+- Smol.Effects.addParallaxLayer(url, speed, yOffset, alpha);
+- Smol.Effects.renderParallax(baseSpeed); // CALL IN RENDER
+- Smol.Render.gl(color, blur); Smol.Render.ngl(); // glow on/off
+- Smol.Render.text(txt, x, y, color, size, glowColor, glowBlur);
+- Smol.State.set(name); Smol.State.is(name); // intro, playing, game_over
 
 Params: ${JSON.stringify(gameParams)}
 Seed: ${goldenSeedContent}
 Output ONLY complete HTML.`;
 
 const POLISHER_PROMPT = (rawGameCode: string, feedback: string = "") => `
-GamePolisher: Maximize "Juice" using Smol-Core Effects.
-- Add 'Smol.Effects.burst' on collection/death.
-- Add 'Smol.Effects.shakeScreen' on jump/hit.
-- Add 'Smol.Render.gl' (glow) to all moving objects.
-- Add 'Smol.Render.vignette()' and 'scanlines()' in render function.
-- Fix any logic bugs using Smol-Core methods.
+GamePolisher: Maximize "Juice" using Smol-Core.
+1. Use 'Smol.Render.gl(color, 15)' before drawing objects for neon glow.
+2. Use 'Smol.Effects.burst' on all collisions/points.
+3. Use 'Smol.Effects.shakeScreen(10, 0.2)' on jump/hit.
+4. Ensure 'Smol.Effects.applyScreenShake()' and 'renderParallax()' are in the render loop.
+5. Use 'Smol.Render.vignette()' and 'scanlines()' for retro feel.
 Feedback: ${feedback}
 Code: ${rawGameCode}
 Output ONLY complete HTML.`;
