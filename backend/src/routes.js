@@ -34,10 +34,37 @@ const PUBLISHED_FEED_SQL = `
     ORDER BY g.created_at DESC
     LIMIT ? OFFSET ?`;
 
-async function publishedFeedGamesQuery(db, limit, offset, orderBy = 'g.created_at DESC') {
+async function publishedFeedGamesQuery(db, limit, offset, orderBy = 'g.created_at DESC', search = '', genre = '') {
+  let where = "WHERE g.status = 'published'";
+  const binds = [];
+
+  if (search) {
+    where += " AND (g.title LIKE ? OR g.description LIKE ?)";
+    const s = `%${search}%`;
+    binds.push(s, s);
+  }
+
+  if (genre) {
+    where += " AND g.genre = ?";
+    binds.push(genre);
+  }
+
   const safeOrder = orderBy === 'RANDOM()' ? 'RANDOM()' : 'g.created_at DESC';
-  const sql = PUBLISHED_FEED_SQL.replace(/ORDER\s+BY\s+g\.created_at\s+DESC/i, `ORDER BY ${safeOrder}`);
-  return db.prepare(sql).bind(limit, offset).all();
+  const sql = `
+    SELECT g.id, g.title, g.description, g.genre, g.genre_emoji AS genreEmoji,
+            g.url, g.image_url AS imageUrl, g.likes, g.plays, g.author_id AS authorId,
+            g.created_at AS createdAt, g.updated_at AS updatedAt,
+            u.site_handle AS authorHandle, u.first_name AS authorFirst, u.last_name AS authorLast,
+            u.display_name AS authorDisplayName,
+            COALESCE(u.photo_url, '') AS authorPhoto
+       FROM games g
+       LEFT JOIN users u ON u.id = g.author_id
+      ${where}
+      ORDER BY ${safeOrder}
+      LIMIT ? OFFSET ?`;
+
+  binds.push(limit, offset);
+  return db.prepare(sql).bind(...binds).all();
 }
 
 // Вспомогательные функции для совместимости, теперь просто выполняют первый запрос
@@ -130,9 +157,19 @@ export async function getFeed(req, env) {
   if (!Number.isFinite(limit) || limit < 1) limit = FEED_PAGE_DEFAULT;
   limit = Math.min(FEED_PAGE_MAX, Math.max(1, Math.floor(limit)));
 
+  const search = url.searchParams.get('q') || '';
+  const genre = url.searchParams.get('genre') || '';
+
   // Только опубликованные. По умолчанию новые первыми (created_at DESC).
   // Если shuffle=true — случайный порядок (RANDOM()).
-  const { results } = await publishedFeedGamesQuery(env.DB, limit, offset, shuffle ? 'RANDOM()' : 'g.created_at DESC');
+  const { results } = await publishedFeedGamesQuery(
+    env.DB, 
+    limit, 
+    offset, 
+    shuffle ? 'RANDOM()' : 'g.created_at DESC',
+    search,
+    genre
+  );
 
   const headers = {};
   // Кэшируем ленту на уровне CDN на 1 минуту, если это не случайный порядок
