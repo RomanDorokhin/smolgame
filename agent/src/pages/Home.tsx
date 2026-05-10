@@ -51,7 +51,7 @@ class ErrorBoundary extends Component<{ children: ReactNode }, { hasError: boole
 
 export default function Home() {
   const [settings, setSettings] = useState<ChatSettings>(loadSettings);
-  const { messages, isRunning, step, sendMessage, stop, reset } = useGameAgent(settings);
+  const { messages, isRunning, step, sendMessage, stop, reset, debugGame } = useGameAgent(settings);
   const { user, isAuthenticated, isLoading: authLoading, login } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<"chat" | "studio">(() => {
@@ -416,6 +416,7 @@ export default function Home() {
                             console.log("Studio received code. Title:", title, "Length:", code?.length);
                             setStudioGame({ title, code });
                           }}
+                          onDebug={debugGame}
                         />
                       ))}
                       

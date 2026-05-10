@@ -14,6 +14,7 @@ interface ChatMessageItemProps {
   onSend?: (content: string) => void;
   onSwitchTab?: (tab: "chat" | "studio") => void;
   onLoadStudio?: (title: string, code: string) => void;
+  onDebug?: (code: string) => void;
   isLast?: boolean;
 }
 
@@ -24,7 +25,7 @@ const extractTextFromNode = (node: any): string => {
   return "";
 };
 
-export function ChatMessageItem({ message, onSend, onSwitchTab, onLoadStudio, isLast }: ChatMessageItemProps) {
+export function ChatMessageItem({ message, onSend, onSwitchTab, onLoadStudio, onDebug, isLast }: ChatMessageItemProps) {
   const [copied, setCopied] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
   const { isGithubConnected } = useAuth();
@@ -163,22 +164,34 @@ export function ChatMessageItem({ message, onSend, onSwitchTab, onLoadStudio, is
                 {copied ? <Check size={14} className="mr-2" /> : <Copy size={14} className="mr-2" />}
                 {copied ? "Скопировано" : "Копировать"}
               </Button>
+
               {htmlCode && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-8 px-3 text-[10px] font-bold uppercase tracking-widest text-blue-400 hover:text-blue-300 bg-blue-500/5 border border-blue-500/10 rounded-xl transition-all"
-                  onClick={() => {
-                    if (onLoadStudio && htmlCode) {
-                      onLoadStudio(message.id.slice(0, 8), htmlCode);
-                    }
-                    if (onSwitchTab) {
-                      onSwitchTab("studio");
-                    }
-                  }}
-                >
-                  <Play size={14} className="mr-2" /> Студия
-                </Button>
+                <>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 px-3 text-[10px] font-bold uppercase tracking-widest text-amber-400 hover:text-amber-300 bg-amber-500/5 border border-amber-500/10 rounded-xl transition-all"
+                    onClick={() => onDebug && onDebug(htmlCode)}
+                  >
+                    🔍 Проверить на баги
+                  </Button>
+
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 px-3 text-[10px] font-bold uppercase tracking-widest text-blue-400 hover:text-blue-300 bg-blue-500/5 border border-blue-500/10 rounded-xl transition-all"
+                    onClick={() => {
+                      if (onLoadStudio && htmlCode) {
+                        onLoadStudio(message.id.slice(0, 8), htmlCode);
+                      }
+                      if (onSwitchTab) {
+                        onSwitchTab("studio");
+                      }
+                    }}
+                  >
+                    <Play size={14} className="mr-2" /> Студия
+                  </Button>
+                </>
               )}
             </div>
 

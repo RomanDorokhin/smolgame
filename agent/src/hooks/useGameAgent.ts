@@ -240,18 +240,59 @@ export function useGameAgent(settings: ChatSettings) {
     }
   }, [isRunning, settings, addMessage, updateMessage, getActiveProviders, getLLMConfig, streamWithFallback, messages]);
 
-  const stop = useCallback(() => {
-    abortRef.current?.abort();
-    setIsRunning(false);
-    setStep("");
-  }, []);
+  const debugGame = useCallback(async (currentCode: string) => {
+    if (isRunning) return;
+    setIsRunning(true);
+    setStep("🔍 Поиск багов...");
+    const assistantId = addMessage({ role: "assistant", content: "🔍 Анализирую код на наличие ошибок...", isStreaming: true });
+    
+    try {
+      const abortController = new AbortController();
+      const signal = abortController.signal;
 
-  const reset = useCallback(() => {
-    setMessages([]);
-    chatHistory.current = [];
-    safeStorage.remove("smol_agent_messages_v1");
-    safeStorage.remove("smol_agent_history_v1");
-  }, []);
+      // ШАГ 1: Найти баги
+      const { text: bugReport } = await streamWithFallback(
+        [
+          { role: "system", content: "You are a QA Engineer. Find all bugs, logical errors, and UI issues in this code. Output a concise list of bugs." },
+          { role: "user", content: `CHECK THIS CODE FOR BUGS:\n\n${currentCode}` }
+        ],
+        () => {},
+        signal
+      );
 
-  return { messages, isRunning, step, sendMessage, stop, reset };
+      setStep("🛠 Исправление...");
+      updateMessage(assistantId, { content: `Found bugs:\n${bugReport}\n\n🛠 Fixing...` });
+
+      // ШАГ 2: Исправить баги
+      const { text: fixedCodeResponse } = await streamWithFallback(
+        [
+          { role: "system", content: "You are a Senior Developer. Fix the provided bugs and output ONLY the FULL, COMPLETE HTML code of the fixed game. No commentary, no explanations." },
+          { role: "user", content: `BUGS TO FIX:\n${bugReport}\n\nCURRENT CODE:\n${currentCode}` }
+        ],
+        (chunk, full) => {
+           updateMessage(assistantId, { content: `🛠 Исправляю баги...\n\n` + full, isStreaming: true });
+        },
+        signal
+      );
+
+      let finalCode = fixedCodeResponse.replace(/```[a-z]*\n/gi, '').replace(/```/g, '').trim();
+      const match = finalCode.match(/<html[\s\S]*<\/html>/i);
+      if (match) finalCode = match[0];
+
+      updateMessage(assistantId, {
+        content: finalCode,
+        gameCode: finalCode,
+        isStreaming: false,
+        deployState: { phase: "ready", status: "Исправлено", pagesUrl: "" }
+      });
+
+    } catch (e: unknown) {
+      updateMessage(assistantId, { content: `❌ Ошибка отладки: ${(e as Error).message}`, isStreaming: false });
+    } finally {
+      setIsRunning(false);
+      setStep("");
+    }
+  }, [isRunning, addMessage, updateMessage, streamWithFallback]);
+
+  return { messages, isRunning, step, sendMessage, stop, reset, debugGame };
 }
