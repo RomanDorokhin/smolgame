@@ -265,7 +265,7 @@ export function useGameAgent(settings: ChatSettings) {
       const abortController = new AbortController();
       const signal = abortController.signal;
 
-      // ОДИН ШАГ: Найти баги и дать обратную связь
+      // ШАГ 1: Найти баги
       const { text: bugReport } = await streamWithFallback(
         [
           { role: "system", content: "ЭТО ИГРА ДОЛЖНА БЫТЬ НА МИРОВОМ УРОВНЕ без тебя мы не справимся НАЙДИ ВСЕ БАГИ В ЭТОЙ ИГРЕ И КОРОТКО пришли только план по исправлению БЕЗ ЛИШНИХ КОММЕНТАРИЕВ ЭТО ВАЖНО" },
@@ -277,10 +277,30 @@ export function useGameAgent(settings: ChatSettings) {
         signal
       );
 
+      setStep("🛠 Исправление...");
+      updateMessage(assistantId, { content: `**План исправления:**\n${bugReport}\n\n🛠 **Начинаю исправление...**`, isStreaming: true });
+
+      // ШАГ 2: Исправить баги по плану
+      const { text: fixedCodeResponse } = await streamWithFallback(
+        [
+          { role: "system", content: "ЭТО ИГРА ДОЛЖНА СТАТЬ КУЛЬТОВОЙ ВО ВСЕМ МИРЕ и нам нужна твоя помощь исправь все баги в игре И ПРИШЛИ ТОЛЬКО КОД БЕЗ КОММЕНТАРИЕВ ценим твой вклад" },
+          { role: "user", content: `ПЛАН ИСПРАВЛЕНИЯ:\n${bugReport}\n\nТЕКУЩИЙ КОД:\n${currentCode}` }
+        ],
+        (chunk, full) => {
+           updateMessage(assistantId, { content: `🛠 Исправляю баги на основе плана...\n\n` + full, isStreaming: true });
+        },
+        signal
+      );
+
+      let finalCode = fixedCodeResponse.replace(/```[a-z]*\n/gi, '').replace(/```/g, '').trim();
+      const match = finalCode.match(/<html[\s\S]*<\/html>/i);
+      if (match) finalCode = match[0];
+
       updateMessage(assistantId, {
-        content: bugReport,
+        content: finalCode,
+        gameCode: finalCode,
         isStreaming: false,
-        deployState: { phase: "idle" }
+        deployState: { phase: "ready", status: "Исправлено", pagesUrl: "" }
       });
 
     } catch (e: unknown) {
