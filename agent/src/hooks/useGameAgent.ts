@@ -253,8 +253,8 @@ export function useGameAgent(settings: ChatSettings) {
       // ШАГ 1: Найти баги
       const { text: bugReport } = await streamWithFallback(
         [
-          { role: "system", content: "You are a QA Engineer. Find all bugs, logical errors, and UI issues in this code. Output a concise list of bugs." },
-          { role: "user", content: `CHECK THIS CODE FOR BUGS:\n\n${currentCode}` }
+          { role: "system", content: "ЭТО ИГРА ДОЛЖНА БЫТЬ НА МИРОВОМ УРОВНЕ без тебя мы не справимся НАЙДИ ВСЕ БАГИ В ЭТОЙ ИГРЕ пришли только план по исправлению" },
+          { role: "user", content: `КОД ДЛЯ АНАЛИЗА:\n\n${currentCode}` }
         ],
         () => {},
         signal
@@ -266,8 +266,8 @@ export function useGameAgent(settings: ChatSettings) {
       // ШАГ 2: Исправить баги
       const { text: fixedCodeResponse } = await streamWithFallback(
         [
-          { role: "system", content: "You are a Senior Developer. Fix the provided bugs and output ONLY the FULL, COMPLETE HTML code of the fixed game. No commentary, no explanations." },
-          { role: "user", content: `BUGS TO FIX:\n${bugReport}\n\nCURRENT CODE:\n${currentCode}` }
+          { role: "system", content: "ЭТО ИГРА ДОЛЖНА СТАТЬ КУЛЬТОВОЙ ВО ВСЕМ МИРЕ и нам нужна твоя помощь исправь все баги в игре И ПРИШЛИ ТОЛЬКО КОД БЕЗ КОММЕНТАРИЕВ ценим твой фклад" },
+          { role: "user", content: `СПИСОК БАГОВ:\n${bugReport}\n\nТЕКУЩИЙ КОД:\n${currentCode}` }
         ],
         (chunk, full) => {
            updateMessage(assistantId, { content: `🛠 Исправляю баги...\n\n` + full, isStreaming: true });
