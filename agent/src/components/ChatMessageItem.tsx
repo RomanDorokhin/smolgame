@@ -125,7 +125,11 @@ export function ChatMessageItem({ message, onSend, onSwitchTab, onLoadStudio, on
                         .replace(/<game_spec>[\s\S]*?(?:<\/game_spec>|$)/g, "")
                         .replace(/<thought>[\s\S]*?(?:<\/thought>|$)/g, "")
                         .replace(/<plan>[\s\S]*?(?:<\/plan>|$)/g, "")
+                        .replace(/```(?:html|javascript|css|js)[\s\S]*?(?:```|$)/gi, "")
                         .trim();
+                      if (!filtered && message.gameCode) {
+                        return "🎮 Код игры сгенерирован! Нажми кнопку ниже, чтобы перейти в Студию и поиграть.";
+                      }
                       return filtered || message.content;
                     })()}
                   </ReactMarkdown>
