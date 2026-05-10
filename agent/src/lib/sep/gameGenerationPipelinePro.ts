@@ -61,19 +61,23 @@ Output ONLY JSON:
 
 const CODER_PROMPT = (gameParams: GameParams, goldenSeedContent: string) => `
 GameCoder: Integrate GameParams into Golden Seed. 
-REAL SMOL-CORE API (USE ONLY THESE):
-- Smol.init(id, {update: (dt, f)=>{}, render: (ctx, w, h, gy, f)=>{}, groundYRatio: 0.76})
-- Smol.Input.bind(() => { /* action on tap/space */ }); Smol.Input.isDown('Space')
-- Smol.Audio.tone(freq, dur, vol, type, sweepFreq); Smol.Audio.sfx.jump(isDouble); Smol.Audio.sfx.die();
-- Smol.Physics.hits(a, b, padding); // a,b must have x,y,w,h
-- Smol.Effects.burst(x, y, count, colors, gravity); // particles
-- Smol.Effects.shakeScreen(intensity, duration); 
-- Smol.Effects.applyScreenShake(); // CALL IN RENDER
-- Smol.Effects.addParallaxLayer(url, speed, yOffset, alpha);
-- Smol.Effects.renderParallax(baseSpeed); // CALL IN RENDER
-- Smol.Render.gl(color, blur); Smol.Render.ngl(); // glow on/off
-- Smol.Render.text(txt, x, y, color, size, glowColor, glowBlur);
-- Smol.State.set(name); Smol.State.is(name); // intro, playing, game_over
+RULES:
+1. Use 'Smol.W', 'Smol.H', 'Smol.GY' for dimensions.
+2. 'Smol.Audio.tone(f, dur, vol, type)' -> dur is in SECONDS (e.g. 0.1).
+3. 'Smol.Effects.addParallaxLayer' -> CALL ONLY ONCE outside loops.
+4. 'Smol.init' options: { update: (dt, frame) => {}, render: (ctx, w, h, gy, frame) => {} }.
+5. Use 'Smol.Input.bind(() => { if(Smol.State.is("intro")) Smol.State.set("playing"); })' for taps.
+
+Example Structure:
+Smol.Effects.addParallaxLayer(url, speed); // ONCE
+Smol.init("gameCanvas", {
+  update: (dt) => { if(Smol.State.is("playing")) { player.y += player.vy * dt; } },
+  render: (ctx, w, h, gy) => {
+    Smol.Effects.applyScreenShake();
+    Smol.Effects.renderParallax(1);
+    ctx.fillRect(player.x, player.y, 40, 40);
+  }
+});
 
 Params: ${JSON.stringify(gameParams)}
 Seed: ${goldenSeedContent}
