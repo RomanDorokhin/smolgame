@@ -73,12 +73,19 @@
             }
         };
 
+        function resetGame() {
+            state = { score: 0, speed: cfg.difficulty.curve[0].gameSpeed, distance: 0, powerups: { shield: 0, magnet: 0, boost: 0 } };
+            player.x = 100; player.y = 0; player.vy = 0; player.trail = []; player.grounded = false; player.jumpCount = 0;
+            obstacles = []; collectibles = [];
+            Smol.State.set('playing');
+        }
+
         function gameOver() {
             Smol.State.set('game_over');
             Smol.Effects.burst(player.x, player.y, 50, [player.color, '#F00']);
             Smol.Effects.shakeScreen(30, 0.5);
             Smol.Audio.tone(100, 0.5, 1, 'sawtooth');
-            setTimeout(() => { Smol.Social.showMainButton("RETRY", () => location.reload()); }, 1000);
+            setTimeout(() => { Smol.Social.showMainButton("RETRY", () => resetGame()); }, 1000);
         }
 
         Smol.init("gameCanvas", {

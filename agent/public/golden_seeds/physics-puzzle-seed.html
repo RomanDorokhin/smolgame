@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Smol Physics Puzzle v1.0</title>
+    <style>
+        body { margin: 0; overflow: hidden; background: #111; color: #fff; font-family: 'Press Start 2P', cursive; }
+        canvas { display: block; margin: auto; }
+        #loading-screen { position: absolute; inset: 0; background: #000; color: #0FF; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 1000; }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div id="loading-screen">READY TO SOLVE?</div>
+    <canvas id="gameCanvas"></canvas>
+    <script src="https://smolgame.ru/js/smol-core/smol-core.js"></script>
+    
+    <!-- GAME_CONFIG_INJECTION_POINT -->
+
+    <script>
+        const cfg = JSON.parse(document.getElementById('game-config-json').textContent);
+        let state = { score: 0, level: 1, balls: 5 };
+        let objects = [];
+
+        function resetLevel() {
+            objects = [];
+            // Spawn goal
+            objects.push({ x: Smol.W - 100, y: Smol.H - 100, w: 50, h: 50, type: 'goal', color: '#0F0' });
+            // Spawn obstacles from config
+            cfg.world.obstacleTypes.forEach(o => {
+                objects.push({ x: Math.random() * Smol.W, y: Math.random() * Smol.H, w: o.width, h: o.height, type: 'wall', color: o.color });
+            });
+        }
+
+        Smol.init("gameCanvas", {
+            update: (dt) => {
+                if (!Smol.State.is('playing')) return;
+                // Basic physics simulation for balls
+                objects.forEach(o => {
+                    if (o.type === 'ball') {
+                        o.vy += 0.2; o.x += o.vx; o.y += o.vy;
+                        if (o.y > Smol.H) objects.splice(objects.indexOf(o), 1);
+                    }
+                });
+                try { // CUSTOM_UPDATE_LOGIC_HOOK 
+                } catch(e) {}
+            },
+            render: (ctx, w, h) => {
+                ctx.clearRect(0, 0, w, h);
+                objects.forEach(o => {
+                    Smol.Render.gl(o.color, 10);
+                    ctx.fillStyle = o.color;
+                    ctx.fillRect(o.x, o.y, o.w, o.h);
+                    Smol.Render.ngl();
+                });
+                Smol.Render.text("BALLS: " + state.balls, 100, 50);
+                if (Smol.State.is('intro')) Smol.Render.text("TAP TO DROP", w/2, h/2, "#FFF", 20);
+                Smol.Render.vignette();
+            }
+        });
+
+        Smol.Input.bind((x, y) => {
+            if (Smol.State.is('intro')) { 
+                Smol.State.set('playing'); 
+                document.getElementById('loading-screen').remove();
+                resetLevel();
+            } else if (Smol.State.is('playing') && state.balls > 0) {
+                objects.push({ x: x || 50, y: 50, vx: 2, vy: 0, w: 20, h: 20, type: 'ball', color: cfg.player.color });
+                state.balls--;
+                Smol.Audio.tone(cfg.audio.sfx.jump.freq, 0.1);
+            }
+        });
+
+        Smol.State.set('intro');
+    </script>
+</body>
+</html>

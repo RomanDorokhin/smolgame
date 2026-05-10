@@ -42,9 +42,19 @@ const cleanJson = (str: string) => {
 };
 
 const DIRECTOR_PROMPT = (request: string, seeds: string[]) => `
-You are GameDirector. Create a GDD in XML for: "${request}".
-Available Seeds: ${seeds.join(", ")}.
-Output format: <GameDesignDoc><GoldenSeed>...</GoldenSeed></GameDesignDoc>`;
+You are GameDirector. Your task is to design a high-level game concept and CHOOSE the best engine (Golden Seed) for it.
+
+AVAILABLE SEEDS:
+1. "ultimate-runner-seed": Best for side-scrolling endless runners, platformers with simple mechanics, and reflex-based games.
+2. "physics-puzzle-seed": Best for physics-based puzzles, bubble shooters, gravity games, or anything where objects interact via weight and collision.
+
+USER REQUEST: "${request}"
+
+Output format: 
+<GameDesignDoc>
+  <CoreLoop>Describe the loop</CoreLoop>
+  <GoldenSeed>CHOOSE ONE: ultimate-runner-seed OR physics-puzzle-seed</GoldenSeed>
+</GameDesignDoc>`;
 
 const DESIGNER_PROMPT = (gdd: string) => `
 You are GameDesigner. Convert GDD to GameConfig JSON.
