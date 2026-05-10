@@ -44,6 +44,20 @@ const safeStorage={
 };
 hi=safeStorage.get('smol_hi',0);
 
+const glow=(c,b)=>{ctx.shadowColor=c;ctx.shadowBlur=b*scale;};
+const nglow=()=>{ctx.shadowBlur=0;};
+
+class Part{
+  constructor(x,y,c){
+    this.x=x;this.y=y;this.c=c;this.s=Math.random()*4+2;
+    this.vx=(Math.random()-0.5)*10;this.vy=(Math.random()-0.5)*10;
+    this.a=1;
+  }
+  u(){this.x+=this.vx;this.y+=this.vy;this.vy+=0.2;this.a-=0.02;}
+  d(){ctx.globalAlpha=this.a;ctx.fillStyle=this.c;ctx.fillRect(this.x,this.y,this.s,this.s);ctx.globalAlpha=1;}
+}
+let parts=[];
+
 function resize(){
   W=canvas.width=window.innerWidth;
   H=canvas.height=window.innerHeight;
