@@ -29,7 +29,7 @@ export interface AgentMessage {
   };
 }
 
-const FALLBACK_ORDER: APIProvider[] = ["openrouter", "groq", "gemini", "together", "deepseek", "sambanova", "glhf", "huggingface"];
+const FALLBACK_ORDER: APIProvider[] = ["openrouter", "groq", "gemini", "together", "deepseek", "sambanova", "glhf"];
 
 const DEFAULT_MODELS: Record<string, string[]> = {
   openrouter: ["anthropic/claude-3-5-sonnet", "google/gemini-2.0-flash-001"],
@@ -166,7 +166,10 @@ export function useGameAgent(settings: ChatSettings) {
         if (i === ordered.length - 1) break;
       }
     }
-    throw new Error(`All providers failed. Last: ${lastError}`);
+    const detailedError = lastError === "Load failed" 
+      ? "Ошибка сети (CORS или недоступен сервер). Проверьте ключи в настройках." 
+      : lastError;
+    throw new Error(`Все провайдеры недоступны. Последняя ошибка: ${detailedError}`);
   }, [settings, getActiveProviders, getLLMConfig]);
 
   const sendMessage = useCallback(async (userText: string, repoToUpdate?: string) => {
