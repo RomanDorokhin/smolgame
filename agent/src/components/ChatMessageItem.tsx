@@ -2,7 +2,7 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Copy, Check, User, Bot, Play, X, Github, Loader2, Clock, ExternalLink } from "lucide-react";
+import { Copy, Check, User, Bot, Play, X, Github, LoaderCircle as Loader2, Clock, ExternalLink } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import type { AgentMessage } from "@/hooks/useGameAgent";
 import { useAuth } from "@/_core/hooks/useAuth";
