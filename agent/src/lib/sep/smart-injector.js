@@ -12,6 +12,7 @@ class SmartInjector {
     }
 
     inject() {
+        console.log("SmartInjector v2.1 (Bulletproof) loaded");
         let injectedHtml = this.goldenSeedHtml;
         const cfg = this.gameConfig || {};
 
