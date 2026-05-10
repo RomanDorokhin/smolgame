@@ -278,13 +278,13 @@ export function useGameAgent(settings: ChatSettings) {
           isStreaming: true,
         });
 
-        // --- ULTIMATE RUNNER SEED v4.0 (HIGH-FIDELITY) ---
+        // --- ULTIMATE RUNNER SEED v4.1 (RESILIENT) ---
         const ULTIMATE_RUNNER_SEED = `<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SmolGame Engine v4.0</title>
+    <title>SmolGame Engine v4.1</title>
     <style>
         body { margin: 0; overflow: hidden; background: #000; color: #fff; font-family: 'Press Start 2P', cursive; }
         canvas { display: block; margin: auto; }
@@ -302,7 +302,7 @@ export function useGameAgent(settings: ChatSettings) {
     <script>
         const cfg = JSON.parse(document.getElementById('game-config-json').textContent);
         let state = { score: 0, speed: cfg.difficulty.curve[0].gameSpeed, distance: 0, powerups: { shield: 0, magnet: 0, boost: 0 } };
-        const player = { x: 100, y: 0, w: cfg.player.size, h: cfg.player.size, vy: 0, grounded: false, jumpCount: 0, color: cfg.player.color, trail: [] };
+        const player = { x: 100, y: 0, w: cfg.player.size, h: cfg.player.size, vy: 0, grounded: false, jumpCount: 0, isJumping: false, airTime: 0, color: cfg.player.color, trail: [] };
         let obstacles = []; let collectibles = [];
 
         const Systems = {
@@ -317,7 +317,7 @@ export function useGameAgent(settings: ChatSettings) {
             checkCollisions() {
                 obstacles.forEach((o, i) => {
                     if (Smol.Physics.hits(player, o, 10)) {
-                        if (state.powerups.shield > 0) { state.powerups.shield = 0; obstacles.splice(i, 1); Smol.Effects.burst(o.x, o.y, 20, [o.color, '#FFF']); Smol.Effects.shakeScreen(10, 0.2); }
+                        if (state.powerups.shield > 0) { state.powerups.shield = 0; obstacles.splice(i, 1); Smol.Effects.burst(o.x, o.y, 20, [o.color, '#FFF']); }
                         else { gameOver(); }
                     }
                 });
@@ -340,24 +340,24 @@ export function useGameAgent(settings: ChatSettings) {
             update: (dt, f) => {
                 if (!Smol.State.is('playing')) return;
                 player.vy += 0.6; player.y += player.vy;
-                if (player.y + player.h > Smol.GY) { player.y = Smol.GY - player.h; player.vy = 0; player.grounded = true; player.jumpCount = 0; }
+                player.isJumping = !player.grounded; if (player.isJumping) player.airTime += dt;
+                if (player.y + player.h > Smol.GY) { player.y = Smol.GY - player.h; player.vy = 0; player.grounded = true; player.jumpCount = 0; player.airTime = 0; player.isJumping = false; }
                 state.distance += state.speed * dt;
                 obstacles.forEach(o => o.x -= state.speed);
                 collectibles.forEach(c => c.x -= state.speed);
                 if (f % 60 === 0) Systems.spawnObstacle();
                 if (f % 90 === 0) Systems.spawnCollectible();
                 Systems.checkCollisions();
-                // CUSTOM_UPDATE_LOGIC_HOOK
+                try { // CUSTOM_UPDATE_LOGIC_HOOK
+                } catch(e) { console.warn("Hook Error:", e); }
             },
             render: (ctx, w, h, gy, f) => {
                 ctx.clearRect(0, 0, w, h);
                 Smol.Effects.applyScreenShake();
                 Smol.Effects.renderParallax(state.speed / 5);
-                Smol.Render.gl(cfg.world.groundColor || "#333", 5);
                 ctx.fillStyle = cfg.world.groundColor || "#333"; ctx.fillRect(0, gy, w, h - gy);
-                Smol.Render.ngl();
                 player.trail.push({x: player.x, y: player.y}); if (player.trail.length > 10) player.trail.shift();
-                player.trail.forEach((t, i) => { ctx.globalAlpha = i / 10; ctx.fillStyle = player.color; ctx.fillRect(t.x, t.y, player.w, player.h); });
+                player.trail.forEach((t, i) => { ctx.globalAlpha = i / 15; ctx.fillStyle = player.color; ctx.fillRect(t.x, t.y, player.w, player.h); });
                 ctx.globalAlpha = 1; Smol.Render.gl(player.color, 15); ctx.fillRect(player.x, player.y, player.w, player.h); Smol.Render.ngl();
                 obstacles.forEach(o => { Smol.Render.gl(o.color, 10); ctx.fillStyle = o.color; ctx.fillRect(o.x, o.y, o.w, o.h); Smol.Render.ngl(); });
                 collectibles.forEach(c => { Smol.Render.gl(c.color, 15); ctx.beginPath(); ctx.arc(c.x, c.y, c.r, 0, Math.PI*2); ctx.fill(); Smol.Render.ngl(); });
@@ -374,11 +374,11 @@ export function useGameAgent(settings: ChatSettings) {
                 if (player.grounded || (cfg.player.doubleJumpEnabled && player.jumpCount < 1)) {
                     player.vy = -cfg.player.jumpHeight; player.grounded = false; player.jumpCount++;
                     Smol.Audio.tone(cfg.audio.sfx.jump.freq, 0.1);
-                    Smol.Effects.burst(player.x, player.y + player.h, 5, [player.color, '#FFF']);
                 }
             }
         });
-        cfg.visuals.parallaxLayers.forEach(l => Smol.Effects.addParallaxLayer(l.assetUrl, l.speed));
+        cfg.visuals.parallaxLayers.forEach(l => { if (l.assetUrl && l.assetUrl.startsWith('http')) Smol.Effects.addParallaxLayer(l.assetUrl, l.speed); });
+        // CUSTOM_START_GAME_LOGIC_HOOK
         Smol.State.set('intro');
     </script>
 </body>

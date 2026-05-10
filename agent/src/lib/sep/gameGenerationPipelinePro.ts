@@ -90,8 +90,16 @@ RULES:
 2. Use 'state.speed' to change game difficulty.
 3. To add 'Juice', use 'Smol.Effects.shakeScreen' on important events.
 
+STRICT OUTPUT FORMAT:
+Return ONLY a valid JSON object where keys are EXACTLY hook names.
+Example:
+{
+  "CUSTOM_UPDATE_LOGIC_HOOK": "player.x += 1;",
+  "CUSTOM_START_GAME_LOGIC_HOOK": "state.score = 100;"
+}
+
 Config: ${config}
-Output JSON: {"hookName": "js code string"}`;
+Output JSON: {"CUSTOM_UPDATE_LOGIC_HOOK": "...", "CUSTOM_START_GAME_LOGIC_HOOK": "..."}`;
 
 export async function generateGame(userRequest: string, options: PipelineOptions): Promise<PipelineResult> {
   const { onProgress, goldenSeeds, generateFn } = options;
