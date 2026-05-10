@@ -77,7 +77,8 @@ export async function generateGame(
         {
           role: 'system',
           content: `You are a Senior Game Developer. Modify the game based on user instructions.
-Use SEARCH/REPLACE blocks or output the full new HTML. Code only, no explanations.`,
+Use SEARCH/REPLACE blocks or output the full new HTML. Code only, no explanations.
+NEVER use window.alert() or confirm(). Use DOM/Canvas overlays instead.`,
         },
         { role: 'system', content: `CURRENT CODE:\n${previousCode}` },
         { role: 'user',   content: `Apply these changes: ${userRequest}` },
@@ -111,6 +112,7 @@ Use SEARCH/REPLACE blocks or output the full new HTML. Code only, no explanation
                 `Only replace the game-logic section (marked with REPLACE THIS SECTION comments).\n` +
                 `CRITICAL: DO NOT change the initialization order. DO NOT call resizeCanvas() or any functions before declaring 'const Game'. All initialization must happen at the VERY BOTTOM.\n` +
                 `NEVER use location.reload() — use resetGame() instead.\n` +
+                `NEVER use window.alert() or confirm() — use HTML/Canvas overlays for Game Over.\n` +
                 `NEVER add external libraries.\n` +
                 `Output ONLY the complete HTML file. No markdown. No explanations.\n\n` +
                 `SKELETON:\n${skeleton.html}`,

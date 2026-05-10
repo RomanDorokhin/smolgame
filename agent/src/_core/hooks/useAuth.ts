@@ -56,12 +56,9 @@ export function useAuth() {
     window.addEventListener('focus', handleFocus);
     window.addEventListener('smolgame:auth_bypass', handleBypass);
     
-    const interval = setInterval(checkAuth, 30000);
-
     return () => {
       window.removeEventListener('focus', handleFocus);
       window.removeEventListener('smolgame:auth_bypass', handleBypass);
-      clearInterval(interval);
     };
   }, []);
 
