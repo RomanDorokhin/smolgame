@@ -1,6 +1,3 @@
-import arcadeCanvasSkeleton from '../skeletons/arcade-canvas.html?raw';
-import physicsPuzzleSkeleton from '../skeletons/physics-puzzle.html?raw';
-import narrativeMysterySkeleton from '../skeletons/narrative-mystery.html?raw';
 import ultimateArcadeSkeleton from '../skeletons/ultimate-arcade.html?raw';
 import { analyzeGameJS, extractScripts } from './ast-analyzer';
 
@@ -17,35 +14,13 @@ export interface PipelineOptions {
 }
 
 // ─── GENRE → SKELETON MAPPING ────────────────────────────────
-const SKELETONS = {
-  runner: {
-    name: 'Runner',
-    html: ultimateArcadeSkeleton,
-    keywords: ['раннер', 'runner', 'беги', 'бесконечный', 'endless', 'прыжки', 'препятствия', 'obstacle'],
-  },
-  puzzle: {
-    name: 'Physics Puzzle',
-    html: physicsPuzzleSkeleton,
-    keywords: ['пазл', 'puzzle', 'физик', 'physics', 'шар', 'ball', 'докатить', 'головоломка'],
-  },
-  narrative: {
-    name: 'Narrative',
-    html: narrativeMysterySkeleton,
-    keywords: ['история', 'story', 'нарратив', 'текст', 'выбор', 'choice', 'новелла', 'детектив', 'диалог'],
-  },
-  arcade: {
-    name: 'Arcade',
-    html: arcadeCanvasSkeleton,
-    keywords: [], // default fallback
-  },
+const SKELETON = {
+  name: 'Ultimate Mobile',
+  html: ultimateArcadeSkeleton,
 };
 
 function pickSkeleton(request: string) {
-  const lower = request.toLowerCase();
-  for (const [, s] of Object.entries(SKELETONS)) {
-    if (s.keywords.some(kw => lower.includes(kw))) return s;
-  }
-  return SKELETONS.arcade; // default
+  return SKELETON;
 }
 
 // ─── ADVANCED VALIDATOR (AST-BASED) ──────────────────────────
@@ -162,38 +137,38 @@ NEVER use window.alert() or confirm(). Use DOM/Canvas overlays instead.`,
             {
               role: 'system',
               content:
-                `ЭТО ИГРА ДОЛЖНА БЫТЬ МИРОВОГО УРОВНЯ ТЫ ДЕЛАЕШЬ ИСТОРИЮ так что напиши ее без багов.\n\n` +
-                `You are a World-Class HTML5 Game Developer.\n` +
-                `Below is a WORKING game skeleton. Customize it to match the user request.\n` +
-                `Keep ALL juice code (particles, screen shake, audio, safeStorage) EXACTLY as-is.\n` +
-                `Only replace the game-logic section (marked with REPLACE THIS SECTION comments).\n` +
-                `CRITICAL: DO NOT change the initialization order. DO NOT call resizeCanvas() or any functions before declaring 'const Game'. All initialization must happen at the VERY BOTTOM.\n` +
-                `NEVER use location.reload() — use resetGame() instead.\n` +
-                `NEVER use window.alert() or confirm() — use HTML/Canvas overlays for Game Over.\n` +
-                `NEVER add external libraries.\n` +
-                `Output ONLY the complete HTML file. No markdown. No explanations.\n\n` +
-                `SKELETON:\n${skeleton.html}`,
+                `You are a God-Level Mobile Game Logic Architect.\n` +
+                `You ONLY provide the core gameplay logic. DO NOT write HTML, CSS, or Engine boilerplate.\n` +
+                `You must provide exactly 4 functions inside a <game_logic> block:\n` +
+                `1. function init() { /* setup objects, set joy.enabled=true if needed */ }\n` +
+                `2. function update() { /* physics, check swipe.up/down/left/right, use cam.x/y */ }\n` +
+                `3. function draw() { /* render ctx objects, use glow(color, blur) */ }\n` +
+                `4. function onTouch(e) { /* handle taps */ }\n\n` +
+                `AVAILABLE GLOBALS: W, H, ctx, scale, score, state, shake, cam (x,y,zoom), joy (x,y,active,enabled), swipe (up,down,left,right), safeStorage, Part class, glow/nglow functions.\n` +
+                `CRITICAL: Reset swipe flags (e.g. swipe.up=false) after reading them in update().\n` +
+                `Output ONLY the <game_logic> block.`,
             },
-            { role: 'user', content: `Create this game: ${userRequest}` },
+            { role: 'user', content: `Create logic for: ${userRequest}` },
           ]
         : [
             {
               role: 'system',
-              content:
-                `ЭТО ИГРА ДОЛЖНА БЫТЬ МИРОВОГО УРОВНЯ ТЫ ДЕЛАЕШЬ ИСТОРИЮ так что напиши ее без багов.\n\n` +
-                `Fix these errors in the game and output the complete corrected HTML:\n` +
-                `${lastErrors.map(e => `• ${e}`).join('\n')}`,
+              content: `Fix the errors in your <game_logic> and output the corrected block:\n${lastErrors.join('\n')}`,
             },
             { role: 'user', content: lastHtml },
           ];
 
       const response = await generateFn(messages);
-      let html = cleanHtml(response);
+      const logicMatch = response.match(/<game_logic>([\s\S]*?)<\/game_logic>/i);
+      const logic = logicMatch ? logicMatch[1].trim() : response;
       
-      // Apply auto-repair before validation
-      html = autoRepair(html);
-      lastHtml = html;
-
+      // Inject logic into skeleton
+      const html = ultimateArcadeSkeleton.replace(
+        '// ─── OVERRIDE THESE ──────────────────────────────────────────',
+        `// ─── INJECTED LOGIC ──────────────────────────────────────────\n${logic}`
+      );
+      
+      lastHtml = logic; // store only logic for next attempt
       const errors = validate(html);
       lastErrors = errors;
 

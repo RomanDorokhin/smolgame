@@ -112,8 +112,11 @@ function loop(){
   requestAnimationFrame(loop);
 }
 
-// ─── INPUT (JOYSTICK) ─────────────────────────────────────────
+// ─── INPUT (JOYSTICK & SWIPE) ─────────────────────────────────
 const jBase=document.getElementById('joy-base'), jStick=document.getElementById('joy-stick');
+const swipe={up:false,down:false,left:false,right:false,x:0,y:0};
+let sX=0,sY=0,sT=50;
+
 const handleJoy=(e)=>{
   if(!joy.active)return;
   const r=jBase.getBoundingClientRect(), cx=r.left+50, cy=r.top+50;
@@ -122,16 +125,32 @@ const handleJoy=(e)=>{
   joy.x=d?(dx/d)*(m/40):0; joy.y=d?(dy/d)*(m/40):0;
   jStick.style.transform=`translate(${joy.x*40}px,${joy.y*40}px)`;
 };
+
 window.addEventListener('pointerdown',e=>{
   if(e.target===jBase||jBase.contains(e.target)){joy.active=true;handleJoy(e);}
-  else if(state==='play'&&typeof onTouch==='function')onTouch(e);
+  else{
+    sX=e.clientX; sY=e.clientY;
+    if(state==='play'&&typeof onTouch==='function')onTouch(e);
+  }
 });
 window.addEventListener('pointermove',handleJoy);
-window.addEventListener('pointerup',()=>{joy.active=false;joy.x=0;joy.y=0;jStick.style.transform='';});
+window.addEventListener('pointerup',e=>{
+  if(joy.active){joy.active=false;joy.x=0;joy.y=0;jStick.style.transform='';}
+  else {
+    const dx=e.clientX-sX, dy=e.clientY-sY;
+    if(Math.abs(dx)>sT||Math.abs(dy)>sT){
+      if(Math.abs(dx)>Math.abs(dy)) { if(dx>0)swipe.right=true; else swipe.left=true; }
+      else { if(dy>0)swipe.down=true; else swipe.up=true; }
+    }
+  }
+});
 
 // ─── OVERRIDE THESE ──────────────────────────────────────────
-function init(){ joy.enabled=false; } // Set joy.enabled=true if needed
-function update(){}
+function init(){ joy.enabled=false; } 
+function update(){
+  // Check swipe.up, swipe.down, etc. 
+  // IMPORTANT: reset swipe flags after reading or at end of update()
+}
 function draw(){}
 
 requestAnimationFrame(loop);
