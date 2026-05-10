@@ -179,6 +179,7 @@ export function ChatMessageItem({ message, onSend, onSwitchTab, onLoadStudio, is
                       const code = message.gameCode || message.content.match(/```html\n([\s\S]*?)```/)?.[1];
                       
                       if (code && onLoadStudio) {
+                        console.log("Loading game into Studio. Code length:", code.length);
                         onLoadStudio(message.id.slice(0, 8), code);
                         if (onSwitchTab) onSwitchTab("studio");
                       } else {

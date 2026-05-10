@@ -381,7 +381,10 @@ export default function Home() {
                           isLast={i === messages.length - 1}
                           onSend={sendMessage}
                           onSwitchTab={setActiveTab}
-                          onLoadStudio={(title, code) => setStudioGame({ title, code })}
+                          onLoadStudio={(title, code) => {
+                            console.log("Studio received code. Title:", title, "Length:", code?.length);
+                            setStudioGame({ title, code });
+                          }}
                         />
                       ))}
                       
@@ -653,7 +656,7 @@ export default function Home() {
                 placeholder={isRunning ? "Агент думает..." : "Опишите игру или попросите доработать текущую..."}
               />
               <div className="mt-3 text-[9px] text-center text-white/10 uppercase tracking-[0.2em] font-black">
-                agent-smol v4.3-STABLE • Phase: Plan + Code • Engine: LLM-API v3
+                agent-smol v4.4-GODMODE • Phase: Plan + Code • Engine: LLM-API v3
               </div>
             </div>
           </div>
