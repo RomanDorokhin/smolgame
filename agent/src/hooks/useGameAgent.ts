@@ -117,8 +117,14 @@ export function useGameAgent(settings: ChatSettings) {
 
   const getLLMConfig = useCallback((provider: string): LLMConfig => {
     const apiKey = settings.keys[provider as keyof typeof settings.keys] as string;
-    const model = (settings.models?.[provider as keyof typeof settings.models] as string | undefined)
+    let model = (settings.models?.[provider as keyof typeof settings.models] as string | undefined)
       || DEFAULT_MODELS[provider]?.[0] || "gpt-3.5-turbo";
+      
+    // FIX: Auto-correct cached invalid model names from localStorage
+    if (model === "anthropic/claude-3-5-sonnet") {
+      model = "anthropic/claude-3.5-sonnet";
+    }
+      
     return { provider: provider as any, apiKey, model };
   }, [settings]);
 
