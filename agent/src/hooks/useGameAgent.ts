@@ -279,8 +279,12 @@ export function useGameAgent(settings: ChatSettings) {
         // Load golden seeds
         let seedContent = "";
         try {
-          // Fix: Use relative path and ensure we don't load index.html by mistake
-          const resp = await fetch("golden_seeds/ultimate-runner-seed.html");
+          // Calculate base path dynamically to avoid 404s in different environments
+          const baseUrl = window.location.href.split('#')[0].split('?')[0].replace(/\/[^\/]*$/, '/');
+          const seedUrl = `${baseUrl}golden_seeds/ultimate-runner-seed.html`;
+          
+          console.log("Fetching seed from:", seedUrl);
+          const resp = await fetch(seedUrl);
           if (!resp.ok) throw new Error(`Seed fetch failed: ${resp.status}`);
           seedContent = await resp.text();
           
