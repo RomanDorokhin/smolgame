@@ -51,6 +51,16 @@ class SmartInjector {
         const sphereColor = cfg.world?.collectibleTypes?.[0]?.color || '#FFFF00';
         injectedHtml = injectedHtml.replace(/let SPHERE_COLOR = ".*?";/, `let SPHERE_COLOR = "${sphereColor}";`);
 
+        // 4. Inject custom logic hooks from the Mechanics section
+        if (cfg.mechanics) {
+            Object.keys(cfg.mechanics).forEach(hookName => {
+                const hookCode = cfg.mechanics[hookName];
+                // Replace both with and without "//" prefix to be safe
+                injectedHtml = injectedHtml.replace(`// ${hookName}`, hookCode);
+                injectedHtml = injectedHtml.replace(hookName, hookCode);
+            });
+        }
+
         return injectedHtml;
     }
 }
