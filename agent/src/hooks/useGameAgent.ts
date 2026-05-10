@@ -279,12 +279,20 @@ export function useGameAgent(settings: ChatSettings) {
         // Load golden seeds
         let seedContent = "";
         try {
-          // Use absolute path for smol-core.js in the seed
-          const resp = await fetch("/golden_seeds/ultimate-runner-seed.html");
+          // Fix: Use relative path and ensure we don't load index.html by mistake
+          const resp = await fetch("golden_seeds/ultimate-runner-seed.html");
+          if (!resp.ok) throw new Error(`Seed fetch failed: ${resp.status}`);
           seedContent = await resp.text();
+          
+          // Safety check: if it contains platform tags, it's not a seed
+          if (seedContent.includes("id=\"app-boot-splash\"") || !seedContent.includes("Smol-Core")) {
+            throw new Error("Invalid seed content detected (received platform HTML instead of game template). Check server paths.");
+          }
+
           seedContent = seedContent.replace('src="js/smol-core/smol-core.js"', 'src="https://smolgame.ru/agent-v3/js/smol-core/smol-core.js"');
         } catch (e) {
           console.error("Failed to load seed", e);
+          throw new Error("CRITICAL: Game template (Golden Seed) could not be loaded correctly.");
         }
 
         const config = getLLMConfig(usedProvider);
