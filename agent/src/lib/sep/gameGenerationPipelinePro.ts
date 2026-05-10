@@ -94,43 +94,62 @@ Config: ${config}
 Output JSON: {"hookName": "js code string"}`;
 
 export async function generateGame(userRequest: string, options: PipelineOptions): Promise<PipelineResult> {
-  const { onProgress, goldenSeeds } = options;
+  const { onProgress, goldenSeeds, generateFn } = options;
   const logs: string[] = [];
   const log = (m: string) => { logs.push(m); onProgress?.(m); };
 
   try {
-    // 1. Director
-    log("🎬 Director: Designing game concept...");
-    const gdd = await options.generateFn([{ role: 'system', content: DIRECTOR_PROMPT(userRequest, Object.keys(goldenSeeds)) }]);
-    
-    // 2. Designer
-    log("🎨 Designer: Creating GameConfig JSON...");
-    const configStr = await options.generateFn([{ role: 'system', content: DESIGNER_PROMPT(gdd) }]);
-    const gameConfig = JSON.parse(configStr.replace(/```json|```/g, ''));
-
-    // 3. Coder (Custom Hooks)
-    log("💻 Coder: Generating custom logic hooks...");
-    const hooksStr = await options.generateFn([{ role: 'system', content: CODER_PROMPT(configStr) }]);
-    const hooks = JSON.parse(hooksStr.replace(/```json|```/g, '') || "{}");
-    gameConfig.mechanics = hooks;
-
-    // 4. Assemble with SmartInjector
-    log("🛠 SmartInjector: Assembling final game HTML...");
+    // 1. Director: Concept & Seed Selection
+    log("🎬 [Director] Designing high-fidelity concept...");
+    const gdd = await generateFn([{ role: 'system', content: DIRECTOR_PROMPT(userRequest, Object.keys(goldenSeeds)) }]);
     const seedName = gdd.match(/<GoldenSeed>(.*?)<\/GoldenSeed>/)?.[1] || 'ultimate-runner-seed';
     const seedHtml = goldenSeeds[seedName] || goldenSeeds['ultimate-runner-seed'];
-    
-    const injector = new SmartInjector(seedHtml, gameConfig);
-    const finalHtml = injector.inject();
 
-    // 5. QA Analysis
-    log("🧪 QA: Validating game code...");
-    const report = analyzeGameCode(finalHtml);
+    // 2. Designer: Blueprint Generation
+    log("🎨 [Designer] Architecting GameConfig JSON...");
+    let configStr = await generateFn([{ role: 'system', content: DESIGNER_PROMPT(gdd) }]);
+    let gameConfig = JSON.parse(configStr.replace(/```json|```/g, ''));
+
+    // 3. Iterative Refinement Loop (The "Logic Engine")
+    let finalHtml = "";
+    let report: ValidationReport | null = null;
+    let attempts = 0;
+    const maxAttempts = 3;
+
+    while (attempts < maxAttempts) {
+      attempts++;
+      log(`💻 [Coder] Pass ${attempts}/${maxAttempts}: Generating logic & assembling...`);
+      
+      const hooksStr = await generateFn([{ role: 'system', content: CODER_PROMPT(JSON.stringify(gameConfig)) }]);
+      const hooks = JSON.parse(hooksStr.replace(/```json|```/g, '') || "{}");
+      gameConfig.mechanics = hooks;
+
+      const injector = new SmartInjector(seedHtml, gameConfig);
+      finalHtml = injector.inject();
+
+      log("🧪 [QA] Analyzing quality and engine compliance...");
+      report = analyzeGameCode(finalHtml);
+
+      if (report.isValid && report.juiceScore >= 85) {
+        log("✅ [QA] Quality standards met!");
+        break;
+      }
+
+      log(`⚠️ [QA] Quality low (${report.juiceScore}/100). Polish required: ${report.warnings.join(", ")}`);
+      const feedback = `QA Findings:\n- Errors: ${report.errors.join(", ")}\n- Warnings: ${report.warnings.join(", ")}`;
+      
+      const polishedConfigStr = await generateFn([
+        { role: 'system', content: "You are the Polisher. Fix the GameConfig based on QA feedback to maximize JUICE and STABILITY." },
+        { role: 'user', content: `Current Config: ${JSON.stringify(gameConfig)}\n\nFeedback: ${feedback}\n\nReturn ONLY corrected JSON.` }
+      ]);
+      gameConfig = JSON.parse(polishedConfigStr.replace(/```json|```/g, ''));
+    }
 
     return {
-      isSuccess: report.isValid,
+      isSuccess: report?.isValid || false,
       generatedCode: finalHtml,
       validationReport: report,
-      errors: report.errors
+      errors: report?.errors || []
     };
 
   } catch (e) {
