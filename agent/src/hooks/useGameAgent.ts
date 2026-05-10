@@ -291,102 +291,110 @@ export function useGameAgent(settings: ChatSettings) {
     <script>
         window.onerror = (m) => { 
             const el = document.getElementById('loading-text');
-            if (el) el.innerHTML = '<div style="color:red">ERROR: ' + m + '</div>';
+            if (el) el.innerHTML = '<div style="color:red; font-size:12px">ERROR: ' + m + '</div>';
             console.error(m);
         };
         const cfg = JSON.parse(document.getElementById('game-config-json').textContent);
         
-        let state = { 
-            score: 0, 
-            speed: cfg.difficulty?.curve?.[0]?.gameSpeed || 5, 
-            distance: 0, 
-            powerups: { shield: 0, magnet: 0, boost: 0 } 
-        };
-        
-        const player = { 
-            x: 100, y: 0, 
-            w: cfg.player?.size || 40, 
-            h: cfg.player?.size || 40, 
-            vy: 0, grounded: false, jumpCount: 0, isJumping: false, airTime: 0, 
-            color: cfg.player?.color || "#0FF", 
-            trail: [] 
-        };
-        let obstacles = []; let collectibles = [];
+        function bootGame() {
+            if (typeof Smol === 'undefined') {
+                setTimeout(bootGame, 100);
+                return;
+            }
 
-        function resetGame() {
-            state = { 
+            let state = { 
                 score: 0, 
                 speed: cfg.difficulty?.curve?.[0]?.gameSpeed || 5, 
                 distance: 0, 
                 powerups: { shield: 0, magnet: 0, boost: 0 } 
             };
-            player.x = 100; player.y = 0; player.vy = 0; player.trail = []; player.grounded = false; player.jumpCount = 0;
-            obstacles = []; collectibles = [];
-            Smol.State.set('playing');
-        }
+            
+            const player = { 
+                x: 100, y: 0, 
+                w: cfg.player?.size || 40, 
+                h: cfg.player?.size || 40, 
+                vy: 0, grounded: false, jumpCount: 0, isJumping: false, airTime: 0, 
+                color: cfg.player?.color || "#0FF", 
+                trail: [] 
+            };
+            let obstacles = []; let collectibles = [];
 
-        function gameOver() {
-            Smol.State.set('game_over');
-            Smol.Effects.burst(player.x, player.y, 50, [player.color, '#F00']);
-            Smol.Effects.shakeScreen(30, 0.5);
-            Smol.Audio.tone(100, 0.5, 1, 'sawtooth');
-            setTimeout(() => { Smol.Social.showMainButton("RETRY", () => resetGame()); }, 1000);
-        }
+            function resetGame() {
+                state = { 
+                    score: 0, 
+                    speed: cfg.difficulty?.curve?.[0]?.gameSpeed || 5, 
+                    distance: 0, 
+                    powerups: { shield: 0, magnet: 0, boost: 0 } 
+                };
+                player.x = 100; player.y = 0; player.vy = 0; player.trail = []; player.grounded = false; player.jumpCount = 0;
+                obstacles = []; collectibles = [];
+                Smol.State.set('playing');
+            }
 
-        Smol.init("gameCanvas", {
-            update: (dt, f) => {
-                if (!Smol.State.is('playing')) return;
-                player.vy += 0.6; player.y += player.vy;
-                player.isJumping = !player.grounded; if (player.isJumping) player.airTime += dt;
-                if (player.y + player.h > Smol.GY) { player.y = Smol.GY - player.h; player.vy = 0; player.grounded = true; player.jumpCount = 0; player.airTime = 0; player.isJumping = false; }
-                state.distance += state.speed * dt;
-                obstacles.forEach(o => o.x -= state.speed);
-                collectibles.forEach(c => c.x -= state.speed);
-                if (f % 60 === 0) {
-                    const type = cfg.world.obstacleTypes[Math.floor(Math.random() * cfg.world.obstacleTypes.length)];
-                    obstacles.push({ x: Smol.W, y: Smol.GY - type.height, w: type.width, h: type.height, color: type.color });
-                }
-                if (f % 90 === 0) {
-                    const type = cfg.world.collectibleTypes[0];
-                    collectibles.push({ x: Smol.W, y: Smol.GY - 100 - Math.random() * 150, r: type.radius, color: type.color, value: type.scoreValue });
-                }
-                obstacles.forEach((o, i) => { if (Smol.Physics.hits(player, o, 10)) gameOver(); });
-                collectibles.forEach((c, i) => {
-                    if (Math.sqrt((player.x - c.x)**2 + (player.y - c.y)**2) < c.r + player.w) {
-                        state.score += c.value; collectibles.splice(i, 1); Smol.Audio.tone(cfg.audio.sfx.score.freq, 0.1);
+            function gameOver() {
+                Smol.State.set('game_over');
+                Smol.Effects.burst(player.x, player.y, 50, [player.color, '#F00']);
+                Smol.Effects.shakeScreen(30, 0.5);
+                Smol.Audio.tone(100, 0.5, 1, 'sawtooth');
+                setTimeout(() => { Smol.Social.showMainButton("RETRY", () => resetGame()); }, 1000);
+            }
+
+            Smol.init("gameCanvas", {
+                update: (dt, f) => {
+                    if (!Smol.State.is('playing')) return;
+                    player.vy += 0.6; player.y += player.vy;
+                    player.isJumping = !player.grounded; if (player.isJumping) player.airTime += dt;
+                    if (player.y + player.h > Smol.GY) { player.y = Smol.GY - player.h; player.vy = 0; player.grounded = true; player.jumpCount = 0; player.airTime = 0; player.isJumping = false; }
+                    state.distance += state.speed * dt;
+                    obstacles.forEach(o => o.x -= state.speed);
+                    collectibles.forEach(c => c.x -= state.speed);
+                    if (f % 60 === 0) {
+                        const type = (cfg.world?.obstacleTypes || [{height:50,width:30,color:'#F00'}])[Math.floor(Math.random() * (cfg.world?.obstacleTypes?.length || 1))];
+                        obstacles.push({ x: Smol.W, y: Smol.GY - type.height, w: type.width, h: type.height, color: type.color });
                     }
-                });
-                try { // CUSTOM_UPDATE_LOGIC_HOOK
-                } catch(e) { console.warn("Hook Error:", e); }
-            },
-            render: (ctx, w, h, gy) => {
-                ctx.clearRect(0, 0, w, h);
-                Smol.Effects.applyScreenShake();
-                Smol.Effects.renderParallax(state.speed / 5);
-                ctx.fillStyle = cfg.world.groundColor || "#333"; ctx.fillRect(0, gy, w, h - gy);
-                player.trail.push({x: player.x, y: player.y}); if (player.trail.length > 10) player.trail.shift();
-                player.trail.forEach((t, i) => { ctx.globalAlpha = i / 15; ctx.fillStyle = player.color; ctx.fillRect(t.x, t.y, player.w, player.h); });
-                ctx.globalAlpha = 1; Smol.Render.gl(player.color, 15); ctx.fillRect(player.x, player.y, player.w, player.h); Smol.Render.ngl();
-                obstacles.forEach(o => { ctx.fillStyle = o.color; ctx.fillRect(o.x, o.y, o.w, o.h); });
-                collectibles.forEach(c => { ctx.fillStyle = c.color; ctx.beginPath(); ctx.arc(c.x, c.y, c.r, 0, Math.PI*2); ctx.fill(); });
-                Smol.Render.text("SCORE: " + Math.floor(state.score), w/2, 50, cfg.visuals.hudColor);
-                if (Smol.State.is('intro')) Smol.Render.text("TAP TO START", w/2, h/2, "#FFF", 40);
-                if (Smol.State.is('game_over')) Smol.Render.text("GAME OVER", w/2, h/2, "#F00", 60);
-                Smol.Render.vignette(); Smol.Render.scanlines();
-            }
-        });
-
-        Smol.Input.bind(() => {
-            if (Smol.State.is('intro')) { Smol.State.set('playing'); document.getElementById('loading-screen').remove(); }
-            else if (Smol.State.is('playing')) {
-                if (player.grounded || (cfg.player.doubleJumpEnabled && player.jumpCount < 1)) {
-                    player.vy = -cfg.player.jumpHeight; player.grounded = false; player.jumpCount++;
-                    Smol.Audio.tone(cfg.audio.sfx.jump.freq, 0.1);
+                    if (f % 90 === 0) {
+                        const type = (cfg.world?.collectibleTypes || [{radius:10,color:'#0F0',scoreValue:10}])[0];
+                        collectibles.push({ x: Smol.W, y: Smol.GY - 100 - Math.random() * 150, r: type.radius, color: type.color, value: type.scoreValue });
+                    }
+                    obstacles.forEach((o, i) => { if (Smol.Physics.hits(player, o, 10)) gameOver(); });
+                    collectibles.forEach((c, i) => {
+                        if (Math.sqrt((player.x - c.x)**2 + (player.y - c.y)**2) < c.r + player.w) {
+                            state.score += c.value; collectibles.splice(i, 1); Smol.Audio.tone(cfg.audio?.sfx?.score?.freq || 800, 0.1);
+                        }
+                    });
+                    try { // CUSTOM_UPDATE_LOGIC_HOOK
+                    } catch(e) { console.warn("Hook Error:", e); }
+                },
+                render: (ctx, w, h, gy) => {
+                    ctx.clearRect(0, 0, w, h);
+                    Smol.Effects.applyScreenShake();
+                    Smol.Effects.renderParallax(state.speed / 5);
+                    ctx.fillStyle = cfg.world?.groundColor || "#333"; ctx.fillRect(0, gy, w, h - gy);
+                    player.trail.push({x: player.x, y: player.y}); if (player.trail.length > 10) player.trail.shift();
+                    player.trail.forEach((t, i) => { ctx.globalAlpha = i / 15; ctx.fillStyle = player.color; ctx.fillRect(t.x, t.y, player.w, player.h); });
+                    ctx.globalAlpha = 1; Smol.Render.gl(player.color, 15); ctx.fillRect(player.x, player.y, player.w, player.h); Smol.Render.ngl();
+                    obstacles.forEach(o => { ctx.fillStyle = o.color; ctx.fillRect(o.x, o.y, o.w, o.h); });
+                    collectibles.forEach(c => { ctx.fillStyle = c.color; ctx.beginPath(); ctx.arc(c.x, c.y, c.r, 0, Math.PI*2); ctx.fill(); });
+                    Smol.Render.text("SCORE: " + Math.floor(state.score), w/2, 50, cfg.visuals?.hudColor || "#FFF");
+                    if (Smol.State.is('intro')) Smol.Render.text("TAP TO START", w/2, h/2, "#FFF", 40);
+                    if (Smol.State.is('game_over')) Smol.Render.text("GAME OVER", w/2, h/2, "#F00", 60);
+                    Smol.Render.vignette(); Smol.Render.scanlines();
                 }
-            }
-        });
-        cfg.visuals.parallaxLayers.forEach(l => { if (l.assetUrl && l.assetUrl.startsWith('http')) Smol.Effects.addParallaxLayer(l.assetUrl, l.speed); });
-        Smol.State.set('intro');
+            });
+
+            Smol.Input.bind(() => {
+                if (Smol.State.is('intro')) { Smol.State.set('playing'); document.getElementById('loading-screen').remove(); }
+                else if (Smol.State.is('playing')) {
+                    if (player.grounded || (cfg.player?.doubleJumpEnabled && player.jumpCount < 1)) {
+                        player.vy = -(cfg.player?.jumpHeight || 12); player.grounded = false; player.jumpCount++;
+                        Smol.Audio.tone(cfg.audio?.sfx?.jump?.freq || 400, 0.1);
+                    }
+                }
+            });
+            (cfg.visuals?.parallaxLayers || []).forEach(l => { if (l.assetUrl && l.assetUrl.startsWith('http')) Smol.Effects.addParallaxLayer(l.assetUrl, l.speed); });
+            Smol.State.set('intro');
+        }
+        bootGame();
     </script>
 </body>
 </html>`;

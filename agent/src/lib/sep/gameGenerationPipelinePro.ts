@@ -87,20 +87,11 @@ Output ONLY valid JSON.`;
 
 const CODER_PROMPT = (config: string) => `
 You are GameCoder. You provide JS code for TWO specific hooks.
-HOOK 1: 'CUSTOM_START_GAME_LOGIC_HOOK' (Initializes custom state)
-HOOK 2: 'CUSTOM_UPDATE_LOGIC_HOOK' (Runs every frame, has access to 'dt')
+STRICT RULE: Your output MUST be a JSON object with EXACTLY these two keys:
+1. "CUSTOM_START_GAME_LOGIC_HOOK": (Initializes custom state, e.g. "state.myVar = 0;")
+2. "CUSTOM_UPDATE_LOGIC_HOOK": (Runs every frame, has access to 'dt', e.g. "state.myVar += dt;")
 
-CRITICAL API RULES:
-1. Use 'Smol.State.set("game_over")' to end game. (NOT Smol.gm)
-2. Use 'state.score' and 'state.speed'.
-3. Use 'Smol.Effects.shakeScreen(intensity, duration)'.
-
-STRICT OUTPUT FORMAT (JSON ONLY, NO COMMENTS):
-{
-  "CUSTOM_START_GAME_LOGIC_HOOK": "...",
-  "CUSTOM_UPDATE_LOGIC_HOOK": "..."
-}
-
+WARNING: DO NOT use the code itself as a key. DO NOT include comments in JSON.
 Config: ${config}`;
 
 export async function generateGame(userRequest: string, options: PipelineOptions): Promise<PipelineResult> {
@@ -130,10 +121,16 @@ export async function generateGame(userRequest: string, options: PipelineOptions
       const rawHooks = JSON.parse(cleanJson(hooksStr));
       
       const normalizedHooks: Record<string, string> = {};
-      Object.entries(rawHooks).forEach(([key, val]) => {
+      const entries = Object.entries(rawHooks);
+      
+      entries.forEach(([key, val]) => {
           if (typeof val === 'string') {
-              if (key.includes('UPDATE') || Object.keys(rawHooks).length === 1) normalizedHooks['CUSTOM_UPDATE_LOGIC_HOOK'] = val;
-              else if (key.includes('START')) normalizedHooks['CUSTOM_START_GAME_LOGIC_HOOK'] = val;
+              const k = key.toUpperCase();
+              if (k.includes('UPDATE') || (entries.length === 1) || val.includes('dt') || val.length > 100) {
+                  normalizedHooks['CUSTOM_UPDATE_LOGIC_HOOK'] = val;
+              } else if (k.includes('START') || val.includes('state.') || val.length < 100) {
+                  normalizedHooks['CUSTOM_START_GAME_LOGIC_HOOK'] = val;
+              }
           }
       });
       gameConfig.mechanics = normalizedHooks;
