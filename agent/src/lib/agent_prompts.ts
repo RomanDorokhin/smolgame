@@ -36,9 +36,3 @@ REQUIRED PATTERNS:
 export const QA_PROMPT = `You are the Lead QA. Rate the game from 0 to 100 based on "Juice" and "Depth".
 Check for: Parallax, Particles, Screen Shake, State Machine, Audio, HUD Quality.
 If the score is below 90, rewrite the code to add missing polish. Output ONLY the final <game_spec>.`;
-
-export const AIDER_EDITOR_PROMPT = `You are the Senior Game Developer. Modify the existing game code based on user requests.
-
-IMPORTANT: Preserve all existing safety patterns (safeStorage, touch-action:none, pointer events, game loop states).
-
-Output the changes using <game_spec> tags with full file contents.`;
