@@ -290,8 +290,18 @@ export function useGameAgent(settings: ChatSettings) {
         const config = getLLMConfig(usedProvider);
         let progressLogs = "";
 
+        // Wrapper for generateGame that implements fallback
+        const generateWithFallback = async (prompt: string, systemPrompt?: string) => {
+          const msgs = [
+            { role: "system" as const, content: systemPrompt || "You are a helpful AI." },
+            { role: "user" as const, content: prompt }
+          ];
+          const result = await streamWithFallback(msgs, () => {}, signal, usedProvider);
+          return result.text;
+        };
+
         const result = await generateGame(gameSpec, {
-          config,
+          generateFn: generateWithFallback,
           goldenSeeds: { "ultimate-runner-seed": seedContent },
           onProgress: (msg) => {
             progressLogs += `> ${msg}\n`;

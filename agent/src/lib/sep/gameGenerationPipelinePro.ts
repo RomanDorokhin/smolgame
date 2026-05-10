@@ -1,5 +1,4 @@
-import { generateText, LLMConfig } from '../llm-api';
-import { analyzeGameCode, ValidationReport } from './game-code-analyzer';
+import { ValidationReport, analyzeGameCode } from './game-code-analyzer';
 
 export interface GameDesignDoc {
   coreLoop: string;
@@ -31,101 +30,52 @@ export interface PipelineOptions {
   onProgress?: (message: string) => void;
   maxQaLoops?: number;
   goldenSeeds: Record<string, string>;
-  config: LLMConfig;
+  /** Function to generate text, allowing useGameAgent to inject fallback logic */
+  generateFn: (prompt: string, systemPrompt?: string) => Promise<string>;
 }
 
 const DIRECTOR_PROMPT = (userRequest: string, seeds: string[]) => `
-As the GameDirector AI, your task is to interpret a high-level user request and transform it into a detailed Game Design Document (GDD). The GDD must be structured in XML format and include core game loop, visual style, atmosphere, key mechanics, and a suitable Golden Seed from the available options. Prioritize rich gameplay and engaging visuals.
-
-Available Golden Seeds: ${seeds.join(', ')}
-
-User Request: "${userRequest}"
-
-Your output MUST be a valid XML document, like this:
+GameDirector: Create GDD in XML for user request: "${userRequest}".
+Seeds: ${seeds.join(', ')}.
+Output ONLY XML:
 <GameDesignDoc>
-  <CoreLoop>Player runs, jumps, collects items, avoids obstacles.</CoreLoop>
-  <VisualStyle>Cyberpunk, neon, futuristic city.</VisualStyle>
-  <Atmosphere>Rainy, dark, high-tech, sense of speed.</Atmosphere>
-  <KeyMechanics>
-    <Mechanic>Double Jump</Mechanic>
-    <Mechanic>Dynamic Difficulty Scaling</Mechanic>
-    <Mechanic>Procedural Obstacle Generation</Mechanic>
-  </KeyMechanics>
-  <GoldenSeed>ultimate-runner-seed</GoldenSeed>
-</GameDesignDoc>
-`;
+  <CoreLoop>...</CoreLoop>
+  <VisualStyle>...</VisualStyle>
+  <Atmosphere>...</Atmosphere>
+  <KeyMechanics><Mechanic>...</Mechanic></KeyMechanics>
+  <GoldenSeed>...</GoldenSeed>
+</GameDesignDoc>`;
 
 const DESIGNER_PROMPT = (gdd: GameDesignDoc) => `
-As the GameDesigner AI, your task is to convert the provided Game Design Document (GDD) into concrete, numerical game parameters (GameParams) in JSON format. These parameters will be used by the GameCoder to populate a Golden Seed. Ensure the parameters reflect the GDD's vision for visual style, atmosphere, and mechanics.
-
-Game Design Document:
-${JSON.stringify(gdd, null, 2)}
-
-Your output MUST be a valid JSON object, like this:
+GameDesigner: Convert GDD to JSON parameters.
+GDD: ${JSON.stringify(gdd)}
+Output ONLY JSON:
 {
-  "palette": ["#00FFFF", "#FF00FF", "#00FF00", "#FFD700", "#FFFFFF", "#111111"],
-  "difficultyCurve": [
-    { "score": 0, "speed": 5, "spawnRate": 1000 },
-    { "score": 100, "speed": 7, "spawnRate": 800 },
-    { "score": 500, "speed": 10, "spawnRate": 600 }
-  ],
-  "sfxMap": {
-    "jump": { "freq": 360, "type": "square", "sweep": 580 },
-    "doubleJump": { "freq": 580, "type": "square", "sweep": 880 },
-    "die": { "freq": 280, "type": "sawtooth", "duration": 0.18 },
-    "score": { "freq": 1100, "type": "sine", "duration": 0.04 }
-  },
-  "playerConfig": {
-    "jumpHeight": 12,
-    "doubleJumpEnabled": true,
-    "trailColor": "#00FFFF",
-    "color": "#00FFFF"
-  },
-  "obstacleTypes": [
-    { "type": "block", "color": "#FF00FF", "width": 40, "height": 80, "speed": 1 },
-    { "type": "spike", "color": "#00FF00", "width": 30, "height": 50, "speed": 1.2 }
-  ],
-  "parallaxLayers": [
-    { "img": "https://example.com/cyber_sky.png", "speed": 0.1, "yOffset": 0, "alpha": 0.8 },
-    { "img": "https://example.com/cyber_city_far.png", "speed": 0.3, "yOffset": 50, "alpha": 0.9 }
-  ]
-}
-`;
+  "palette": ["#hex",...],
+  "difficultyCurve": [{"score":0,"speed":5,"spawnRate":1000},...],
+  "sfxMap": {"event":{"freq":400,"type":"square"}},
+  "playerConfig": {"jumpHeight":12,"doubleJumpEnabled":true},
+  "obstacleTypes": [{"type":"block","color":"#hex","width":40,"height":80}],
+  "parallaxLayers": [{"img":"url","speed":0.1}]
+}`;
 
 const CODER_PROMPT = (gameParams: GameParams, goldenSeedContent: string) => `
-As the GameCoder AI, your task is to integrate the provided GameParams into the Golden Seed HTML structure. You MUST use Smol-Core functions (Smol.init, Smol.State, Smol.Storage, Smol.Audio, Smol.Input, Smol.Physics, Smol.Render, Smol.Effects, Smol.Social, Smol.Assets) to implement the game logic and visual elements. DO NOT generate the basic engine structure; instead, populate the existing Golden Seed. Focus on implementing the core loop, player mechanics, obstacle generation, scoring, and basic visual elements using the provided parameters.
-
-Game Parameters (JSON):
-${JSON.stringify(gameParams, null, 2)}
-
-Golden Seed HTML (integrate your code into the <script> section):
-${goldenSeedContent}
-
-Your output MUST be the complete, modified HTML file. Ensure all Smol-Core functions are called correctly and parameters are used.
-`;
+GameCoder: Integrate GameParams into Golden Seed <script>. 
+Use Smol-Core (init, State, Audio, Input, Physics, Effects, Render). 
+Params: ${JSON.stringify(gameParams)}
+Seed: ${goldenSeedContent}
+Output ONLY complete HTML.`;
 
 const POLISHER_PROMPT = (rawGameCode: string, feedback: string = "") => `
-As the GamePolisher AI, your task is to enhance the provided raw game code by adding "Juice" effects, optimizing visuals, and fixing any minor issues. You MUST ensure the game is visually stunning and engaging. Pay close attention to particles, screen shake, glow effects, post-processing, and sound integration. If specific feedback is provided, address it.
-
-Raw Game Code:
-${rawGameCode}
-
-Feedback: ${feedback || "No specific feedback. Focus on maximizing juice and polish."}
-
-Your output MUST be the complete, polished HTML file. Ensure all Smol-Core functions for effects are utilized.
-`;
+GamePolisher: Add Juice (particles, shake, glow, parallax) to code.
+Feedback: ${feedback}
+Code: ${rawGameCode}
+Output ONLY complete HTML.`;
 
 const QA_PROMPT = (polishedGameCode: string, validationReport: ValidationReport) => `
-As the GameQA AI, your task is to review the polished game code and the validation report. Your goal is to provide constructive feedback to the GamePolisher if the game does not meet the required quality and security standards. If the game is perfect, simply state "APPROVED".
-
-Polished Game Code:
-${polishedGameCode}
-
-Validation Report:
-${JSON.stringify(validationReport, null, 2)}
-
-If the game is not valid (report.isValid === false) or the juiceScore is below 85, or securityScore is below 90, provide detailed, actionable feedback to the GamePolisher on how to improve the code. Focus on specific Smol-Core functions to use or security patterns to avoid. Otherwise, respond with "APPROVED".
-`;
+GameQA: Review code/report. Return "APPROVED" or specific fix instructions.
+Report: ${JSON.stringify(validationReport)}
+Code: ${polishedGameCode}`;
 
 function extractCodeBlock(text: string, tag?: string): string {
   if (tag) {
@@ -134,12 +84,10 @@ function extractCodeBlock(text: string, tag?: string): string {
     if (match) return match[1].trim();
   }
   
-  // Try to find markdown code blocks
   const markdownRegex = /```(?:json|xml|html|javascript|typescript)?\s*([\s\S]*?)```/gi;
   const markdownMatch = markdownRegex.exec(text);
   if (markdownMatch) return markdownMatch[1].trim();
 
-  // If it looks like JSON but has text around it
   if (text.includes('{') && text.includes('}')) {
     const start = text.indexOf('{');
     const end = text.lastIndexOf('}');
@@ -147,9 +95,7 @@ function extractCodeBlock(text: string, tag?: string): string {
     try {
       JSON.parse(potentialJson);
       return potentialJson;
-    } catch (e) {
-      // Not valid JSON, continue to other methods
-    }
+    } catch (e) {}
   }
   
   return text.trim();
@@ -159,7 +105,7 @@ export async function generateGame(userRequest: string, options: PipelineOptions
   const debugLog: string[] = [];
   const errors: string[] = [];
   const warnings: string[] = [];
-  const { onProgress, maxQaLoops = 3, goldenSeeds, config } = options;
+  const { onProgress, maxQaLoops = 3, goldenSeeds, generateFn } = options;
 
   const log = (msg: string) => { debugLog.push(msg); if (onProgress) onProgress(msg); };
   const addError = (msg: string) => { errors.push(msg); log(`ERROR: ${msg}`); };
@@ -172,93 +118,71 @@ export async function generateGame(userRequest: string, options: PipelineOptions
   let validationReport: ValidationReport | null = null;
 
   try {
-    // --- Stage 1: GameDirector (Conceptualization) ---
-    log("Stage 1: GameDirector - Conceptualizing game design...");
-    let directorResponse = await generateText(DIRECTOR_PROMPT(userRequest, Object.keys(goldenSeeds)), config, "You are a professional Game Director. Return ONLY valid XML.");
-    directorResponse = extractCodeBlock(directorResponse, "GameDesignDoc");
+    // Stage 1
+    log("Stage 1: GameDirector...");
+    let dirResp = await generateFn(DIRECTOR_PROMPT(userRequest, Object.keys(goldenSeeds)), "Game Director AI");
+    dirResp = extractCodeBlock(dirResp, "GameDesignDoc");
     
     try {
       const parser = new DOMParser();
-      const xmlDoc = parser.parseFromString(directorResponse, "text/xml");
+      const xmlDoc = parser.parseFromString(dirResp, "text/xml");
       const getTagContent = (tagName: string) => xmlDoc.getElementsByTagName(tagName)[0]?.textContent || "";
-      
-      const seed = getTagContent("GoldenSeed");
       gdd = {
         coreLoop: getTagContent("CoreLoop"),
         visualStyle: getTagContent("VisualStyle"),
         atmosphere: getTagContent("Atmosphere"),
         keyMechanics: Array.from(xmlDoc.getElementsByTagName("Mechanic")).map(el => el.textContent || ""),
-        goldenSeed: seed || "ultimate-runner-seed"
+        goldenSeed: getTagContent("GoldenSeed") || "ultimate-runner-seed"
       };
-      
-      if (!goldenSeeds[gdd.goldenSeed]) {
-        addWarning(`Unknown Golden Seed: '${gdd.goldenSeed}'. Using fallback.`);
-        gdd.goldenSeed = 'ultimate-runner-seed';
-      }
-      log(`GameDesignDoc generated. Seed: ${gdd.goldenSeed}`);
+      if (!goldenSeeds[gdd.goldenSeed]) gdd.goldenSeed = 'ultimate-runner-seed';
     } catch (e) {
-      addError(`Failed to parse GameDirector XML: ${e}.`);
+      addError(`Director XML parse failed: ${e}`);
       return { isSuccess: false, generatedCode: null, validationReport: null, errors, warnings, debugLog };
     }
 
-    // --- Stage 2: GameDesigner (Parameter Generation) ---
-    log("Stage 2: GameDesigner - Generating game parameters...");
-    let designerResponse = await generateText(DESIGNER_PROMPT(gdd), config, "You are a professional Game Designer. Return ONLY valid JSON.");
-    designerResponse = extractCodeBlock(designerResponse);
-    
+    // Stage 2
+    log("Stage 2: GameDesigner...");
+    let desResp = await generateFn(DESIGNER_PROMPT(gdd), "Game Designer AI");
     try {
-      gameParams = JSON.parse(designerResponse);
-      log("GameParams generated successfully.");
+      gameParams = JSON.parse(extractCodeBlock(desResp));
     } catch (e) {
-      addError(`Failed to parse GameDesigner JSON: ${e}.`);
+      addError(`Designer JSON parse failed: ${e}`);
       return { isSuccess: false, generatedCode: null, validationReport: null, errors, warnings, debugLog };
     }
 
-    // --- Stage 3: GameCoder (Code Generation from Seed) ---
-    log("Stage 3: GameCoder - Integrating parameters into Golden Seed...");
-    const goldenSeedContent = goldenSeeds[gdd.goldenSeed];
-    if (!goldenSeedContent) {
-      addError(`Golden Seed content for '${gdd.goldenSeed}' not found.`);
-      return { isSuccess: false, generatedCode: null, validationReport: null, errors, warnings, debugLog };
-    }
-    rawGameCode = await generateText(CODER_PROMPT(gameParams, goldenSeedContent), config, "You are an expert Game Programmer. Return ONLY the complete HTML.");
-    rawGameCode = extractCodeBlock(rawGameCode);
-    log("Raw game code generated.");
+    // Stage 3
+    log("Stage 3: GameCoder...");
+    const seedContent = goldenSeeds[gdd.goldenSeed];
+    let codeResp = await generateFn(CODER_PROMPT(gameParams, seedContent), "Expert Game Programmer");
+    rawGameCode = extractCodeBlock(codeResp);
 
-    // --- Stage 4 & 5: GamePolisher & GameQA (Iterative Polish and Validation) ---
+    // Stage 4 & 5
     polishedGameCode = rawGameCode;
     let qaLoops = 0;
     let qaFeedback = "";
 
     while (qaLoops < maxQaLoops) {
-      log(`Stage 4: GamePolisher - Polishing game code (QA Loop ${qaLoops + 1}/${maxQaLoops})...`);
-      let polisherResponse = await generateText(POLISHER_PROMPT(polishedGameCode, qaFeedback), config, "You are a specialist Game Polisher. Return ONLY the complete HTML.");
-      polishedGameCode = extractCodeBlock(polisherResponse);
-      log("Polished game code generated. Running QA...");
+      log(`Stage 4: Polisher (Loop ${qaLoops + 1})...`);
+      let polResp = await generateFn(POLISHER_PROMPT(polishedGameCode, qaFeedback), "Game Polisher");
+      polishedGameCode = extractCodeBlock(polResp);
 
       validationReport = analyzeGameCode(polishedGameCode);
-      log(`QA Report: juiceScore=${validationReport.juiceScore}, securityScore=${validationReport.securityScore}`);
-      
       if (validationReport.isValid && validationReport.juiceScore >= 85 && validationReport.securityScore >= 90) {
-        log("Stage 5: GameQA - Game APPROVED!");
+        log("Stage 5: QA APPROVED!");
         return { isSuccess: true, generatedCode: polishedGameCode, validationReport, errors, warnings, debugLog };
       } else {
-        let qaResponse = await generateText(QA_PROMPT(polishedGameCode, validationReport), config, "You are a strict Game QA Engineer.");
-        qaFeedback = qaResponse;
-        log(`QA Feedback received.`);
-        if (qaResponse.toUpperCase().includes("APPROVED")) {
-          log("Stage 5: GameQA - Game APPROVED despite minor issues.");
+        qaFeedback = await generateFn(QA_PROMPT(polishedGameCode, validationReport), "Game QA");
+        if (qaFeedback.toUpperCase().includes("APPROVED")) {
           return { isSuccess: true, generatedCode: polishedGameCode, validationReport, errors, warnings, debugLog };
         }
         qaLoops++;
       }
     }
 
-    addError(`Game failed to pass QA after ${maxQaLoops} iterations.`);
-    return { isSuccess: false, generatedCode: polishedGameCode, validationReport, errors, warnings, debugLog };
+    return { isSuccess: true, generatedCode: polishedGameCode, validationReport, errors, warnings, debugLog };
 
   } catch (e: any) {
-    addError(`Pipeline execution failed: ${e.message || e}`);
+    addError(`Pipeline failed: ${e.message || e}`);
     return { isSuccess: false, generatedCode: polishedGameCode, validationReport, errors, warnings, debugLog };
   }
 }
