@@ -49,6 +49,19 @@ export function ChatMessageItem({ message, onSend, onSwitchTab, onLoadStudio, is
   const isUser = message.role === "user";
   const isStreaming = message.isStreaming;
 
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (showPreview && htmlCode) {
+      const blob = new Blob([htmlCode], { type: 'text/html' });
+      const url = URL.createObjectURL(blob);
+      setPreviewUrl(url);
+      return () => URL.revokeObjectURL(url);
+    } else {
+      setPreviewUrl(null);
+    }
+  }, [showPreview, htmlCode]);
+
   return (
     <div className={`flex gap-4 py-8 px-4 ${isUser ? "bg-transparent" : "bg-[#13141a]/30"}`}>
       <div className="flex-shrink-0">
@@ -123,7 +136,7 @@ export function ChatMessageItem({ message, onSend, onSwitchTab, onLoadStudio, is
                         <span className="text-[10px] font-black text-white">{message.progress}%</span>
                       </div>
                       <Progress value={message.progress} className="h-1.5 bg-white/5" />
-                      <p className="text-[9px] text-white/30 uppercase tracking-tighter">Движок: OpenGame Core v4.3</p>
+                      <p className="text-[9px] text-white/30 uppercase tracking-tighter">Движок: OpenGame Core v4.4</p>
                     </div>
                   )}
                 </>
@@ -157,7 +170,7 @@ export function ChatMessageItem({ message, onSend, onSwitchTab, onLoadStudio, is
                   className="h-8 px-3 text-[10px] font-bold uppercase tracking-widest text-blue-400 hover:text-blue-300 bg-blue-500/5 border border-blue-500/10 rounded-xl transition-all"
                   onClick={() => {
                     if (onLoadStudio && htmlCode) {
-                      onLoadStudio("Generated Game", htmlCode);
+                      onLoadStudio(message.id.slice(0, 8), htmlCode);
                     }
                     if (onSwitchTab) {
                       onSwitchTab("studio");
@@ -231,7 +244,7 @@ export function ChatMessageItem({ message, onSend, onSwitchTab, onLoadStudio, is
                             className="h-10 text-[10px] font-black uppercase" 
                             onClick={() => {
                               if (onLoadStudio && htmlCode) {
-                                onLoadStudio("Generated Game", htmlCode);
+                                onLoadStudio(message.id.slice(0, 8), htmlCode);
                               }
                               if (onSwitchTab) {
                                 onSwitchTab("studio");
@@ -260,11 +273,12 @@ export function ChatMessageItem({ message, onSend, onSwitchTab, onLoadStudio, is
             <div className="relative w-full max-w-lg aspect-[9/16] bg-black rounded-[32px] overflow-hidden border border-white/10">
               <Button variant="ghost" className="absolute top-6 right-6 z-50 text-white" onClick={() => setShowPreview(false)}><X size={20} /></Button>
                 <iframe
-                  key={`preview-${message.id}-${htmlCode.length}-${Date.now()}`}
+                  key={`preview-${message.id}`}
                   title="Game Preview"
-                  srcDoc={htmlCode.includes("<!DOCTYPE") ? htmlCode : `<!DOCTYPE html><html><body style="margin:0;overflow:hidden;background:#000;">${htmlCode}</body></html>`}
+                  src={previewUrl || "about:blank"}
                   className="w-full h-full border-none bg-black"
-                  sandbox="allow-scripts allow-pointer-lock allow-same-origin allow-modals"
+                  sandbox="allow-scripts allow-pointer-lock allow-same-origin allow-modals allow-forms allow-popups"
+                  allow="autoplay; fullscreen; pointer-lock"
                 />
             </div>
           </div>

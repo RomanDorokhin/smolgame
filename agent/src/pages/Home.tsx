@@ -85,6 +85,18 @@ export default function Home() {
   const [isPurging, setIsPurging] = useState(false);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (studioGame?.code) {
+      const blob = new Blob([studioGame.code], { type: 'text/html' });
+      const url = URL.createObjectURL(blob);
+      setPreviewUrl(url);
+      return () => URL.revokeObjectURL(url);
+    } else {
+      setPreviewUrl(null);
+    }
+  }, [studioGame?.code]);
 
   const handlePurgeCache = async () => {
     if (!window.confirm("Это удалит кэши моделей и браузера на сервере (около 1.5 ГБ). Это освободит место, но следующая генерация может занять больше времени. Продолжить?")) return;
@@ -550,11 +562,12 @@ export default function Home() {
                           <div className="h-full flex flex-col items-center justify-center bg-[#07080a] p-8">
                             <div className="relative w-full max-w-[380px] aspect-[9/16] rounded-[2.5rem] border-[10px] border-[#1a1b26] bg-black shadow-2xl overflow-hidden group">
                                 <iframe
-                                  key={`preview-${studioGame.title}-${studioGame.code.length}-${Date.now()}`}
+                                  key={`preview-${studioGame.title}`}
                                   title="Studio Live Preview"
-                                  srcDoc={studioGame.code}
+                                  src={previewUrl || "about:blank"}
                                   className="w-full h-full border-none bg-black"
-                                  sandbox="allow-scripts allow-pointer-lock allow-same-origin allow-modals"
+                                  sandbox="allow-scripts allow-pointer-lock allow-same-origin allow-modals allow-forms allow-popups"
+                                  allow="autoplay; fullscreen; pointer-lock"
                                 />
                               <div className="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-6 bg-[#1a1b26] rounded-b-2xl z-10" />
                             </div>
