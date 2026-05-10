@@ -174,6 +174,8 @@ export function useGameAgent(settings: ChatSettings) {
 
     if (repoToUpdate) setTargetRepo(repoToUpdate);
 
+    const lastCodeMessage = [...messages].reverse().find(m => m.role === "assistant" && m.gameCode);
+
     addMessage({ role: "user", content: userText });
     chatHistory.current.push({ role: "user", content: userText });
 
