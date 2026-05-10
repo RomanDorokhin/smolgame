@@ -240,6 +240,19 @@ export function useGameAgent(settings: ChatSettings) {
     }
   }, [isRunning, settings, addMessage, updateMessage, getActiveProviders, getLLMConfig, streamWithFallback, messages]);
 
+  const stop = useCallback(() => {
+    abortRef.current?.abort();
+    setIsRunning(false);
+    setStep("");
+  }, []);
+
+  const reset = useCallback(() => {
+    setMessages([]);
+    chatHistory.current = [];
+    safeStorage.remove("smol_agent_messages_v1");
+    safeStorage.remove("smol_agent_history_v1");
+  }, []);
+
   const debugGame = useCallback(async (currentCode: string) => {
     if (isRunning) return;
     setIsRunning(true);
