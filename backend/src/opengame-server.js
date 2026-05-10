@@ -234,7 +234,7 @@ const server = http.createServer(async (req, res) => {
 
     const session = sessions.get(sessionId);
     if (!session) {
-      console.error(`[Proxy Error] Session not found: ${sessionId}`);
+      console.error(`[Proxy Error] Session not found: "${sessionId}". Available sessions:`, Array.from(sessions.keys()));
       res.writeHead(401);
       res.end(JSON.stringify({ error: `Session ${sessionId} not found` }));
       return;
@@ -325,14 +325,9 @@ const server = http.createServer(async (req, res) => {
       }
 
       res.writeHead(502);
-      if (jsonBody.error === 'invalid json') {
-        console.error('[Proxy] CLI sent invalid JSON');
-        const preview = (jsonBody.rawBody || '').slice(0, 200).replace(/\n/g, ' ');
-        return res.status(400).json({ 
-          error: `Engine JSON Error: ${preview}...`, 
-          message: 'The OpenGame engine sent malformed data to the proxy.',
-          bodyPreview: jsonBody.rawBody
-        });
+      const errorDetail = {
+        error: 'Proxy Error',
+        message: lastError,
       };
       console.error('[Proxy Error Details]:', errorDetail);
       res.end(JSON.stringify(errorDetail));
@@ -343,7 +338,7 @@ const server = http.createServer(async (req, res) => {
         message: e.message,
         bodyPreview: e.rawBody ? e.rawBody.slice(0, 200) : 'empty'
       };
-      console.error('[Proxy Error Details]:', errorDetail);
+      console.error('[Proxy Catch Details]:', errorDetail);
       res.end(JSON.stringify(errorDetail));
     }
     return;

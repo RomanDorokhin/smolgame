@@ -361,14 +361,16 @@ export function useGameAgent(settings: ChatSettings) {
             
             const chunk = decoder.decode(value, { stream: true });
             
-            // Проверяем, не пришел ли финальный результат
-            if (chunk.includes("===OPEN_GAME_RESULT===")) {
-              rawCode = chunk.split("===OPEN_GAME_RESULT===")[1].trim();
-              break;
-            } else if (chunk.includes("===OPEN_GAME_RESULT_ERROR===")) {
+            if (chunk.includes("===OPEN_GAME_RESULT_ERROR===")) {
               throw new Error("OpenGame не смог сохранить результат: " + chunk.split("===OPEN_GAME_RESULT_ERROR===")[1]);
             } else {
               fullConsole += chunk;
+              
+              // Если уже пошел результат, не выводим его в консоль чата
+              if (fullConsole.includes("===OPEN_GAME_RESULT===")) {
+                continue;
+              }
+              
               // Показываем в чате последние логи консоли (ограничиваем длину)
               const displayLogs = fullConsole.length > 500 ? "..." + fullConsole.slice(-500) : fullConsole;
               updateMessage(assistantId, {
@@ -376,6 +378,12 @@ export function useGameAgent(settings: ChatSettings) {
                 isStreaming: true
               });
             }
+          }
+          if (fullConsole.includes("===OPEN_GAME_RESULT===")) {
+            rawCode = fullConsole.split("===OPEN_GAME_RESULT===")[1].trim();
+          } else if (fullConsole.includes("[ERROR] OpenGame generation failed")) {
+            const errMatch = fullConsole.match(/\[ERROR\] OpenGame generation failed(.*)/);
+            throw new Error("Движок завершил работу с ошибкой: " + (errMatch ? errMatch[1].trim() : ""));
           }
         } catch (e: any) {
           updateMessage(assistantId, { content: "❌ Ошибка запуска OpenGame: " + e.message, isStreaming: false });
