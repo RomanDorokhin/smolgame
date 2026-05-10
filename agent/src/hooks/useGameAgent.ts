@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from "react";
-import { generateStream, LLMConfig } from "@/lib/llm-api";
+import { generateStream, type LLMConfig } from "@/lib/llm-api";
 import { SmolGameAPI } from "@/lib/smolgame-api";
 import type { APIProvider, ChatSettings } from "@/types/chat";
 import { pool } from "@/lib/llm-api";
