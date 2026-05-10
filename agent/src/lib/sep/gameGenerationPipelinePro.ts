@@ -25,16 +25,15 @@ STRICT TECHNICAL REQUIREMENTS:
 1. Include: <script src="https://smolgame.ru/js/smol-core/smol-core.js"></script> in <head>.
 2. Use Smol Engine API:
    - Smol.init("gameCanvas", { update: (dt, f) => {...}, render: (ctx, w, h, gy) => {...} })
+   - IMPORTANT: In update(dt, f), 'f' is a NUMBER (frame count). It is NOT an object. DO NOT use f.input.
+   - Smol.Input: Use Smol.Input.isDown('KeyName') or Smol.Input.isPressed('KeyName') for input.
    - Smol.State: .set('playing'|'game_over'|'intro'), .is('state')
    - Smol.Effects: .shakeScreen(intensity, duration), .burst(x, y, count, colors)
    - Smol.Audio: .tone(freq, duration, volume, type)
    - Smol.Render: .text(text, x, y, color, size), .vignette(), .scanlines()
-3. CRITICAL: NO PLACEHOLDERS. DO NOT use comments like "// logic goes here" or "// handle collisions".
-4. FULL IMPLEMENTATION: Every single mechanic (movement, collisions, scoring, state transitions) MUST be fully coded and functional.
-5. The game MUST start with an 'intro' state and have a working 'game_over' state.
-6. Use modern, beautiful aesthetics (even for retro themes) and ensure mobile responsiveness.
-
-Output ONLY the raw HTML code. Be a coding god. Fully finish the game.`;
+3. CRITICAL: NO PLACEHOLDERS. Every function must be fully implemented.
+4. MOBILE READY: Ensure the game works with touch (use Smol.Input.bind(() => { ... }) or check Smol.Input.isDown() without args).
+5. Output ONLY the raw HTML code. Be a coding god. Fully finish the game.`;
 
 export async function generateGame(userRequest: string, options: PipelineOptions): Promise<PipelineResult> {
   const { onProgress, generateFn } = options;
