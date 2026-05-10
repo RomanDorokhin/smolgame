@@ -276,29 +276,34 @@ export function useGameAgent(settings: ChatSettings) {
           isStreaming: true,
         });
 
-        // Load golden seeds
-        let seedContent = "";
-        try {
-          // Calculate base path dynamically to avoid 404s in different environments
-          const baseUrl = window.location.href.split('#')[0].split('?')[0].replace(/\/[^\/]*$/, '/');
-          const seedUrl = `${baseUrl}golden_seeds/ultimate-runner-seed.html`;
-          
-          console.log("Fetching seed from:", seedUrl);
-          const resp = await fetch(seedUrl);
-          if (!resp.ok) throw new Error(`Seed fetch failed: ${resp.status}`);
-          seedContent = await resp.text();
-          
-          // Safety check: if it contains platform tags, it's not a seed
-          if (seedContent.includes("id=\"app-boot-splash\"") || !seedContent.includes("Smol-Core")) {
-            throw new Error("Invalid seed content detected (received platform HTML instead of game template). Check server paths.");
-          }
+        // --- ULTIMATE RUNNER SEED (EMBEDDED TO AVOID FETCH ISSUES) ---
+        const ULTIMATE_RUNNER_SEED = `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Ultimate Runner Game</title>
+    <style>
+        body { margin: 0; overflow: hidden; background: #111; color: #fff; font-family: 'Press Start 2P', cursive; }
+        canvas { display: block; margin: auto; background: linear-gradient(to bottom, #000033, #000000); }
+        #loading-screen { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: #000; color: #0FF; display: flex; justify-content: center; align-items: center; font-size: 2em; z-index: 1000; }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div id="loading-screen">LOADING...</div>
+    <canvas id="gameCanvas"></canvas>
+    <script src="https://smolgame.ru/agent-v3/js/smol-core/smol-core.js"></script>
+    <script>
+        // --- GAME_SPEC_START ---
+        // (AI will populate this section)
+        // --- GAME_SPEC_END ---
+    </script>
+</body>
+</html>`;
 
-          seedContent = seedContent.replace('src="js/smol-core/smol-core.js"', 'src="https://smolgame.ru/agent-v3/js/smol-core/smol-core.js"');
-        } catch (e) {
-          console.error("Failed to load seed", e);
-          throw new Error("CRITICAL: Game template (Golden Seed) could not be loaded correctly.");
-        }
-
+        const seedContent = ULTIMATE_RUNNER_SEED;
+        const usedProvider = interviewerProvider;
         const config = getLLMConfig(usedProvider);
         let progressLogs = "";
 
