@@ -38,7 +38,38 @@ Available Seeds: ${seeds.join(", ")}.
 Output format: <GameDesignDoc><CoreLoop>...</CoreLoop><VisualStyle>...</VisualStyle><GoldenSeed>...</GoldenSeed></GameDesignDoc>`;
 
 const DESIGNER_PROMPT = (gdd: string) => `
-You are GameDesigner. Convert GDD to GameConfig JSON based on the schema.
+You are GameDesigner. Convert GDD to GameConfig JSON.
+STRICT RULE: You MUST follow this structure EXACTLY. Do not add top-level keys like 'coreLoop' or 'visualStyle'.
+
+MANDATORY STRUCTURE:
+{
+  "gameTitle": "...",
+  "player": { "size": 40, "color": "#HEX", "jumpHeight": 12, "doubleJumpEnabled": true },
+  "world": { 
+    "groundColor": "#HEX",
+    "obstacleTypes": [{ "id": "obs1", "color": "#HEX", "width": 40, "height": 60, "speedMultiplier": 1, "spawnWeight": 1 }],
+    "collectibleTypes": [{ "id": "coin", "color": "#HEX", "radius": 15, "scoreValue": 10, "spawnWeight": 1 }]
+  },
+  "visuals": {
+    "parallaxLayers": [{ "assetUrl": "url", "speed": 0.2, "yOffset": 0, "alpha": 1 }],
+    "postProcessing": { "vignetteEnabled": true, "scanlinesEnabled": true, "glowEnabled": true },
+    "hudColor": "#HEX", "hudGlowColor": "#HEX"
+  },
+  "audio": {
+    "sfx": { 
+      "jump": { "type": "square", "freq": 400, "duration": 0.1 },
+      "score": { "type": "sine", "freq": 800, "duration": 0.1 },
+      "die": { "type": "sawtooth", "freq": 200, "duration": 0.3 }
+    },
+    "music": []
+  },
+  "difficulty": {
+    "curve": [{ "scoreThreshold": 0, "gameSpeed": 5, "obstacleSpawnInterval": 1500, "collectibleSpawnInterval": 3000 }],
+    "maxGameSpeed": 15
+  },
+  "social": { "leaderboardEnabled": true }
+}
+
 GDD: ${gdd}
 Output ONLY valid JSON.`;
 
