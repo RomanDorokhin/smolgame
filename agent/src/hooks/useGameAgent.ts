@@ -29,7 +29,7 @@ export interface AgentMessage {
   };
 }
 
-const FALLBACK_ORDER: APIProvider[] = ["groq", "gemini", "openrouter", "together", "deepseek", "huggingface"];
+const FALLBACK_ORDER: APIProvider[] = ["groq", "gemini", "openrouter", "together", "deepseek", "sambanova", "glhf", "huggingface"];
 
 const DEFAULT_MODELS: Record<string, string[]> = {
   groq: ["llama-3.3-70b-versatile"],
@@ -37,6 +37,8 @@ const DEFAULT_MODELS: Record<string, string[]> = {
   openrouter: ["google/gemini-2.0-flash-001"],
   together: ["meta-llama/Llama-3.3-70B-Instruct-Turbo"],
   deepseek: ["deepseek-chat"],
+  sambanova: ["Meta-Llama-3.1-70B-Instruct"],
+  glhf: ["hf:meta-llama/Llama-3.1-70B-Instruct"],
   huggingface: ["meta-llama/Llama-3.2-11B-Vision-Instruct"],
 };
 
