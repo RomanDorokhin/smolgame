@@ -32,7 +32,7 @@ export interface AgentMessage {
 const FALLBACK_ORDER: APIProvider[] = ["openrouter", "groq", "gemini", "together", "deepseek", "sambanova", "glhf"];
 
 const DEFAULT_MODELS: Record<string, string[]> = {
-  openrouter: ["anthropic/claude-3-5-sonnet", "google/gemini-2.0-flash-001"],
+  openrouter: ["anthropic/claude-3.5-sonnet", "google/gemini-2.0-flash-001"],
   groq: ["llama-3.3-70b-versatile"],
   gemini: ["gemini-2.0-flash"],
   together: ["meta-llama/Llama-3.3-70B-Instruct-Turbo"],
