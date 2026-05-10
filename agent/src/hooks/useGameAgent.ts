@@ -278,97 +278,108 @@ export function useGameAgent(settings: ChatSettings) {
           isStreaming: true,
         });
 
-        // --- ULTIMATE RUNNER SEED (DATA-DRIVEN VERSION) ---
+        // --- ULTIMATE RUNNER SEED v4.0 (HIGH-FIDELITY) ---
         const ULTIMATE_RUNNER_SEED = `<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SmolGame - Game Title Placeholder</title>
+    <title>SmolGame Engine v4.0</title>
     <style>
-        body { margin: 0; overflow: hidden; background: #111; color: #fff; font-family: 'Press Start 2P', cursive; }
-        canvas { display: block; margin: auto; background: linear-gradient(to bottom, #000033, #000000); }
-        #loading-screen { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: #000; color: #0FF; display: flex; justify-content: center; align-items: center; font-size: 2em; z-index: 1000; }
+        body { margin: 0; overflow: hidden; background: #000; color: #fff; font-family: 'Press Start 2P', cursive; }
+        canvas { display: block; margin: auto; }
+        #loading-screen { position: absolute; inset: 0; background: #000; color: #0FF; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 1000; }
+        .spinner { width: 50px; height: 50px; border: 5px solid #0FF; border-top-color: transparent; border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 20px; }
+        @keyframes spin { to { transform: rotate(360deg); } }
     </style>
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
 </head>
 <body>
-    <div id="loading-screen">LOADING...</div>
+    <div id="loading-screen"><div class="spinner"></div><div>SYNCING REALITY...</div></div>
     <canvas id="gameCanvas"></canvas>
     <script src="js/smol-core/smol-core.js"></script>
     <!-- GAME_CONFIG_INJECTION_POINT -->
     <script>
-        const gameConfig = JSON.parse(document.getElementById('game-config-json').textContent);
-        let PLAYER_COLOR = gameConfig.player.color;
-        let OBSTACLE_COLORS = gameConfig.world.obstacleTypes.map(o => o.color);
-        let JUMP_HEIGHT = gameConfig.player.jumpHeight;
-        let DOUBLE_JUMP_ENABLED = gameConfig.player.doubleJumpEnabled;
-        let INITIAL_SPEED = gameConfig.difficulty.curve[0].gameSpeed;
-        let MAX_SPEED = gameConfig.difficulty.maxGameSpeed;
-        let DIFFICULTY_CURVE = gameConfig.difficulty.curve;
-        let PARALLAX_LAYERS = gameConfig.visuals.parallaxLayers;
-        let SFX_MAP = gameConfig.audio.sfx;
+        const cfg = JSON.parse(document.getElementById('game-config-json').textContent);
+        let state = { score: 0, speed: cfg.difficulty.curve[0].gameSpeed, distance: 0, powerups: { shield: 0, magnet: 0, boost: 0 } };
+        const player = { x: 100, y: 0, w: cfg.player.size, h: cfg.player.size, vy: 0, grounded: false, jumpCount: 0, color: cfg.player.color, trail: [] };
+        let obstacles = []; let collectibles = [];
 
-        let score = 0;
-        let player;
-        let obstacles = [];
-        let gameSpeed = INITIAL_SPEED;
-        let obstacleSpawnTimer = 0;
-
-        class Player {
-            constructor(x, y, w, h, color) {
-                this.x = x; this.y = y; this.w = w; this.h = h; this.color = color;
-                this.vy = 0; this.grounded = false;
+        const Systems = {
+            spawnObstacle() {
+                const type = cfg.world.obstacleTypes[Math.floor(Math.random() * cfg.world.obstacleTypes.length)];
+                obstacles.push({ x: Smol.W, y: Smol.GY - type.height, w: type.width, h: type.height, color: type.color, id: type.id });
+            },
+            spawnCollectible() {
+                const type = cfg.world.collectibleTypes[0];
+                collectibles.push({ x: Smol.W, y: Smol.GY - 100 - Math.random() * 150, r: type.radius, color: type.color, value: type.scoreValue });
+            },
+            checkCollisions() {
+                obstacles.forEach((o, i) => {
+                    if (Smol.Physics.hits(player, o, 10)) {
+                        if (state.powerups.shield > 0) { state.powerups.shield = 0; obstacles.splice(i, 1); Smol.Effects.burst(o.x, o.y, 20, [o.color, '#FFF']); Smol.Effects.shakeScreen(10, 0.2); }
+                        else { gameOver(); }
+                    }
+                });
+                collectibles.forEach((c, i) => {
+                    const dist = Math.sqrt((player.x - c.x)**2 + (player.y - c.y)**2);
+                    if (dist < c.r + player.w) { state.score += c.value; collectibles.splice(i, 1); Smol.Audio.tone(cfg.audio.sfx.score.freq, 0.1); Smol.Effects.burst(c.x, c.y, 10, [c.color, '#FFF']); }
+                });
             }
-            update(dt) {
-                this.vy += 0.5; this.y += this.vy;
-                if (this.y + this.h > Smol.GY) { this.y = Smol.GY - this.h; this.vy = 0; this.grounded = true; }
-                // CUSTOM_PLAYER_UPDATE_LOGIC_HOOK
-            }
-            draw(ctx) {
-                Smol.Render.gl(this.color, 15);
-                ctx.fillStyle = this.color; ctx.fillRect(this.x, this.y, this.w, this.h);
-                Smol.Render.ngl();
-            }
-            jump() {
-                if (this.grounded) { this.vy = -JUMP_HEIGHT; this.grounded = false; Smol.Audio.tone(SFX_MAP.jump.freq, 0.1); }
-            }
-        }
-
-        function startGame() {
-            document.getElementById('loading-screen').style.display = 'none';
-            player = new Player(100, 100, gameConfig.player.size, gameConfig.player.size, PLAYER_COLOR);
-            obstacles = [];
-            Smol.State.set('playing');
-        }
-
-        function update(dt) {
-            if (Smol.State.is('playing')) {
-                player.update(dt);
-                // Obstacle logic, collisions...
-                // CUSTOM_UPDATE_LOGIC_HOOK
-            }
-        }
-
-        function render(ctx, W, H, GY) {
-            ctx.clearRect(0, 0, W, H);
-            Smol.Effects.renderParallax(gameSpeed / INITIAL_SPEED);
-            player.draw(ctx);
-            Smol.Render.text("SCORE: " + Math.floor(score), W/2, 50);
-            if (Smol.State.is('game_over')) Smol.Render.text('GAME OVER', W/2, H/2);
-            Smol.Render.vignette(); Smol.Render.scanlines();
-        }
-
-        window.onload = () => {
-            Smol.init('gameCanvas', { update, render });
-            Smol.Input.bind(() => {
-                if (Smol.State.is('intro')) startGame();
-                else if (Smol.State.is('playing')) player.jump();
-                else if (Smol.State.is('game_over')) location.reload();
-            });
-            PARALLAX_LAYERS.forEach(l => Smol.Effects.addParallaxLayer(l.assetUrl, l.speed));
-            Smol.State.set('intro');
         };
+
+        function gameOver() {
+            Smol.State.set('game_over');
+            Smol.Effects.burst(player.x, player.y, 50, [player.color, '#F00']);
+            Smol.Effects.shakeScreen(30, 0.5);
+            Smol.Audio.tone(100, 0.5, 1, 'sawtooth');
+            setTimeout(() => { Smol.Social.showMainButton("RETRY", () => location.reload()); }, 1000);
+        }
+
+        Smol.init("gameCanvas", {
+            update: (dt, f) => {
+                if (!Smol.State.is('playing')) return;
+                player.vy += 0.6; player.y += player.vy;
+                if (player.y + player.h > Smol.GY) { player.y = Smol.GY - player.h; player.vy = 0; player.grounded = true; player.jumpCount = 0; }
+                state.distance += state.speed * dt;
+                obstacles.forEach(o => o.x -= state.speed);
+                collectibles.forEach(c => c.x -= state.speed);
+                if (f % 60 === 0) Systems.spawnObstacle();
+                if (f % 90 === 0) Systems.spawnCollectible();
+                Systems.checkCollisions();
+                // CUSTOM_UPDATE_LOGIC_HOOK
+            },
+            render: (ctx, w, h, gy, f) => {
+                ctx.clearRect(0, 0, w, h);
+                Smol.Effects.applyScreenShake();
+                Smol.Effects.renderParallax(state.speed / 5);
+                Smol.Render.gl(cfg.world.groundColor || "#333", 5);
+                ctx.fillStyle = cfg.world.groundColor || "#333"; ctx.fillRect(0, gy, w, h - gy);
+                Smol.Render.ngl();
+                player.trail.push({x: player.x, y: player.y}); if (player.trail.length > 10) player.trail.shift();
+                player.trail.forEach((t, i) => { ctx.globalAlpha = i / 10; ctx.fillStyle = player.color; ctx.fillRect(t.x, t.y, player.w, player.h); });
+                ctx.globalAlpha = 1; Smol.Render.gl(player.color, 15); ctx.fillRect(player.x, player.y, player.w, player.h); Smol.Render.ngl();
+                obstacles.forEach(o => { Smol.Render.gl(o.color, 10); ctx.fillStyle = o.color; ctx.fillRect(o.x, o.y, o.w, o.h); Smol.Render.ngl(); });
+                collectibles.forEach(c => { Smol.Render.gl(c.color, 15); ctx.beginPath(); ctx.arc(c.x, c.y, c.r, 0, Math.PI*2); ctx.fill(); Smol.Render.ngl(); });
+                Smol.Render.text("SCORE: " + Math.floor(state.score), w/2, 50, cfg.visuals.hudColor, 30, cfg.visuals.hudGlowColor);
+                if (Smol.State.is('intro')) Smol.Render.text("TAP TO START", w/2, h/2, "#FFF", 40, "#0FF");
+                if (Smol.State.is('game_over')) Smol.Render.text("GAME OVER", w/2, h/2, "#F00", 60);
+                Smol.Render.vignette(); Smol.Render.scanlines();
+            }
+        });
+
+        Smol.Input.bind(() => {
+            if (Smol.State.is('intro')) { Smol.State.set('playing'); document.getElementById('loading-screen').remove(); }
+            else if (Smol.State.is('playing')) {
+                if (player.grounded || (cfg.player.doubleJumpEnabled && player.jumpCount < 1)) {
+                    player.vy = -cfg.player.jumpHeight; player.grounded = false; player.jumpCount++;
+                    Smol.Audio.tone(cfg.audio.sfx.jump.freq, 0.1);
+                    Smol.Effects.burst(player.x, player.y + player.h, 5, [player.color, '#FFF']);
+                }
+            }
+        });
+        cfg.visuals.parallaxLayers.forEach(l => Smol.Effects.addParallaxLayer(l.assetUrl, l.speed));
+        Smol.State.set('intro');
     </script>
 </body>
 </html>`;

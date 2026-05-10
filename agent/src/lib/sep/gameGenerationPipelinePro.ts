@@ -74,9 +74,24 @@ GDD: ${gdd}
 Output ONLY valid JSON.`;
 
 const CODER_PROMPT = (config: string) => `
-You are GameCoder. Provide custom JS logic for hooks if needed (onPlayerHit, customUpdateLogic).
+You are GameCoder. Provide custom JS logic for hooks to add unique DEPTH to the game.
+ENGINE CHEAT SHEET:
+- 'player': { x, y, w, h, vy, color, grounded, jumpCount }
+- 'state': { score, speed, distance, powerups: { shield, magnet, boost } }
+- 'Smol': { Effects: { burst(x,y,count,colors), shakeScreen(p,d) }, Audio: { tone(f,d) } }
+- 'cfg': Access any value from GameConfig.
+
+AVAILABLE HOOKS:
+- '// CUSTOM_UPDATE_LOGIC_HOOK': runs every frame. Use 'dt' (delta time).
+- '// CUSTOM_START_GAME_LOGIC_HOOK': runs when game starts.
+
+RULES:
+1. No 'window', 'document', or 'setTimeout'. 
+2. Use 'state.speed' to change game difficulty.
+3. To add 'Juice', use 'Smol.Effects.shakeScreen' on important events.
+
 Config: ${config}
-Output JSON: {"hookName": "js code"}`;
+Output JSON: {"hookName": "js code string"}`;
 
 export async function generateGame(userRequest: string, options: PipelineOptions): Promise<PipelineResult> {
   const { onProgress, goldenSeeds } = options;
