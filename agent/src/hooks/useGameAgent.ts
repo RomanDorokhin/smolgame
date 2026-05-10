@@ -266,7 +266,7 @@ export function useGameAgent(settings: ChatSettings) {
       // ОДИН ШАГ: Найти баги и дать обратную связь
       const { text: bugReport } = await streamWithFallback(
         [
-          { role: "system", content: "ЭТО ИГРА ДОЛЖНА БЫТЬ НА МИРОВОМ УРОВНЕ без тебя мы не справимся НАЙДИ ВСЕ БАГИ В ЭТОЙ ИГРЕ пришли только план по исправлению" },
+          { role: "system", content: "ЭТО ИГРА ДОЛЖНА БЫТЬ НА МИРОВОМ УРОВНЕ без тебя мы не справимся НАЙДИ ВСЕ БАГИ В ЭТОЙ ИГРЕ И КОРОТКО пришли только план по исправлению БЕЗ ЛИШНИХ КОММЕНТАРИЕВ ЭТО ВАЖНО" },
           { role: "user", content: `КОД ДЛЯ АНАЛИЗА:\n\n${currentCode}` }
         ],
         (chunk, full) => {
