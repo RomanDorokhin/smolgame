@@ -89,7 +89,26 @@ export default function Home() {
 
   useEffect(() => {
     if (studioGame?.code) {
-      const blob = new Blob([studioGame.code], { type: 'text/html' });
+      const injectedCode = studioGame.code.replace(/<\/body>/i, `
+        <script>
+          (function() {
+            const fixCanvas = () => {
+              const canvases = document.querySelectorAll('canvas');
+              canvases.forEach(c => {
+                if (c.width === 0 || c.height === 0 || c.style.width === '0px') {
+                  c.style.width = '100%';
+                  c.style.height = '100%';
+                  c.width = window.innerWidth;
+                  c.height = window.innerHeight;
+                }
+              });
+            };
+            setTimeout(fixCanvas, 100);
+            window.addEventListener('resize', fixCanvas);
+          })();
+        </script>
+      </body>`);
+      const blob = new Blob([injectedCode], { type: 'text/html' });
       const url = URL.createObjectURL(blob);
       setPreviewUrl(url);
       return () => URL.revokeObjectURL(url);
@@ -565,7 +584,9 @@ export default function Home() {
                                   key={`preview-${studioGame.title}`}
                                   title="Studio Live Preview"
                                   src={previewUrl || "about:blank"}
-                                  className="w-full h-full border-none bg-black"
+                                  width="100%"
+                                  height="100%"
+                                  className="w-full h-full border-none bg-transparent"
                                   sandbox="allow-scripts allow-pointer-lock allow-same-origin allow-modals allow-forms allow-popups"
                                   allow="autoplay; fullscreen; pointer-lock"
                                 />
