@@ -24,9 +24,10 @@ jobs:
             
             # Сборка Агента (фронтенд)
             cd /root/smolgame-frontend/agent
+            echo "--- Installing Agent Dependencies ---"
+            npm install --prefer-offline --no-audit
+            
             echo "--- Building Agent ---"
-            rm -rf node_modules dist ../agent-v3
-            npm install
             npm run build || { echo "Agent build FAILED"; exit 1; }
             
             cd /root/smolgame-frontend
