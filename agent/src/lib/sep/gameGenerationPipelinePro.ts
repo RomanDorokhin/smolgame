@@ -1,4 +1,4 @@
-import { generateText, LLMConfig } from '../../llm-api';
+import { generateText, LLMConfig } from '../llm-api';
 import { analyzeGameCode, ValidationReport } from './game-code-analyzer';
 
 export interface GameDesignDoc {
