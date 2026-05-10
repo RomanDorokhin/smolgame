@@ -2,6 +2,7 @@ import arcadeCanvasSkeleton from '../skeletons/arcade-canvas.html?raw';
 import physicsPuzzleSkeleton from '../skeletons/physics-puzzle.html?raw';
 import narrativeMysterySkeleton from '../skeletons/narrative-mystery.html?raw';
 import ultimateArcadeSkeleton from '../skeletons/ultimate-arcade.html?raw';
+import { analyzeGameJS, extractScripts } from './ast-analyzer';
 
 export interface PipelineResult {
   isSuccess: boolean;
@@ -47,19 +48,58 @@ function pickSkeleton(request: string) {
   return SKELETONS.arcade; // default
 }
 
-// ─── BASIC VALIDATOR ──────────────────────────────────────────
+// ─── ADVANCED VALIDATOR (AST-BASED) ──────────────────────────
 function validate(html: string): string[] {
   const errors: string[] = [];
   if (html.length < 1500)              errors.push('Output too short — incomplete game.');
   if (!html.includes('<canvas'))       errors.push('Missing <canvas> element.');
+  
+  // Extract and analyze scripts
+  const scripts = extractScripts(html);
+  if (scripts.length === 0) {
+    errors.push('No <script> tags found in HTML.');
+  } else {
+    let hasSeriousJsError = false;
+    scripts.forEach(js => {
+      const analysis = analyzeGameJS(js);
+      if (analysis.errors.length > 0) {
+        errors.push(...analysis.errors);
+        hasSeriousJsError = true;
+      }
+      if (analysis.score < 60) {
+        console.warn('Game quality score low:', analysis.score);
+      }
+    });
+  }
+
   if (!html.includes('requestAnimationFrame') && !html.includes('Engine.update'))
                                        errors.push('Must use requestAnimationFrame for game loop.');
   if (/location\.reload\s*\(\)/.test(html)) errors.push('FORBIDDEN: location.reload() — use resetGame() instead.');
   if (!html.includes('pointerdown'))   errors.push('Missing pointerdown — required for mobile touch.');
-  if (/(?:resizeCanvas|Game\.init)\s*\(\s*\);[\s\S]{0,2000}const\s+Game\s*=/.test(html)) {
-    errors.push('ReferenceError: You called resizeCanvas() or Game.init() BEFORE declaring "const Game". Move ALL initialization calls to the VERY END of the script after the Game object is defined to avoid Temporal Dead Zone errors.');
-  }
+  
   return errors;
+}
+
+// ─── AUTO-REPAIR MECHANISM ────────────────────────────────────
+function autoRepair(html: string): string {
+  let repaired = html;
+  
+  // Fix 1: Move suspicious top-level calls to the bottom
+  // This is a heuristic fix for TDZ errors
+  if (repaired.includes('resizeCanvas()') || repaired.includes('Game.init()')) {
+    const scripts = extractScripts(repaired);
+    scripts.forEach(js => {
+      if (js.includes('resizeCanvas()') || js.includes('Game.init()')) {
+        // Remove the calls from where they are and place them at the end
+        let cleanJs = js.replace(/resizeCanvas\s*\(\s*\);?/g, '');
+        cleanJs = cleanJs.replace(/Game\.init\s*\(\s*\);?/g, '');
+        cleanJs += '\n\n// Auto-repaired initialization\nif (typeof resizeCanvas === "function") resizeCanvas();\nif (typeof Game !== "undefined" && Game.init) Game.init();\n';
+        repaired = repaired.replace(js, cleanJs);
+      }
+    });
+  }
+
+  return repaired;
 }
 
 // ─── MAIN PIPELINE ────────────────────────────────────────────
@@ -131,14 +171,17 @@ NEVER use window.alert() or confirm(). Use DOM/Canvas overlays instead.`,
           ];
 
       const response = await generateFn(messages);
-      const html = cleanHtml(response);
+      let html = cleanHtml(response);
+      
+      // Apply auto-repair before validation
+      html = autoRepair(html);
       lastHtml = html;
 
       const errors = validate(html);
       lastErrors = errors;
 
       if (errors.length === 0) {
-        onProgress?.('✅ Done!');
+        onProgress?.('✅ Validation passed! Finalizing world-class code.');
         return { isSuccess: true, generatedCode: html, errors: [] };
       }
 
