@@ -259,9 +259,25 @@ export function ChatMessageItem({ message, onSend, onSwitchTab, onLoadStudio, is
             <div className="relative w-full max-w-lg aspect-[9/16] bg-black rounded-[32px] overflow-hidden border border-white/10">
               <Button variant="ghost" className="absolute top-6 right-6 z-50 text-white" onClick={() => setShowPreview(false)}><X size={20} /></Button>
                 <iframe
+                  key={message.id + htmlCode.length}
                   title="Game Preview"
-                  srcDoc={(htmlCode.includes("<!DOCTYPE") ? htmlCode : `<!DOCTYPE html><html><body style="margin:0;overflow:hidden;background:#000;">${htmlCode}</body></html>`).replace(/window\.innerWidth/g, '(window.innerWidth || 380)').replace(/window\.innerHeight/g, '(window.innerHeight || 675)')}
-                  className="w-full h-full border-none"
+                  srcDoc={(htmlCode.includes("<!DOCTYPE") ? htmlCode : `<!DOCTYPE html><html><body style="margin:0;overflow:hidden;background:#000;">${htmlCode}</body></html>`)
+                    .replace(/<\/body>/i, `<script>
+                      setTimeout(() => {
+                        const c = document.querySelector("canvas");
+                        if (c) {
+                          c.style.width = "100%";
+                          c.style.height = "100%";
+                          if (c.width === 0) c.width = 380;
+                          if (c.height === 0) c.height = 675;
+                        }
+                        document.body.style.backgroundColor = "white";
+                      }, 100);
+                    </script></body>`)
+                    .replace(/window\.innerWidth/g, '(window.innerWidth || 380)')
+                    .replace(/window\.innerHeight/g, '(window.innerHeight || 675)')
+                  }
+                  className="w-full h-full border-none bg-white"
                   sandbox="allow-scripts allow-pointer-lock allow-same-origin allow-modals"
                 />
             </div>

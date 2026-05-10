@@ -536,9 +536,25 @@ export default function Home() {
                           <div className="h-full flex flex-col items-center justify-center bg-[#07080a] p-8">
                             <div className="relative w-full max-w-[380px] aspect-[9/16] rounded-[2.5rem] border-[10px] border-[#1a1b26] bg-black shadow-2xl overflow-hidden group">
                                 <iframe
+                                  key={studioGame.title + studioGame.code.length}
                                   title="Studio Live Preview"
-                                  srcDoc={studioGame.code.replace(/window\.innerWidth/g, '(window.innerWidth || 380)').replace(/window\.innerHeight/g, '(window.innerHeight || 675)')}
-                                  className="w-full h-full border-none"
+                                  srcDoc={studioGame.code
+                                    .replace(/<\/body>/i, `<script>
+                                      setTimeout(() => {
+                                        const c = document.querySelector("canvas");
+                                        if (c) {
+                                          c.style.width = "100%";
+                                          c.style.height = "100%";
+                                          if (c.width === 0) c.width = 380;
+                                          if (c.height === 0) c.height = 675;
+                                        }
+                                        document.body.style.backgroundColor = "white";
+                                      }, 100);
+                                    </script></body>`)
+                                    .replace(/window\.innerWidth/g, '(window.innerWidth || 380)')
+                                    .replace(/window\.innerHeight/g, '(window.innerHeight || 675)')
+                                  }
+                                  className="w-full h-full border-none bg-white"
                                   sandbox="allow-scripts allow-pointer-lock allow-same-origin allow-modals"
                                 />
                               <div className="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-6 bg-[#1a1b26] rounded-b-2xl z-10" />
