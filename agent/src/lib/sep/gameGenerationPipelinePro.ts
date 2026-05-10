@@ -94,7 +94,7 @@ function autoRepair(html: string): string {
 
     // Fix: only replace if NOT preceded by "function "
     // We use a safe regex approach that checks the prefix
-    const calls = ['resizeCanvas', 'Game.init'];
+    const calls = ['init', 'loop'];
     calls.forEach(call => {
       const regex = new RegExp(`(^|[^a-zA-Z0-9_])function\\s+${call.replace('.', '\\.')}`, 'g');
       // If we find "function resizeCanvas", we skip this call in this script
