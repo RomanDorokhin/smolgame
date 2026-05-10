@@ -3,8 +3,6 @@ import { generateStream } from "@/lib/llm-api";
 import { SmolGameAPI } from "@/lib/smolgame-api";
 import type { APIProvider, ChatSettings } from "@/types/chat";
 import { pool } from "@/lib/llm-api";
-import { INTERVIEWER_PROMPT, ENGINEER_PROMPT, QA_PROMPT, AIDER_EDITOR_PROMPT } from "@/lib/agent_prompts";
-import { analyzeGameCode } from "@/lib/game-code-analyzer";
 
 // ──────────────────────────────────────────────
 // ТИПЫ
@@ -61,8 +59,162 @@ const safeStorage = {
 };
 
 // ──────────────────────────────────────────────
-// ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ
+// ПРОМПТЫ
 // ──────────────────────────────────────────────
+
+// ФАЗА 1: Интервьюер (Архитектор)
+const INTERVIEWER_PROMPT = `You are a Senior Game Producer for SmolGame platform (Telegram Mini Apps). Your goal is to get started AS FAST AS POSSIBLE.
+- If the user's idea is clear, skip questions and just say: "I've got it! Starting the engine..." and output ONLY the <plan> block.
+- Only ask questions if the idea is completely vague.
+- Limit yourself to 1-2 most critical questions max.
+- Always output a <plan> if you have enough info.
+
+Output format for planning:
+<plan>
+- Core Loop: ...
+- Template: (choose one: arcade-canvas | physics-puzzle | narrative-mystery)
+- Style & Juice: ...
+</plan>`;
+
+// ФАЗА 2: Инженер (Генератор кода)
+// FIX #1: Added mobile-first touch requirements
+// FIX #2: Added safe storage requirement with code snippet
+// FIX #3: Added audio initialization requirement
+// FIX #4: Added complete game loop requirement (START/PLAYING/GAMEOVER/RESTART)
+// FIX #5: Added Juice Toolkit with concrete code patterns
+const ENGINEER_PROMPT = `You are a Visionary Game Developer and Master Architect building for the SmolGame platform (Telegram Mini Apps). Your goal is to create a masterpiece: a world-class, high-fidelity mobile game.
+
+CORE PRINCIPLES:
+1. MOBILE FIRST (CRITICAL): The game runs in Telegram WebView on a mobile phone. There is NO physical mouse and NO keyboard. You MUST use pointer events: pointerdown, pointerup, pointermove. You MUST add CSS: canvas { touch-action: none; } to prevent the Telegram feed from scrolling during gameplay.
+2. SAFE STORAGE (CRITICAL): Telegram WebView may throw SecurityError on localStorage access. You MUST wrap ALL localStorage calls in try/catch. Use this exact pattern:
+   const safeStorage = {
+     set: (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch(e) {} },
+     get: (k, d) => { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch(e) { return d; } }
+   };
+3. AUDIO INITIALIZATION: Mobile browsers block AudioContext autoplay. You MUST initialize AudioContext only inside a pointerdown/touchstart event handler, never on page load.
+4. COMPLETE GAME LOOP (CRITICAL): The game MUST have:
+   - A START screen (title + "Tap to Start")
+   - A PLAYING state with clear objective
+   - A GAME OVER screen with final score and "Tap to Restart"
+   - A restart() function that resets state WITHOUT calling location.reload()
+5. DEEP GAMEPLAY: The game must be interesting, balanced, and have "Juice" — use screen shake, particles, and smooth transitions.
+
+JUICE TOOLKIT (use these patterns directly):
+// Screen Shake:
+let shakeIntensity = 0;
+function screenShake(i=8){ shakeIntensity=i; }
+// In draw loop: ctx.translate((Math.random()-0.5)*shakeIntensity, (Math.random()-0.5)*shakeIntensity); shakeIntensity*=0.85;
+
+// Particles:
+const particles = [];
+function spawnParticles(x, y, color, count=12) {
+  for(let i=0;i<count;i++){
+    const a=(Math.PI*2*i/count)+Math.random()*0.5, s=2+Math.random()*4;
+    particles.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,life:1,decay:0.025,size:3+Math.random()*4,color});
+  }
+}
+
+// Delta-time game loop (works correctly on 60Hz and 120Hz screens):
+let lastTime = 0;
+function loop(ts) {
+  const dt = Math.min((ts - lastTime) / 16.67, 3);
+  lastTime = ts;
+  update(dt); draw();
+  requestAnimationFrame(loop);
+}
+
+TECHNICAL RULES:
+1. OUTPUT: Deliver everything inside <game_spec> tags.
+2. FILE FORMAT: Use <file path="filename">content</file> for each file.
+3. COMPATIBILITY: All external libraries must be loaded via reliable CDNs (cdnjs.cloudflare.com, cdn.jsdelivr.net).
+
+"СДЕЛАЙ ИГРУ МИРОВОГО УРОВНЯ ОТ НАЧАЛА И ДО КОНЦА". Deliver your absolute best. Output ONLY the <game_spec> block.`;
+
+// ФАЗА 3: QA (Валидатор)
+// FIX: New QA phase that validates and auto-fixes generated code
+const QA_PROMPT = `You are the Lead QA Engineer for SmolGame platform. Review the generated game code for compliance.
+
+MANDATORY CHECKS:
+1. TOUCH INPUT: Does it use pointerdown/pointerup/pointermove (not just mousedown/keydown)?
+2. SAFE STORAGE: Is localStorage wrapped in try/catch or using a safeStorage wrapper?
+3. GAME LOOP: Does it have START screen, PLAYING state, GAME OVER screen, and restart() without location.reload()?
+4. TOUCH ACTION: Is "touch-action: none" applied to the canvas element?
+5. AUDIO: Is AudioContext initialized only on first user interaction (not on page load)?
+
+If ALL checks pass, output exactly: <status>PASSED</status>
+
+If ANY check fails, output the COMPLETE corrected code inside <game_spec> tags with all issues fixed. Do not explain — just fix and output.`;
+
+const AIDER_EDITOR_PROMPT = `You are the Senior Game Developer. Modify the existing game code based on user requests.
+
+IMPORTANT: Preserve all existing safety patterns (safeStorage, touch-action:none, pointer events, game loop states).
+
+Output the changes using <game_spec> tags with full file contents.`;
+
+// ──────────────────────────────────────────────
+// STATIC CODE ANALYZER
+// FIX: Pre-deploy validation to catch common issues
+// ──────────────────────────────────────────────
+interface AnalysisResult {
+  passed: boolean;
+  issues: string[];
+  warnings: string[];
+}
+
+function analyzeGameCode(code: string): AnalysisResult {
+  const issues: string[] = [];
+  const warnings: string[] = [];
+
+  // CRITICAL: touch-action
+  if (!code.includes('touch-action')) {
+    issues.push('Missing touch-action: none on canvas — Telegram feed will scroll during gameplay');
+  }
+
+  // CRITICAL: safe localStorage
+  const hasLocalStorage = code.includes('localStorage');
+  const hasTryCatch = code.includes('try {') || code.includes('try{');
+  const hasSafeStorage = code.includes('safeStorage');
+  if (hasLocalStorage && !hasTryCatch && !hasSafeStorage) {
+    issues.push('localStorage used without try/catch — will crash in Telegram WebView');
+  }
+
+  // CRITICAL: game loop states
+  if (!code.includes('GAME_OVER') && !code.includes('gameover') && !code.includes('gameOver')) {
+    issues.push('No GAME_OVER state found — game has no ending');
+  }
+
+  // CRITICAL: restart without reload
+  if (code.includes('location.reload')) {
+    issues.push('location.reload() used for restart — crashes inside Telegram iframe');
+  }
+
+  // CRITICAL: forbidden patterns
+  if (code.includes('top.location') || code.includes('window.parent.location')) {
+    issues.push('top.location / window.parent.location is forbidden in Telegram iframe');
+  }
+
+  // CRITICAL: absolute paths
+  if (/src=["']\/[^/]/.test(code) || /href=["']\/[^/]/.test(code)) {
+    issues.push('Absolute paths (src="/...") will break on GitHub Pages — use relative paths');
+  }
+
+  // WARNING: touch events
+  if (!code.includes('pointerdown') && !code.includes('touchstart')) {
+    warnings.push('No touch/pointer events found — game may be unplayable on mobile');
+  }
+
+  // WARNING: audio context
+  if (code.includes('AudioContext') && !code.includes('pointerdown') && !code.includes('touchstart')) {
+    warnings.push('AudioContext may be initialized before user interaction — will fail on mobile');
+  }
+
+  // WARNING: delta time
+  if (code.includes('requestAnimationFrame') && !code.includes('deltaTime') && !code.includes('dt')) {
+    warnings.push('No delta-time detected — game speed will vary on 60Hz vs 120Hz screens');
+  }
+
+  return { passed: issues.length === 0, issues, warnings };
+}
 
 // ──────────────────────────────────────────────
 // ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ
@@ -429,9 +581,9 @@ export function useGameAgent(settings: ChatSettings) {
 
         // Build quality report for user
         const qualityNote = analysis.issues.length > 0
-          ? `\n\n⚠️ *Авто-исправлены проблемы:* ${analysis.issues.map(i => i.message).join('; ')}`
-          : analysis.issues.some(i => i.severity === 'juice')
-            ? `\n\n💡 *Предупреждения по сочности:* ${analysis.issues.filter(i => i.severity === 'juice').map(i => i.message).join('; ')}`
+          ? `\n\n⚠️ *Авто-исправлены проблемы:* ${analysis.issues.join('; ')}`
+          : analysis.warnings.length > 0
+            ? `\n\n💡 *Предупреждения:* ${analysis.warnings.join('; ')}`
             : '\n\n✅ *Все проверки качества пройдены.*';
 
         updateMessage(assistantId, {
