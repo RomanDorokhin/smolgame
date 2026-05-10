@@ -32,16 +32,22 @@ export function analyzeGameCode(htmlContent: string): ValidationReport {
     smolCoreIntegrationScore: 0
   };
 
-  // Extract JS from script tags for syntax check
-  const scripts = htmlContent.match(/<script[\s\S]*?>([\s\S]*?)<\/script>/g) || [];
-  scripts.forEach(s => {
-    const code = s.replace(/<script[\s\S]*?>|<\/script>/g, '');
+  // Extract JS from script tags for syntax check (Skip JSON config tags)
+  const scriptRegex = /<script([\s\S]*?)>([\s\S]*?)<\/script>/g;
+  let match;
+  while ((match = scriptRegex.exec(htmlContent)) !== null) {
+    const attributes = match[1];
+    const code = match[2];
+    
+    // Skip application/json scripts
+    if (attributes.includes('type="application/json"')) continue;
+    
     const syntaxError = validateSyntax(code);
     if (syntaxError) {
       report.isValid = false;
       report.errors.push(`JS Syntax Error: ${syntaxError}`);
     }
-  });
+  }
 
   if (!htmlContent) {
     report.isValid = false;
