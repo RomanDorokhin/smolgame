@@ -113,35 +113,57 @@ export async function generateGame(userRequest: string, options: PipelineOptions
     const seedName = gdd.match(/<GoldenSeed>(.*?)<\/GoldenSeed>/)?.[1] || 'ultimate-runner-seed';
     const seedHtml = goldenSeeds[seedName] || goldenSeeds['ultimate-runner-seed'];
 
-    log("🎨 [Designer] Creating config...");
+    log("🎨 [Designer] Creating initial config...");
     const configStr = await generateFn([{ role: 'system', content: DESIGNER_PROMPT(gdd) }]);
     let gameConfig = JSON.parse(cleanJson(configStr));
 
-    log("💻 [Coder] Writing logic...");
-    const hooksStr = await generateFn([{ role: 'system', content: CODER_PROMPT(JSON.stringify(gameConfig)) }]);
-    const rawHooks = JSON.parse(cleanJson(hooksStr));
-    
-    // Normalize hooks (in case AI used wrong keys)
-    const normalizedHooks: Record<string, string> = {};
-    Object.entries(rawHooks).forEach(([key, val]) => {
-        if (typeof val === 'string') {
-            if (key.includes('UPDATE') || Object.keys(rawHooks).length === 1) normalizedHooks['CUSTOM_UPDATE_LOGIC_HOOK'] = val;
-            else if (key.includes('START')) normalizedHooks['CUSTOM_START_GAME_LOGIC_HOOK'] = val;
-        }
-    });
-    gameConfig.mechanics = normalizedHooks;
+    let finalHtml = "";
+    let report: ValidationReport | null = null;
+    let attempts = 0;
+    const maxAttempts = 10;
 
-    const injector = new SmartInjector(seedHtml, gameConfig);
-    const finalHtml = injector.inject();
+    while (attempts < maxAttempts) {
+      attempts++;
+      log(`💻 [Coder] Pass ${attempts}/${maxAttempts}: Generating & Refining...`);
+      
+      const hooksStr = await generateFn([{ role: 'system', content: CODER_PROMPT(JSON.stringify(gameConfig)) }]);
+      const rawHooks = JSON.parse(cleanJson(hooksStr));
+      
+      const normalizedHooks: Record<string, string> = {};
+      Object.entries(rawHooks).forEach(([key, val]) => {
+          if (typeof val === 'string') {
+              if (key.includes('UPDATE') || Object.keys(rawHooks).length === 1) normalizedHooks['CUSTOM_UPDATE_LOGIC_HOOK'] = val;
+              else if (key.includes('START')) normalizedHooks['CUSTOM_START_GAME_LOGIC_HOOK'] = val;
+          }
+      });
+      gameConfig.mechanics = normalizedHooks;
 
-    log("🧪 [QA] Checking quality...");
-    const report = analyzeGameCode(finalHtml);
+      const injector = new SmartInjector(seedHtml, gameConfig);
+      finalHtml = injector.inject();
+
+      log("🧪 [QA] Analyzing syntax & quality...");
+      report = analyzeGameCode(finalHtml);
+
+      if (report.isValid && report.juiceScore >= 85) {
+        log(`✅ [QA] Standards met on pass ${attempts}!`);
+        break;
+      }
+
+      const errorList = [...report.errors, ...report.warnings].join("\n- ");
+      log(`⚠️ [QA] Quality issues found (Pass ${attempts}). Self-correcting...`);
+      
+      const polishedConfigStr = await generateFn([
+        { role: 'system', content: "You are the Master Polisher. Fix the GameConfig JSON and Mechanics to resolve the errors listed. Output ONLY valid JSON. NO COMMENTS." },
+        { role: 'user', content: `CURRENT CONFIG: ${JSON.stringify(gameConfig)}\n\nERRORS TO FIX:\n- ${errorList}\n\nFIXED JSON:` }
+      ]);
+      gameConfig = JSON.parse(cleanJson(polishedConfigStr));
+    }
 
     return {
-      isSuccess: report.isValid,
+      isSuccess: report?.isValid || false,
       generatedCode: finalHtml,
       validationReport: report,
-      errors: report.errors
+      errors: report?.errors || []
     };
 
   } catch (e) {
