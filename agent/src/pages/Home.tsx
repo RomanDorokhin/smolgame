@@ -643,23 +643,24 @@ export default function Home() {
             )}
           </div>
 
-          {/* Input */}
-          {activeTab === "chat" && (
-            <div className="px-4 py-4 md:px-8 md:py-6 bg-[#0a0b0e] border-t border-white/5 shrink-0">
-              <div className="max-w-2xl mx-auto">
-                <ChatInput
-                  onSend={sendMessage}
-                  onStop={stop}
-                  isGenerating={isRunning}
-                  disabled={isRunning}
-                  placeholder={isRunning ? "Агент думает..." : "Опишите игру..."}
-                />
-                <div className="mt-3 text-[9px] text-center text-white/10 uppercase tracking-[0.2em] font-black">
-                  agent-smol v4.3-STABLE • Phase: Plan + Code • Engine: LLM-API v3
-                </div>
+          {/* Global Input */}
+          <div className="px-4 py-4 md:px-8 md:py-6 bg-[#0a0b0e] border-t border-white/5 shrink-0">
+            <div className="max-w-2xl mx-auto">
+              <ChatInput
+                onSend={(text) => {
+                  if (activeTab === "studio") setActiveTab("chat");
+                  sendMessage(text);
+                }}
+                onStop={stop}
+                isGenerating={isRunning}
+                disabled={isRunning}
+                placeholder={isRunning ? "Агент думает..." : "Опишите игру или попросите доработать текущую..."}
+              />
+              <div className="mt-3 text-[9px] text-center text-white/10 uppercase tracking-[0.2em] font-black">
+                agent-smol v4.3-STABLE • Phase: Plan + Code • Engine: LLM-API v3
               </div>
             </div>
-          )}
+          </div>
         </main>
       </div>
     </ErrorBoundary>
