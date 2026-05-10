@@ -84,20 +84,34 @@ function validate(html: string): string[] {
 function autoRepair(html: string): string {
   let repaired = html;
   
-  // Fix 1: Move suspicious top-level calls to the bottom
-  // This is a heuristic fix for TDZ errors
-  if (repaired.includes('resizeCanvas()') || repaired.includes('Game.init()')) {
-    const scripts = extractScripts(repaired);
-    scripts.forEach(js => {
-      if (js.includes('resizeCanvas()') || js.includes('Game.init()')) {
-        // Remove the calls from where they are and place them at the end
-        let cleanJs = js.replace(/resizeCanvas\s*\(\s*\);?/g, '');
-        cleanJs = cleanJs.replace(/Game\.init\s*\(\s*\);?/g, '');
-        cleanJs += '\n\n// Auto-repaired initialization\nif (typeof resizeCanvas === "function") resizeCanvas();\nif (typeof Game !== "undefined" && Game.init) Game.init();\n';
-        repaired = repaired.replace(js, cleanJs);
+  // Prevent double-repair
+  if (repaired.includes('// Auto-repaired initialization')) return repaired;
+
+  const scripts = extractScripts(repaired);
+  scripts.forEach(js => {
+    let cleanJs = js;
+    let modified = false;
+
+    // Fix: only replace if NOT preceded by "function "
+    // We use a safe regex approach that checks the prefix
+    const calls = ['resizeCanvas', 'Game.init'];
+    calls.forEach(call => {
+      const regex = new RegExp(`(^|[^a-zA-Z0-9_])function\\s+${call.replace('.', '\\.')}`, 'g');
+      // If we find "function resizeCanvas", we skip this call in this script
+      if (regex.test(cleanJs)) return;
+
+      const callRegex = new RegExp(`([^a-zA-Z0-9_])${call.replace('.', '\\.')}\\s*\\(\\s*\\);?`, 'g');
+      if (callRegex.test(cleanJs)) {
+        cleanJs = cleanJs.replace(callRegex, '$1');
+        modified = true;
       }
     });
-  }
+
+    if (modified) {
+      cleanJs += '\n\n// Auto-repaired initialization\nif (typeof resizeCanvas === "function") resizeCanvas();\nif (typeof Game !== "undefined" && Game.init) Game.init();\n';
+      repaired = repaired.replace(js, cleanJs);
+    }
+  });
 
   return repaired;
 }
