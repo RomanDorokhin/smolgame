@@ -290,7 +290,8 @@ export function useGameAgent(settings: ChatSettings) {
     <!-- GAME_CONFIG_INJECTION_POINT -->
     <script>
         window.onerror = (m) => { 
-            document.getElementById('loading-text').innerHTML = `<div style="color:red">ERROR: ${m}</div>`;
+            const el = document.getElementById('loading-text');
+            if (el) el.innerHTML = '<div style="color:red">ERROR: ' + m + '</div>';
             console.error(m);
         };
         const cfg = JSON.parse(document.getElementById('game-config-json').textContent);
