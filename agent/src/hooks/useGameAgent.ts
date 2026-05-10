@@ -29,12 +29,12 @@ export interface AgentMessage {
   };
 }
 
-const FALLBACK_ORDER: APIProvider[] = ["groq", "gemini", "openrouter", "together", "deepseek", "sambanova", "glhf", "huggingface"];
+const FALLBACK_ORDER: APIProvider[] = ["openrouter", "groq", "gemini", "together", "deepseek", "sambanova", "glhf", "huggingface"];
 
 const DEFAULT_MODELS: Record<string, string[]> = {
+  openrouter: ["anthropic/claude-3-5-sonnet", "google/gemini-2.0-flash-001"],
   groq: ["llama-3.3-70b-versatile"],
   gemini: ["gemini-2.0-flash"],
-  openrouter: ["google/gemini-2.0-flash-001"],
   together: ["meta-llama/Llama-3.3-70B-Instruct-Turbo"],
   deepseek: ["deepseek-chat"],
   sambanova: ["Meta-Llama-3.1-70B-Instruct"],
