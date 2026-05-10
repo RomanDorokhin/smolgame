@@ -371,14 +371,8 @@ export function useGameAgent(settings: ChatSettings) {
       // Cleanup
       finalCode = finalCode.replace(/```[a-z]*\n/gi, '').replace(/```/g, '');
 
-      // Final Analysis
-      const analysis = analyzeGameCode(finalCode);
-      const qualityNote = analysis.juiceScore < 85
-        ? `\n\n⚠️ *Качество:* Сочность ${analysis.juiceScore}% (рекомендуется добавить эффектов).`
-        : `\n\n✅ *Качество:* Сочность ${analysis.juiceScore}% - Отлично!`;
-
       updateMessage(assistantId, {
-        content: (beforeTag ? beforeTag + "\n\n" : "") + `✅ **Игра готова!**\n\n🛠 **Код в Студии.** Нажми «Опубликовать», чтобы выпустить игру.${qualityNote}`,
+        content: (beforeTag ? beforeTag + "\n\n" : "") + `✅ **Игра готова!**\n\n🛠 **Код в Студии.** Нажми «Опубликовать», чтобы выпустить игру.`,
         gameCode: finalCode,
         isStreaming: false,
         deployState: { phase: "ready", status: "Готово", pagesUrl: "" }
