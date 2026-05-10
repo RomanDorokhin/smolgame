@@ -27,15 +27,14 @@ STRICT TECHNICAL REQUIREMENTS:
    - Smol.init("gameCanvas", { update: (dt, f) => {...}, render: (ctx, w, h, gy) => {...} })
    - Smol.State: .set('playing'|'game_over'|'intro'), .is('state')
    - Smol.Effects: .shakeScreen(intensity, duration), .burst(x, y, count, colors)
-   - Smol.Audio: .tone(freq, duration, volume, type), .playSound(id)
+   - Smol.Audio: .tone(freq, duration, volume, type)
    - Smol.Render: .text(text, x, y, color, size), .vignette(), .scanlines()
-   - Smol.W, Smol.H, Smol.GY (Ground level)
-3. The game MUST start with an 'intro' state (e.g., "TAP TO START").
-4. Handle input via Smol.Input.bind(() => { ... }).
-5. Use modern, beautiful colors and typography (Google Fonts are allowed).
-6. Ensure the game is mobile-responsive (touch friendly).
+3. CRITICAL: NO PLACEHOLDERS. DO NOT use comments like "// logic goes here" or "// handle collisions".
+4. FULL IMPLEMENTATION: Every single mechanic (movement, collisions, scoring, state transitions) MUST be fully coded and functional.
+5. The game MUST start with an 'intro' state and have a working 'game_over' state.
+6. Use modern, beautiful aesthetics (even for retro themes) and ensure mobile responsiveness.
 
-Output ONLY the raw HTML code. No talk, no explanations.`;
+Output ONLY the raw HTML code. Be a coding god. Fully finish the game.`;
 
 export async function generateGame(userRequest: string, options: PipelineOptions): Promise<PipelineResult> {
   const { onProgress, generateFn } = options;
