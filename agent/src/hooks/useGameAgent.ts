@@ -284,18 +284,41 @@ export function useGameAgent(settings: ChatSettings) {
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
 </head>
 <body>
-    <div id="loading-screen"><div class="spinner"></div><div>SYNCING REALITY...</div></div>
+    <div id="loading-screen"><div class="spinner"></div><div id="loading-text">SYNCING REALITY...</div></div>
     <canvas id="gameCanvas"></canvas>
     <script src="https://smolgame.ru/js/smol-core/smol-core.js" onerror="alert('CRITICAL: smol-core.js not found!')"></script>
     <!-- GAME_CONFIG_INJECTION_POINT -->
     <script>
+        window.onerror = (m) => { 
+            document.getElementById('loading-text').innerHTML = `<div style="color:red">ERROR: ${m}</div>`;
+            console.error(m);
+        };
         const cfg = JSON.parse(document.getElementById('game-config-json').textContent);
-        let state = { score: 0, speed: cfg.difficulty.curve[0].gameSpeed, distance: 0, powerups: { shield: 0, magnet: 0, boost: 0 } };
-        const player = { x: 100, y: 0, w: cfg.player.size, h: cfg.player.size, vy: 0, grounded: false, jumpCount: 0, isJumping: false, airTime: 0, color: cfg.player.color, trail: [] };
+        
+        let state = { 
+            score: 0, 
+            speed: cfg.difficulty?.curve?.[0]?.gameSpeed || 5, 
+            distance: 0, 
+            powerups: { shield: 0, magnet: 0, boost: 0 } 
+        };
+        
+        const player = { 
+            x: 100, y: 0, 
+            w: cfg.player?.size || 40, 
+            h: cfg.player?.size || 40, 
+            vy: 0, grounded: false, jumpCount: 0, isJumping: false, airTime: 0, 
+            color: cfg.player?.color || "#0FF", 
+            trail: [] 
+        };
         let obstacles = []; let collectibles = [];
 
         function resetGame() {
-            state = { score: 0, speed: cfg.difficulty.curve[0].gameSpeed, distance: 0, powerups: { shield: 0, magnet: 0, boost: 0 } };
+            state = { 
+                score: 0, 
+                speed: cfg.difficulty?.curve?.[0]?.gameSpeed || 5, 
+                distance: 0, 
+                powerups: { shield: 0, magnet: 0, boost: 0 } 
+            };
             player.x = 100; player.y = 0; player.vy = 0; player.trail = []; player.grounded = false; player.jumpCount = 0;
             obstacles = []; collectibles = [];
             Smol.State.set('playing');

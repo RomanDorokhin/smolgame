@@ -58,8 +58,32 @@ Output format:
 
 const DESIGNER_PROMPT = (gdd: string) => `
 You are GameDesigner. Convert GDD to GameConfig JSON.
-STRICT RULE: NO COMMENTS. USE ONLY THESE KEYS: gameTitle, player, world, visuals, audio, difficulty, social.
-GDD: ${gdd}`;
+STRICT RULE: NO COMMENTS inside JSON.
+MANDATORY STRUCTURE (Do not change keys):
+{
+  "gameTitle": "...",
+  "player": { "size": 40, "color": "#HEX", "jumpHeight": 12, "doubleJumpEnabled": true },
+  "world": { 
+    "groundColor": "#HEX",
+    "obstacleTypes": [{ "id": "obs1", "color": "#HEX", "width": 40, "height": 60, "spawnWeight": 1 }],
+    "collectibleTypes": [{ "id": "c1", "color": "#HEX", "radius": 15, "scoreValue": 10, "spawnWeight": 1 }]
+  },
+  "visuals": {
+    "parallaxLayers": [{ "assetUrl": "url", "speed": 0.2, "alpha": 1 }],
+    "hudColor": "#HEX"
+  },
+  "audio": {
+    "sfx": { "jump": { "freq": 400 }, "score": { "freq": 800 }, "die": { "freq": 200 } }
+  },
+  "difficulty": {
+    "curve": [{ "scoreThreshold": 0, "gameSpeed": 5, "obstacleSpawnInterval": 1500, "collectibleSpawnInterval": 3000 }],
+    "maxGameSpeed": 15
+  },
+  "social": { "leaderboardEnabled": true }
+}
+
+GDD: ${gdd}
+Output ONLY valid JSON.`;
 
 const CODER_PROMPT = (config: string) => `
 You are GameCoder. You provide JS code for TWO specific hooks.
