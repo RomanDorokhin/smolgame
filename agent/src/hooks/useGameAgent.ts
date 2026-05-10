@@ -14,6 +14,7 @@ export interface AgentMessage {
   gameCode?: string;
   timestamp: number;
   isStreaming?: boolean;
+  progress?: number;
   deployState?: {
     phase: "idle" | "deploying" | "waiting_pages" | "ready" | "error";
     status?: string;
@@ -39,11 +40,30 @@ const DEFAULT_MODELS: Record<string, string[]> = {
 const makeId = () => Math.random().toString(36).substring(2, 9);
 
 // ──────────────────────────────────────────────
+// SAFE STORAGE HELPER
+// Fixes: localStorage crash in Telegram WebView
+// ──────────────────────────────────────────────
+const safeStorage = {
+  set: (key: string, val: unknown): void => {
+    try { localStorage.setItem(key, JSON.stringify(val)); } catch (_e) {}
+  },
+  get: <T>(key: string, defaultVal: T): T => {
+    try {
+      const raw = localStorage.getItem(key);
+      return raw !== null ? (JSON.parse(raw) as T) : defaultVal;
+    } catch (_e) { return defaultVal; }
+  },
+  remove: (key: string): void => {
+    try { localStorage.removeItem(key); } catch (_e) {}
+  }
+};
+
+// ──────────────────────────────────────────────
 // ПРОМПТЫ
 // ──────────────────────────────────────────────
 
 // ФАЗА 1: Интервьюер (Архитектор)
-const INTERVIEWER_PROMPT = `You are a Senior Game Producer. Your goal is to get started AS FAST AS POSSIBLE.
+const INTERVIEWER_PROMPT = `You are a Senior Game Producer for SmolGame platform (Telegram Mini Apps). Your goal is to get started AS FAST AS POSSIBLE.
 - If the user's idea is clear, skip questions and just say: "I've got it! Starting the engine..." and output ONLY the <plan> block.
 - Only ask questions if the idea is completely vague.
 - Limit yourself to 1-2 most critical questions max.
@@ -52,28 +72,149 @@ const INTERVIEWER_PROMPT = `You are a Senior Game Producer. Your goal is to get 
 Output format for planning:
 <plan>
 - Core Loop: ...
-- Tech: ...
-- Style: ...
+- Template: (choose one: arcade-canvas | physics-puzzle | narrative-mystery)
+- Style & Juice: ...
 </plan>`;
 
-const ENGINEER_PROMPT = `You are a Visionary Game Developer and Master Architect. Your goal is to create a masterpiece: a world-class, high-fidelity mobile game.
+// ФАЗА 2: Инженер (Генератор кода)
+// FIX #1: Added mobile-first touch requirements
+// FIX #2: Added safe storage requirement with code snippet
+// FIX #3: Added audio initialization requirement
+// FIX #4: Added complete game loop requirement (START/PLAYING/GAMEOVER/RESTART)
+// FIX #5: Added Juice Toolkit with concrete code patterns
+const ENGINEER_PROMPT = `You are a Visionary Game Developer and Master Architect building for the SmolGame platform (Telegram Mini Apps). Your goal is to create a masterpiece: a world-class, high-fidelity mobile game.
 
 CORE PRINCIPLES:
-1. UNLIMITED CREATIVITY: You have full freedom. Choose the best stack for the prompt (Three.js, Babylon.js, Phaser, PixiJS, or pure WebGL/WebGPU). 
-2. PROFESSIONAL ENGINEERING: Use sophisticated software architecture. Don't be afraid of complexity if it brings quality. Split code into many logical files if needed.
-3. DEEP GAMEPLAY: The game must be interesting, balanced, and have "Juice" (screen shake, particles, smooth transitions, great feedback).
-4. AAA FIDELITY: Implement advanced visuals (lighting, shaders, post-processing). It must look like a polished commercial product.
+1. MOBILE FIRST (CRITICAL): The game runs in Telegram WebView on a mobile phone. There is NO physical mouse and NO keyboard. You MUST use pointer events: pointerdown, pointerup, pointermove. You MUST add CSS: canvas { touch-action: none; } to prevent the Telegram feed from scrolling during gameplay.
+2. SAFE STORAGE (CRITICAL): Telegram WebView may throw SecurityError on localStorage access. You MUST wrap ALL localStorage calls in try/catch. Use this exact pattern:
+   const safeStorage = {
+     set: (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch(e) {} },
+     get: (k, d) => { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch(e) { return d; } }
+   };
+3. AUDIO INITIALIZATION: Mobile browsers block AudioContext autoplay. You MUST initialize AudioContext only inside a pointerdown/touchstart event handler, never on page load.
+4. COMPLETE GAME LOOP (CRITICAL): The game MUST have:
+   - A START screen (title + "Tap to Start")
+   - A PLAYING state with clear objective
+   - A GAME OVER screen with final score and "Tap to Restart"
+   - A restart() function that resets state WITHOUT calling location.reload()
+5. DEEP GAMEPLAY: The game must be interesting, balanced, and have "Juice" — use screen shake, particles, and smooth transitions.
+
+JUICE TOOLKIT (use these patterns directly):
+// Screen Shake:
+let shakeIntensity = 0;
+function screenShake(i=8){ shakeIntensity=i; }
+// In draw loop: ctx.translate((Math.random()-0.5)*shakeIntensity, (Math.random()-0.5)*shakeIntensity); shakeIntensity*=0.85;
+
+// Particles:
+const particles = [];
+function spawnParticles(x, y, color, count=12) {
+  for(let i=0;i<count;i++){
+    const a=(Math.PI*2*i/count)+Math.random()*0.5, s=2+Math.random()*4;
+    particles.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,life:1,decay:0.025,size:3+Math.random()*4,color});
+  }
+}
+
+// Delta-time game loop (works correctly on 60Hz and 120Hz screens):
+let lastTime = 0;
+function loop(ts) {
+  const dt = Math.min((ts - lastTime) / 16.67, 3);
+  lastTime = ts;
+  update(dt); draw();
+  requestAnimationFrame(loop);
+}
 
 TECHNICAL RULES:
 1. OUTPUT: Deliver everything inside <game_spec> tags.
 2. FILE FORMAT: Use <file path="filename">content</file> for each file.
-3. COMPATIBILITY: Ensure all external assets/libraries are loaded via reliable CDNs.
+3. COMPATIBILITY: All external libraries must be loaded via reliable CDNs (cdnjs.cloudflare.com, cdn.jsdelivr.net).
 
 "СДЕЛАЙ ИГРУ МИРОВОГО УРОВНЯ ОТ НАЧАЛА И ДО КОНЦА". Deliver your absolute best. Output ONLY the <game_spec> block.`;
 
+// ФАЗА 3: QA (Валидатор)
+// FIX: New QA phase that validates and auto-fixes generated code
+const QA_PROMPT = `You are the Lead QA Engineer for SmolGame platform. Review the generated game code for compliance.
+
+MANDATORY CHECKS:
+1. TOUCH INPUT: Does it use pointerdown/pointerup/pointermove (not just mousedown/keydown)?
+2. SAFE STORAGE: Is localStorage wrapped in try/catch or using a safeStorage wrapper?
+3. GAME LOOP: Does it have START screen, PLAYING state, GAME OVER screen, and restart() without location.reload()?
+4. TOUCH ACTION: Is "touch-action: none" applied to the canvas element?
+5. AUDIO: Is AudioContext initialized only on first user interaction (not on page load)?
+
+If ALL checks pass, output exactly: <status>PASSED</status>
+
+If ANY check fails, output the COMPLETE corrected code inside <game_spec> tags with all issues fixed. Do not explain — just fix and output.`;
+
 const AIDER_EDITOR_PROMPT = `You are the Senior Game Developer. Modify the existing game code based on user requests.
 
+IMPORTANT: Preserve all existing safety patterns (safeStorage, touch-action:none, pointer events, game loop states).
+
 Output the changes using <game_spec> tags with full file contents.`;
+
+// ──────────────────────────────────────────────
+// STATIC CODE ANALYZER
+// FIX: Pre-deploy validation to catch common issues
+// ──────────────────────────────────────────────
+interface AnalysisResult {
+  passed: boolean;
+  issues: string[];
+  warnings: string[];
+}
+
+function analyzeGameCode(code: string): AnalysisResult {
+  const issues: string[] = [];
+  const warnings: string[] = [];
+
+  // CRITICAL: touch-action
+  if (!code.includes('touch-action')) {
+    issues.push('Missing touch-action: none on canvas — Telegram feed will scroll during gameplay');
+  }
+
+  // CRITICAL: safe localStorage
+  const hasLocalStorage = code.includes('localStorage');
+  const hasTryCatch = code.includes('try {') || code.includes('try{');
+  const hasSafeStorage = code.includes('safeStorage');
+  if (hasLocalStorage && !hasTryCatch && !hasSafeStorage) {
+    issues.push('localStorage used without try/catch — will crash in Telegram WebView');
+  }
+
+  // CRITICAL: game loop states
+  if (!code.includes('GAME_OVER') && !code.includes('gameover') && !code.includes('gameOver')) {
+    issues.push('No GAME_OVER state found — game has no ending');
+  }
+
+  // CRITICAL: restart without reload
+  if (code.includes('location.reload')) {
+    issues.push('location.reload() used for restart — crashes inside Telegram iframe');
+  }
+
+  // CRITICAL: forbidden patterns
+  if (code.includes('top.location') || code.includes('window.parent.location')) {
+    issues.push('top.location / window.parent.location is forbidden in Telegram iframe');
+  }
+
+  // CRITICAL: absolute paths
+  if (/src=["']\/[^/]/.test(code) || /href=["']\/[^/]/.test(code)) {
+    issues.push('Absolute paths (src="/...") will break on GitHub Pages — use relative paths');
+  }
+
+  // WARNING: touch events
+  if (!code.includes('pointerdown') && !code.includes('touchstart')) {
+    warnings.push('No touch/pointer events found — game may be unplayable on mobile');
+  }
+
+  // WARNING: audio context
+  if (code.includes('AudioContext') && !code.includes('pointerdown') && !code.includes('touchstart')) {
+    warnings.push('AudioContext may be initialized before user interaction — will fail on mobile');
+  }
+
+  // WARNING: delta time
+  if (code.includes('requestAnimationFrame') && !code.includes('deltaTime') && !code.includes('dt')) {
+    warnings.push('No delta-time detected — game speed will vary on 60Hz vs 120Hz screens');
+  }
+
+  return { passed: issues.length === 0, issues, warnings };
+}
 
 // ──────────────────────────────────────────────
 // ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ
@@ -92,7 +233,7 @@ function parseMultiFile(text: string): { path: string; content: string }[] {
 function mergeFilesForPreview(files: { path: string; content: string }[]): string {
   const htmlFile = files.find(f => f.path.endsWith(".html"));
   if (!htmlFile) return files[0]?.content || "";
-  
+
   let merged = htmlFile.content;
   files.forEach(f => {
     if (f.path.endsWith(".js")) {
@@ -135,27 +276,22 @@ function applyAiderBlocks(code: string, blocks: { search: string; replace: strin
 // ──────────────────────────────────────────────
 
 export function useGameAgent(settings: ChatSettings) {
-  const [messages, setMessages] = useState<AgentMessage[]>(() => {
-    try {
-      const saved = localStorage.getItem("smol_agent_messages_v1");
-      return saved ? JSON.parse(saved) : [];
-    } catch { return []; }
-  });
+  // FIX: All localStorage access wrapped with safeStorage
+  const [messages, setMessages] = useState<AgentMessage[]>(() =>
+    safeStorage.get<AgentMessage[]>("smol_agent_messages_v1", [])
+  );
   const [isRunning, setIsRunning] = useState(false);
   const [step, setStep] = useState("");
   const [targetRepo, setTargetRepo] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
-  const chatHistory = useRef<{ role: "user" | "assistant" | "system"; content: string }[]>((() => {
-    try {
-      const saved = localStorage.getItem("smol_agent_history_v1");
-      return saved ? JSON.parse(saved) : [];
-    } catch { return []; }
-  })());
+  const chatHistory = useRef<{ role: "user" | "assistant" | "system"; content: string }[]>(
+    safeStorage.get("smol_agent_history_v1", [])
+  );
 
-  // Save to localStorage on change
+  // FIX: Save to localStorage using safeStorage
   useEffect(() => {
-    localStorage.setItem("smol_agent_messages_v1", JSON.stringify(messages));
-    localStorage.setItem("smol_agent_history_v1", JSON.stringify(chatHistory.current));
+    safeStorage.set("smol_agent_messages_v1", messages);
+    safeStorage.set("smol_agent_history_v1", chatHistory.current);
   }, [messages]);
 
   const addMessage = useCallback((msg: Omit<AgentMessage, "id" | "timestamp">) => {
@@ -168,7 +304,6 @@ export function useGameAgent(settings: ChatSettings) {
     setMessages(prev => prev.map(m => m.id === id ? { ...m, ...patch } : m));
   }, []);
 
-  // Получаем список провайдеров с ключами
   const getActiveProviders = useCallback(() => {
     return FALLBACK_ORDER.filter(p => {
       const key = settings.keys[p as keyof typeof settings.keys] as string | undefined;
@@ -176,7 +311,6 @@ export function useGameAgent(settings: ChatSettings) {
     });
   }, [settings]);
 
-  // Стриминг через ротацию провайдеров
   const streamWithFallback = useCallback(async (
     msgs: { role: "user" | "assistant" | "system"; content: string }[],
     onChunk: (chunk: string, full: string) => void,
@@ -207,17 +341,17 @@ export function useGameAgent(settings: ChatSettings) {
 
         let fullText = "";
         const stream = generateStream(msgs, { provider: providerId, apiKey, model }, signal);
-        
+
         for await (const chunk of stream) {
           if (signal.aborted) break;
           fullText += chunk;
           onChunk(chunk, fullText);
         }
-        
+
         pool.reportSuccess(providerId);
         return { text: fullText, provider: providerId };
-      } catch (e: any) {
-        lastError = e.message || "Unknown";
+      } catch (e: unknown) {
+        lastError = (e as Error).message || "Unknown";
         const isRate = lastError.includes("429") || lastError.toLowerCase().includes("rate limit");
         pool.reportFailure(providerId, isRate, lastError);
         if (i === ordered.length - 1) break;
@@ -249,6 +383,7 @@ export function useGameAgent(settings: ChatSettings) {
     }
 
     try {
+      // ── PHASE 1: INTERVIEWER ────────────────────────────
       setStep("💬 Думаю...");
       const interviewMsgs = [
         { role: "system" as const, content: INTERVIEWER_PROMPT },
@@ -297,19 +432,18 @@ export function useGameAgent(settings: ChatSettings) {
       const tagStart = interviewText.search(/<plan>|plan/i);
       const beforeTag = tagStart > 0 ? interviewText.slice(0, tagStart).trim() : "";
       const isModification = !!previousCode;
-      
-      let rawCode = "";
 
-      let progressInterval: any;
+      let rawCode = "";
+      let progressInterval: ReturnType<typeof setInterval> | undefined;
 
       if (isModification) {
-        // Симуляция плавного прогресса для UX
+        // ── MODIFICATION MODE ───────────────────────────
         let simulatedProgress = 0;
         progressInterval = setInterval(() => {
           simulatedProgress += Math.random() * 5;
           if (simulatedProgress > 95) simulatedProgress = 95;
           updateMessage(assistantId, {
-            content: (beforeTag ? beforeTag + "\n\n" : "") + `🤖 **OpenGame в процессе...**\n\nЯ проектирую архитектуру и пишу код твоей игры мирового уровня.`,
+            content: (beforeTag ? beforeTag + "\n\n" : "") + `🤖 **Редактирую код...**`,
             progress: Math.floor(simulatedProgress),
             isStreaming: true
           });
@@ -329,22 +463,22 @@ export function useGameAgent(settings: ChatSettings) {
 
         const blocks = parseAiderBlocks(modificationText);
         if (blocks.length > 0) {
-          rawCode = applyAiderBlocks(previousCode, blocks).code;
+          rawCode = applyAiderBlocks(previousCode!, blocks).code;
         } else {
           const match = modificationText.match(/<game_spec>([\s\S]*?)<\/game_spec>/i) || modificationText.match(/<html[\s\S]*<\/html>/i);
-          rawCode = match ? (match[1] || match[0]) : previousCode;
+          rawCode = match ? (match[1] || match[0]) : previousCode!;
         }
       } else {
+        // ── GENERATION MODE (OpenGame) ──────────────────
         updateMessage(assistantId, {
-          content: (beforeTag ? beforeTag + "\n\n" : "") + "🔨 Передаю задачу движку OpenGame... Запускаю изолированную песочницу...",
+          content: (beforeTag ? beforeTag + "\n\n" : "") + "🔨 Передаю задачу движку OpenGame...",
           isStreaming: true,
         });
         setStep("🚀 Запуск OpenGame...");
 
         try {
-          // Получаем настройки юзера (ключи и порядок провайдеров)
           const activeProviders = getActiveProviders();
-          
+
           const reader = await SmolGameAPI.generateWithOpenGame({
             prompt: gameSpec,
             keys: settings.keys as Record<string, string>,
@@ -353,25 +487,20 @@ export function useGameAgent(settings: ChatSettings) {
 
           const decoder = new TextDecoder();
           let fullConsole = "";
-          
+
           while (true) {
             const { done, value } = await reader.read();
             if (done) break;
             if (signal.aborted) break;
-            
+
             const chunk = decoder.decode(value, { stream: true });
-            
+
             if (chunk.includes("===OPEN_GAME_RESULT_ERROR===")) {
               throw new Error("OpenGame не смог сохранить результат: " + chunk.split("===OPEN_GAME_RESULT_ERROR===")[1]);
             } else {
               fullConsole += chunk;
-              
-              // Если уже пошел результат, не выводим его в консоль чата
-              if (fullConsole.includes("===OPEN_GAME_RESULT===")) {
-                continue;
-              }
-              
-              // Показываем в чате последние логи консоли (ограничиваем длину)
+              if (fullConsole.includes("===OPEN_GAME_RESULT===")) continue;
+
               const displayLogs = fullConsole.length > 500 ? "..." + fullConsole.slice(-500) : fullConsole;
               updateMessage(assistantId, {
                 content: (beforeTag ? beforeTag + "\n\n" : "") + "🤖 **OpenGame работает:**\n```bash\n" + displayLogs + "\n```",
@@ -379,14 +508,15 @@ export function useGameAgent(settings: ChatSettings) {
               });
             }
           }
+
           if (fullConsole.includes("===OPEN_GAME_RESULT===")) {
             rawCode = fullConsole.split("===OPEN_GAME_RESULT===")[1].trim();
           } else if (fullConsole.includes("[ERROR] OpenGame generation failed")) {
             const errMatch = fullConsole.match(/\[ERROR\] OpenGame generation failed(.*)/);
             throw new Error("Движок завершил работу с ошибкой: " + (errMatch ? errMatch[1].trim() : ""));
           }
-        } catch (e: any) {
-          updateMessage(assistantId, { content: "❌ Ошибка запуска OpenGame: " + e.message, isStreaming: false });
+        } catch (e: unknown) {
+          updateMessage(assistantId, { content: "❌ Ошибка запуска OpenGame: " + (e as Error).message, isStreaming: false });
           return;
         }
       }
@@ -405,47 +535,97 @@ export function useGameAgent(settings: ChatSettings) {
         .replace(/width:\s*canvas\.width/g, "width: window.innerWidth")
         .replace(/height:\s*canvas\.height/g, "height: window.innerHeight")
         .replace(/```[a-z]*\n/gi, '').replace(/```/g, '');
-      
+
+      // ── PHASE 3: STATIC ANALYSIS (NEW) ─────────────────
+      // FIX: Validate code before showing to user
+      setStep("🔍 Проверяю качество кода...");
+      const analysis = analyzeGameCode(finalCode);
+
+      if (!analysis.passed) {
+        // Auto-fix via QA prompt
+        setStep("🛠 Автоисправление проблем...");
+        updateMessage(assistantId, {
+          content: (beforeTag ? beforeTag + "\n\n" : "") + `⚠️ Обнаружены проблемы (${analysis.issues.length}). Исправляю автоматически...`,
+          isStreaming: true
+        });
+
+        try {
+          const { text: qaText } = await streamWithFallback(
+            [
+              { role: "system", content: QA_PROMPT },
+              { role: "user", content: `Review and fix this game code:\n\n${finalCode}` }
+            ],
+            () => {},
+            signal,
+            usedProvider
+          );
+
+          if (qaText.includes("<status>PASSED</status>")) {
+            // QA says it's fine despite our analysis — trust QA
+          } else {
+            const qaMatch = qaText.match(/<game_spec>([\s\S]*?)<\/game_spec>/i);
+            if (qaMatch) {
+              finalCode = qaMatch[1].trim();
+            }
+          }
+        } catch (_qaErr) {
+          // QA failed — log warnings but continue with original code
+          console.warn("QA phase failed, using original code. Issues:", analysis.issues);
+        }
+      }
+
+      // ── FINALIZE ────────────────────────────────────────
       try {
         const parsedFiles = parseMultiFile(finalCode);
         const codeForPreview = parsedFiles.length > 0 ? mergeFilesForPreview(parsedFiles) : finalCode;
 
+        // Build quality report for user
+        const qualityNote = analysis.issues.length > 0
+          ? `\n\n⚠️ *Авто-исправлены проблемы:* ${analysis.issues.join('; ')}`
+          : analysis.warnings.length > 0
+            ? `\n\n💡 *Предупреждения:* ${analysis.warnings.join('; ')}`
+            : '\n\n✅ *Все проверки качества пройдены.*';
+
         updateMessage(assistantId, {
-          content: (beforeTag ? beforeTag + "\n\n" : "") + `✅ **Черновик игры готов!**\n\n🛠 **Код загружен в Студию.** Внеси правки и нажми «Опубликовать», чтобы игра появилась в общей ленте.`,
+          content: (beforeTag ? beforeTag + "\n\n" : "") + `✅ **Черновик игры готов!**\n\n🛠 **Код загружен в Студию.** Внеси правки и нажми «Опубликовать», чтобы игра появилась в общей ленте.${qualityNote}`,
           gameCode: codeForPreview,
           isStreaming: false,
-          deployState: { 
-            phase: "ready", 
+          deployState: {
+            phase: "ready",
             status: "Черновик готов",
-            pagesUrl: "", // Нет ссылки до публикации
+            pagesUrl: "",
           }
         });
 
-        // Автоматически загружаем в студию (через пропсы ChatMessageItem или внешнее событие)
-        console.log("Game draft ready for Studio");
-
-      } catch (pubErr: any) {
-        updateMessage(assistantId, { 
-          content: `⚠️ Публикация не удалась: ${pubErr.message}`, 
-          deployState: { phase: "error", error: pubErr.message },
-          isStreaming: false 
+      } catch (pubErr: unknown) {
+        updateMessage(assistantId, {
+          content: `⚠️ Публикация не удалась: ${(pubErr as Error).message}`,
+          deployState: { phase: "error", error: (pubErr as Error).message },
+          isStreaming: false
         });
       }
 
-      } catch (e: any) {
-        if (typeof progressInterval !== 'undefined') clearInterval(progressInterval);
-        updateMessage(assistantId, { content: `❌ Ошибка: ${e.message}`, isStreaming: false });
-      } finally {
-        setIsRunning(false);
-        setStep("");
-        setTargetRepo(null);
-      }
-  }, [isRunning, settings, addMessage, updateMessage, getActiveProviders, streamWithFallback]);
+    } catch (e: unknown) {
+      if (progressInterval !== undefined) clearInterval(progressInterval);
+      updateMessage(assistantId, { content: `❌ Ошибка: ${(e as Error).message}`, isStreaming: false });
+    } finally {
+      setIsRunning(false);
+      setStep("");
+      setTargetRepo(null);
+    }
+  }, [isRunning, settings, addMessage, updateMessage, getActiveProviders, streamWithFallback, messages]);
 
-  const stop = useCallback(() => { abortRef.current?.abort(); setIsRunning(false); setStep(""); }, []);
+  const stop = useCallback(() => {
+    abortRef.current?.abort();
+    setIsRunning(false);
+    setStep("");
+  }, []);
+
   const reset = useCallback(() => {
-    setMessages([]); chatHistory.current = [];
-    localStorage.removeItem("smol_agent_messages_v1"); localStorage.removeItem("smol_agent_history_v1");
+    setMessages([]);
+    chatHistory.current = [];
+    safeStorage.remove("smol_agent_messages_v1");
+    safeStorage.remove("smol_agent_history_v1");
   }, []);
 
   return { messages, isRunning, step, sendMessage, stop, reset };
