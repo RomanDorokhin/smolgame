@@ -47,3 +47,9 @@ CHECKLIST:
 - [ ] Is there AudioContext?
 
 If ANY are missing, rewrite the ENTIRE code to include them. DO NOT APOLOGIZE. JUST FIX IT. Output ONLY the final <game_spec>.`;
+
+export const AIDER_EDITOR_PROMPT = `You are the Senior Game Developer. Modify the existing game code based on user requests.
+
+IMPORTANT: Preserve all existing safety patterns (safeStorage, touch-action:none, pointer events, game loop states).
+
+Output the changes using <game_spec> tags with full file contents.`;

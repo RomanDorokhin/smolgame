@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Physics Puzzle</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { width: 100%; height: 100%; background: #0d1117; overflow: hidden; font-family: 'Courier New', monospace; }
+    canvas { display: block; touch-action: none; }
+    #ui {
+      position: fixed; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      pointer-events: none;
+    }
+    .screen {
+      display: none; flex-direction: column; align-items: center;
+      gap: 16px; pointer-events: all; text-align: center; padding: 32px;
+    }
+    .screen.active { display: flex; }
+    h1 { color: #fff; font-size: clamp(26px, 7vw, 48px); text-shadow: 0 0 20px #38bdf8; }
+    h2 { color: #fff; font-size: clamp(20px, 5vw, 36px); }
+    p  { color: #94a3b8; font-size: clamp(13px, 3.5vw, 17px); }
+    .tap-hint { color: #38bdf8; animation: pulse 1.4s ease-in-out infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+    #hud {
+      position: fixed; top: 0; left: 0; right: 0;
+      display: none; align-items: center; justify-content: space-between;
+      padding: 12px 20px; color: #fff; font-size: clamp(14px, 4vw, 20px);
+      pointer-events: none;
+    }
+    #level-label { color: #38bdf8; }
+    #moves-label { color: #fbbf24; }
+  </style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="hud">
+  <span id="level-label">Level 1</span>
+  <span id="moves-label">Moves: 0</span>
+</div>
+<div id="ui">
+  <div id="screen-start" class="screen active">
+    <h1>PUZZLE TITLE</h1>
+    <p>Drag blocks to guide the ball to the goal</p>
+    <p class="tap-hint">▶ TAP TO START</p>
+  </div>
+  <div id="screen-win" class="screen">
+    <h2>LEVEL COMPLETE!</h2>
+    <p id="win-moves"></p>
+    <p class="tap-hint">▶ TAP FOR NEXT LEVEL</p>
+  </div>
+  <div id="screen-fail" class="screen">
+    <h2>TRY AGAIN</h2>
+    <p id="fail-reason">Out of moves!</p>
+    <p class="tap-hint">▶ TAP TO RETRY</p>
+  </div>
+</div>
+
+<!-- Matter.js via CDN -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
+<script>
+// ═══════════════════════════════════════════════════════
+// SAFE STORAGE
+// ═══════════════════════════════════════════════════════
+const safeStorage = {
+  set: (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch(e) {} },
+  get: (k, d) => { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch(e) { return d; } }
+};
+
+// ═══════════════════════════════════════════════════════
+// AUDIO ENGINE
+// ═══════════════════════════════════════════════════════
+let audioCtx = null;
+function getAudio() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  return audioCtx;
+}
+function playTone(freq = 440, type = 'sine', duration = 0.15, vol = 0.1) {
+  try {
+    const ac = getAudio();
+    const osc = ac.createOscillator();
+    const gain = ac.createGain();
+    osc.connect(gain); gain.connect(ac.destination);
+    osc.frequency.value = freq;
+    osc.type = type;
+    gain.gain.setValueAtTime(vol, ac.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + duration);
+    osc.start(); osc.stop(ac.currentTime + duration);
+  } catch(e) {}
+}
+
+// ═══════════════════════════════════════════════════════
+// CANVAS & MATTER.JS SETUP
+// ═══════════════════════════════════════════════════════
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+canvas.width  = window.innerWidth;
+canvas.height = window.innerHeight;
+window.addEventListener('resize', () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; });
+
+const { Engine, Render, Runner, Bodies, Body, World, Events, Mouse, MouseConstraint, Composite } = Matter;
+
+const engine = Engine.create();
+const world = engine.world;
+
+// ═══════════════════════════════════════════════════════
+// GAME STATE
+// ═══════════════════════════════════════════════════════
+const STATE = { START: 'start', PLAYING: 'playing', WIN: 'win', FAIL: 'fail' };
+let gameState = STATE.START;
+let currentLevel = safeStorage.get('currentLevel', 0);
+let moveCount = 0;
+
+const screens = {
+  start: document.getElementById('screen-start'),
+  win:   document.getElementById('screen-win'),
+  fail:  document.getElementById('screen-fail'),
+};
+const hud = document.getElementById('hud');
+
+function showScreen(name) {
+  Object.values(screens).forEach(s => s.classList.remove('active'));
+  if (name && screens[name]) screens[name].classList.add('active');
+  hud.style.display = (name === null) ? 'flex' : 'none';
+}
+
+// ═══════════════════════════════════════════════════════
+// ▼▼▼ LEVEL DEFINITIONS — REPLACE/EXTEND THIS ▼▼▼
+// ═══════════════════════════════════════════════════════
+const W = () => canvas.width;
+const H = () => canvas.height;
+
+const LEVELS = [
+  {
+    maxMoves: 5,
+    ball:   { x: () => W() * 0.2, y: () => H() * 0.2, r: 20 },
+    goal:   { x: () => W() * 0.8, y: () => H() * 0.75, r: 30 },
+    walls: [
+      // { x: () => W()*0.5, y: () => H()*0.5, w: 120, h: 20, angle: 0.3 }
+    ],
+    draggable: [
+      { x: () => W() * 0.5, y: () => H() * 0.4, w: 100, h: 20, angle: 0, color: '#38bdf8' }
+    ]
+  }
+];
+
+let ball = null;
+let goalBody = null;
+let draggableBodies = [];
+let staticBodies = [];
+
+function loadLevel(idx) {
+  World.clear(world);
+  Engine.clear(engine);
+  draggableBodies = [];
+  staticBodies = [];
+  moveCount = 0;
+
+  const level = LEVELS[idx % LEVELS.length];
+
+  // Walls (static)
+  const ground  = Bodies.rectangle(W()/2, H() + 25, W() * 2, 50, { isStatic: true });
+  const wallL   = Bodies.rectangle(-25, H()/2, 50, H() * 2, { isStatic: true });
+  const wallR   = Bodies.rectangle(W() + 25, H()/2, 50, H() * 2, { isStatic: true });
+  const ceiling = Bodies.rectangle(W()/2, -25, W() * 2, 50, { isStatic: true });
+  World.add(world, [ground, wallL, wallR, ceiling]);
+
+  // Level walls
+  (level.walls || []).forEach(w => {
+    const b = Bodies.rectangle(w.x(), w.y(), w.w, w.h, { isStatic: true, angle: w.angle || 0, render: { fillStyle: '#475569' } });
+    b.label = 'wall';
+    World.add(world, b);
+    staticBodies.push(b);
+  });
+
+  // Draggable blocks
+  (level.draggable || []).forEach(d => {
+    const b = Bodies.rectangle(d.x(), d.y(), d.w, d.h, { isStatic: true, angle: d.angle || 0 });
+    b.label = 'draggable';
+    b._color = d.color || '#38bdf8';
+    World.add(world, b);
+    draggableBodies.push(b);
+  });
+
+  // Ball
+  ball = Bodies.circle(level.ball.x(), level.ball.y(), level.ball.r, {
+    restitution: 0.6, friction: 0.3, frictionAir: 0.01, label: 'ball'
+  });
+  World.add(world, ball);
+
+  // Goal (sensor)
+  goalBody = Bodies.circle(level.goal.x(), level.goal.y(), level.goal.r, {
+    isStatic: true, isSensor: true, label: 'goal'
+  });
+  World.add(world, goalBody);
+
+  document.getElementById('level-label').textContent = `Level ${idx + 1}`;
+  document.getElementById('moves-label').textContent = `Moves: ${moveCount}/${level.maxMoves}`;
+}
+
+// ═══════════════════════════════════════════════════════
+// ▲▲▲ END LEVEL DEFINITIONS ▲▲▲
+// ═══════════════════════════════════════════════════════
+
+// ═══════════════════════════════════════════════════════
+// DRAG LOGIC (touch-friendly)
+// ═══════════════════════════════════════════════════════
+let dragging = null;
+let dragOffsetX = 0, dragOffsetY = 0;
+
+function getPos(e) {
+  const rect = canvas.getBoundingClientRect();
+  const src = e.touches ? e.touches[0] : e;
+  return { x: src.clientX - rect.left, y: src.clientY - rect.top };
+}
+
+canvas.addEventListener('pointerdown', (e) => {
+  e.preventDefault();
+  if (gameState === STATE.START) {
+    gameState = STATE.PLAYING;
+    loadLevel(currentLevel);
+    showScreen(null);
+    return;
+  }
+  if (gameState === STATE.WIN) {
+    currentLevel++;
+    safeStorage.set('currentLevel', currentLevel);
+    gameState = STATE.PLAYING;
+    loadLevel(currentLevel);
+    showScreen(null);
+    return;
+  }
+  if (gameState === STATE.FAIL) {
+    gameState = STATE.PLAYING;
+    loadLevel(currentLevel);
+    showScreen(null);
+    return;
+  }
+  if (gameState !== STATE.PLAYING) return;
+
+  const pos = getPos(e);
+  for (const b of draggableBodies) {
+    if (Matter.Bounds.contains(b.bounds, pos)) {
+      dragging = b;
+      dragOffsetX = b.position.x - pos.x;
+      dragOffsetY = b.position.y - pos.y;
+      moveCount++;
+      const level = LEVELS[currentLevel % LEVELS.length];
+      document.getElementById('moves-label').textContent = `Moves: ${moveCount}/${level.maxMoves}`;
+      playTone(300, 'sine', 0.05);
+      break;
+    }
+  }
+}, { passive: false });
+
+canvas.addEventListener('pointermove', (e) => {
+  e.preventDefault();
+  if (!dragging || gameState !== STATE.PLAYING) return;
+  const pos = getPos(e);
+  Body.setPosition(dragging, { x: pos.x + dragOffsetX, y: pos.y + dragOffsetY });
+}, { passive: false });
+
+canvas.addEventListener('pointerup', () => { dragging = null; });
+
+// ═══════════════════════════════════════════════════════
+// WIN / FAIL DETECTION
+// ═══════════════════════════════════════════════════════
+Events.on(engine, 'collisionStart', (e) => {
+  if (gameState !== STATE.PLAYING) return;
+  for (const pair of e.pairs) {
+    const labels = [pair.bodyA.label, pair.bodyB.label];
+    if (labels.includes('ball') && labels.includes('goal')) {
+      gameState = STATE.WIN;
+      playTone(880, 'sine', 0.4, 0.15);
+      document.getElementById('win-moves').textContent = `Solved in ${moveCount} moves!`;
+      setTimeout(() => showScreen('win'), 400);
+    }
+  }
+});
+
+// ═══════════════════════════════════════════════════════
+// RENDER LOOP
+// ═══════════════════════════════════════════════════════
+function drawBody(b, color) {
+  const verts = b.vertices;
+  ctx.beginPath();
+  ctx.moveTo(verts[0].x, verts[0].y);
+  for (let i = 1; i < verts.length; i++) ctx.lineTo(verts[i].x, verts[i].y);
+  ctx.closePath();
+  ctx.fillStyle = color;
+  ctx.fill();
+}
+
+function render() {
+  ctx.fillStyle = '#0d1117';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  if (gameState === STATE.START) { requestAnimationFrame(render); return; }
+
+  Engine.update(engine, 1000 / 60);
+
+  // Draw goal
+  ctx.beginPath();
+  ctx.arc(goalBody.position.x, goalBody.position.y, 30, 0, Math.PI * 2);
+  ctx.strokeStyle = '#4ade80';
+  ctx.lineWidth = 3;
+  ctx.setLineDash([6, 4]);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = 'rgba(74,222,128,0.15)';
+  ctx.fill();
+
+  // Draw draggable blocks
+  draggableBodies.forEach(b => {
+    drawBody(b, b._color || '#38bdf8');
+    ctx.shadowBlur = 8; ctx.shadowColor = b._color || '#38bdf8';
+    ctx.fill();
+    ctx.shadowBlur = 0;
+  });
+
+  // Draw static walls
+  staticBodies.forEach(b => drawBody(b, '#475569'));
+
+  // Draw ball
+  ctx.beginPath();
+  ctx.arc(ball.position.x, ball.position.y, 20, 0, Math.PI * 2);
+  ctx.fillStyle = '#f59e0b';
+  ctx.shadowBlur = 14; ctx.shadowColor = '#f59e0b';
+  ctx.fill();
+  ctx.shadowBlur = 0;
+
+  // Fail check
+  if (gameState === STATE.PLAYING) {
+    const level = LEVELS[currentLevel % LEVELS.length];
+    if (ball.position.y > canvas.height + 100) {
+      gameState = STATE.FAIL;
+      document.getElementById('fail-reason').textContent = 'Ball fell off!';
+      setTimeout(() => showScreen('fail'), 300);
+    }
+  }
+
+  requestAnimationFrame(render);
+}
+
+showScreen('start');
+requestAnimationFrame(render);
+</script>
+</body>
+</html>

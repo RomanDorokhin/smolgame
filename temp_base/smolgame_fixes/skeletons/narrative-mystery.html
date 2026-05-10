@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Narrative Game</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body {
+      width: 100%; height: 100%;
+      background: #000;
+      overflow: hidden;
+      font-family: 'Courier New', Courier, monospace;
+      color: #e0e0e0;
+      touch-action: none;
+    }
+
+    /* ── ATMOSPHERE LAYERS ─────────────────────── */
+    #scanlines {
+      position: fixed; inset: 0; pointer-events: none; z-index: 100;
+      background: repeating-linear-gradient(
+        0deg, transparent, transparent 2px,
+        rgba(0,0,0,0.08) 2px, rgba(0,0,0,0.08) 4px
+      );
+    }
+    #vignette {
+      position: fixed; inset: 0; pointer-events: none; z-index: 99;
+      background: radial-gradient(ellipse at center, transparent 50%, rgba(0,0,0,0.7) 100%);
+    }
+    #noise-canvas {
+      position: fixed; inset: 0; pointer-events: none; z-index: 98;
+      opacity: 0.04;
+    }
+
+    /* ── MAIN STAGE ────────────────────────────── */
+    #stage {
+      position: fixed; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      padding: 24px;
+    }
+
+    /* ── TEXT BOX ──────────────────────────────── */
+    #text-box {
+      max-width: 520px; width: 100%;
+      min-height: 120px;
+      font-size: clamp(14px, 4vw, 18px);
+      line-height: 1.8;
+      color: #d0d8e8;
+      text-shadow: 0 0 8px rgba(160,200,255,0.3);
+      white-space: pre-wrap;
+    }
+
+    /* ── CHOICES ───────────────────────────────── */
+    #choices {
+      position: fixed; bottom: 32px; left: 50%; transform: translateX(-50%);
+      display: flex; flex-direction: column; gap: 10px;
+      width: min(480px, calc(100% - 48px));
+    }
+    .choice-btn {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.12);
+      color: #c0d0e8;
+      padding: 14px 20px;
+      font-family: inherit;
+      font-size: clamp(13px, 3.5vw, 16px);
+      cursor: pointer;
+      border-radius: 4px;
+      text-align: left;
+      transition: background 0.2s, border-color 0.2s;
+    }
+    .choice-btn:hover, .choice-btn:active {
+      background: rgba(160,200,255,0.1);
+      border-color: rgba(160,200,255,0.4);
+    }
+
+    /* ── GLITCH EFFECT ─────────────────────────── */
+    @keyframes glitch-shift {
+      0%   { clip-path: inset(20% 0 60% 0); transform: translate(-4px, 0); }
+      25%  { clip-path: inset(50% 0 20% 0); transform: translate(4px, 0); }
+      50%  { clip-path: inset(10% 0 80% 0); transform: translate(-2px, 0); }
+      75%  { clip-path: inset(70% 0 10% 0); transform: translate(3px, 0); }
+      100% { clip-path: inset(40% 0 40% 0); transform: translate(-4px, 0); }
+    }
+    .glitch-layer {
+      position: absolute; inset: 0;
+      color: #a0c8ff;
+      animation: glitch-shift 0.15s steps(1) infinite;
+      pointer-events: none;
+    }
+
+    /* ── PHASE TRANSITIONS ─────────────────────── */
+    #stage { transition: filter 1.2s ease; }
+    body.phase-warm { filter: sepia(0.3) hue-rotate(-10deg); }
+    body.phase-cold { filter: hue-rotate(200deg) saturate(0.6); }
+    body.phase-red  { filter: hue-rotate(-30deg) saturate(2); }
+
+    /* ── FLICKER ───────────────────────────────── */
+    @keyframes flicker {
+      0%,100%{opacity:1} 92%{opacity:1} 93%{opacity:0.7} 94%{opacity:1}
+      96%{opacity:0.85} 97%{opacity:1}
+    }
+    #stage { animation: flicker 8s ease-in-out infinite; }
+  </style>
+</head>
+<body>
+<canvas id="noise-canvas"></canvas>
+<div id="scanlines"></div>
+<div id="vignette"></div>
+
+<div id="stage">
+  <div style="position:relative;">
+    <div id="text-box"></div>
+  </div>
+</div>
+
+<div id="choices"></div>
+
+<script>
+// ═══════════════════════════════════════════════════════
+// SAFE STORAGE
+// ═══════════════════════════════════════════════════════
+const safeStorage = {
+  set: (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch(e) {} },
+  get: (k, d) => { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch(e) { return d; } }
+};
+
+// ═══════════════════════════════════════════════════════
+// NOISE ANIMATION
+// ═══════════════════════════════════════════════════════
+const noiseCanvas = document.getElementById('noise-canvas');
+const noiseCtx = noiseCanvas.getContext('2d');
+noiseCanvas.width  = 256;
+noiseCanvas.height = 256;
+
+function renderNoise() {
+  const img = noiseCtx.createImageData(256, 256);
+  for (let i = 0; i < img.data.length; i += 4) {
+    const v = Math.random() * 255;
+    img.data[i] = img.data[i+1] = img.data[i+2] = v;
+    img.data[i+3] = 255;
+  }
+  noiseCtx.putImageData(img, 0, 0);
+}
+setInterval(renderNoise, 80);
+
+// ═══════════════════════════════════════════════════════
+// AUDIO ENGINE
+// ═══════════════════════════════════════════════════════
+let audioCtx = null;
+function getAudio() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  return audioCtx;
+}
+function playAmbient(freq = 60, duration = 2.0) {
+  try {
+    const ac = getAudio();
+    const osc = ac.createOscillator();
+    const gain = ac.createGain();
+    osc.connect(gain); gain.connect(ac.destination);
+    osc.frequency.value = freq;
+    osc.type = 'sine';
+    gain.gain.setValueAtTime(0, ac.currentTime);
+    gain.gain.linearRampToValueAtTime(0.04, ac.currentTime + 0.3);
+    gain.gain.linearRampToValueAtTime(0, ac.currentTime + duration);
+    osc.start(); osc.stop(ac.currentTime + duration);
+  } catch(e) {}
+}
+
+// ═══════════════════════════════════════════════════════
+// TYPING ENGINE
+// ═══════════════════════════════════════════════════════
+const textBox = document.getElementById('text-box');
+let typingTimer = null;
+
+function typeText(text, speed = 28, onDone = null) {
+  clearTimeout(typingTimer);
+  textBox.textContent = '';
+  let i = 0;
+  function tick() {
+    if (i < text.length) {
+      textBox.textContent += text[i++];
+      typingTimer = setTimeout(tick, speed + Math.random() * 10);
+    } else if (onDone) {
+      onDone();
+    }
+  }
+  tick();
+}
+
+// ═══════════════════════════════════════════════════════
+// GLITCH EFFECT
+// ═══════════════════════════════════════════════════════
+function triggerGlitch(duration = 400) {
+  const layer = document.createElement('div');
+  layer.className = 'glitch-layer';
+  layer.textContent = textBox.textContent;
+  textBox.parentElement.appendChild(layer);
+  setTimeout(() => layer.remove(), duration);
+}
+
+// ═══════════════════════════════════════════════════════
+// STATE MACHINE
+// ═══════════════════════════════════════════════════════
+const choicesEl = document.getElementById('choices');
+let gameFlags = safeStorage.get('gameFlags', {});
+let currentPhaseId = 'intro';
+
+function saveProgress() {
+  safeStorage.set('gameFlags', gameFlags);
+  safeStorage.set('currentPhase', currentPhaseId);
+}
+
+function setPhaseStyle(style) {
+  document.body.className = style ? `phase-${style}` : '';
+}
+
+function showChoices(choices) {
+  choicesEl.innerHTML = '';
+  choices.forEach(c => {
+    if (c.condition && !gameFlags[c.condition]) return;
+    const btn = document.createElement('button');
+    btn.className = 'choice-btn';
+    btn.textContent = c.text;
+    btn.addEventListener('pointerdown', (e) => {
+      e.preventDefault();
+      if (c.setFlag) gameFlags[c.setFlag] = true;
+      saveProgress();
+      triggerGlitch(200);
+      playAmbient(80 + Math.random() * 40, 1.5);
+      goToPhase(c.next);
+    });
+    choicesEl.appendChild(btn);
+  });
+}
+
+// ═══════════════════════════════════════════════════════
+// ▼▼▼ NARRATIVE PHASES — REPLACE THIS SECTION ▼▼▼
+// ═══════════════════════════════════════════════════════
+const PHASES = {
+  intro: {
+    style: null,
+    text: `The screen flickers.\n\nA cursor blinks in the dark.\n\nYou are here.`,
+    choices: [
+      { text: '> Look around', next: 'room_a' },
+      { text: '> Check the terminal', next: 'terminal_a' }
+    ]
+  },
+  room_a: {
+    style: 'cold',
+    text: `The room is small.\nA single light hangs from the ceiling.\nOn the wall: a clock, frozen at 3:47.`,
+    choices: [
+      { text: '> Touch the clock', next: 'clock_secret', setFlag: 'found_clock' },
+      { text: '> Go back', next: 'intro' }
+    ]
+  },
+  terminal_a: {
+    style: 'warm',
+    text: `The terminal hums.\nA blinking prompt waits.\n\n> _`,
+    choices: [
+      { text: '> Type "help"', next: 'terminal_help' },
+      { text: '> Type "exit"', next: 'ending_a' }
+    ]
+  },
+  clock_secret: {
+    style: 'red',
+    text: `The clock is warm to the touch.\nBehind it: a folded note.\n\n"The answer is in the seconds."`,
+    choices: [
+      { text: '> Take the note', next: 'terminal_a', setFlag: 'has_note' }
+    ]
+  },
+  terminal_help: {
+    style: 'warm',
+    text: `AVAILABLE COMMANDS:\n  unlock — requires a key\n  read   — requires a note\n  exit   — leave`,
+    choices: [
+      { text: '> read', next: 'ending_b', condition: 'has_note' },
+      { text: '> exit', next: 'ending_a' }
+    ]
+  },
+  ending_a: {
+    style: null,
+    text: `You leave.\n\nThe door closes behind you.\n\nSome questions remain unanswered.`,
+    choices: [
+      { text: '> Play again', next: '__restart__' }
+    ]
+  },
+  ending_b: {
+    style: 'cold',
+    text: `The note reads:\n\n"One million seconds is eleven days.\nYou have been here longer than you think."\n\nThe terminal shuts off.`,
+    choices: [
+      { text: '> Play again', next: '__restart__' }
+    ]
+  }
+};
+// ═══════════════════════════════════════════════════════
+// ▲▲▲ END NARRATIVE PHASES ▲▲▲
+// ═══════════════════════════════════════════════════════
+
+function goToPhase(id) {
+  if (id === '__restart__') {
+    gameFlags = {};
+    saveProgress();
+    currentPhaseId = 'intro';
+    goToPhase('intro');
+    return;
+  }
+
+  currentPhaseId = id;
+  const phase = PHASES[id];
+  if (!phase) return;
+
+  setPhaseStyle(phase.style || null);
+  choicesEl.innerHTML = '';
+
+  typeText(phase.text, 26, () => {
+    showChoices(phase.choices || []);
+  });
+}
+
+// ═══════════════════════════════════════════════════════
+// INIT — resume from saved progress or start fresh
+// ═══════════════════════════════════════════════════════
+const savedPhase = safeStorage.get('currentPhase', 'intro');
+const savedFlags = safeStorage.get('gameFlags', {});
+gameFlags = savedFlags;
+
+// First tap initializes audio
+let started = false;
+document.addEventListener('pointerdown', () => {
+  if (!started) {
+    started = true;
+    getAudio(); // unlock AudioContext
+    playAmbient(55, 3.0);
+  }
+}, { once: true });
+
+goToPhase(savedPhase);
+</script>
+</body>
+</html>
