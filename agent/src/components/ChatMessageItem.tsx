@@ -258,12 +258,12 @@ export function ChatMessageItem({ message, onSend, onSwitchTab, onLoadStudio, is
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/90 backdrop-blur-xl">
             <div className="relative w-full max-w-lg aspect-[9/16] bg-black rounded-[32px] overflow-hidden border border-white/10">
               <Button variant="ghost" className="absolute top-6 right-6 z-50 text-white" onClick={() => setShowPreview(false)}><X size={20} /></Button>
-              <iframe
-                title="Game Preview"
-                srcDoc={htmlCode.includes("<!DOCTYPE") ? htmlCode : `<!DOCTYPE html><html><body style="margin:0;overflow:hidden;background:#000;">${htmlCode}</body></html>`}
-                className="w-full h-full border-none"
-                sandbox="allow-scripts allow-pointer-lock allow-same-origin"
-              />
+                <iframe
+                  title="Game Preview"
+                  srcDoc={htmlCode.includes("<!DOCTYPE") ? htmlCode : `<!DOCTYPE html><html><body style="margin:0;overflow:hidden;background:#000;">${htmlCode}</body></html>`}
+                  className="w-full h-full border-none"
+                  sandbox="allow-scripts allow-pointer-lock allow-same-origin allow-modals"
+                />
             </div>
           </div>
         )}

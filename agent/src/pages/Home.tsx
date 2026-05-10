@@ -545,12 +545,12 @@ export default function Home() {
                         <Panel defaultSize={50} minSize={20}>
                           <div className="h-full flex flex-col items-center justify-center bg-[#07080a] p-8">
                             <div className="relative w-full max-w-[380px] aspect-[9/16] rounded-[2.5rem] border-[10px] border-[#1a1b26] bg-black shadow-2xl overflow-hidden group">
-                              <iframe
-                                title="Studio Live Preview"
-                                srcDoc={studioGame.code}
-                                className="w-full h-full border-none"
-                                sandbox="allow-scripts allow-pointer-lock allow-same-origin"
-                              />
+                                <iframe
+                                  title="Studio Live Preview"
+                                  srcDoc={studioGame.code}
+                                  className="w-full h-full border-none"
+                                  sandbox="allow-scripts allow-pointer-lock allow-same-origin allow-modals"
+                                />
                               <div className="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-6 bg-[#1a1b26] rounded-b-2xl z-10" />
                             </div>
                             <div className="mt-6 flex items-center gap-4 text-white/20">
