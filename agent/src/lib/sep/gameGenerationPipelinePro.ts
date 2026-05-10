@@ -60,14 +60,26 @@ Output ONLY JSON:
 }`;
 
 const CODER_PROMPT = (gameParams: GameParams, goldenSeedContent: string) => `
-GameCoder: Integrate GameParams into Golden Seed <script>. 
-Use Smol-Core (init, State, Audio, Input, Physics, Effects, Render). 
+GameCoder: Integrate GameParams into Golden Seed. 
+STRICT RULES:
+1. Use ONLY Smol-Core API. NO standard 'new Audio()', 'requestAnimationFrame', or manual 'ctx' loops.
+2. Use 'Smol.init(canvasId, {update, render})' for game loop.
+3. Use 'Smol.Audio.tone(freq, dur, vol, type, targetFreq)' for SFX.
+4. Use 'Smol.Effects' for everything: 'addParallaxLayer', 'burst' (particles), 'shakeScreen', 'renderParallax'.
+5. Use 'Smol.Physics.hits(a, b, pad)' for collisions.
+6. Use 'Smol.Render' for juice: 'gl' (glow), 'text' (neon text), 'vignette', 'scanlines'.
+
 Params: ${JSON.stringify(gameParams)}
 Seed: ${goldenSeedContent}
 Output ONLY complete HTML.`;
 
 const POLISHER_PROMPT = (rawGameCode: string, feedback: string = "") => `
-GamePolisher: Add Juice (particles, shake, glow, parallax) to code.
+GamePolisher: Maximize "Juice" using Smol-Core Effects.
+- Add 'Smol.Effects.burst' on collection/death.
+- Add 'Smol.Effects.shakeScreen' on jump/hit.
+- Add 'Smol.Render.gl' (glow) to all moving objects.
+- Add 'Smol.Render.vignette()' and 'scanlines()' in render function.
+- Fix any logic bugs using Smol-Core methods.
 Feedback: ${feedback}
 Code: ${rawGameCode}
 Output ONLY complete HTML.`;
