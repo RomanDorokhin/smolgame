@@ -4,14 +4,13 @@
  * UPDATED: Data-Driven approach with JSON config and SmartInjector.
  */
 
-import { generateText } from '../llm-api';
 import { analyzeGameCode, ValidationReport } from './game-code-analyzer';
 import { SmartInjector } from './smart-injector';
 
 export interface GameConfig {
   gameTitle: string;
   player: { size: number; color: string; jumpHeight: number; doubleJumpEnabled: boolean; };
-  world: { obstacleTypes: any[]; collectibleTypes: any[]; };
+  world: { groundColor: string; obstacleTypes: any[]; collectibleTypes: any[]; };
   difficulty: { curve: any[]; maxGameSpeed: number; };
   audio: { sfx: any; };
   visuals: { parallaxLayers: any[]; postProcessing: any; hudColor?: string; hudGlowColor?: string; };
@@ -32,6 +31,15 @@ export interface PipelineOptions {
   generateFn: (messages: any[]) => Promise<string>;
 }
 
+const cleanJson = (str: string) => {
+  try {
+    const match = str.match(/\{[\s\S]*\}/);
+    if (!match) return "{}";
+    let cleaned = match[0].replace(/\/\/.*$/gm, ''); // Remove single line comments
+    return cleaned;
+  } catch(e) { return "{}"; }
+};
+
 const DIRECTOR_PROMPT = (request: string, seeds: string[]) => `
 You are GameDirector. Create a GDD in XML for: "${request}".
 Available Seeds: ${seeds.join(", ")}.
@@ -39,7 +47,7 @@ Output format: <GameDesignDoc><CoreLoop>...</CoreLoop><VisualStyle>...</VisualSt
 
 const DESIGNER_PROMPT = (gdd: string) => `
 You are GameDesigner. Convert GDD to GameConfig JSON.
-STRICT RULE: You MUST follow this structure EXACTLY. Do not add top-level keys like 'coreLoop' or 'visualStyle'.
+STRICT RULE: You MUST follow this structure EXACTLY. NO COMMENTS INSIDE JSON.
 
 MANDATORY STRUCTURE:
 {
@@ -76,49 +84,35 @@ Output ONLY valid JSON.`;
 const CODER_PROMPT = (config: string) => `
 You are GameCoder. Provide custom JS logic for hooks to add unique DEPTH to the game.
 ENGINE CHEAT SHEET:
-- 'player': { x, y, w, h, vy, color, grounded, jumpCount }
+- 'player': { x, y, w, h, vy, color, grounded, jumpCount, isJumping, airTime }
 - 'state': { score, speed, distance, powerups: { shield, magnet, boost } }
 - 'Smol': { Effects: { burst(x,y,count,colors), shakeScreen(p,d) }, Audio: { tone(f,d) } }
 - 'cfg': Access any value from GameConfig.
 
-AVAILABLE HOOKS:
-- '// CUSTOM_UPDATE_LOGIC_HOOK': runs every frame. Use 'dt' (delta time).
-- '// CUSTOM_START_GAME_LOGIC_HOOK': runs when game starts.
-
-RULES:
-1. No 'window', 'document', or 'setTimeout'. 
-2. Use 'state.speed' to change game difficulty.
-3. To add 'Juice', use 'Smol.Effects.shakeScreen' on important events.
-
 STRICT OUTPUT FORMAT:
-Return ONLY a valid JSON object where keys are EXACTLY hook names.
+Return ONLY a valid JSON object. NO COMMENTS INSIDE THE JSON WRAPPER.
 Example:
 {
   "CUSTOM_UPDATE_LOGIC_HOOK": "player.x += 1;",
   "CUSTOM_START_GAME_LOGIC_HOOK": "state.score = 100;"
 }
 
-Config: ${config}
-Output JSON: {"CUSTOM_UPDATE_LOGIC_HOOK": "...", "CUSTOM_START_GAME_LOGIC_HOOK": "..."}`;
+Config: ${config}`;
 
 export async function generateGame(userRequest: string, options: PipelineOptions): Promise<PipelineResult> {
   const { onProgress, goldenSeeds, generateFn } = options;
-  const logs: string[] = [];
-  const log = (m: string) => { logs.push(m); onProgress?.(m); };
+  const log = (m: string) => onProgress?.(m);
 
   try {
-    // 1. Director: Concept & Seed Selection
     log("🎬 [Director] Designing high-fidelity concept...");
     const gdd = await generateFn([{ role: 'system', content: DIRECTOR_PROMPT(userRequest, Object.keys(goldenSeeds)) }]);
     const seedName = gdd.match(/<GoldenSeed>(.*?)<\/GoldenSeed>/)?.[1] || 'ultimate-runner-seed';
     const seedHtml = goldenSeeds[seedName] || goldenSeeds['ultimate-runner-seed'];
 
-    // 2. Designer: Blueprint Generation
     log("🎨 [Designer] Architecting GameConfig JSON...");
     let configStr = await generateFn([{ role: 'system', content: DESIGNER_PROMPT(gdd) }]);
-    let gameConfig = JSON.parse(configStr.replace(/```json|```/g, ''));
+    let gameConfig = JSON.parse(cleanJson(configStr));
 
-    // 3. Iterative Refinement Loop (The "Logic Engine")
     let finalHtml = "";
     let report: ValidationReport | null = null;
     let attempts = 0;
@@ -129,13 +123,13 @@ export async function generateGame(userRequest: string, options: PipelineOptions
       log(`💻 [Coder] Pass ${attempts}/${maxAttempts}: Generating logic & assembling...`);
       
       const hooksStr = await generateFn([{ role: 'system', content: CODER_PROMPT(JSON.stringify(gameConfig)) }]);
-      const hooks = JSON.parse(hooksStr.replace(/```json|```/g, '') || "{}");
+      const hooks = JSON.parse(cleanJson(hooksStr));
       gameConfig.mechanics = hooks;
 
       const injector = new SmartInjector(seedHtml, gameConfig);
       finalHtml = injector.inject();
 
-      log("🧪 [QA] Analyzing quality and engine compliance...");
+      log("🧪 [QA] Analyzing quality...");
       report = analyzeGameCode(finalHtml);
 
       if (report.isValid && report.juiceScore >= 85) {
@@ -143,14 +137,12 @@ export async function generateGame(userRequest: string, options: PipelineOptions
         break;
       }
 
-      log(`⚠️ [QA] Quality low (${report.juiceScore}/100). Polish required: ${report.warnings.join(", ")}`);
-      const feedback = `QA Findings:\n- Errors: ${report.errors.join(", ")}\n- Warnings: ${report.warnings.join(", ")}`;
-      
+      log(`⚠️ [QA] Quality low (${report.juiceScore}/100). Polishing...`);
       const polishedConfigStr = await generateFn([
-        { role: 'system', content: "You are the Polisher. Fix the GameConfig based on QA feedback to maximize JUICE and STABILITY." },
-        { role: 'user', content: `Current Config: ${JSON.stringify(gameConfig)}\n\nFeedback: ${feedback}\n\nReturn ONLY corrected JSON.` }
+        { role: 'system', content: "You are the Polisher. Fix the GameConfig based on QA feedback. NO COMMENTS IN JSON." },
+        { role: 'user', content: `Current Config: ${JSON.stringify(gameConfig)}\n\nFeedback: ${report.errors.join(", ")}` }
       ]);
-      gameConfig = JSON.parse(polishedConfigStr.replace(/```json|```/g, ''));
+      gameConfig = JSON.parse(cleanJson(polishedConfigStr));
     }
 
     return {
@@ -161,6 +153,7 @@ export async function generateGame(userRequest: string, options: PipelineOptions
     };
 
   } catch (e) {
+    console.error("Pipeline Error:", e);
     return { isSuccess: false, generatedCode: null, validationReport: null, errors: [(e as Error).message] };
   }
 }
