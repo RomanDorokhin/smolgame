@@ -276,13 +276,13 @@ export function useGameAgent(settings: ChatSettings) {
           isStreaming: true,
         });
 
-        // --- ULTIMATE RUNNER SEED (EMBEDDED TO AVOID FETCH ISSUES) ---
+        // --- ULTIMATE RUNNER SEED (DATA-DRIVEN VERSION) ---
         const ULTIMATE_RUNNER_SEED = `<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Ultimate Runner Game</title>
+    <title>SmolGame - Game Title Placeholder</title>
     <style>
         body { margin: 0; overflow: hidden; background: #111; color: #fff; font-family: 'Press Start 2P', cursive; }
         canvas { display: block; margin: auto; background: linear-gradient(to bottom, #000033, #000000); }
@@ -293,11 +293,80 @@ export function useGameAgent(settings: ChatSettings) {
 <body>
     <div id="loading-screen">LOADING...</div>
     <canvas id="gameCanvas"></canvas>
-    <script src="https://smolgame.ru/agent-v3/js/smol-core/smol-core.js"></script>
+    <script src="js/smol-core/smol-core.js"></script>
+    <!-- GAME_CONFIG_INJECTION_POINT -->
     <script>
-        // --- GAME_SPEC_START ---
-        // (AI will populate this section)
-        // --- GAME_SPEC_END ---
+        const gameConfig = JSON.parse(document.getElementById('game-config-json').textContent);
+        let PLAYER_COLOR = gameConfig.player.color;
+        let OBSTACLE_COLORS = gameConfig.world.obstacleTypes.map(o => o.color);
+        let JUMP_HEIGHT = gameConfig.player.jumpHeight;
+        let DOUBLE_JUMP_ENABLED = gameConfig.player.doubleJumpEnabled;
+        let INITIAL_SPEED = gameConfig.difficulty.curve[0].gameSpeed;
+        let MAX_SPEED = gameConfig.difficulty.maxGameSpeed;
+        let DIFFICULTY_CURVE = gameConfig.difficulty.curve;
+        let PARALLAX_LAYERS = gameConfig.visuals.parallaxLayers;
+        let SFX_MAP = gameConfig.audio.sfx;
+
+        let score = 0;
+        let player;
+        let obstacles = [];
+        let gameSpeed = INITIAL_SPEED;
+        let obstacleSpawnTimer = 0;
+
+        class Player {
+            constructor(x, y, w, h, color) {
+                this.x = x; this.y = y; this.w = w; this.h = h; this.color = color;
+                this.vy = 0; this.grounded = false;
+            }
+            update(dt) {
+                this.vy += 0.5; this.y += this.vy;
+                if (this.y + this.h > Smol.GY) { this.y = Smol.GY - this.h; this.vy = 0; this.grounded = true; }
+                // CUSTOM_PLAYER_UPDATE_LOGIC_HOOK
+            }
+            draw(ctx) {
+                Smol.Render.gl(this.color, 15);
+                ctx.fillStyle = this.color; ctx.fillRect(this.x, this.y, this.w, this.h);
+                Smol.Render.ngl();
+            }
+            jump() {
+                if (this.grounded) { this.vy = -JUMP_HEIGHT; this.grounded = false; Smol.Audio.tone(SFX_MAP.jump.freq, 0.1); }
+            }
+        }
+
+        function startGame() {
+            document.getElementById('loading-screen').style.display = 'none';
+            player = new Player(100, 100, gameConfig.player.size, gameConfig.player.size, PLAYER_COLOR);
+            obstacles = [];
+            Smol.State.set('playing');
+        }
+
+        function update(dt) {
+            if (Smol.State.is('playing')) {
+                player.update(dt);
+                // Obstacle logic, collisions...
+                // CUSTOM_UPDATE_LOGIC_HOOK
+            }
+        }
+
+        function render(ctx, W, H, GY) {
+            ctx.clearRect(0, 0, W, H);
+            Smol.Effects.renderParallax(gameSpeed / INITIAL_SPEED);
+            player.draw(ctx);
+            Smol.Render.text("SCORE: " + Math.floor(score), W/2, 50);
+            if (Smol.State.is('game_over')) Smol.Render.text('GAME OVER', W/2, H/2);
+            Smol.Render.vignette(); Smol.Render.scanlines();
+        }
+
+        window.onload = () => {
+            Smol.init('gameCanvas', { update, render });
+            Smol.Input.bind(() => {
+                if (Smol.State.is('intro')) startGame();
+                else if (Smol.State.is('playing')) player.jump();
+                else if (Smol.State.is('game_over')) location.reload();
+            });
+            PARALLAX_LAYERS.forEach(l => Smol.Effects.addParallaxLayer(l.assetUrl, l.speed));
+            Smol.State.set('intro');
+        };
     </script>
 </body>
 </html>`;
@@ -305,23 +374,12 @@ export function useGameAgent(settings: ChatSettings) {
         const seedContent = ULTIMATE_RUNNER_SEED;
         let progressLogs = "";
 
-        // Wrapper for generateGame that implements fallback
-        const generateWithFallback = async (prompt: string, systemPrompt?: string) => {
-          const msgs = [
-            { role: "system" as const, content: systemPrompt || "You are a helpful AI." },
-            { role: "user" as const, content: prompt }
-          ];
-          const result = await streamWithFallback(msgs, () => {}, signal, usedProvider);
-          return result.text;
-        };
-
         const result = await generateGame(gameSpec, {
-          generateFn: generateWithFallback,
           goldenSeeds: { "ultimate-runner-seed": seedContent },
           onProgress: (msg) => {
             progressLogs += `> ${msg}\n`;
             updateMessage(assistantId, {
-              content: (beforeTag ? beforeTag + "\n\n" : "") + "🤖 **Логи SEP Engine:**\n\`\`\`bash\n" + progressLogs + "\n\`\`\`",
+              content: (beforeTag ? beforeTag + "\n\n" : "") + "🤖 **SEP Bulletproof Pipeline:**\n\`\`\`bash\n" + progressLogs + "\n\`\`\`",
               isStreaming: true
             });
           }

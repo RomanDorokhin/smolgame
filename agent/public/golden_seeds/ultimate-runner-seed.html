@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Ultimate Runner Game</title>
+    <title>SmolGame - Game Title Placeholder</title>
     <style>
         body {
             margin: 0;
@@ -42,32 +42,23 @@
     <!-- Smol-Core Library -->
     <script src="js/smol-core/smol-core.js"></script>
 
+    <!-- GAME_CONFIG_INJECTION_POINT -->
+
     <script>
-        // Game-specific variables (to be populated by GameCoder)
-        let PLAYER_COLOR = '#00FFFF';
-        let OBSTACLE_COLORS = ['#FF00FF', '#00FF00'];
-        let SPHERE_COLOR = '#FFFF00';
-        let JUMP_HEIGHT = 12;
-        let DOUBLE_JUMP_ENABLED = true;
-        let INITIAL_SPEED = 5;
-        let MAX_SPEED = 15;
-        let DIFFICULTY_CURVE = [
-            { score: 0, speed: 5, spawnRate: 1000 },
-            { score: 100, speed: 7, spawnRate: 800 },
-            { score: 500, speed: 10, spawnRate: 600 },
-            { score: 1000, speed: 12, spawnRate: 500 }
-        ];
-        let PARALLAX_LAYERS = [
-            { img: 'https://via.placeholder.com/1200x400/000011/000022?text=Sky', speed: 0.1, yOffset: 0, alpha: 0.8 },
-            { img: 'https://via.placeholder.com/1200x400/000022/000033?text=FarCity', speed: 0.3, yOffset: 50, alpha: 0.9 },
-            { img: 'https://via.placeholder.com/1200x400/000033/000044?text=MidCity', speed: 0.6, yOffset: 100, alpha: 1.0 }
-        ];
-        let SFX_MAP = {
-            jump: (dbl) => Smol.Audio.tone(dbl ? 580 : 360, 0.12, 0.12, 'square', dbl ? 880 : 580),
-            die: () => { Smol.Audio.tone(280, 0.18, 0.16, 'sawtooth', 80); setTimeout(() => Smol.Audio.tone(110, 0.4, 0.18, 'sawtooth'), 200); },
-            score: () => Smol.Audio.tone(1100, 0.04, 0.04, 'sine'),
-            hit: () => Smol.Audio.tone(150, 0.1, 0.1, 'square', 50)
-        };
+        // Load GameConfig from injected JSON
+        const gameConfig = JSON.parse(document.getElementById('game-config-json').textContent);
+
+        // Game-specific variables, initialized from gameConfig
+        let PLAYER_COLOR = gameConfig.player.color;
+        let OBSTACLE_COLORS = gameConfig.world.obstacleTypes.map(o => o.color);
+        let SPHERE_COLOR = gameConfig.world.collectibleTypes[0]?.color || '#FFFF00';
+        let JUMP_HEIGHT = gameConfig.player.jumpHeight;
+        let DOUBLE_JUMP_ENABLED = gameConfig.player.doubleJumpEnabled;
+        let INITIAL_SPEED = gameConfig.difficulty.curve[0].gameSpeed;
+        let MAX_SPEED = gameConfig.difficulty.maxGameSpeed;
+        let DIFFICULTY_CURVE = gameConfig.difficulty.curve;
+        let PARALLAX_LAYERS = gameConfig.visuals.parallaxLayers;
+        let SFX_MAP = gameConfig.audio.sfx;
 
         // Game state
         let score = 0;
@@ -77,7 +68,8 @@
         let spheres = [];
         let gameSpeed = INITIAL_SPEED;
         let obstacleSpawnTimer = 0;
-        let obstacleSpawnInterval = 1000; // ms
+        let obstacleSpawnInterval = DIFFICULTY_CURVE[0].obstacleSpawnInterval; // ms
+        let collectibleSpawnInterval = DIFFICULTY_CURVE[0].collectibleSpawnInterval; // ms
         let jumpCount = 0;
 
         // Game objects
@@ -99,6 +91,7 @@
                 } else {
                     this.grounded = false;
                 }
+                // CUSTOM_PLAYER_UPDATE_LOGIC_HOOK
             }
 
             draw(ctx) {
@@ -106,6 +99,7 @@
                 ctx.fillStyle = this.color;
                 ctx.fillRect(this.x, this.y, this.w, this.h);
                 Smol.Render.ngl();
+                // CUSTOM_PLAYER_DRAW_LOGIC_HOOK
             }
 
             jump() {
@@ -113,9 +107,10 @@
                     this.vy = -JUMP_HEIGHT;
                     this.grounded = false;
                     jumpCount++;
-                    SFX_MAP.jump(jumpCount > 1);
+                    Smol.Audio.playTone(SFX_MAP.jump.freq, SFX_MAP.jump.duration, SFX_MAP.jump.type, SFX_MAP.jump.sweep);
                     Smol.Effects.shakeScreen(5, 0.1);
                     Smol.Effects.burst(this.x + this.w / 2, this.y + this.h, 10, [this.color, '#FFF'], false);
+                    // CUSTOM_JUMP_LOGIC_HOOK
                 }
             }
         }
@@ -127,6 +122,7 @@
 
             update(deltaTime) {
                 this.x -= gameSpeed * deltaTime * 60; // Adjust for frame rate
+                // CUSTOM_OBSTACLE_UPDATE_LOGIC_HOOK
             }
 
             draw(ctx) {
@@ -134,6 +130,7 @@
                 ctx.fillStyle = this.color;
                 ctx.fillRect(this.x, this.y, this.w, this.h);
                 Smol.Render.ngl();
+                // CUSTOM_OBSTACLE_DRAW_LOGIC_HOOK
             }
         }
 
@@ -144,6 +141,7 @@
 
             update(deltaTime) {
                 this.x -= gameSpeed * deltaTime * 60; // Adjust for frame rate
+                // CUSTOM_SPHERE_UPDATE_LOGIC_HOOK
             }
 
             draw(ctx) {
@@ -153,6 +151,7 @@
                 ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2);
                 ctx.fill();
                 Smol.Render.ngl();
+                // CUSTOM_SPHERE_DRAW_LOGIC_HOOK
             }
         }
 
@@ -161,17 +160,20 @@
             document.getElementById('loading-screen').style.display = 'none';
             score = 0;
             gameSpeed = INITIAL_SPEED;
-            player = new Player(Smol.W / 8, Smol.GY - 50, 40, 40, PLAYER_COLOR);
+            player = new Player(Smol.W / 8, Smol.GY - gameConfig.player.size, gameConfig.player.size, gameConfig.player.size, PLAYER_COLOR);
             obstacles = [];
             spheres = [];
             Smol.State.set('playing');
-            Smol.Audio.playMusic('https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3', true, 0.3); // Example background music
+            if (gameConfig.audio.music.length > 0) {
+                Smol.Audio.playMusic(gameConfig.audio.music[0].assetUrl, gameConfig.audio.music[0].loop, gameConfig.audio.music[0].volume);
+            }
+            // CUSTOM_START_GAME_LOGIC_HOOK
         }
 
         function gameOverScreen() {
             Smol.State.set('game_over');
             Smol.Audio.stopMusic();
-            SFX_MAP.die();
+            Smol.Audio.playTone(SFX_MAP.die.freq, SFX_MAP.die.duration, SFX_MAP.die.type, SFX_MAP.die.sweep);
             Smol.Effects.burst(player.x + player.w / 2, player.y + player.h / 2, 50, [player.color, '#FF0000', '#FFA500']);
             Smol.Effects.shakeScreen(20, 0.5);
 
@@ -180,35 +182,43 @@
                 Smol.Storage.set('highScore', highScore);
             }
 
-            Smol.Social.submitScore(score);
+            if (gameConfig.social.leaderboardEnabled) {
+                Smol.Social.submitScore(score);
+            }
             Smol.Social.showMainButton(`Play Again! (High Score: ${highScore})`, () => {
                 Smol.Social.hideMainButton();
                 startGame();
             });
+            // CUSTOM_GAME_OVER_LOGIC_HOOK
         }
 
         function updateDifficulty() {
             for (let i = DIFFICULTY_CURVE.length - 1; i >= 0; i--) {
-                if (score >= DIFFICULTY_CURVE[i].score) {
-                    gameSpeed = DIFFICULTY_CURVE[i].speed;
-                    obstacleSpawnInterval = DIFFICULTY_CURVE[i].spawnRate;
+                if (score >= DIFFICULTY_CURVE[i].scoreThreshold) {
+                    gameSpeed = DIFFICULTY_CURVE[i].gameSpeed;
+                    obstacleSpawnInterval = DIFFICULTY_CURVE[i].obstacleSpawnInterval;
+                    collectibleSpawnInterval = DIFFICULTY_CURVE[i].collectibleSpawnInterval;
                     break;
                 }
             }
             gameSpeed = Math.min(gameSpeed, MAX_SPEED);
+            // CUSTOM_DIFFICULTY_UPDATE_LOGIC_HOOK
         }
 
         function spawnObstacle() {
-            const type = Math.floor(Math.random() * OBSTACLE_COLORS.length);
-            const color = OBSTACLE_COLORS[type];
-            const w = 40 + Math.random() * 60;
-            const h = 40 + Math.random() * 80;
-            obstacles.push(new Obstacle(Smol.W, Smol.GY - h, w, h, color));
+            const typeConfig = gameConfig.world.obstacleTypes[Math.floor(Math.random() * gameConfig.world.obstacleTypes.length)];
+            const w = typeConfig.width;
+            const h = typeConfig.height;
+            obstacles.push(new Obstacle(Smol.W, Smol.GY - h, w, h, typeConfig.color));
+            // CUSTOM_SPAWN_OBSTACLE_LOGIC_HOOK
         }
 
         function spawnSphere() {
-            const r = 10 + Math.random() * 10;
-            spheres.push(new Sphere(Smol.W, Smol.GY - r - Math.random() * 100, r, SPHERE_COLOR));
+            const typeConfig = gameConfig.world.collectibleTypes[0]; // Assuming one type for now
+            if (!typeConfig) return;
+            const r = typeConfig.radius;
+            spheres.push(new Sphere(Smol.W, Smol.GY - r - Math.random() * 100, r, typeConfig.color));
+            // CUSTOM_SPAWN_SPHERE_LOGIC_HOOK
         }
 
         // Main game loop functions
@@ -224,17 +234,18 @@
                 spheres.forEach(s => s.update(deltaTime));
                 spheres = spheres.filter(s => s.x + s.r > 0);
 
-                // Obstacle spawning
+                // Spawning
                 obstacleSpawnTimer += deltaTime * 1000;
                 if (obstacleSpawnTimer > obstacleSpawnInterval) {
                     if (Math.random() < 0.7) spawnObstacle();
-                    else spawnSphere(); // Sometimes spawn a sphere instead of obstacle
+                    else spawnSphere();
                     obstacleSpawnTimer = 0;
                 }
 
                 // Collision detection
                 for (const o of obstacles) {
                     if (Smol.Physics.hits(player, o, 5)) { // 5px padding for softer collision
+                        // CUSTOM_ON_PLAYER_HIT_HOOK
                         gameOverScreen();
                         return;
                     }
@@ -244,14 +255,16 @@
                 for (let i = spheres.length - 1; i >= 0; i--) {
                     const s = spheres[i];
                     if (Smol.Physics.hits(player, { x: s.x - s.r, y: s.y - s.r, w: s.r * 2, h: s.r * 2 }, 0)) {
-                        score += 10;
-                        SFX_MAP.score();
+                        score += s.scoreValue || 10;
+                        Smol.Audio.playTone(SFX_MAP.score.freq, SFX_MAP.score.duration, SFX_MAP.score.type, SFX_MAP.score.sweep);
                         Smol.Effects.burst(s.x, s.y, 5, [s.color, '#FFF'], false);
                         spheres.splice(i, 1);
+                        // CUSTOM_ON_COLLECTIBLE_COLLECTED_HOOK
                     }
                 }
 
                 updateDifficulty();
+                // CUSTOM_UPDATE_LOGIC_HOOK
             }
         }
 
@@ -265,8 +278,8 @@
             Smol.Effects.renderParallax(gameSpeed / INITIAL_SPEED); // Parallax speed scales with game speed
 
             // Render ground
-            Smol.Render.gl('#00FF00', 5);
-            ctx.fillStyle = '#00FF00';
+            Smol.Render.gl(gameConfig.world.groundColor || '#00FF00', 5);
+            ctx.fillStyle = gameConfig.world.groundColor || '#00FF00';
             ctx.fillRect(0, GY, W, H - GY);
             Smol.Render.ngl();
 
@@ -279,15 +292,16 @@
             Smol.Effects.updateParticles(Smol.getDeltaTime());
 
             // Render HUD
-            Smol.Render.text(`SCORE: ${score}`, Smol.W / 2, 50, '#FFF', 30, '#0FF', 15);
+            Smol.Render.text(`SCORE: ${score}`, Smol.W / 2, 50, gameConfig.visuals.hudColor || '#FFF', 30, gameConfig.visuals.hudGlowColor || '#0FF', 15, gameConfig.visuals.hudFont || 'Press Start 2P');
             if (Smol.State.is('game_over')) {
-                Smol.Render.text('GAME OVER', Smol.W / 2, Smol.H / 2 - 50, '#FF0000', 60, '#FF0000', 20);
-                Smol.Render.text(`High Score: ${highScore}`, Smol.W / 2, Smol.H / 2 + 20, '#FFF', 30, '#0FF', 10);
+                Smol.Render.text('GAME OVER', Smol.W / 2, Smol.H / 2 - 50, '#FF0000', 60, '#FF0000', 20, gameConfig.visuals.hudFont || 'Press Start 2P');
+                Smol.Render.text(`High Score: ${highScore}`, Smol.W / 2, Smol.H / 2 + 20, '#FFF', 30, '#0FF', 10, gameConfig.visuals.hudFont || 'Press Start 2P');
             }
 
             // Apply post-processing effects
-            Smol.Render.vignette();
-            Smol.Render.scanlines();
+            if (gameConfig.visuals.postProcessing.vignetteEnabled) Smol.Render.vignette();
+            if (gameConfig.visuals.postProcessing.scanlinesEnabled) Smol.Render.scanlines();
+            // CUSTOM_RENDER_LOGIC_HOOK
         }
 
         // Initialize Smol-Core and game
@@ -299,14 +313,20 @@
                     startGame();
                 } else if (Smol.State.is('playing')) {
                     player.jump();
+                } else if (Smol.State.is('game_over')) {
+                    Smol.Social.hideMainButton(); // Hide if visible
+                    startGame(); // Restart game
                 }
             });
 
             // Add parallax layers (example images, will be replaced by AI generated)
-            PARALLAX_LAYERS.forEach(layer => Smol.Effects.addParallaxLayer(layer.img, layer.speed, layer.yOffset, layer.alpha));
+            PARALLAX_LAYERS.forEach(layer => Smol.Assets.loadImage(layer.assetUrl).then(img => {
+                Smol.Effects.addParallaxLayer(img, layer.speed, layer.yOffset, layer.alpha);
+            }));
 
             Smol.State.set('intro');
-            Smol.Render.text('TAP TO START', Smol.W / 2, Smol.H / 2, '#0FF', 40, '#0FF', 20);
+            Smol.Render.text('TAP TO START', Smol.W / 2, Smol.H / 2, gameConfig.visuals.hudColor || '#0FF', 40, gameConfig.visuals.hudGlowColor || '#0FF', 20, gameConfig.visuals.hudFont || 'Press Start 2P');
+            // CUSTOM_INIT_LOGIC_HOOK
         };
 
     </script>
