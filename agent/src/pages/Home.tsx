@@ -5,7 +5,7 @@ import { ChatInput } from "@/components/ChatInput";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
-import { Menu, Sparkles, Github, Layout, MessageSquare, Play, Pencil, RotateCcw, X, ChevronDown, ChevronUp, Key, Trash2, Save, FileCode, Monitor, Smartphone, Maximize2, ExternalLink, ArrowLeft, Loader2, CheckCircle2 } from "lucide-react";
+import { Menu, Sparkles, Github, Layout, MessageSquare, Play, Pencil, RotateCcw, X, ChevronDown, ChevronUp, Key, Trash2, Save, FileCode, Monitor, Smartphone, Maximize2, ExternalLink, ArrowLeft, Loader2, CheckCircle2, Activity } from "lucide-react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { SmolGameAPI } from "@/lib/smolgame-api";
 import { Component, type ReactNode } from "react";
@@ -80,9 +80,10 @@ export default function Home() {
   const [expandedProvider, setExpandedProvider] = useState<APIProvider | null>(null);
   const [isCleaning, setIsCleaning] = useState(false);
   const [publishProgress, setPublishProgress] = useState<{ status: string; progress: number } | null>(null);
-  const [studioMode, setStudioMode] = useState<"code" | "preview" | "split">("split");
-  const [userHasScrolled, setUserHasScrolled] = useState(false);
+  const [studioMode, setStudioMode] = useState<"split" | "code" | "preview">("split");
+  const [showSettings, setShowSettings] = useState(false);
   const [isPurging, setIsPurging] = useState(false);
+  const [iframeErrors, setIframeErrors] = useState<{message: string, count: number}[]>([]);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -92,6 +93,13 @@ export default function Home() {
       const injectedCode = studioGame.code.replace(/<\/body>/i, `
         <script>
           (function() {
+            window.onerror = function(msg, url, line, col, error) {
+              window.parent.postMessage({ type: 'SMOLGAME_ERROR', message: msg, stack: error?.stack }, '*');
+              return false;
+            };
+            window.addEventListener('unhandledrejection', function(event) {
+              window.parent.postMessage({ type: 'SMOLGAME_ERROR', message: event.reason?.message || 'Unhandled Promise Rejection', stack: event.reason?.stack }, '*');
+            });
             const fixCanvas = () => {
               const canvases = document.querySelectorAll('canvas');
               canvases.forEach(c => {
@@ -146,8 +154,26 @@ export default function Home() {
   useEffect(() => {
     if (studioGame) {
       localStorage.setItem("smol_studio_game_v1", JSON.stringify(studioGame));
+      setIframeErrors([]); // Сброс ошибок при смене игры
     }
   }, [studioGame]);
+
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      if (event.data && event.data.type === 'SMOLGAME_ERROR') {
+        setIframeErrors(prev => {
+          const newMsg = event.data.message || "Unknown error";
+          const existing = prev.find(e => e.message === newMsg);
+          if (existing) {
+            return prev.map(e => e.message === newMsg ? { ...e, count: e.count + 1 } : e);
+          }
+          return [...prev, { message: newMsg, count: 1 }];
+        });
+      }
+    };
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, []);
 
   const updateSettings = (patch: Partial<ChatSettings>) => {
     setSettings(prev => {
@@ -502,6 +528,21 @@ export default function Home() {
                       >
                         <ExternalLink size={14} className="mr-2" /> Тест
                       </Button>
+
+                      {iframeErrors.length > 0 && (
+                        <Button 
+                          className="h-9 px-4 bg-red-600/90 hover:bg-red-700 text-white text-[9px] font-black uppercase tracking-widest rounded-xl shadow-lg shadow-red-900/20"
+                          onClick={() => {
+                            const errorText = iframeErrors.map(e => e.message).join('\\n');
+                            sendMessage(\`В игре произошли ошибки во время запуска (runtime errors):\\n\${errorText}\\n\\nПожалуйста, исправь их и перенеси инициализацию в правильное место. Верни полный исправленный HTML.\`);
+                            setIframeErrors([]);
+                            setActiveTab("chat");
+                          }}
+                        >
+                          <Activity size={14} className="mr-2" />
+                          Автофикс ({iframeErrors.length})
+                        </Button>
+                      )}
 
                       <Button 
                         disabled={!!publishProgress}
