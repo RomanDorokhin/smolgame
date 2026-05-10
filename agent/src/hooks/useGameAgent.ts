@@ -303,8 +303,6 @@ export function useGameAgent(settings: ChatSettings) {
 </html>`;
 
         const seedContent = ULTIMATE_RUNNER_SEED;
-        const usedProvider = interviewerProvider;
-        const config = getLLMConfig(usedProvider);
         let progressLogs = "";
 
         // Wrapper for generateGame that implements fallback
