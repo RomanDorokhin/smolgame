@@ -12,7 +12,7 @@ import { SmolGameAPI } from "@/lib/smolgame-api";
 import { Component, type ReactNode } from "react";
 import type { ChatSettings, APIProvider } from "@/types/chat";
 import Editor from "@monaco-editor/react";
-import { Panel, Group as PanelGroup, Separator as PanelResizeHandle } from "react-resizable-panels";
+import { Panel, Group, Separator } from "react-resizable-panels";
 import { Progress } from "@/components/ui/progress";
 
 function loadSettings(): ChatSettings {
@@ -522,7 +522,7 @@ export default function Home() {
                                     }
                                   }}
                                 >
-                                  <div className="flex i-center w-full items-center justify-between">
+                                  <div className="flex items-center w-full items-center justify-between">
                                     <span className="font-bold truncate max-w-[150px]">{d.title}</span>
                                     <span className="text-[9px] text-white/30 uppercase">v{drafts.length - idx}</span>
                                   </div>
@@ -609,7 +609,7 @@ export default function Home() {
 
                 <div className="flex-1 overflow-hidden">
                   {studioGame ? (
-                    <PanelGroup direction="horizontal" className="h-full">
+                    <Group direction="horizontal" className="h-full">
                       {(studioMode === "code" || studioMode === "split") && (
                         <>
                           <Panel defaultSize={50} minSize={20}>
@@ -630,7 +630,7 @@ export default function Home() {
                               }}
                             />
                           </Panel>
-                          {studioMode === "split" && <PanelResizeHandle className="w-1 bg-white/5 hover:bg-blue-500/50 transition-colors" />}
+                          {studioMode === "split" && <Separator className="w-1 bg-white/5 hover:bg-blue-500/50 transition-colors" />}
                         </>
                       )}
                       {(studioMode === "preview" || studioMode === "split") && (
@@ -656,7 +656,7 @@ export default function Home() {
                           </div>
                         </Panel>
                       )}
-                    </PanelGroup>
+                    </Group>
                   ) : (
                     <ScrollArea className="h-full">
                       <div className="max-w-5xl mx-auto px-6 py-10">
