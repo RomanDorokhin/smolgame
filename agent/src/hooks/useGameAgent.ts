@@ -204,10 +204,22 @@ export function useGameAgent(settings: ChatSettings) {
 
       const result = await generateGame(userText, {
         generateFn: generateWithFallback,
+        previousCode: lastCodeMessage?.gameCode
       });
 
       if (result.isSuccess && result.generatedCode) {
-        let finalCode = result.generatedCode.replace(/```[a-z]*\n/gi, '').replace(/```/g, '').trim();
+        let finalCode = result.generatedCode.trim();
+        
+        // Aider logic: Apply blocks if they exist
+        const blocks = parseAiderBlocks(finalCode);
+        if (blocks.length > 0 && lastCodeMessage?.gameCode) {
+          const applied = applyAiderBlocks(lastCodeMessage.gameCode, blocks);
+          finalCode = applied.code;
+        } else {
+          // Clean up markdown markers if it's a full file
+          finalCode = finalCode.replace(/```[a-z]*\n/gi, '').replace(/```/g, '').trim();
+        }
+
         updateMessage(assistantId, {
           content: finalCode,
           gameCode: finalCode,

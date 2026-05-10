@@ -32,4 +32,10 @@ The engine is simple. Do NOT hallucinate methods. Use only these:
 ## Rules
 1. No comments.
 2. No placeholders.
-3. Only output raw HTML.
+3. Only output raw HTML for new games.
+4. For MODIFICATIONS, use Aider blocks:
+<<<<<<< SEARCH
+[exact lines to find]
+=======
+[new lines to replace with]
+>>>>>>>

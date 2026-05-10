@@ -1,5 +1,5 @@
 /**
- * SmolGame Engine Pipeline (SEP) - Grounded Version
+ * SmolGame Engine Pipeline (SEP) - World Class Aider Edition
  */
 
 export interface PipelineResult {
@@ -11,34 +11,42 @@ export interface PipelineResult {
 export interface PipelineOptions {
   onProgress?: (message: string) => void;
   generateFn: (messages: any[]) => Promise<string>;
+  previousCode?: string;
 }
 
-const INSTRUCTIONS = `
-# SmolGame Agent Instructions
-You MUST use the SmolGame Engine (smol-core.js).
-API: Smol.init, Smol.Input.isDown, Smol.Effects.shakeScreen, Smol.Effects.applyScreenShake, Smol.Effects.burst, Smol.Render.text, Smol.Render.vignette, Smol.Render.scanlines.
-Global: Smol.W, Smol.H, Smol.GY.
-Rules: Use standard 'ctx' for drawing. No placeholders. Output ONLY raw HTML.`;
+const AIDER_INSTRUCTIONS = `
+You are a World Class Game Developer. 
+Output ONLY raw HTML/JS/CSS code. No comments, no explanations.
+
+MODIFICATION RULES:
+If you are editing existing code, use SEARCH/REPLACE blocks:
+<<<<<<< SEARCH
+[exact lines from current code]
+=======
+[replacement lines]
+>>>>>>>
+`;
 
 export async function generateGame(userRequest: string, options: PipelineOptions): Promise<PipelineResult> {
-  const { generateFn } = options;
+  const { generateFn, previousCode } = options;
 
   try {
-    const response = await generateFn([
-        { role: 'system', content: INSTRUCTIONS },
-        { role: 'user', content: userRequest }
-    ]);
+    const messages = [
+        { role: 'system', content: AIDER_INSTRUCTIONS }
+    ];
 
-    let html = response;
-    const match = response.match(/<html[\s\S]*<\/html>/i);
-    if (match) html = match[0];
-    else if (response.includes('```html')) {
-        html = response.split('```html')[1].split('```')[0];
+    if (previousCode) {
+        messages.push({ role: 'system', content: `CURRENT CODE:\n${previousCode}` });
+        messages.push({ role: 'user', content: `Apply these changes: ${userRequest}` });
+    } else {
+        messages.push({ role: 'user', content: userRequest });
     }
+
+    const response = await generateFn(messages);
 
     return {
       isSuccess: true,
-      generatedCode: html,
+      generatedCode: response,
       errors: []
     };
 
