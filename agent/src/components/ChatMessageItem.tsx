@@ -131,13 +131,37 @@ export function ChatMessageItem({ message, onSend, onSwitchTab, onLoadStudio, is
                   </ReactMarkdown>
 
                   {message.progress !== undefined && message.isStreaming && (
-                    <div className="mt-6 space-y-3 p-4 bg-white/5 border border-white/5 rounded-2xl animate-in fade-in slide-in-from-bottom-2 duration-500">
-                      <div className="flex justify-between items-center mb-1">
-                        <span className="text-[10px] font-black uppercase tracking-widest text-[#a3b8d4]">Создание игры</span>
-                        <span className="text-[10px] font-black text-white">{message.progress}%</span>
+                    <div className="mt-6 space-y-4 p-5 bg-white/[0.03] border border-white/10 rounded-[2rem] animate-in fade-in slide-in-from-bottom-2 duration-500 backdrop-blur-md shadow-2xl relative overflow-hidden group">
+                      <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
+                      <div className="flex justify-between items-end mb-1 relative z-10">
+                        <div className="flex flex-col gap-1">
+                          <div className="flex items-center gap-2">
+                            <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse shadow-[0_0_10px_rgba(59,130,246,0.6)]" />
+                            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-[#a3b8d4]">Team SEP: Orchestrating</span>
+                          </div>
+                          <span className="text-[9px] text-white/30 uppercase font-bold tracking-widest">Phase: {message.progress < 25 ? "Intelligence Gathering" : message.progress < 50 ? "Architectural Blueprints" : message.progress < 75 ? "Neural Synthesis" : "Final Assembly"}</span>
+                        </div>
+                        <div className="flex flex-col items-end gap-1">
+                          <span className="text-xl font-black text-white tabular-nums tracking-tighter">{message.progress}%</span>
+                          <span className="text-[8px] text-white/20 uppercase font-black">Optimization Active</span>
+                        </div>
                       </div>
-                      <Progress value={message.progress} className="h-1.5 bg-white/5" />
-                      <p className="text-[9px] text-white/30 uppercase tracking-tighter">Движок: OpenGame Core v4.4</p>
+                      <div className="relative h-2.5 w-full bg-white/5 rounded-full overflow-hidden border border-white/5 shadow-inner">
+                         <div 
+                           className="absolute top-0 left-0 h-full bg-gradient-to-r from-blue-600 to-indigo-500 transition-all duration-500 ease-out rounded-full"
+                           style={{ width: `${message.progress}%` }}
+                         >
+                           <div className="absolute inset-0 bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.2),transparent)] animate-[shimmer_2s_infinite] translate-x-[-100%]" />
+                         </div>
+                      </div>
+                      <div className="flex items-center justify-between pt-1 relative z-10">
+                        <p className="text-[8px] text-white/10 uppercase tracking-[0.3em] font-black">Hyper-Engine v4.4.2</p>
+                        <div className="flex gap-1">
+                           {[1,2,3,4,5].map(i => (
+                             <div key={i} className={`w-1 h-1 rounded-full ${message.progress > (i*20) ? "bg-blue-500/50" : "bg-white/5"}`} />
+                           ))}
+                        </div>
+                      </div>
                     </div>
                   )}
                 </>

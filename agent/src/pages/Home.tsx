@@ -346,43 +346,53 @@ export default function Home() {
           )}
 
           {/* Header */}
-          <div className="flex items-center justify-between px-4 py-3 z-30 shrink-0 border-b border-white/5 bg-[#0a0b0e]/80 backdrop-blur-md">
-            <div className="flex items-center gap-2">
-              {/* Hamburger — opens API keys sidebar */}
-              <button
-                onClick={() => setSidebarOpen(true)}
-                className="w-9 h-9 flex items-center justify-center rounded-xl bg-[#13141a] border border-white/5 hover:border-white/15 transition-all text-white/60 hover:text-white"
-              >
-                <Menu size={16} />
-              </button>
+          <div className="flex items-center justify-between px-6 py-4 z-30 shrink-0 border-b border-white/[0.03] bg-black/40 backdrop-blur-xl">
+            <div className="flex items-center gap-6">
+              {/* Logo / Branding */}
+              <div className="flex items-center gap-3 group cursor-pointer" onClick={() => setActiveTab("chat")}>
+                <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-700 flex items-center justify-center shadow-lg shadow-blue-900/30 group-hover:scale-110 group-hover:rotate-3 transition-all duration-500">
+                  <Sparkles size={20} className="text-white fill-current" />
+                </div>
+                <div className="hidden sm:flex flex-col">
+                  <span className="text-sm font-black tracking-tight text-white uppercase tracking-[0.1em]">Architect</span>
+                  <span className="text-[8px] font-black text-blue-500/80 uppercase tracking-[0.3em]">SmolGame Studio</span>
+                </div>
+              </div>
 
-              <div className="flex bg-[#13141a] p-1 rounded-xl border border-white/5 ml-1">
+              <div className="flex bg-white/[0.03] p-1.5 rounded-2xl border border-white/5 shadow-inner">
                 <button
                   onClick={() => setActiveTab("chat")}
-                  className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === "chat" ? "bg-white/10 text-white shadow-inner" : "text-white/40 hover:text-white/60"}`}
+                  className={`flex items-center gap-2.5 px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-[0.15em] transition-all duration-300 ${activeTab === "chat" ? "bg-white/10 text-white shadow-xl" : "text-white/30 hover:text-white/60"}`}
                 >
-                  <MessageSquare size={12} /> Чат
+                  <MessageSquare size={13} /> Chat
                 </button>
                 <button
                   onClick={() => setActiveTab("studio")}
-                  className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === "studio" ? "bg-white/10 text-white shadow-inner" : "text-white/40 hover:text-white/60"}`}
+                  className={`flex items-center gap-2.5 px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-[0.15em] transition-all duration-300 ${activeTab === "studio" ? "bg-white/10 text-white shadow-xl" : "text-white/30 hover:text-white/60"}`}
                 >
-                  <Layout size={12} /> Студия
+                  <Layout size={13} /> Studio
                 </button>
               </div>
+            </div>
 
+            <div className="flex items-center gap-3">
               {activeTab === "chat" && messages.length > 0 && (
                 <Button variant="ghost" size="sm"
-                  className="h-9 px-3 bg-[#13141a] border border-white/5 rounded-xl text-[9px] font-black uppercase tracking-widest text-white/30 hover:text-white transition-all ml-2"
+                  className="h-10 px-4 bg-white/[0.03] border border-white/5 rounded-xl text-[9px] font-black uppercase tracking-widest text-white/20 hover:text-red-400 hover:bg-red-400/10 transition-all duration-300"
                   onClick={() => {
-                    if (window.confirm("Очистить текущий чат и начать заново?")) {
-                      reset();
-                    }
+                    if (window.confirm("Очистить чат?")) reset();
                   }}
                 >
-                  <RotateCcw size={12} className="mr-2" /> Стереть чат
+                  <RotateCcw size={13} className="mr-2" /> Reset Session
                 </Button>
               )}
+
+              <button
+                onClick={() => setSidebarOpen(true)}
+                className="w-11 h-11 flex items-center justify-center rounded-2xl bg-white/[0.03] border border-white/5 hover:border-white/20 hover:bg-white/5 transition-all duration-300 text-white/40 hover:text-white group"
+              >
+                <Menu size={18} className="group-hover:rotate-90 transition-transform duration-500" />
+              </button>
             </div>
           </div>
 
@@ -392,24 +402,31 @@ export default function Home() {
               <ScrollArea className="h-full" onScroll={handleScroll}>
                 <div className="max-w-4xl mx-auto px-4 md:px-8 pb-10">
                   {messages.length === 0 ? (
-                    <div className="min-h-[600px] flex flex-col items-center justify-center">
-                      <div className="w-16 h-16 rounded-3xl bg-blue-600/10 flex items-center justify-center mb-8 animate-pulse">
-                        <Sparkles className="text-blue-500 w-8 h-8" />
+                    <div className="min-h-[75vh] flex flex-col items-center justify-center py-20 px-6">
+                      <div className="relative mb-12">
+                        <div className="absolute inset-0 bg-blue-500/30 blur-[100px] animate-pulse rounded-full" />
+                        <div className="w-24 h-24 rounded-[2.5rem] bg-gradient-to-br from-blue-600 to-indigo-700 flex items-center justify-center shadow-[0_20px_50px_rgba(37,99,235,0.4)] animate-float relative z-10">
+                          <Sparkles className="text-white w-12 h-12 fill-current" />
+                        </div>
                       </div>
-                      <h2 className="text-2xl font-black text-white mb-2 text-center tracking-tight">Создай свою игру</h2>
-                      <p className="text-white/30 text-sm mb-12 text-center max-w-sm font-medium uppercase tracking-widest text-[10px]">
-                        Выбери жанр или опиши свою идею в чате ниже
+                      <h2 className="text-4xl md:text-6xl font-black text-white mb-4 text-center tracking-tighter leading-tight">
+                        Imagine. <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-400">Create.</span> Play.
+                      </h2>
+                      <p className="text-white/40 text-[11px] mb-16 text-center max-w-sm font-black uppercase tracking-[0.4em] leading-relaxed">
+                        Next-Gen Game Synthesis Engine v4.4
                       </p>
                       
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 w-full">
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-6 w-full max-w-5xl">
                         {GENRE_PRESETS.map((preset) => (
                           <button
                             key={preset.title}
                             onClick={() => setChatInputValue(preset.prompt)}
-                            className="flex flex-col items-center p-6 bg-[#13141a] border border-white/5 rounded-[2rem] hover:border-blue-500/30 hover:bg-blue-500/5 transition-all group hover:-translate-y-1"
+                            className="flex flex-col items-center p-10 bg-white/[0.02] border border-white/5 rounded-[3rem] hover:border-blue-500/40 hover:bg-blue-500/10 transition-all duration-500 group hover:-translate-y-3 hover:shadow-[0_30px_60px_rgba(0,0,0,0.5)] backdrop-blur-xl relative overflow-hidden"
                           >
-                            <span className="text-4xl mb-4 group-hover:scale-110 transition-transform">{preset.emoji}</span>
-                            <span className="text-[10px] font-black uppercase tracking-widest text-white/40 group-hover:text-blue-400">{preset.title}</span>
+                            <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                            <span className="text-5xl mb-6 group-hover:scale-125 group-hover:rotate-6 transition-transform duration-500 relative z-10">{preset.emoji}</span>
+                            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white/30 group-hover:text-blue-400 transition-colors relative z-10">{preset.title}</span>
+                            <div className="mt-4 w-6 h-1 bg-white/5 group-hover:w-12 group-hover:bg-blue-500 transition-all duration-500" />
                           </button>
                         ))}
                       </div>
@@ -667,32 +684,37 @@ export default function Home() {
                         ) : (studioSubTab === "published" ? myGames.length > 0 : drafts.length > 0) ? (
                           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                             {(studioSubTab === "published" ? myGames : drafts).map((game, idx) => {
-                              // Создаем градиент на основе индекса, чтобы карточки были разными
                               const gradients = [
-                                "from-blue-500/10 to-purple-500/10",
-                                "from-green-500/10 to-emerald-500/10",
-                                "from-orange-500/10 to-red-500/10",
-                                "from-pink-500/10 to-rose-500/10",
-                                "from-cyan-500/10 to-blue-500/10"
+                                "from-blue-600/20 via-blue-500/5 to-transparent",
+                                "from-emerald-600/20 via-emerald-500/5 to-transparent",
+                                "from-rose-600/20 via-rose-500/5 to-transparent",
+                                "from-amber-600/20 via-amber-500/5 to-transparent",
+                                "from-cyan-600/20 via-cyan-500/5 to-transparent"
                               ];
                               const bgGradient = gradients[idx % gradients.length];
                               const isDraft = studioSubTab === "drafts";
                               return (
-                              <div key={game.id} className={`group flex flex-col p-6 rounded-3xl bg-[#13141a] border border-white/5 hover:border-blue-500/20 transition-all hover:translate-y-[-4px] bg-gradient-to-br ${bgGradient}`}>
-                                <div className="flex items-start justify-between mb-6">
-                                  <div className="w-16 h-16 rounded-2xl bg-black/20 flex items-center justify-center text-3xl shrink-0 group-hover:scale-110 transition-transform">
+                              <div key={game.id} className={`group flex flex-col p-7 rounded-[2.5rem] bg-[#13141a]/60 border border-white/5 hover:border-white/20 transition-all duration-500 hover:translate-y-[-8px] hover:shadow-[0_20px_50px_rgba(0,0,0,0.5)] backdrop-blur-xl relative overflow-hidden`}>
+                                <div className={`absolute inset-0 bg-gradient-to-br ${bgGradient} opacity-50 group-hover:opacity-100 transition-opacity duration-700`} />
+                                <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity">
+                                   <SparkleIcon size={120} className="text-white" />
+                                </div>
+                                
+                                <div className="relative z-10">
+                                <div className="flex items-start justify-between mb-8">
+                                  <div className="w-20 h-20 rounded-3xl bg-black/40 flex items-center justify-center text-4xl shadow-inner border border-white/10 group-hover:scale-110 group-hover:rotate-3 transition-transform duration-500">
                                     {game.genreEmoji || "🎮"}
                                   </div>
-                                  <div className="flex gap-1">
+                                  <div className="flex gap-2">
                                     <DropdownMenu>
                                       <DropdownMenuTrigger asChild>
-                                        <Button variant="ghost" size="sm" className="w-8 h-8 p-0 rounded-full hover:bg-white/10 text-white/40 hover:text-white">
-                                          <MoreVertical size={14} />
+                                        <Button variant="ghost" size="sm" className="w-10 h-10 p-0 rounded-2xl bg-white/5 hover:bg-white/10 text-white/40 hover:text-white border border-white/5">
+                                          <MoreVertical size={16} />
                                         </Button>
                                       </DropdownMenuTrigger>
-                                      <DropdownMenuContent align="end" className="w-40 bg-[#13141a] border-white/10 rounded-xl overflow-hidden p-1 shadow-xl">
+                                      <DropdownMenuContent align="end" className="w-48 bg-[#13141a]/95 backdrop-blur-xl border-white/10 rounded-2xl overflow-hidden p-1.5 shadow-2xl">
                                         <DropdownMenuItem 
-                                          className="text-xs font-bold text-white/80 focus:bg-white/10 focus:text-white rounded-lg cursor-pointer flex items-center gap-2 p-2"
+                                          className="text-xs font-bold text-white/80 focus:bg-white/10 focus:text-white rounded-xl cursor-pointer flex items-center gap-3 p-3"
                                           onClick={async () => {
                                             setStudioGame({ title: game.title, code: "<!-- Загрузка кода... -->" });
                                             if (isDraft) {
@@ -708,10 +730,13 @@ export default function Home() {
                                             }
                                           }}
                                         >
-                                          <Pencil size={12} /> Править код
+                                          <div className="w-6 h-6 rounded-lg bg-blue-500/10 flex items-center justify-center text-blue-400">
+                                            <Pencil size={12} />
+                                          </div>
+                                          Править код
                                         </DropdownMenuItem>
                                         <DropdownMenuItem 
-                                          className="text-xs font-bold text-blue-400 focus:bg-blue-500/10 focus:text-blue-300 rounded-lg cursor-pointer flex items-center gap-2 p-2"
+                                          className="text-xs font-bold text-blue-400 focus:bg-blue-500/10 focus:text-blue-300 rounded-xl cursor-pointer flex items-center gap-3 p-3"
                                           onClick={async () => {
                                             if (isDraft) {
                                               setStudioGame({ title: game.title, code: game.code });
@@ -730,11 +755,14 @@ export default function Home() {
                                             }
                                           }}
                                         >
-                                          <SparkleIcon size={12} /> Улучшить
+                                          <div className="w-6 h-6 rounded-lg bg-indigo-500/10 flex items-center justify-center text-indigo-400">
+                                            <SparkleIcon size={12} />
+                                          </div>
+                                          Улучшить AI
                                         </DropdownMenuItem>
                                         {!isDraft && (
                                           <DropdownMenuItem 
-                                            className="text-xs font-bold text-red-400 focus:bg-red-500/10 focus:text-red-300 rounded-lg cursor-pointer flex items-center gap-2 p-2"
+                                            className="text-xs font-bold text-red-400 focus:bg-red-500/10 focus:text-red-300 rounded-xl cursor-pointer flex items-center gap-3 p-3"
                                             onClick={async () => {
                                               if (window.confirm("Удалить игру?")) {
                                                 await SmolGameAPI.deleteGame(game.id);
@@ -742,32 +770,36 @@ export default function Home() {
                                               }
                                             }}
                                           >
-                                            <Trash2 size={12} /> Удалить
+                                            <div className="w-6 h-6 rounded-lg bg-red-500/10 flex items-center justify-center text-red-400">
+                                              <Trash2 size={12} />
+                                            </div>
+                                            Удалить
                                           </DropdownMenuItem>
                                         )}
                                       </DropdownMenuContent>
                                     </DropdownMenu>
                                   </div>
                                 </div>
-                                <h3 className="font-black text-lg text-white mb-2 group-hover:text-blue-400 transition-colors">{game.title}</h3>
-                                <p className="text-xs text-white/40 line-clamp-2 mb-8 leading-relaxed font-medium">{game.description || (isDraft ? "Черновик игры." : "Готовая к игре разработка.")}</p>
+                                <h3 className="font-black text-xl text-white mb-3 group-hover:text-blue-400 transition-colors tracking-tight">{game.title}</h3>
+                                <p className="text-xs text-white/50 line-clamp-2 mb-8 leading-relaxed font-medium min-h-[3em]">{game.description || (isDraft ? "Черновик игры." : "Готовая к игре разработка.")}</p>
                                 
-                                <div className="mt-auto pt-4 border-t border-white/5">
+                                <div className="mt-auto pt-6 border-t border-white/10 flex items-center justify-between">
                                   {isDraft ? (
                                     <Button 
-                                      className="w-full h-12 bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 border border-blue-500/20 text-[12px] font-black uppercase tracking-[0.2em] rounded-xl transition-all"
+                                      className="w-full h-14 bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-black uppercase tracking-[0.2em] rounded-2xl transition-all shadow-lg shadow-blue-900/20"
                                       onClick={() => setStudioGame({ title: game.title, code: game.code })}
                                     >
-                                      <Pencil size={16} className="mr-2" /> В РЕДАКТОР
+                                      <Pencil size={18} className="mr-3" /> В РЕДАКТОР
                                     </Button>
                                   ) : (
                                     <Button 
-                                      className="w-full h-12 bg-[#22c55e] hover:bg-[#16a34a] text-white text-[12px] font-black uppercase tracking-[0.2em] rounded-xl shadow-[0_4px_14px_0_rgba(34,197,94,0.39)] hover:shadow-[0_6px_20px_rgba(34,197,94,0.23)] hover:-translate-y-0.5 transition-all"
+                                      className="w-full h-14 bg-[#22c55e] hover:bg-[#16a34a] text-white text-[11px] font-black uppercase tracking-[0.2em] rounded-2xl shadow-[0_10px_20px_0_rgba(34,197,94,0.3)] hover:shadow-[0_15px_30px_rgba(34,197,94,0.4)] hover:-translate-y-1 transition-all duration-300"
                                       onClick={() => window.open(game.url, "_blank")}
                                     >
-                                      <Play size={16} fill="currentColor" className="mr-2" /> ИГРАТЬ
+                                      <Play size={18} fill="currentColor" className="mr-3" /> ИГРАТЬ СЕЙЧАС
                                     </Button>
                                   )}
+                                </div>
                                 </div>
                               </div>
                             )})}
