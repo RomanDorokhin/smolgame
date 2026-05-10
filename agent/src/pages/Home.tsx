@@ -456,6 +456,17 @@ export default function Home() {
                       </div>
 
 
+                      <Button 
+                        variant="ghost"
+                        size="sm"
+                        className="h-9 px-3 bg-white/5 border border-white/5 text-[9px] font-black uppercase text-[#a3b8d4] rounded-xl mr-4"
+                        onClick={() => {
+                          const blob = new Blob([studioGame.code], { type: 'text/html' });
+                          window.open(URL.createObjectURL(blob), '_blank');
+                        }}
+                      >
+                        <ExternalLink size={14} className="mr-2" /> Тест
+                      </Button>
 
                       <Button 
                         disabled={!!publishProgress}
