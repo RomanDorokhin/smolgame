@@ -316,8 +316,21 @@ export function useGameAgent(settings: ChatSettings) {
         if (blocks.length > 0) {
           finalCode = applyAiderBlocks(previousCode!, blocks).code;
         } else {
-          const match = modificationText.match(/<game_spec>([\s\S]*?)<\/game_spec>/i) || modificationText.match(/<html[\s\S]*<\/html>/i);
-          finalCode = match ? (match[1] || match[0]) : previousCode!;
+          const matchHtml = modificationText.match(/<html[\s\S]*<\/html>/i);
+          const matchLogic = modificationText.match(/<game_logic>([\s\S]*?)<\/game_logic>/i);
+          
+          if (matchHtml) {
+            finalCode = matchHtml[0];
+          } else if (matchLogic) {
+            // Replace the logic block in the previous code
+            finalCode = previousCode!.replace(
+              /\/\/ ─── INJECTED LOGIC ──────────────────────────────────────────\n[\s\S]*?(?=<\/script>)/i,
+              `// ─── INJECTED LOGIC ──────────────────────────────────────────\n${matchLogic[1].trim()}\n`
+            );
+          } else {
+            console.warn("Failed to parse modification. Falling back to previous code.");
+            finalCode = previousCode!;
+          }
         }
       } else {
         // --- 5-STAGE SEP PIPELINE ---

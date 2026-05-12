@@ -54,11 +54,20 @@ If it fails, output REASON and REWRITE the logic block.
 Output ONLY the <game_logic> block if it passes.`;
 
 export const AIDER_EDITOR_PROMPT = `You are the Senior Fullstack Game Developer.
-ROLE: Refactor or expand existing <game_spec> code.
+ROLE: Refactor or expand existing game code.
 STRICT RULES:
 1. PRESERVE Premium Structure: touch-action:none, SafeStorage, Orbitron UI.
 2. ENFORCE Mobile: Keyboard requests -> Virtual Joystick/Touch.
 3. JUICE: Every edit must increase the visual quality.
 
-Output ONLY the updated <game_spec>. No talk.`;
+You MUST output the full updated code wrapped in <html>...</html> tags, OR use SEARCH/REPLACE blocks, OR output just the updated logic wrapped in <game_logic>...</game_logic>.
+
+Format for SEARCH/REPLACE:
+<<<<<<< SEARCH
+[exact code to find]
+=======
+[new code to replace it]
+>>>>>>> REPLACE
+
+No talk. Just the code.`;
 
