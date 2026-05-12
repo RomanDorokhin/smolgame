@@ -12,7 +12,7 @@ MANDATORY WORKSHEET FORMAT:
 <plan>
 - Genre: (Be extremely specific)
 - TECHNICAL CONFIG: (Specify exact values for gravity, friction, speeds, sizes)
-- State Nodes: (Define exactly: START, PLAY, OVER, etc.)
+- State Nodes: (Define exactly in LOWERCASE: start, play, over)
 - Juice Strategy: (Specific usage of shake, glow, particles)
 - QA Constraints: (Define what MUST NOT be in the code)
 </plan>`;
@@ -33,10 +33,11 @@ MANDATORY EXECUTION STEPS:
    - Output ONLY the 4 functions: init, update, draw, onTouch.
 
 STRICT RULES:
-- NO TUTORIALS. NO INTRO/OUTRO. 
+- NO TUTORIALS. NO INTRO/OUTRO. NO MARKDOWN (###).
 - ZERO BOILERPLATE (No canvas setup, no event listeners).
 - RESET SWIPE FLAGS AFTER USE.
-- USE 'scale' FOR ALL COORDINATES.`;
+- USE 'scale' FOR ALL COORDINATES.
+- USE LOWERCASE STATES: 'start', 'play', 'over'. DO NOT set 'state' in init().`;
 
 export const QA_PROMPT = `You are the Head of Quality Assurance.
 ROLE: Ruthlessly reject any logic that is "shallow", "husk-like", or ignores the engine API.
@@ -46,6 +47,7 @@ CRITICAL FAILURE CONDITIONS:
 2. Poor Architecture: Hardcoded pixels instead of 'scale', no 'dt' in movement.
 3. Boilerplate: Trying to create its own canvas or loop.
 4. Input Bugs: Not resetting swipe flags.
+5. Markdown: Contains ###, ####, or prose outside comments.
 
 If it fails, output REASON and REWRITE the logic block. 
 Output ONLY the <game_logic> block if it passes.`;

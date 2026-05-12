@@ -116,6 +116,8 @@ KNOWLEDGE: ${getFullKnowledgePrompt(genre)}
 ENGINE: ultimate-mobile (Globals: W, H, scale, ctx, joy, swipe, cam, Part, glow, sfx).
 STRICT: DO NOT define 'class Part'. It is already provided.
 STRICT: DO NOT define 'class Joystick' or 'class Camera'.
+STRICT: DO NOT change 'state'. The engine handles state.
+STRICT: DO NOT include markdown (###, ####, etc.) or any prose/explanation.
 TASK: Implement 4 functions (init, update, draw, onTouch) based on the <plan>.
 STRICT: Reset swipe flags. Use 'scale' for all sizes. Output ONLY <game_logic>.` 
     },
@@ -124,7 +126,16 @@ STRICT: Reset swipe flags. Use 'scale' for all sizes. Output ONLY <game_logic>.`
   ]);
   
   let logic = engineerResponse.match(/<game_logic>([\s\S]*?)<\/game_logic>/i)?.[1].trim() || engineerResponse;
-  logic = logic.replace(/<thought>[\s\S]*?<\/thought>/gi, '').replace(/<qa_self_audit>[\s\S]*?<\/qa_self_audit>/gi, '').trim();
+  
+  // Hard-strip markdown and prose that LLMs often hallucinate inside tags
+  logic = logic
+    .replace(/^#+.*$/gm, '') // Remove all markdown headers
+    .replace(/^\*\*.*?\*\*$/gm, '') // Remove bold lines
+    .replace(/^(The|This|In this|Here is|Note:|Important:).*?$/gim, '') // Remove prose
+    .replace(/```javascript|```js|```html|```/g, '') // Remove code blocks
+    .replace(/<thought>[\s\S]*?<\/thought>/gi, '')
+    .replace(/<qa_self_audit>[\s\S]*?<\/qa_self_audit>/gi, '')
+    .trim();
 
   // Sanity check
   const required = ['function init', 'function update', 'function draw', 'function onTouch'];
