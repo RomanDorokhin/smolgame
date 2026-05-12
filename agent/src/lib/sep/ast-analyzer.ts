@@ -26,63 +26,64 @@ export function analyzeGameJS(code: string): AnalysisResult {
     const declaredVariables = new Set<string>();
     const declaredFunctions = new Set<string>();
     const usedBeforeDeclaration: string[] = [];
+    const coreGlobals = new Set(['smolState', 'score', 'hi', 'W', 'H', 'ctx', 'scale', 'cam', 'joy', 'swipe', 'entities', 'particles', 'CONFIG']);
+    const coreFunctions = new Set(['checkAABB', 'checkCircle', 'applyShake', 'burst', 'smolTriggerGameOver', 'sfx']);
 
     walk(ast, {
       VariableDeclaration(node: any) {
         node.declarations.forEach((d: any) => {
-          if (d.id.type === 'Identifier') declaredVariables.add(d.id.name);
+          if (d.id.type === 'Identifier') {
+            const name = d.id.name;
+            if (coreGlobals.has(name)) {
+              result.warnings.push(`Pollution: Re-declaring core global "${name}". Use the provided variable instead.`);
+            }
+            declaredVariables.add(name);
+          }
         });
       },
       FunctionDeclaration(node: any) {
-        if (node.id && node.id.type === 'Identifier') declaredFunctions.add(node.id.name);
+        if (node.id && node.id.type === 'Identifier') {
+          const name = node.id.name;
+          if (coreFunctions.has(name)) {
+             result.errors.push(`Redundancy: Re-defining core function "${name}". This function is already in the ENGINE CORE.`);
+          }
+          declaredFunctions.add(name);
+        }
+      },
+      NewExpression(node: any) {
+        if (node.callee.type === 'Identifier' && node.callee.name === 'Proxy') {
+          result.warnings.push('Architectural Slop: Using Proxy (Compatibility Layer) detected. Write direct, clean code instead.');
+        }
       },
       CallExpression(node: any) {
         if (node.callee.type === 'Identifier') {
           const name = node.callee.name;
-          if (['init', 'start', 'setup', 'resizeCanvas'].includes(name)) {
-            if (!declaredFunctions.has(name) && !declaredVariables.has(name)) {
-              usedBeforeDeclaration.push(name);
-            }
+          if (['init', 'update', 'draw'].includes(name)) {
+             // Basic structure check
           }
         }
       }
     });
 
-    if (usedBeforeDeclaration.length > 0) {
-      result.errors.push(`Temporal Dead Zone Detected: Calling ${usedBeforeDeclaration.join(', ')} before declaration.`);
-    }
-
-    // Robust Feature Detection via AST
+    // Feature Detection
     const featuresFound = new Set<string>();
-    
     walk(ast, {
       CallExpression(node: any) {
-        if (node.callee.type === 'MemberExpression' &&
-            node.callee.object.type === 'Identifier' && node.callee.object.name === 'Math' &&
-            node.callee.property.type === 'Identifier' && node.callee.property.name === 'random') {
-          featuresFound.add('Screen Shake');
-        }
-        if (node.callee.type === 'Identifier' && node.callee.name === 'playSound') {
-          featuresFound.add('Audio System');
-        }
-      },
-      NewExpression(node: any) {
-        if (node.callee.type === 'Identifier' && node.callee.name === 'Part') {
-          featuresFound.add('Particle System');
-        }
+        if (node.callee.type === 'Identifier' && node.callee.name === 'burst') featuresFound.add('Particle System');
+        if (node.callee.type === 'Identifier' && node.callee.name === 'sfx') featuresFound.add('Audio System');
+        if (node.callee.type === 'Identifier' && node.callee.name === 'applyShake') featuresFound.add('Screen Shake');
       },
       MemberExpression(node: any) {
-        if (node.object.type === 'Identifier' && node.object.name === 'localStorage') {
-          featuresFound.add('Persistence');
-        }
+        if (node.object.type === 'Identifier' && node.object.name === 'storage') featuresFound.add('Persistence');
       }
     });
     result.features = Array.from(featuresFound);
 
     // Scoring
-    let score = 50;
+    let score = 70;
     score += result.features.length * 10;
-    if (result.errors.length > 0) score -= 40;
+    if (result.errors.length > 0) score -= 50;
+    if (result.warnings.length > 0) score -= 10 * result.warnings.length;
     result.score = Math.min(100, Math.max(0, score));
 
   } catch (e) {

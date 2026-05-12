@@ -3,42 +3,81 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>SmolGame Pro</title>
+<title>SmolGame Ultimate</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;900&family=Orbitron:wght@400;700;900&family=Press+Start+2P&display=swap" rel="stylesheet">
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;900&display=swap');
-
 :root {
   --primary: #00ffcc;
   --secondary: #0066ff;
-  --bg: #000;
-  --text: #fff;
-  --font-main: 'Orbitron', sans-serif;
-  --ui-bg: rgba(0,0,0,0.85);
-  --ui-border: #333;
-  --glow: rgba(0,255,200,0.3);
+  --accent: #ff00ff;
+  --bg: #050505;
+  --text: #ffffff;
+  --font-ui: 'Inter', sans-serif;
+  --font-game: 'Orbitron', sans-serif;
+  --font-pixel: 'Press Start 2P', system-ui;
+  --ui-bg: rgba(10, 10, 10, 0.9);
+  --ui-border: rgba(255, 255, 255, 0.1);
+  --glow: rgba(0, 255, 204, 0.4);
 }
 
-*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);touch-action:none;font-family:var(--font-main);position:fixed;color:var(--text)}
-canvas{display:block;touch-action:none;image-rendering:pixelated}
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body { 
+  width: 100%; height: 100%; overflow: hidden; 
+  background: var(--bg); touch-action: none; 
+  font-family: var(--font-ui); color: var(--text);
+  position: fixed;
+}
 
-#ui{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:10;text-align:center}
-.screen{display:none;flex-direction:column;gap:30px;pointer-events:all;padding:40px;background:var(--ui-bg);border:2px solid var(--ui-border);border-radius:32px;backdrop-filter:blur(20px);box-shadow:0 0 80px var(--glow);max-width:90%}
-.screen.active{display:flex;animation:fadeIn 0.3s ease-out}
+canvas { display: block; touch-action: none; image-rendering: auto; }
+.pixelated canvas { image-rendering: pixelated; }
 
-@keyframes fadeIn{from{opacity:0;transform:scale(0.9)}to{opacity:1;transform:scale(1)}}
+#ui { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; pointer-events: none; z-index: 10; text-align: center; }
+.screen { 
+  display: none; flex-direction: column; gap: 24px; pointer-events: all; 
+  padding: 48px; background: var(--ui-bg); border: 1px solid var(--ui-border); 
+  border-radius: 40px; backdrop-filter: blur(30px); 
+  box-shadow: 0 20px 50px rgba(0,0,0,0.5), 0 0 30px var(--glow);
+  max-width: 90%; width: 400px;
+}
+.screen.active { display: flex; animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
 
-h1{font-size:clamp(32px,10vw,64px);background:linear-gradient(45deg,var(--primary),var(--secondary));-webkit-background-clip:text;-webkit-text-fill-color:transparent;text-transform:uppercase;letter-spacing:6px;font-weight:900;filter:drop-shadow(0 0 10px var(--primary))}
-#hud{position:fixed;top:max(20px,env(safe-area-inset-top));left:20px;right:20px;display:flex;justify-content:space-between;pointer-events:none;font-weight:900;text-shadow:0 0 15px var(--primary);font-size:20px;z-index:5;transition:opacity 0.3s}
+@keyframes slideUp { from { opacity: 0; transform: translateY(20px) scale(0.95); } to { opacity: 1; transform: translateY(0) scale(1); } }
 
-button{padding:20px 50px;border:none;border-radius:16px;background:linear-gradient(45deg,var(--primary),var(--secondary));color:#000;font-weight:900;font-size:22px;cursor:pointer;text-transform:uppercase;transition:transform 0.1s,box-shadow 0.2s;box-shadow:0 10px 0 var(--secondary)}
-button:active{transform:translateY(5px);box-shadow:0 5px 0 var(--secondary)}
+h1 { 
+  font-family: var(--font-game); font-size: 48px; font-weight: 900; 
+  background: linear-gradient(to bottom, #fff, var(--primary)); 
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; 
+  letter-spacing: -2px; text-transform: uppercase;
+}
 
-#joy-base{position:fixed;bottom:60px;left:60px;width:120px;height:120px;background:rgba(255,255,255,0.05);border-radius:50%;display:none;pointer-events:all;border:2px solid rgba(255,255,255,0.1);backdrop-filter:blur(5px)}
-#joy-stick{position:absolute;top:35px;left:35px;width:50px;height:50px;background:linear-gradient(45deg,var(--primary),var(--secondary));border-radius:50%;box-shadow:0 0 30px var(--primary)}
+#hud { 
+  position: fixed; top: max(20px, env(safe-area-inset-top)); left: 24px; right: 24px; 
+  display: flex; justify-content: space-between; pointer-events: none; 
+  font-family: var(--font-game); font-weight: 900; font-size: 18px; 
+  z-index: 5; opacity: 0; transition: opacity 0.3s;
+}
+
+.btn { 
+  padding: 18px 32px; border: none; border-radius: 20px; 
+  background: var(--primary); color: #000; 
+  font-family: var(--font-game); font-weight: 900; font-size: 20px; 
+  cursor: pointer; transition: all 0.2s cubic-bezier(0.33, 1, 0.68, 1);
+  box-shadow: 0 8px 0 #00886a;
+}
+.btn:active { transform: translateY(4px); box-shadow: 0 4px 0 #00886a; }
+
+#joy-base { 
+  position: fixed; bottom: 60px; left: 60px; width: 140px; height: 140px; 
+  background: rgba(255,255,255,0.03); border-radius: 50%; display: none; 
+  border: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(10px);
+}
+#joy-stick { 
+  position: absolute; top: 40px; left: 40px; width: 60px; height: 60px; 
+  background: var(--primary); border-radius: 50%; box-shadow: 0 0 30px var(--primary);
+}
 </style>
-
 </head>
 <body>
 <canvas id="c"></canvas>
@@ -47,184 +86,191 @@ button:active{transform:translateY(5px);box-shadow:0 5px 0 var(--secondary)}
 <div id="ui">
   <div id="start" class="screen active">
     <h1 id="title">GAME</h1>
-    <p id="subtitle" style="color:var(--primary);letter-spacing:2px">PRO EDITION</p>
-    <button onclick="smolStartGame()">START</button>
+    <p id="subtitle" style="color:var(--primary); font-family:var(--font-game); letter-spacing:4px; font-weight:700">PREMIUM EDITION</p>
+    <button class="btn" onclick="smolStartGame()">START</button>
   </div>
   <div id="over" class="screen">
     <h1>GAME OVER</h1>
-    <h2 id="fscore" style="font-size:32px;margin-bottom:10px">SCORE: 0</h2>
-    <button onclick="smolStartGame()">RETRY</button>
+    <h2 id="fscore" style="font-family:var(--font-game); font-size:32px; margin-bottom:16px">0</h2>
+    <button class="btn" onclick="smolStartGame()">RETRY</button>
   </div>
 </div>
 
-
 <script>
-// --- POLYFILLS ---
-if(!CanvasRenderingContext2D.prototype.roundRect){CanvasRenderingContext2D.prototype.roundRect=function(x,y,w,h,r){if(w<2*r)r=w/2;if(h<2*r)r=h/2;this.beginPath();this.moveTo(x+r,y);this.arcTo(x+w,y,x+w,y+h,r);this.arcTo(x+w,y+h,x,y+h,r);this.arcTo(x,y+h,x,y,r);this.arcTo(x,y,x+w,y,r);this.closePath();return this;}}
-
-const canvas=document.getElementById('c'), ctx=canvas.getContext('2d');
-let W,H,scale=1,smolState='start',score=0,hi=0,shake=0,dt=0,lastT=0;
-const cam={x:0,y:0,zoom:1}, joy={x:0,y:0,active:false,enabled:false};
-const swipe={up:false,down:false,left:false,right:false,x:0,y:0};
-
-const safeStorage={
-  set:(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}},
-  get:(k,d)=>{try{return JSON.parse(localStorage.getItem(k))??d}catch(e){return d}}
+// --- WORLD CLASS ENGINE CORE ---
+const canvas = document.getElementById('c'), ctx = canvas.getContext('2d');
+const CONFIG = {
+  pixelated: false,
+  joyEnabled: false,
+  gravity: 0.25,
+  friction: 0.98
 };
-hi=safeStorage.get('smol_hi',0);
 
-const glow=(c,b)=>{ctx.shadowColor=c;ctx.shadowBlur=b*scale;};
-const nglow=()=>{ctx.shadowBlur=0;};
+let W, H, scale = 1, smolState = 'start', score = 0, hi = 0, shake = 0, dt = 1, lastT = 0;
+const cam = { x: 0, y: 0, zoom: 1 }, joy = { x: 0, y: 0, active: false };
+const swipe = { up: false, down: false, left: false, right: false, x: 0, y: 0 };
+let entities = [], particles = [];
 
-// --- CORE HELPERS (GLOBAL & FROZEN) ---
-const checkAABB=Object.freeze((a,b)=>a.x<b.x+b.w&&a.x+a.w>b.x&&a.y<b.y+b.h&&a.y+a.h>b.y);
-const checkCircle=Object.freeze((a,b)=>{const dx=a.x-b.x,dy=a.y-b.y,d=Math.sqrt(dx*dx+dy*dy);return d<a.r+b.r;});
-const applyShake=Object.freeze((v=10)=>shake=v);
-const burst=Object.freeze((x,y,c,n=15)=>{for(let i=0;i<n;i++)parts.push(new Part(x,y,c))});
+// --- RECOVERY & STORAGE ---
+const storage = {
+  set: (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)) } catch (e) {} },
+  get: (k, d) => { try { return JSON.parse(localStorage.getItem(k)) ?? d } catch (e) { return d } }
+};
+hi = storage.get('smol_hi', 0);
 
-// --- COMPATIBILITY LAYER ---
-// Agents often hallucinate 'state.entities' or 'state.score'. We map them here.
-window.state = new Proxy({ entities: parts }, {
-  get: (target, prop) => {
-    if (prop === 'entities') return parts;
-    if (prop === 'score') return score;
-    return target[prop];
-  },
-  set: (target, prop, val) => {
-    if (prop === 'score') { score = val; return true; }
-    target[prop] = val; return true;
+// --- CLASS DEFINITIONS ---
+class Particle {
+  constructor(x, y, color, size = 4, vx, vy) {
+    this.x = x; this.y = y; this.c = color;
+    this.s = Math.random() * size + size/2;
+    this.vx = vx ?? (Math.random() - 0.5) * 10;
+    this.vy = vy ?? (Math.random() - 0.5) * 10;
+    this.a = 1;
+    this.decay = Math.random() * 0.02 + 0.01;
   }
-});
-
-class Part{
-  constructor(x,y,c){
-    this.x=x;this.y=y;this.c=c;this.s=Math.random()*4+2;
-    this.vx=(Math.random()-0.5)*10;this.vy=(Math.random()-0.5)*10;
-    this.a=1;
+  update() {
+    this.x += this.vx; this.y += this.vy;
+    this.vy += 0.2; this.a -= this.decay;
   }
-  u(){this.x+=this.vx;this.y+=this.vy;this.vy+=0.2;this.a-=0.02;}
-  d(){ctx.globalAlpha=this.a;ctx.fillStyle=this.c;ctx.fillRect(this.x,this.y,this.s,this.s);ctx.globalAlpha=1;}
+  draw() {
+    ctx.globalAlpha = Math.max(0, this.a);
+    ctx.fillStyle = this.c;
+    ctx.fillRect(this.x - this.s/2, this.y - this.s/2, this.s, this.s);
+    ctx.globalAlpha = 1;
+  }
 }
-let parts=[];
 
-// --- AUDIO SYSTEM ---
+// --- CORE UTILITIES (DO NOT RE-IMPLEMENT) ---
+const checkAABB = (a, b) => a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
+const checkCircle = (a, b) => {
+  const dx = a.x - b.x, dy = a.y - b.y;
+  return Math.sqrt(dx*dx + dy*dy) < (a.r || a.s/2) + (b.r || b.s/2);
+};
+const applyShake = (v = 10) => shake = v;
+const burst = (x, y, c, n = 12) => {
+  for (let i = 0; i < n; i++) particles.push(new Particle(x, y, c));
+};
+
+// --- AUDIO ENGINE ---
 let audioCtx;
-const sfx=(f,t,type='sine')=>{
-  if(!audioCtx)return;
-  const o=audioCtx.createOscillator(), g=audioCtx.createGain();
-  o.type=type; o.frequency.setValueAtTime(f,audioCtx.currentTime);
+const sfx = (f, t, type = 'sine', sweep = 0) => {
+  if (!audioCtx) return;
+  const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+  o.type = type;
+  o.frequency.setValueAtTime(f, audioCtx.currentTime);
+  if (sweep) o.frequency.exponentialRampToValueAtTime(f + sweep, audioCtx.currentTime + t);
   o.connect(g); g.connect(audioCtx.destination);
-  o.start(); g.gain.exponentialRampToValueAtTime(0.00001,audioCtx.currentTime+t);
-  o.stop(audioCtx.currentTime+t);
+  o.start(); g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + t);
+  o.stop(audioCtx.currentTime + t);
 };
 
-function resize(){
-  W=canvas.width=window.innerWidth;
-  H=canvas.height=window.innerHeight;
-  scale=Math.min(W,H)/400;
-}
-resize();
-window.addEventListener('resize',resize);
-
-function showScreen(id){
-  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
-  if(id)document.getElementById(id).classList.add('active');
-  document.getElementById('hud').style.opacity=id?0:1;
-  document.getElementById('joy-base').style.display=(!id && joy.enabled)?'block':'none';
+function resize() {
+  W = canvas.width = window.innerWidth;
+  H = canvas.height = window.innerHeight;
+  scale = Math.min(W, H) / 400;
+  if (CONFIG.pixelated) document.body.classList.add('pixelated');
+  else document.body.classList.remove('pixelated');
 }
 
-let _stateLocked = false;
-function smolStartGame(){
-  if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();
-  if(audioCtx.state==='suspended')audioCtx.resume();
-  smolState='play';
-  score=0;
-  parts=[];
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  if (id) document.getElementById(id).classList.add('active');
+  document.getElementById('hud').style.opacity = id ? 0 : 1;
+  document.getElementById('joy-base').style.display = (!id && CONFIG.joyEnabled) ? 'block' : 'none';
+}
+
+function smolStartGame() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  smolState = 'play';
+  score = 0;
+  entities = [];
+  particles = [];
   showScreen(null);
-  
-  _stateLocked = true; // Lock state during init to prevent accidental resets
-  if(typeof init==='function')init();
-  _stateLocked = false;
+  if (typeof init === 'function') init();
 }
 
-// --- IDIOT-PROOF BRIDGE ---
-window.currentState = smolState; 
-Object.defineProperty(window, 'currentState', {
-  get: () => smolState,
-  set: (v) => { if(!_stateLocked) smolState = v; }
-});
-
-// Also protect smolState itself if possible
-const _origSetState = (v) => { if(!_stateLocked) smolState = v; else console.warn("Attempted to reset state during init() - blocked."); };
-
-function smolTriggerGameOver(){
-  smolState='over';
-  if(score>hi){hi=score;safeStorage.set('smol_hi',hi)}
-  document.getElementById('fscore').innerText='SCORE: '+score;
-  document.getElementById('best').innerText='HI: '+String(hi).padStart(6,'0');
+function smolTriggerGameOver() {
+  smolState = 'over';
+  if (score > hi) { hi = score; storage.set('smol_hi', hi); }
+  document.getElementById('fscore').innerText = 'SCORE: ' + score;
+  document.getElementById('best').innerText = 'HI: ' + String(hi).padStart(6, '0');
   showScreen('over');
 }
 
-function loop(t){
-  dt=(t-lastT)/16.6; lastT=t;
-  ctx.clearRect(0,0,W,H);
-  ctx.save();
-  if(shake>0.5){ctx.translate((Math.random()-0.5)*shake,(Math.random()-0.5)*shake);shake*=0.9}
+function loop(t) {
+  dt = Math.min(2, (t - lastT) / 16.6) || 1; 
+  lastT = t;
   
-  if(smolState==='play'){
-    try {
-      if(typeof update==='function') update();
-      ctx.save();
-      ctx.translate(W/2,H/2);
-      ctx.scale(cam.zoom,cam.zoom);
-      ctx.translate(-cam.x,-cam.y);
-      if(typeof draw==='function') draw();
-      ctx.restore();
-    } catch(e) {
-      console.error("Game Loop Error:", e);
-      shake = 20; // Visual feedback of error
+  ctx.clearRect(0, 0, W, H);
+  ctx.save();
+  
+  if (shake > 0.5) {
+    ctx.translate((Math.random() - 0.5) * shake, (Math.random() - 0.5) * shake);
+    shake *= 0.9;
+  }
+  
+  if (smolState === 'play') {
+    if (typeof update === 'function') update();
+    
+    ctx.save();
+    ctx.translate(W/2, H/2);
+    ctx.scale(cam.zoom * scale, cam.zoom * scale);
+    ctx.translate(-cam.x, -cam.y);
+    
+    if (typeof draw === 'function') draw();
+    
+    // Auto-particle management
+    for (let i = particles.length - 1; i >= 0; i--) {
+      particles[i].update();
+      particles[i].draw();
+      if (particles[i].a <= 0) particles.splice(i, 1);
     }
-    document.getElementById('score').innerText=String(score).padStart(6,'0');
+    
+    ctx.restore();
+    document.getElementById('score').innerText = String(score).padStart(6, '0');
   }
 
   ctx.restore();
   requestAnimationFrame(loop);
 }
 
-// --- INPUT HANDLERS ---
-const jBase=document.getElementById('joy-base'), jStick=document.getElementById('joy-stick');
-let sX=0,sY=0,sT=50;
+// --- INPUT SYSTEM ---
+const jBase = document.getElementById('joy-base'), jStick = document.getElementById('joy-stick');
+let sX = 0, sY = 0, sT = 40;
 
-const handleJoy=(e)=>{
-  if(!joy.active)return;
-  const rect=jBase.getBoundingClientRect(), cx=rect.left+60, cy=rect.top+60;
-  const clientX=e.clientX||(e.touches?e.touches[0].clientX:0);
-  const clientY=e.clientY||(e.touches?e.touches[0].clientY:0);
-  const dx=clientX-cx, dy=clientY-cy, d=Math.sqrt(dx*dx+dy*dy);
-  const m=Math.min(d,40);
-  joy.x=d?(dx/d)*(m/40):0; joy.y=d?(dy/d)*(m/40):0;
-  jStick.style.transform=`translate(${joy.x*40}px,${joy.y*40}px)`;
+const handleJoy = (e) => {
+  if (!joy.active) return;
+  const rect = jBase.getBoundingClientRect(), cx = rect.left + 70, cy = rect.top + 70;
+  const clientX = e.clientX || (e.touches ? e.touches[0].clientX : 0);
+  const clientY = e.clientY || (e.touches ? e.touches[0].clientY : 0);
+  const dx = clientX - cx, dy = clientY - cy, d = Math.sqrt(dx*dx + dy*dy);
+  const m = Math.min(d, 50);
+  joy.x = d ? (dx/d) * (m/50) : 0; joy.y = d ? (dy/d) * (m/50) : 0;
+  jStick.style.transform = `translate(${joy.x * 50}px, ${joy.y * 50}px)`;
 };
 
-window.addEventListener('pointerdown',e=>{
-  if(e.target===jBase||jBase.contains(e.target)){joy.active=true;handleJoy(e);}
-  else{
-    sX=e.clientX; sY=e.clientY;
-    if(smolState==='play'&&typeof onTouch==='function')onTouch(e);
+window.addEventListener('pointerdown', e => {
+  if (CONFIG.joyEnabled && (e.target === jBase || jBase.contains(e.target))) {
+    joy.active = true; handleJoy(e);
+  } else {
+    sX = e.clientX; sY = e.clientY;
+    if (smolState === 'play' && typeof onTouch === 'function') onTouch(e);
   }
 });
-window.addEventListener('pointermove',handleJoy);
-window.addEventListener('pointerup',e=>{
-  if(joy.active){joy.active=false;joy.x=0;joy.y=0;jStick.style.transform='';}
+window.addEventListener('pointermove', handleJoy);
+window.addEventListener('pointerup', e => {
+  if (joy.active) { joy.active = false; joy.x = 0; joy.y = 0; jStick.style.transform = ''; }
   else {
-    const dx=e.clientX-sX, dy=e.clientY-sY;
-    if(Math.abs(dx)>sT||Math.abs(dy)>sT){
-      if(Math.abs(dx)>Math.abs(dy)) { if(dx>0)swipe.right=true; else swipe.left=true; }
-      else { if(dy>0)swipe.down=true; else swipe.up=true; }
+    const dx = e.clientX - sX, dy = e.clientY - sY;
+    if (Math.abs(dx) > sT || Math.abs(dy) > sT) {
+      swipe.up = dy < -sT; swipe.down = dy > sT; swipe.left = dx < -sT; swipe.right = dx > sT;
     }
   }
 });
 
+resize();
+window.addEventListener('resize', resize);
 requestAnimationFrame(loop);
 
 /* INJECT_LOGIC_HERE */

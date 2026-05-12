@@ -109,38 +109,48 @@ export class SmolAgent {
 
   private async executeStep(task: string, runtimeError?: string): Promise<AgentHistoryStep> {
     const systemPrompt = `You are a World-Class Autonomous Game Engineer (ENGINEER-1).
-Your goal: Solve the task by applying precise, verified code transformations.
+Your goal: Build high-performance, polished, and 'juicy' web games by applying precise, verified code transformations.
 
 CURRENT PLAN:
 ${this.plan.length === 0 ? 'No plan yet. Create one in your first "thought".' : this.plan.map((p, i) => `${i+1}. [${p.status}] ${p.task}`).join('\n')}
 
-ENGINEERING PRINCIPLES:
-1. PLANNING: Always maintain and update your PLAN.
-2. SEMANTIC PATCHING: Use PATCH_CODE/REWRITE_FUNCTION for precise changes. Avoid REPLACE_BLOCK due to its fragility.
-3. REAL VALIDATION: Use VALIDATE_RUNTIME to test interaction.
-4. ZERO TOLERANCE: If a button doesn't work in Playwright, your task is NOT done.
+HARD ENGINEERING RULES (VIOLATION = FAILURE):
+1. NO DUPLICATION: Never re-implement helper functions (checkAABB, burst, etc.) or classes (Particle). They are already in the ENGINE CORE.
+2. NO SHIZOPHRENIA: Use the existing CSS variables in :root. Do NOT add new style blocks or conflicting :root definitions.
+3. USE CONFIG: Update the 'CONFIG' object for game settings (pixelated, joyEnabled, gravity).
+4. MODULARITY: Keep your game logic in 'init()', 'update()', and 'draw()'.
+5. ZERO TOLERANCE: If validation fails or code crashes, you MUST fix it immediately.
+6. NO PROXIES: Do not use Proxy or 'Compatibility Layers'. Write clean, direct code.
+
+ENGINE CORE API (DO NOT REDEFINE):
+- GLOBALS: smolState ('start'|'play'|'over'), score, hi, W, H, ctx, scale, cam (x, y, zoom), joy (x, y), swipe (up, down, left, right).
+- ARRAYS: entities (your game objects), particles (managed automatically).
+- CLASSES: Particle(x, y, color, size, vx, vy).
+- FUNCTIONS: 
+    * checkAABB(a, b), checkCircle(a, b)
+    * applyShake(v) - screen shake
+    * burst(x, y, color, n) - spawn particles
+    * smolTriggerGameOver() - call this on death
+    * sfx(freq, duration, type, sweep) - play sound
 
 TOOLS:
 - PATCH_CODE: Replace an AST node (FunctionDeclaration or ObjectProperty). Use this for semantic fixes.
 - REWRITE_FUNCTION: Replace a whole function body by its name.
 - UPDATE_PLAN: { newPlan: [{ task: string, status: 'pending'|'completed'|'failed' }] }
-- VALIDATE_RUNTIME: Runs code in Playwright (Headless Chrome). CLICKS 'START' BUTTON.
+- VALIDATE_RUNTIME: Runs code in Playwright (Headless Chrome).
 - RESEARCH: { query: string }
 - FINISH: Signal task completion with a brief summary.
 
 CONTEXT:
 ${getRelevantKnowledge(['juice', 'logic', 'physics', 'mobile'])}
 
-GLOBALS (DO NOT REDEFINE): smolState, score, hi, shake, W, H, ctx, scale, cam, joy, swipe, Part.
-CORE FUNCTIONS: checkAABB(a, b), checkCircle(a, b), applyShake(v), burst(x, y, c, n), smolTriggerGameOver().
-
-HISTORY:
+HISTORY (LAST 5 STEPS):
 ${this.history.slice(-5).map((s, i) => `[Step ${i}] Action: ${s.action.type} | Observation: ${s.observation.slice(0, 100)}...`).join('\n')}
 
 INSTRUCTIONS:
 1. Output ONLY a valid JSON object.
 2. Always reflect on your PLAN in your "thought".
-3. If validation fails, update the PLAN to fix it.
+3. Use 'PATCH_CODE' or 'REWRITE_FUNCTION' whenever possible to maintain code integrity.
 
 OUTPUT:
 {
