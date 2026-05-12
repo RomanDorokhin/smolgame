@@ -71,11 +71,24 @@ export const KNOWLEDGE_BASE = {
   },
   code: {
     'api-reference': {
-      text: `SKELETON GLOBALS: W, H, ctx, scale (DPR), score, hi, shake, cam, joy, swipe, glow(c,b), nglow(), sfx(f,t,ty), Part, safeStorage.`,
+      text: `GLOBALS (DO NOT REDEFINE): 
+      - smolState: Current game state ('start', 'play', 'over'). 
+      - score: Current numeric score.
+      - shake: Set to > 0 for screen shake (e.g. shake = 10).
+      - W, H: Canvas width/height.
+      - ctx: 2D Context.
+      - cam: Camera {x, y, zoom}.
+      - joy: Joystick {x, y}.
+      - swipe: Swipe flags {up, down, left, right}.
+      - Part: Particle class.`,
       tags: ['api', 'reference']
     },
+    'state-management': {
+      text: `STRICT: Use 'smolState' for flow. 'smolStartGame()' sets it to 'play'. 'smolTriggerGameOver()' sets it to 'over'. NEVER define 'let currentState'.`,
+      tags: ['logic', 'safety']
+    },
     'anti-patterns': {
-      text: `CRITICAL: NO getElementById, NO addEventListener (use onTouch), NO manual loop, NO joy overrides.`,
+      text: `CRITICAL: NO getElementById, NO addEventListener, NO 'let currentState', NO 'let score'. Use existing globals.`,
       tags: ['safety', 'errors']
     }
   },

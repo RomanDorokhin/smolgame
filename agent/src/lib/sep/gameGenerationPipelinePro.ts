@@ -30,7 +30,19 @@ import { analyzeGameCode } from './game-code-analyzer';
 // ─── ADVANCED VALIDATOR ──────────────────────────
 function validate(html: string): string[] {
   const report = analyzeGameCode(html);
-  return report.errors;
+  const errors = [...report.errors];
+  
+  // Strict Linter: Prevent Shadowing Globals
+  const logic = html.split('/* INJECT_LOGIC_HERE */')[1] || '';
+  const shadowing = ['currentState', 'score', 'smolState', 'shake', 'W', 'H'].filter(v => 
+    new RegExp(`(let|const|var)\\s+${v}\\s*=`, 'g').test(logic)
+  );
+  
+  if (shadowing.length > 0) {
+    errors.push(`CRITICAL: You are redefining engine globals: ${shadowing.join(', ')}. Use the existing variables instead of defining new ones with let/const.`);
+  }
+
+  return errors;
 }
 
 // ─── AUTO-REPAIR MECHANISM ────────────────────────────────────

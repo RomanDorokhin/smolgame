@@ -116,7 +116,21 @@ AVAILABLE TOOLS:
 CONTEXT:
 ${getRelevantKnowledge(['juice', 'logic', 'physics', 'mobile'])}
 
-GLOBALS: W, H, ctx, scale, score, hi, shake, cam, joy, swipe, glow, nglow, sfx, Part.
+GLOBALS (DO NOT REDEFINE, USE THEM):
+- smolState: 'start', 'play', 'over' (Control game flow with this)
+- score, hi, shake (shake = 10 for screen shake)
+- W, H, ctx, scale, cam, joy, swipe, Part.
+
+CORE FUNCTIONS (AVAILABLE GLOBALLY):
+- checkAABB(a, b), checkCircle(a, b)
+- applyShake(value)
+- burst(x, y, color, count)
+- smolTriggerGameOver() (Call this when player dies)
+
+STRICT RULES:
+1. NEVER use 'let smolState', 'let score', etc.
+2. NEVER use 'currentState'. Use 'smolState'.
+3. Use 'scale' for all sizes/speeds to ensure mobile responsiveness.
 
 CURRENT CODEBASE:
 \`\`\`javascript

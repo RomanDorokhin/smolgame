@@ -76,6 +76,12 @@ hi=safeStorage.get('smol_hi',0);
 const glow=(c,b)=>{ctx.shadowColor=c;ctx.shadowBlur=b*scale;};
 const nglow=()=>{ctx.shadowBlur=0;};
 
+// --- CORE HELPERS (GLOBAL) ---
+const checkAABB=(a,b)=>a.x<b.x+b.w&&a.x+a.w>b.x&&a.y<b.y+b.h&&a.y+a.h>b.y;
+const checkCircle=(a,b)=>{const dx=a.x-b.x,dy=a.y-b.y,d=Math.sqrt(dx*dx+dy*dy);return d<a.r+b.r;};
+const applyShake=(v=10)=>shake=v;
+const burst=(x,y,c,n=15)=>{for(let i=0;i<n;i++)parts.push(new Part(x,y,c))};
+
 class Part{
   constructor(x,y,c){
     this.x=x;this.y=y;this.c=c;this.s=Math.random()*4+2;
@@ -123,6 +129,14 @@ function smolStartGame(){
   if(typeof init==='function')init();
 }
 
+// --- IDIOT-PROOF BRIDGE ---
+// If agent hallucinates 'currentState' or 'myScore', we map them to engine globals.
+window.currentState = smolState; 
+Object.defineProperty(window, 'currentState', {
+  get: () => smolState,
+  set: (v) => { smolState = v; }
+});
+
 function smolTriggerGameOver(){
   smolState='over';
   if(score>hi){hi=score;safeStorage.set('smol_hi',hi)}
@@ -138,13 +152,18 @@ function loop(t){
   if(shake>0.5){ctx.translate((Math.random()-0.5)*shake,(Math.random()-0.5)*shake);shake*=0.9}
   
   if(smolState==='play'){
-    if(typeof update==='function')update();
-    ctx.save();
-    ctx.translate(W/2,H/2);
-    ctx.scale(cam.zoom,cam.zoom);
-    ctx.translate(-cam.x,-cam.y);
-    if(typeof draw==='function')draw();
-    ctx.restore();
+    try {
+      if(typeof update==='function') update();
+      ctx.save();
+      ctx.translate(W/2,H/2);
+      ctx.scale(cam.zoom,cam.zoom);
+      ctx.translate(-cam.x,-cam.y);
+      if(typeof draw==='function') draw();
+      ctx.restore();
+    } catch(e) {
+      console.error("Game Loop Error:", e);
+      shake = 20; // Visual feedback of error
+    }
     document.getElementById('score').innerText=String(score).padStart(6,'0');
   }
 
