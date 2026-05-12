@@ -29,7 +29,8 @@ export const KNOWLEDGE_BASE = {
     'code-debugging': `Check ctx.save/restore symmetry, check beginPath usage, verify W/H relative coords.`,
     'code-refactoring': `Modular structure: Config -> State -> Systems -> Loop. Idempotent reset().`,
     'single-file-constraints': `NO imports, NO external assets. Use Procedural Gen or Data URIs.`,
-    'performance-budget': `Limit particles to 200, pool objects, avoid heavy ctx.filter or huge shadowBlur.`
+    'performance-budget': `Limit particles to 200, pool objects, avoid heavy ctx.filter or huge shadowBlur.`,
+    'anti-patterns': `CRITICAL: NEVER create your own canvas. NEVER add event listeners. NEVER write a main loop. DO NOT use 'document.getElementById'. DO NOT use 'addEventListener'. These are handled by the skeleton. REJECT any tutorial-style 'Step 1/2/3' text.`
   },
   quality: {
     'qa-checklist': `35-Point Standard: touch-action:none, safeStorage, 60fps, 9:16, Screen Shake, Neon Glow, Particles, Parallax, Procedural Audio.`,
