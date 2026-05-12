@@ -387,7 +387,7 @@ export default function Home() {
               {/* Logo / Branding */}
               <div className="flex items-center gap-3 group cursor-pointer" onClick={() => setActiveTab("chat")}>
                 <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-700 flex items-center justify-center shadow-lg shadow-blue-900/30 group-hover:scale-110 group-hover:rotate-3 transition-all duration-500">
-                  <Sparkles size={20} className="text-white fill-current" />
+                  <SparkleIcon size={20} className="text-white fill-current" />
                 </div>
                 <div className="hidden sm:flex flex-col">
                   <span className="text-sm font-black tracking-tight text-white uppercase tracking-[0.1em]">Architect</span>
@@ -442,7 +442,7 @@ export default function Home() {
                       <div className="relative mb-12">
                         <div className="absolute inset-0 bg-blue-500/30 blur-[100px] animate-pulse rounded-full" />
                         <div className="w-24 h-24 rounded-[2.5rem] bg-gradient-to-br from-blue-600 to-indigo-700 flex items-center justify-center shadow-[0_20px_50px_rgba(37,99,235,0.4)] animate-float relative z-10">
-                          <Sparkles className="text-white w-12 h-12 fill-current" />
+                          <SparkleIcon className="text-white w-12 h-12 fill-current" />
                         </div>
                       </div>
                       <h2 className="text-4xl md:text-6xl font-black text-white mb-4 text-center tracking-tighter leading-tight">
