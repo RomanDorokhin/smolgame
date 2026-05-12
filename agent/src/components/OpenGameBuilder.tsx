@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Wand2, RefreshCcw, Copy, Check, Terminal, Info, X, ChevronRight, Gamepad2, Palette, Zap, Clock } from "lucide-react";
+import { Wand2, RefreshCcw, Copy, Check, Terminal, Info, X, ChevronRight, Gamepad2, Palette, Zap, Clock, Sparkles } from "lucide-react";
 import { SmolGameAPI } from "@/lib/smolgame-api";
 import { toast } from "sonner";
 
