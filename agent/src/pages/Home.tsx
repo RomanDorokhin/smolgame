@@ -161,6 +161,7 @@ export default function Home() {
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
       if (event.data?.type === 'GAME_ERROR') {
+        (window as any).lastSmolError = event.data.error;
         toast.error(`Ошибка в коде игры: ${event.data.error}`, {
           description: `Строка: ${event.data.line || '?'}, Кол: ${event.data.col || '?'}`
         });
