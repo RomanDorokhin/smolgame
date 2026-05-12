@@ -148,7 +148,7 @@ STRICT: Reset swipe flags. Use 'scale' for all sizes. Output ONLY <game_logic>.`
   // --- STAGE 3: THE CRITIC (REFINEMENT & JUICE) ---
   onProgress?.('✨ CRITIC: Validating alignment with plan & injecting juice...');
   const finalHtml = ultimateArcadeSkeleton.replace(
-    /\/\/ ─── OVERRIDE THESE ──────────────────────────────────────────[\s\S]*?function draw\(\)\{\}/i,
+    '/* INJECT_LOGIC_HERE */',
     `// ─── INJECTED LOGIC ──────────────────────────────────────────\n${logic}`
   );
 
@@ -173,7 +173,7 @@ STRICT: Output ONLY updated <game_logic>.`
     ]);
     const fixedLogic = fixedResponse.match(/<game_logic>([\s\S]*?)<\/game_logic>/i)?.[1].trim() || fixedResponse;
     const finalPolishedHtml = ultimateArcadeSkeleton.replace(
-      /\/\/ ─── OVERRIDE THESE ──────────────────────────────────────────[\s\S]*?function draw\(\)\{\}/i,
+      '/* INJECT_LOGIC_HERE */',
       `// ─── INJECTED LOGIC ──────────────────────────────────────────\n${fixedLogic}`
     );
     return { isSuccess: true, generatedCode: finalPolishedHtml, errors: validate(finalPolishedHtml) };
