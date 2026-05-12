@@ -6,7 +6,7 @@ import { ChatInput } from "@/components/ChatInput";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
-import { Menu, Sparkles, Github, Layout, MessageSquare, Play, Pencil, RotateCcw, X, ChevronDown, ChevronUp, Key, Trash2, Save, FileCode, Monitor, Smartphone, Maximize2, ExternalLink, ArrowLeft, LoaderCircle as Loader2, CircleCheck as CheckCircle2, EllipsisVertical as MoreVertical, Sparkles as SparkleIcon } from "lucide-react";
+import { Menu, Sparkles, Github, Layout, MessageSquare, Play, Pencil, RotateCcw, X, ChevronDown, ChevronUp, Key, Trash2, Save, FileCode, Monitor, Smartphone, Maximize2, ExternalLink, ArrowLeft, Wand2, LoaderCircle as Loader2, CircleCheck as CheckCircle2, EllipsisVertical as MoreVertical, Sparkles as SparkleIcon } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { SmolGameAPI } from "@/lib/smolgame-api";
@@ -15,6 +15,8 @@ import type { ChatSettings, APIProvider } from "@/types/chat";
 import Editor from "@monaco-editor/react";
 import { Panel, Group, Separator } from "react-resizable-panels";
 import { Progress } from "@/components/ui/progress";
+import { OpenGameBuilder } from "@/components/OpenGameBuilder";
+
 
 function loadSettings(): ChatSettings {
   const saved = localStorage.getItem("smol_chat_settings_v3");
@@ -91,6 +93,8 @@ export default function Home() {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [chatInputValue, setChatInputValue] = useState("");
   const [studioSubTab, setStudioSubTab] = useState<"published" | "drafts">("published");
+  const [isBuilderOpen, setIsBuilderOpen] = useState(false);
+
 
   useEffect(() => {
     if (studioGame?.code) {
@@ -255,6 +259,12 @@ export default function Home() {
     { title: "Flappy Bird", emoji: "🐦", prompt: "Точный мобильный клон Flappy Bird. Управление — тапы в любой части экрана. Трубы бесконечные. Система рекордов и экран Game Over с кнопкой рестарта." },
     { title: "Змейка", emoji: "🐍", prompt: "Классическая змейка для телефона. Управление свайпами в четырех направлениях. Плавная анимация, сочные эффекты при поедании яблок." }
   ];
+
+  const handleStartBuilderGame = (prompt: string) => {
+    setIsBuilderOpen(false);
+    sendMessage(prompt);
+  };
+
 
   return (
     <ErrorBoundary>
@@ -456,6 +466,7 @@ export default function Home() {
                           </button>
                         ))}
                       </div>
+
                     </div>
                   ) : (
                     <div className="space-y-6 pt-10">
@@ -848,24 +859,46 @@ export default function Home() {
 
           {/* Global Input */}
           <div className="px-4 py-4 md:px-8 md:py-6 bg-[#0a0b0e] border-t border-white/5 shrink-0">
-            <div className="max-w-2xl mx-auto">
-              <ChatInput
-                value={chatInputValue}
-                onChange={setChatInputValue}
-                onSend={(text) => {
-                  if (activeTab === "studio") setActiveTab("chat");
-                  sendMessage(text);
-                }}
-                onStop={stop}
-                isGenerating={isRunning}
-                disabled={isRunning}
-                placeholder={isRunning ? "Агент думает..." : "Опишите игру или попросите доработать текущую..."}
-              />
-              <div className="mt-3 text-[9px] text-center text-white/10 uppercase tracking-[0.2em] font-black">
-                agent-smol v4.4-GODMODE • Phase: Plan + Code • Engine: LLM-API v3
+            <div className="max-w-2xl mx-auto flex items-center gap-4">
+              <button 
+                onClick={() => setIsBuilderOpen(true)}
+                title="Game Architect"
+                className="h-14 w-14 shrink-0 bg-blue-600/10 border border-blue-500/20 rounded-2xl flex items-center justify-center hover:bg-blue-600/20 hover:border-blue-500 transition-all group shadow-lg shadow-blue-900/10"
+              >
+                <Wand2 className="text-blue-400 group-hover:scale-110 group-hover:rotate-12 transition-transform" size={20} />
+              </button>
+              <div className="flex-1">
+                <ChatInput
+                  value={chatInputValue}
+                  onChange={setChatInputValue}
+                  onSend={(text) => {
+                    if (activeTab === "studio") setActiveTab("chat");
+                    sendMessage(text);
+                  }}
+                  onStop={stop}
+                  isGenerating={isRunning}
+                  disabled={isRunning}
+                  placeholder={isRunning ? "Агент думает..." : "Опишите игру или используйте Конструктор..."}
+                />
               </div>
             </div>
+            <div className="mt-3 text-[9px] text-center text-white/10 uppercase tracking-[0.2em] font-black">
+              agent-smol v4.4-GODMODE • Phase: Plan + Code • Engine: LLM-API v3
+            </div>
           </div>
+
+          {/* Builder Overlay */}
+          {isBuilderOpen && (
+            <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4 md:p-8 bg-black/90 backdrop-blur-2xl animate-in fade-in duration-500">
+              <div className="w-full max-w-4xl max-h-[90vh] overflow-y-auto custom-scrollbar">
+                <OpenGameBuilder 
+                  onStart={handleStartBuilderGame} 
+                  onCancel={() => setIsBuilderOpen(false)}
+                  provider={settings.primaryProvider}
+                />
+              </div>
+            </div>
+          )}
         </main>
       </div>
     </ErrorBoundary>
