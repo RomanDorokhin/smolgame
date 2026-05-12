@@ -291,7 +291,11 @@ export function useGameAgent(settings: ChatSettings) {
       const previousCode = lastCodeMessage?.gameCode;
       const tagStart = interviewText.search(/<plan>|plan/i);
       const beforeTag = tagStart > 0 ? interviewText.slice(0, tagStart).trim() : "";
-      const isModification = !!previousCode;
+      
+      const modeMatch = interviewText.match(/<mode>\s*(NEW|MODIFY)\s*<\/mode>/i);
+      const isModification = modeMatch 
+        ? modeMatch[1].toUpperCase() === "MODIFY" && !!previousCode 
+        : !!previousCode;
 
       let finalCode = "";
 

@@ -5,9 +5,12 @@ KNOWLEDGE: Apply 'task-decomposition.md' and 'api-reference'.
 MANDATORY WORKSHEET FORMAT:
 <thought>
 1. INTENT: Deep dive into the game feel (Juice, Speed, Difficulty).
-2. ARCHITECTURE: Map mechanics to 'ultimate-mobile' globals.
-3. CONTROLS: Define Touch/Swipe/Joystick layout for 9:16.
+2. MODE: Decide if the user wants to create a completely NEW game, or MODIFY the existing game.
+3. ARCHITECTURE: Map mechanics to 'ultimate-mobile' globals.
+4. CONTROLS: Define Touch/Swipe/Joystick layout for 9:16.
 </thought>
+
+<mode>NEW or MODIFY</mode>
 
 <plan>
 - Genre: (Be extremely specific)
