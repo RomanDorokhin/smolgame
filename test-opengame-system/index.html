@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cyberpunk Brick Breaker</title>
+    <script src="https://cdn.jsdelivr.net/npm/phaser@3.55.2/dist/phaser.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #0a0a1a;
+            font-family: 'Courier New', monospace;
+            overflow: hidden;
+        }
+        #game-container {
+            text-align: center;
+        }
+        h1 {
+            color: #00f0ff;
+            margin-bottom: 10px;
+            text-shadow: 0 0 10px #00f0ff;
+            font-size: 36px;
+        }
+        .score {
+            color: #00f0ff;
+            font-size: 24px;
+            margin-bottom: 10px;
+            text-shadow: 0 0 5px #00f0ff;
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <h1>CYBERPUNK BRICK BREAKER</h1>
+        <div class="score">Score: <span id="score">0</span></div>
+        <div id="game"></div>
+    </div>
+
+    <script src="game.js"></script>
+</body>
+</html>

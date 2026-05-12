@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Neon Dash</title>
+<script src="https://cdn.jsdelivr.net/npm/phaser@3.80.1/dist/phaser.min.js"></script>
+<script src="js/constants.js"></script>
+<script src="js/BootScene.js"></script>
+<script src="js/GameScene.js"></script>
+<style>
+  body { margin: 0; background: #000; overflow: hidden; }
+  canvas { display: block; margin: 0 auto; }
+</style>
+</head>
+<body>
+<script>
+const config = {
+  type: Phaser.AUTO,
+  width: 800,
+  height: 400,
+  backgroundColor: '#000814',
+  physics: {
+    default: 'arcade',
+    arcade: { gravity: { y: 1200 }, debug: false },
+  },
+  scene: [BootScene, GameScene],
+  scale: {
+    mode: Phaser.Scale.FIT,
+    autoCenter: Phaser.Scale.CENTER_BOTH,
+  }
+};
+const game = new Phaser.Game(config);
+</script>
+</body>
+</html>

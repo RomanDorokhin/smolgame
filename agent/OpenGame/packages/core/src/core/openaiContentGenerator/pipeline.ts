@@ -244,7 +244,7 @@ export class ContentGenerationPipeline {
       (
         baseRequest as unknown as OpenAI.Chat.ChatCompletionCreateParamsStreaming
       ).stream = true;
-      baseRequest.stream_options = { include_usage: true };
+      // baseRequest.stream_options = { include_usage: true }; // NOT SUPPORTED BY MISTRAL
     }
 
     // Add tools if present
@@ -329,7 +329,7 @@ export class ContentGenerationPipeline {
     }
 
     return {
-      reasoning_effort: reasoning?.effort ?? 'medium',
+      // reasoning_effort: reasoning?.effort ?? 'medium', // NOT SUPPORTED BY MISTRAL
     };
   }
 
@@ -353,6 +353,9 @@ export class ContentGenerationPipeline {
         userPromptId,
         isStreaming,
       );
+      console.log('--- OPENAI REQUEST ---');
+      console.log(JSON.stringify(openaiRequest, null, 2));
+      console.log('----------------------');
 
       const result = await executor(openaiRequest, context);
 

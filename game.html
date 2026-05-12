@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+ <meta charset="UTF-8">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+ <title>Top-down Shooter</title>
+ <style>
+ body {
+ margin: 0;
+ padding: 0;
+ overflow: hidden;
+ background: #111;
+ font-family: Arial, sans-serif;
+ }
+ #game-container {
+ position: relative;
+ width: 100vw;
+ height: 100vh;
+ }
+ .mobile-controls {
+ position: absolute;
+ bottom: 20px;
+ left: 20px;
+ right: 20px;
+ display: flex;
+ justify-content: space-between;
+ align-items: center;
+ pointer-events: none;
+ z-index: 1000;
+ }
+ .joystick-container {
+ width: 120px;
+ height: 120px;
+ background: rgba(255, 255, 255, 0.1);
+ border-radius: 50%;
+ position: relative;
+ pointer-events: auto;
+ }
+ .joystick {
+ width: 60px;
+ height: 60px;
+ background: rgba(255, 255, 255, 0.3);
+ border-radius: 50%;
+ position: absolute;
+ top: 30px;
+ left: 30px;
+ }
+ .shoot-button {
+ width: 80px;
+ height: 80px;
+ background: rgba(255, 50, 50, 0.7);
+ border-radius: 50%;
+ display: flex;
+ align-items: center;
+ justify-content: center;
+ color: white;
+ font-size: 24px;
+ font-weight: bold;
+ pointer-events: auto;
+ user-select: none;
+ touch-action: none;
+ }
+ .shoot-button:active {
+ background: rgba(255, 50, 50, 0.9);
+ transform: scale(0.95);
+ }
+ .ui-panel {
+ position: absolute;
+ top: 10px;
+ left: 10px;
+ right: 10px;
+ display: flex;
+ justify-content: space-between;
+ color: white;
+ font-size: 20px;
+ z-index: 1000;
+ }
+ .game-over {
+ position: absolute;
+ top: 50%;
+ left: 50%;
+ transform: translate(-50%, -50%);
+ background: rgba(0, 0, 0, 0.8);
+ padding: 30px;
+ border-radius: 15px;
+ text-align: center;
+ color: white;
+ font-size: 24px;
+ z-index: 2000;
+ display: none;
+ }
+ .restart-button {
+ background: #4CAF50;
+ color: white;
+ border: none;
+ padding: 15px 30px;
+ font-size: 20px;
+ border-radius: 10px;
+ margin-top: 20px;
+ cursor: pointer;
+ }
+ .restart-button:hover {
+ background: #45a049;
+ }
+ </style>
+</head>
+<body>
+ <div id="game-container"></div>
+ <div class="mobile-controls">
+ <div class="joystick-container">
+ <div class="joystick" id="joystick"></div>
+ </div>
+ <div class="shoot-button" id="shoot-button">FIRE</div>
+ </div>
+ <div class="ui-panel">
+ <div id="score">Очки: 0</div>
+ <div id="health">Здоровье: 100</div>
+ </div>
+ <div class="game-over" id="game-over">
+ <h2>Игра окончена!</h2>
+ <p>Ваш счет: <span id="final-score">0</span></p>
+ <button class="restart-button" onclick="restartGame()">Играть снова</button>
+ </div>
+
+ <script src="https://cdn.jsdelivr.net/npm/phaser@3.80.1/dist/phaser.min.js"></script>
+ <script>
+ class GameScene extends Phaser.Scene {
+ constructor() {
+ super('GameScene');
+ }
+
+ preload() {
+ // Создаем текстуры для спрайтов
+ this.createTextures();
+ }
+
+ createTextures() {
+ // Создаем текстуру для игрока (зеленый круг)
+ const playerGraphics = this.make.graphics({ x: 0, y: 0 });
+ playerGraphics.fillStyle(0x00FF00, 1);
+ playerGraphics.fillCircle(32, 32, 32);
+ playerGraphics.generateTexture('player', 64, 64);
+ playerGraphics.destroy();
+
+ // Создаем текстуру для врага (красный круг)
+ const enemyGraphics = this.make.graphics({ x: 0, y: 0 });
+ enemyGraphics.fillStyle(0xFF0000, 1);
+ enemyGraphics.fillCircle(32, 32, 32);
+ enemyGraphics.generateTexture('enemy', 64, 64);
+ enemyGraphics.destroy();
+
+ // Создаем текстуру для пули (желтый круг)
+ const bulletGraphics = this.make.graphics({ x: 0, y: 0 });
+ bulletGraphics.fillStyle(0xFFFF00, 1);
+ bulletGraphics.fillCircle(16, 16, 16);
+ bulletGraphics.generateTexture('bullet', 32, 32);
+ bulletGraphics.destroy();
+
+ // Создаем текстуру для эффекта взрыва
+ const explosionGraphics = this.make.graphics({ x: 0, y: 0 });
+ explosionGraphics.fillStyle(0xFFA500, 0.8);
+ explosionGraphics.fillCircle(32, 32, 32);
+ explosionGraphics.generateTexture('explosion', 64, 64);
+ explosionGraphics.destroy();
+ }
+
+ create() {
+ // Настройка физики
+ this.physics.world.setBounds(0, 0, this.game.config.width, this.game.config.height);
+
+ // Создаем игрока
+ this.player = this.physics.add.sprite(400, 300, 'player');
+ this.player.setCollideWorldBounds(true);
+ this.player.setScale(0.5);
+ this.player.health = 100;
+ this.player.invulnerable = false;
+
+ // Группы для объектов
+ this.enemies = this.physics.add.group();
+ this.bullets = this.physics.add.group();
+ this.explosions = this.physics.add.group();
+
+ // Настройка камеры
+ this.cameras.main.startFollow(this.player);
+ this.cameras.main.setZoom(1.5);
+
+ // Инициализация переменных
+ this.score = 0;
+ this.enemySpawnTimer = 0;
+ this.shootCooldown = 0;
+ this.isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
+ // Настройка управления
+ this.setupControls();
+
+ // UI элементы
+ this.scoreText = document.getElementById('score');
+ this.healthText = document.getElementById('health');
+ this.gameOverScreen = document.getElementById('game-over');
+ this.finalScoreText = document.getElementById('final-score');
+
+ // Коллизии
+ this.physics.add.collider(this.bullets, this.enemies, this.bulletHitEnemy, null, this);
+ this.physics.add.collider(this.player, this.enemies, this.playerHitEnemy, null, this);
+
+ // Событие для спавна врагов
+ this.time.addEvent({
+ delay: 1000,
+ callback: this.spawnEnemy,
+ callbackScope: this,
+ loop: true
+ });
+
+ // Событие для увеличения сложности
+ this.time.addEvent({
+ delay: 30000,
+ callback: this.increaseDifficulty,
+ callbackScope: this,
+ loop: true
+ });
+ }
+
+ setupControls() {
+ // Управление мышкой/тачем для поворота
+ this.input.on('pointermove', (pointer) => {
+ if (pointer.isDown) {
+ const angle = Phaser.Math.Angle.Between(
+ this.player.x, this.player.y,
+ pointer.worldX, pointer.worldY
+ );
+ this.player.rotation = angle + Math.PI / 2;
+ }
+ });
+
+ // Стрельба по клику/тапу
+ this.input.on('pointerdown', (pointer) => {
+ if (!this.isMobile || pointer.x > window.innerWidth / 2) {
+ this.shoot();
+ }
+ });
+
+ // Клавиатура для десктопа
+ this.cursors = this.input.keyboard.createCursorKeys();
+ this.spaceKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
+
+ // Мобильное управление
+ if (this.isMobile) {
+ this.setupMobileControls();
+ }
+ }
+
+ setupMobileControls() {
+ const joystick = document.getElementById('joystick');
+ const joystickContainer = document.querySelector('.joystick-container');
+ const shootButton = document.getElementById('shoot-button');
+
+ let joystickActive = false;
+ let joystickStartX = 0;
+ let joystickStartY = 0;
+ let joystickX = 0;
+ let joystickY = 0;
+
+ // Обработка джойстика
+ const handleJoystickStart = (e) => {
+ e.preventDefault();
+ joystickActive = true;
+ const rect = joystickContainer.getBoundingClientRect();
+ joystickStartX = rect.left + rect.width / 2;
+ joystickStartY = rect.top + rect.height / 2;
+ };
+
+ const handleJoystickMove = (e) => {
+ if (!joystickActive) return;
+ e.preventDefault();
+
+ const touch = e.touches ? e.touches[0] : e;
+ const deltaX = touch.clientX - joystickStartX;
+ const deltaY = touch.clientY - joystickStartY;
+
+ const distance = Math.sqrt(deltaX * deltaY + deltaY * deltaY);
+ const maxDistance = 40;
+
+ if (distance > maxDistance) {
+ const angle = Math.atan2(deltaY, deltaX);
+ joystickX = Math.cos(angle) * maxDistance;
+ joystickY = Math.sin(angle) * maxDistance;
+ } else {
+ joystickX = deltaX;
+ joystickY = deltaY;
+ }
+
+ joystick.style.transform = `translate(${joystickX}px, ${joystickY}px)`;
+ };
+
+ const handleJoystickEnd = () => {
+ joystickActive = false;
+ joystickX = 0;
+ joystickY = 0;
+ joystick.style.transform = 'translate(0, 0)';
+ };
+
+ // Добавляем обработчики событий
+ joystickContainer.addEventListener('touchstart', handleJoystickStart);
+ joystickContainer.addEventListener('touchmove', handleJoystickMove);
+ joystickContainer.addEventListener('touchend', handleJoystickEnd);
+
+ // Кнопка стрельбы
+ shootButton.addEventListener('touchstart', (e) => {
+ e.preventDefault();
+ this.shoot();
+ });
+
+ // Сохраняем состояние джойстика для использования в update
+ this.joystickState = { x: 0, y: 0 };
+ this.updateJoystickState = () => {
+ this.joystickState.x = joystickX / 40;
+ this.joystickState.y = joystickY / 40;
+ };
+ }
+
+ update(time, delta) {
+ // Обновление состояния джойстика
+ if (this.isMobile && this.updateJoystickState) {
+ this.updateJoystickState();
+ }
+
+ // Управление движением
+ let moveX = 0;
+ let moveY = 0;
+ const speed = 200;
+
+ if (this.isMobile) {
+ moveX = this.joystickState.x * speed;
+ moveY = this.joystickState.y * speed;
+ } else {
+ if (this.cursors.left.isDown) moveX = -speed;
+ if (this.cursors.right.isDown) moveX = speed;
+ if (this.cursors.up.isDown) moveY = -speed;
+ if (this.cursors.down.isDown) moveY = speed;
+ }
+
+ this.player.setVelocity(moveX, moveY);
+
+ // Поворот игрока за курсором/тачем
+ const pointer = this.input.activePointer;
+ if (pointer.isDown || this.isMobile) {
+ const angle = Phaser.Math.Angle.Between(
+ this.player.x, this.player.y,
+ pointer.worldX, pointer.worldY
+ );
+ this.player.rotation = angle + Math.PI / 2;
+ }
+
+ // Автострельба при удержании пробела
+ if (this.spaceKey.isDown && !this.isMobile) {
+ this.shoot();
+ }
+
+ // Обновление кулдауна стрельбы
+ if (this.shootCooldown > 0) {
+ this.shootCooldown -= delta;
+ }
+
+ // Движение врагов к игроку
+ this.enemies.getChildren().forEach(enemy => {
+ const angle = Phaser.Math.Angle.Between(enemy.x, enemy.y, this.player.x, this.player.y);
+ this.physics.velocityFromAngle(Phaser.Math.RadToDeg(angle), 80, enemy.body.velocity);
+ });
+
+ // Обновление UI
+ this.scoreText.textContent = `Очки: ${this.score}`;
+ this.healthText.textContent = `Здоровье: ${Math.max(0, this.player.health)}`;
+ }
+
+ shoot() {
+ if (this.shootCooldown > 0) return;
+
+ const bullet = this.bullets.create(this.player.x, this.player.y, 'bullet');
+ bullet.setScale(0.5);
+ this.physics.velocityFromRotation(this.player.rotation - Math.PI / 2, 400, bullet.body.velocity);
+
+ // Ограничение времени жизни пули
+ this.time.delayedCall(2000, () => {
+ if (bullet.active) bullet.destroy();
+ });
+
+ this.shootCooldown = 200; // Кулдаун 200ms
+ }
+
+ spawnEnemy() {
+ const side = Phaser.Math.Between(0, 3);
+ let x, y;
+
+ switch(side) {
+ case 0: // сверху
+ x = Phaser.Math.Between(0, this.game.config.width);
+ y = -50;
+ break;
+ case 1: // справа
+ x = this.game.config.width + 50;
+ y = Phaser.Math.Between(0, this.game.config.height);
+ break;
+ case 2: // снизу
+ x = Phaser.Math.Between(0, this.game.config.width);
+ y = this.game.config.height + 50;
+ break;
+ case 3: // слева
+ x = -50;
+ y = Phaser.Math.Between(0, this.game.config.height);
+ break;
+ }
+
+ const enemy = this.enemies.create(x, y, 'enemy');
+ enemy.setScale(0.5);
+ enemy.setCollideWorldBounds(false);
+ }
+
+ bulletHitEnemy(bullet, enemy) {
+ // Создаем эффект взрыва
+ const explosion = this.explosions.create(enemy.x, enemy.y, 'explosion');
+ explosion.setScale(0.5);
+ explosion.setAlpha(0.7);
+
+ // Анимация исчезновения
+ this.tweens.add({
+ targets: explosion,
+ alpha: 0,
+ scale: 1.5,
+ duration: 300,
+ onComplete: () => explosion.destroy()
+ });
+
+ bullet.destroy();
+ enemy.destroy();
+
+ this.score += 10;
+ }
+
+ playerHitEnemy(player, enemy) {
+ if (this.player.invulnerable) return;
+
+ this.player.health -= 10;
+ enemy.destroy();
+
+ if (this.player.health <= 0) {
+ this.gameOver();
+ } else {
+ // Мигание при получении урона
+ this.player.invulnerable = true;
+ this.player.setTint(0xFF0000);
+
+ this.time.delayedCall(1000, () => {
+ this.player.invulnerable = false;
+ this.player.clearTint();
+ });
+ }
+ }
+
+ increaseDifficulty() {
+ // Увеличиваем скорость спавна врагов
+ const currentEvent = this.time.getEvents().find(e => e.delay === 1000);
+ if (currentEvent) {
+ currentEvent.delay = Math.max(200, currentEvent.delay - 100);
+ }
+ }
+
+ gameOver() {
+ this.physics.pause();
+ this.player.setTint(0xFF0000);
+
+ this.finalScoreText.textContent = this.score;
+ this.gameOverScreen.style.display = 'block';
+
+ // Останавливаем все события времени
+ this.time.removeAllEvents();
+ }
+ }
+
+ const config = {
+ type: Phaser.AUTO,
+ parent: 'game-container',
+ width: window.innerWidth,
+ height: window.innerHeight,
+ physics: {
+ default: 'arcade',
+ arcade: {
+ gravity: { y: 0 },
+ debug: false
+ }
+ },
+ scene: GameScene,
+ scale: {
+ mode: Phaser.Scale.RESIZE,
+ autoCenter: Phaser.Scale.CENTER_BOTH
+ }
+ };
+
+ const game = new Phaser.Game(config);
+
+ // Функция перезапуска игры
+ function restartGame() {
+ document.getElementById('game-over').style.display = 'none';
+ game.scene.stop('GameScene');
+ game.scene.start('GameScene');
+ }
+
+ // Обработка изменения размера окна
+ window.addEventListener('resize', () => {
+ game.scale.resize(window.innerWidth, window.innerHeight);
+ });
+ </script>
+</body>
+</html>

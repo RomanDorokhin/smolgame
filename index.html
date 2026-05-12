@@ -1,641 +1,112 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="theme-color" content="#0a0b0e">
-<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-<meta http-equiv="Pragma" content="no-cache">
-<meta http-equiv="Expires" content="0">
-<title>SmolGame</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="preconnect" href="https://smolgame.ru" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
-<script src="https://telegram.org/js/telegram-web-app.js"></script>
-<!-- ?v=10001 сбрасывает кэш WebView Telegram после правок JS/CSS (меняй при каждом релизе фронта; при крупных фиксах — у всех script/link сразу). -->
-<link rel="stylesheet" href="styles.css?v=222222">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Neon Arena</title>
+<script src="https://cdn.jsdelivr.net/npm/phaser@3.80.1/dist/phaser.min.js"></script>
+<script src="js/BootScene.js"></script>
+<script src="js/GameScene.js"></script>
+<script src="js/modules/BossDragon.js"></script>
 <style>
-  /* Hide technical agent tags from chat */
-  opengame_prompt, game_spec {
-    display: none !important;
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #000;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100vw;
+    height: 100vh;
+    font-family: 'Courier New', Courier, monospace;
+  }
+  canvas {
+    display: block;
+    filter: drop-shadow(0 0 16px #0ff) drop-shadow(0 0 40px #80f);
   }
 </style>
-
-<!-- Обновление имени/аватара теперь реактивно через syncUSERFromTelegramInit() в telegram-initdata.js -->
 </head>
-<body class="feed-open">
-<div id="screen-top-title" class="screen-top-title"></div>
-
-<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" width="0" height="0" style="position:absolute;overflow:hidden">
-  <defs>
-    <linearGradient id="sgLogoGradShared" x1="10" y1="14" x2="38" y2="38" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#b4c7e0"/><stop offset="100%" stop-color="#7d90a8"/>
-    </linearGradient>
-  </defs>
-</svg>
-
-<div id="app-boot-splash" class="app-boot-splash" hidden aria-live="polite" aria-busy="true">
-  <div class="app-boot-genre-drift" id="app-boot-genre-drift" aria-hidden="true"></div>
-  <div class="sg-brand sg-brand--splash">
-    <div class="sg-brand-mark" aria-hidden="true">
-      <svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect x="13" y="13" width="22" height="22" rx="8" fill="none" stroke="url(#sgLogoGradShared)" stroke-width="2.25"/><circle cx="24" cy="24" r="4.5" fill="url(#sgLogoGradShared)" opacity=".95"/></svg>
-    </div>
-    <div class="sg-brand-wordmark"><span class="sg-brand-word-muted">Smol</span><span class="sg-brand-word-accent">Game</span></div>
-  </div>
-  <div class="app-boot-sub" data-i18n="boot_loading">Загрузка…</div>
-</div>
-
-<div id="tg-only-wall" class="tg-only-wall" hidden>
-  <div class="tg-only-card tg-glass">
-    <div class="sg-brand sg-brand--card" style="padding-top: calc(var(--safe-top, 0px) + 80px);
-  padding-bottom: 90px;
-}">
-      <div class="sg-brand-mark sg-brand-mark--sm" aria-hidden="true">
-        <svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect x="13" y="13" width="22" height="22" rx="8" fill="none" stroke="url(#sgLogoGradShared)" stroke-width="2.25"/><circle cx="24" cy="24" r="4.5" fill="url(#sgLogoGradShared)" opacity=".95"/></svg>
-      </div>
-      <div class="sg-brand-wordmark sg-brand-wordmark--compact"><span class="sg-brand-word-muted">Smol</span><span class="sg-brand-word-accent">Game</span></div>
-    </div>
-    <p class="tg-only-title" data-i18n="tg_only_title">Открой в Telegram</p>
-    <p class="tg-only-text" data-i18n="tg_only_text">Открой из Telegram: меню бота → мини-приложение.</p>
-  </div>
-</div>
-
-
-<button type="button" id="feed-exit-focus" class="feed-exit-focus sg-btn sg-btn--secondary" data-action="feed-exit-focus" hidden data-i18n-aria="feed_exit_aria" data-i18n="feed_back">← Лента</button>
-
-<!-- ══ БОКОВЫЕ ДЕЙСТВИЯ: в DOM ДО #feed — иначе слой кнопок перекрывает iframe и ломает drag по игре ══ -->
-<div id="side-actions">
-  <!-- Лайк -->
-  <div class="action-btn" data-action="toggle-like" data-i18n-title="action_like_title" title="Лайк">
-    <div class="action-icon" id="likeIcon"><svg class="sg-icon sg-icon--heart" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-    <span class="action-label-num" id="likeCount">0</span>
-  </div>
-  <!-- Отзывы -->
-  <div class="action-btn" data-action="toggle-feed-reviews" data-i18n-title="action_reviews_title" title="Отзывы">
-    <div class="action-icon" aria-hidden="true"><svg class="sg-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M7.5 9.75h9M7.5 13.5h5.25M5.25 4.5h13.5a2.25 2.25 0 012.25 2.25v9a2.25 2.25 0 01-2.25 2.25H12l-4.5 3v-3H5.25A2.25 2.25 0 013 15.75v-9A2.25 2.25 0 015.25 4.5z" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-    <span class="action-label-num" id="feedReviewCount">0</span>
-  </div>
-  <!-- Поделиться -->
-  <div class="action-btn" data-action="share-game" title="Поделиться">
-    <div class="action-icon" aria-hidden="true"><svg class="sg-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M15 5.25L21 12m0 0l-6 6.75M21 12H3" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-    <span class="action-label-num" id="playsCount">0</span>
-  </div>
-  <!-- Жалоба -->
-  <div class="action-btn" data-action="report-game" data-i18n-title="report" title="Пожаловаться">
-    <div class="action-icon" aria-hidden="true">
-      <svg class="sg-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-10h.01M9 16h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-    </div>
-    <span class="action-label-num" data-i18n="report">Жалоба</span>
-  </div>
-  <!-- Админ-удаление -->
-  <div class="action-btn action-btn--admin" id="adminDeleteBtn" data-action="admin-delete-game" style="display:none; color:#ff4d4d;" title="Удалить (Админ)">
-    <div class="action-icon">
-      <svg class="sg-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-    </div>
-    <span class="action-label-num">Admin</span>
-  </div>
-</div>
-
-<!-- ══ FEED ══ -->
-<div id="feed"></div>
-
-<!-- Короткий оверлей с логотипом между играми -->
-<div id="feed-transition" class="feed-transition" hidden aria-hidden="true">
-  <div class="feed-transition-inner">
-    <div class="sg-brand sg-brand--transition feed-transition-logo">
-      <div class="sg-brand-mark sg-brand-mark--xs sg-brand-mark--spin" aria-hidden="true">
-        <svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect x="13" y="13" width="22" height="22" rx="8" fill="none" stroke="url(#sgLogoGradShared)" stroke-width="2.25"/><circle cx="24" cy="24" r="4.5" fill="url(#sgLogoGradShared)" opacity=".95"/></svg>
-      </div>
-      <div class="sg-brand-wordmark sg-brand-wordmark--transition"><span class="sg-brand-word-muted">Smol</span><span class="sg-brand-word-accent">Game</span></div>
-    </div>
-  </div>
-</div>
-
-<!-- ══ ПУСТАЯ ЛЕНТА / ОШИБКА ЗАГРУЗКИ ══ -->
-<div id="empty-state">
-  <div id="empty-state-default" class="sg-empty-state">
-    <div class="sg-empty-state-icon" aria-hidden="true"><svg class="sg-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M7.5 8.25h9a3 3 0 013 3v7.5a1.5 1.5 0 01-1.5 1.5h-12A1.5 1.5 0 015 18.75v-7.5a3 3 0 013-3zM9 8.25V6a3 3 0 013-3h0a3 3 0 013 3v2.25" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="9.75" cy="13.5" r="0.9" fill="currentColor"/><circle cx="14.25" cy="13.5" r="0.9" fill="currentColor"/><path d="M9.75 17.25h4.5a2.25 2.25 0 002.045-1.31l.022-.047" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg></div>
-    <div class="sg-empty-state-title" data-i18n="empty_feed_title">Пока без игр</div>
-    <div class="sg-empty-state-sub i18n-ru">Как короткие ролики, только это <strong>мини-игры</strong> в Telegram: листаешь — смотришь превью, понравилось — <strong>«Играть»</strong>, зашёл за автором — <strong>«Подписаться»</strong>, не зашла — свайп дальше. Без обязательных «посмотри рекламу, чтобы поиграть» — так задумано сейчас. Свою игру — снизу <strong>«Создать»</strong>.</div>
-    <div class="sg-empty-state-sub i18n-en">Like short videos, but <strong>mini-games</strong> in Telegram: swipe previews, tap <strong>Play</strong>, follow authors you like, swipe on if not. No forced “watch an ad to play” for now. Add yours via <strong>Upload</strong> below.</div>
-    <button type="button" class="sg-btn sg-btn--primary sg-btn--screen-cta sg-empty-state-cta" data-action="switch-tab" data-tab="upload" data-i18n="empty_feed_cta">Создать игру</button>
-  </div>
-  <div id="empty-state-error" class="sg-empty-state" hidden>
-    <div class="sg-empty-state-icon sg-empty-state-icon--warn" aria-hidden="true"><svg class="sg-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 9v4M12 17h.01M10.3 3.6h3.4l8.1 14.2a1 1 0 01-.87 1.5H3.07a1 1 0 01-.87-1.5L10.3 3.6z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-    <div class="sg-empty-state-title" data-i18n="empty_err_title">Лента не загрузилась</div>
-    <div class="sg-empty-state-sub" id="empty-state-error-msg" data-i18n="empty_err_sub">Проверь интернет и попробуй снова.</div>
-    <button type="button" class="sg-btn sg-btn--primary sg-btn--screen-cta sg-empty-state-cta" data-action="feed-retry" data-i18n="empty_retry">Повторить</button>
-  </div>
-</div>
-
-<!-- ══ ИНФО ОБ ИГРЕ (автор + мета игры в одну линию) ══ -->
-<div id="game-info">
-  <div class="author-row" data-action="open-author">
-    <div class="author-avatar" id="authorAvatar">?</div>
-    <div class="author-details">
-      <div class="author-top-row">
-        <div class="author-name" id="authorName">—</div>
-        <div class="follow-btn" id="followBtn" data-action="toggle-follow" data-i18n="follow_add">Подписаться</div>
-      </div>
-      <div class="author-role" id="authorRole" data-i18n="author_role">Разработчик</div>
-    </div>
-  </div>
-</div>
-
-<div id="feed-reviews-backdrop" class="feed-reviews-backdrop" hidden></div>
-<div id="feed-reviews-drawer" class="feed-reviews-drawer" hidden aria-hidden="true">
-  <div class="feed-reviews-drawer-handle" aria-hidden="true"></div>
-  <div class="feed-reviews-drawer-head">
-    <span class="feed-reviews-drawer-title" data-i18n="reviews_drawer_title">Отзывы</span>
-    <button type="button" class="feed-reviews-drawer-close" data-action="close-feed-reviews">×</button>
-  </div>
-  <div id="feedReviewsDrawerList" class="feed-reviews-drawer-list"></div>
-  <div class="feed-reviews-drawer-compose">
-    <div id="feedReviewActionBar" class="feed-reviews-action-bar" hidden>
-      <span id="feedReviewActionText"></span>
-      <button type="button" class="feed-reviews-action-cancel" data-action="cancel-review-action" aria-label="Отмена">×</button>
-    </div>
-    <div class="feed-reviews-compose-row">
-      <textarea id="feedReviewInput" class="feed-reviews-input" maxlength="500" data-i18n-placeholder="review_short_placeholder" placeholder="Твой отзыв..."></textarea>
-      <button type="button" class="feed-reviews-submit-btn" data-action="submit-feed-review" data-i18n="send">Отправить</button>
-    </div>
-  </div>
-</div>
-
-<!-- Полноэкранная карточка игры (профиль / поиск / библиотека) -->
-<div id="game-detail-screen" class="game-detail-screen" hidden aria-hidden="true">
-  <div class="game-detail-topbar">
-    <button type="button" class="game-detail-back sg-btn sg-btn--ghost" data-action="close-game-detail" data-i18n-aria="game_detail_back_aria" aria-label="Назад">←</button>
-    <span class="game-detail-topbar-title" id="gameDetailTopTitle" data-i18n="game_word">Игра</span>
-  </div>
-  <div class="game-detail-scroll" id="gameDetailScroll">
-    <div class="game-detail-hero" id="gameDetailHero"></div>
-    <div class="game-detail-body">
-      <div class="game-detail-badges" id="gameDetailBadges"></div>
-      <h1 class="game-detail-title" id="gameDetailTitle">—</h1>
-      <p class="game-detail-desc" id="gameDetailDesc"></p>
-      <div class="game-detail-meta-grid" id="gameDetailMeta"></div>
-      <button type="button" class="game-detail-play sg-btn sg-btn--primary sg-btn--screen-cta" id="gameDetailPlayBtn" data-action="game-detail-play" data-i18n="play">Играть</button>
-      <div class="game-detail-author-card" id="gameDetailAuthorCard"></div>
-      <section class="game-detail-section">
-        <h2 class="game-detail-section-title" data-i18n="reviews_section">Отзывы</h2>
-        <div id="gameDetailReviews"></div>
-      </section>
-      <div class="game-detail-owner-actions" id="gameDetailOwnerActions" hidden></div>
-    </div>
-  </div>
-  <!-- Sticky compose bar — всегда прикреплена снизу, не в скролле -->
-  <div class="game-detail-compose" id="gameDetailReviewForm">
-    <textarea id="gameDetailReviewInput" class="game-detail-compose-input field-input" maxlength="500" rows="2" data-i18n-placeholder="review_write_placeholder" placeholder="Написать отзыв…"></textarea>
-    <button type="button" class="game-detail-compose-send sg-btn sg-btn--primary" data-action="game-detail-submit-review" aria-label="Отправить">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M22 2L11 13" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M22 2L15 22L11 13L2 9L22 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-    </button>
-  </div>
-</div>
-
-
-<!-- ══ ПРОГРЕСС ══ -->
-<div id="dots"></div>
-
-<!-- Подсказка по ленте (первый вход) -->
-<div id="feed-nav-tip-overlay" class="feed-nav-tip-overlay">
-  <div class="feed-nav-tip-card tg-glass">
-    <button type="button" class="feed-nav-tip-close sg-btn sg-btn--ghost sg-btn--icon" data-action="close-feed-nav-tip" data-i18n-aria="close_aria" aria-label="Закрыть">
-      <svg class="sg-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="1.85" stroke-linecap="round"/></svg>
-    </button>
-    <p class="feed-nav-tip-title" data-i18n="feed_nav_what_title">Что это?</p>
-    <p class="feed-nav-tip-lead i18n-ru"><strong>SmolGame</strong> — лента мини-игр в Telegram в духе TikTok: листаешь карточки, заходишь в игру по кнопке, на автора можно подписаться. Сейчас <strong>без обязательной рекламы перед игрой</strong> (никаких «смотри 10 сек, потом играй»). Свайп <strong>вверх / вниз</strong> — другая игра; <strong>«Играть»</strong> — полный экран, выход — <strong>«← Лента»</strong>.</p>
-    <p class="feed-nav-tip-lead i18n-en"><strong>SmolGame</strong> is a mini-game feed in Telegram, TikTok-style: swipe cards, tap Play, follow creators. <strong>No mandatory ad before play</strong> right now. Swipe <strong>up / down</strong> for another game; <strong>Play</strong> is fullscreen, exit with <strong>← Feed</strong>.</p>
-    <div class="feed-nav-tip-demo" aria-hidden="true">
-      <div class="feed-nav-tip-demo-hand">
-        <svg class="feed-nav-tip-finger-svg" viewBox="0 0 48 56" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-          <path d="M18 8c-2.5 0-4.5 2-4.5 4.5v11L9 30c-1.2 1.2-1.2 3.2 0 4.4l1.1 1.1c.6.6 1.4.9 2.2.9h1.2v8c0 2.2 1.8 4 4 4h12c2.2 0 4-1.8 4-4V22.5c0-2.5-2-4.5-4.5-4.5-1.3 0-2.5.6-3.3 1.5-.8-.9-2-1.5-3.2-1.5-.9 0-1.7.3-2.4.8C22.3 17.3 20.3 16 18 16c-2.5 0-4.5 2-4.5 4.5V26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" opacity="0.92"/>
-        </svg>
-      </div>
-      <div class="feed-nav-tip-demo-track feed-nav-tip-demo-track--vertical">
-        <span class="feed-nav-tip-demo-label" data-i18n="feed_nav_swipe_label">свайп</span>
-        <div class="feed-nav-tip-demo-line feed-nav-tip-demo-line--vertical">
-          <span class="feed-nav-tip-demo-arrow">↑</span>
-          <span class="feed-nav-tip-demo-handle feed-nav-tip-demo-handle--v"></span>
-          <span class="feed-nav-tip-demo-arrow">↓</span>
-        </div>
-      </div>
-    </div>
-    <p class="feed-nav-tip-help"><button type="button" class="feed-nav-tip-help-btn" data-action="open-feed-help-full" data-i18n="feed_nav_help_link">Подробная справка</button></p>
-    <div class="feed-nav-tip-actions">
-      <button type="button" class="sg-btn sg-btn--secondary feed-nav-tip-secondary" data-action="close-feed-nav-tip" data-i18n="close">Закрыть</button>
-      <button type="button" class="sg-btn sg-btn--primary sg-btn--screen-cta" data-action="ack-feed-nav-tip" data-i18n="got_it">Понятно</button>
-    </div>
-  </div>
-  <div class="feed-nav-tip-card feed-nav-tip-card--detail tg-glass">
-    <button type="button" class="feed-nav-tip-close sg-btn sg-btn--ghost sg-btn--icon" data-action="close-feed-nav-tip" data-i18n-aria="close_aria" aria-label="Закрыть">
-      <svg class="sg-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="1.85" stroke-linecap="round"/></svg>
-    </button>
-    <p class="feed-nav-tip-title" data-i18n="feed_nav_how_title">Как листать ленту</p>
-    <p class="feed-nav-tip-lead" data-i18n="feed_nav_how_lead">Свайп <strong>по экрану</strong> (не по кнопкам сбоку и снизу) — следующая или предыдущая игра.</p>
-    <ul class="feed-nav-tip-list">
-      <li class="i18n-ru"><strong>Вверх</strong> — следующая игра</li>
-      <li class="i18n-en"><strong>Up</strong> — next game</li>
-      <li class="i18n-ru"><strong>Вниз</strong> — предыдущая</li>
-      <li class="i18n-en"><strong>Down</strong> — previous</li>
-      <li class="i18n-ru"><strong>«Играть»</strong> — только игра, без лайков и табов; <strong>«← Лента»</strong> — выход</li>
-      <li class="i18n-en"><strong>Play</strong> — game only, no likes/tabs; <strong>← Feed</strong> — exit</li>
-      <li class="i18n-ru">В режиме игры <strong>свайп ленты отключён</strong></li>
-      <li class="i18n-en"><strong>Feed swipe is off</strong> while playing</li>
-    </ul>
-    <div class="feed-nav-tip-actions feed-nav-tip-actions--stack">
-      <button type="button" class="sg-btn sg-btn--secondary feed-nav-tip-secondary" data-action="leave-feed-help-detail" data-i18n="feed_nav_back_detail">Назад к кратко</button>
-      <button type="button" class="sg-btn sg-btn--primary sg-btn--screen-cta" data-action="ack-feed-nav-tip" data-i18n="got_it">Понятно</button>
-    </div>
-  </div>
-</div>
-
-<!-- Первый запуск: welcome + демо свайпа по ленте (см. js/feed-onboarding.js) -->
-<div id="feed-onboarding-root" class="feed-onboarding-root" hidden aria-hidden="true">
-  <div id="feed-onboarding-welcome" class="feed-onboarding-welcome">
-    <div class="feed-onboarding-welcome-inner tg-glass">
-      <div class="feed-onboarding-brand sg-brand sg-brand--splash">
-        <div class="sg-brand-mark" aria-hidden="true">
-          <svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect x="13" y="13" width="22" height="22" rx="8" fill="none" stroke="url(#sgLogoGradShared)" stroke-width="2.25"/><circle cx="24" cy="24" r="4.5" fill="url(#sgLogoGradShared)" opacity=".95"/></svg>
-        </div>
-        <div class="sg-brand-wordmark"><span class="sg-brand-word-muted">Smol</span><span class="sg-brand-word-accent">Game</span></div>
-      </div>
-      <h1 class="feed-onboarding-welcome-title" data-i18n="feed_onboard_title">Добро пожаловать в SmolGame</h1>
-      <p class="feed-onboarding-welcome-sub i18n-ru">Листай как TikTok: превью → «Играть», понравился автор — подписка, не зашло — свайп дальше. Сейчас без принудительной рекламы перед игрой. Свою игру выложи через «Создать».</p>
-      <p class="feed-onboarding-welcome-sub i18n-en">Swipe like TikTok: preview → Play, follow authors you like, swipe on if not. No forced ads before play. Upload your game via Upload.</p>
-      <button type="button" class="sg-btn sg-btn--primary sg-btn--screen-cta feed-onboarding-welcome-cta" data-action="feed-onboarding-welcome-cta" data-i18n="feed_onboard_cta">Начать</button>
-    </div>
-  </div>
-</div>
-
-<!-- ══ НИЖНИЙ НАВ ══ -->
-<div id="bottom-nav">
-  <div class="nav-item active" id="nav-feed" data-action="switch-tab" data-tab="feed">
-    <div class="nav-icon sg-icon sg-icon--nav"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M7.5 8.25h9a3 3 0 013 3v7.5a1.5 1.5 0 01-1.5 1.5h-12A1.5 1.5 0 015 18.75v-7.5a3 3 0 013-3zM9 8.25V6a3 3 0 013-3h0a3 3 0 013 3v2.25" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"/><circle cx="9.75" cy="13.5" r="1.125" fill="currentColor"/><circle cx="14.25" cy="13.5" r="1.125" fill="currentColor"/><path d="M9.75 17.25h4.5a2.25 2.25 0 002.045-1.31l.022-.047" stroke="currentColor" stroke-width="1.65" stroke-linecap="round"/></svg></div>
-    <div class="nav-label" data-i18n="nav_feed">Лента</div>
-  </div>
-  <div class="nav-item" id="nav-games" data-action="switch-tab" data-tab="games">
-    <div class="nav-icon sg-icon sg-icon--nav"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-    <div class="nav-label" data-i18n="nav_games">Игры</div>
-  </div>
-  <div class="nav-item nav-item--upload" id="nav-upload" data-action="switch-tab" data-tab="upload">
-    <div class="nav-upload-fab" aria-hidden="true">
-      <svg class="nav-upload-fab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="3"/></svg>
-      <span class="nav-upload-fab-plus" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 5.25v13.5M5.25 12h13.5" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg></span>
-    </div>
-    <div class="nav-label" data-i18n="nav_upload">Создать</div>
-  </div>
-  <div class="nav-item" id="nav-search" data-action="switch-tab" data-tab="search">
-    <div class="nav-icon sg-icon sg-icon--nav"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><circle cx="11" cy="11" r="6.75" stroke="currentColor" stroke-width="1.65"/><path d="M16.5 16.5L21 21" stroke="currentColor" stroke-width="1.65" stroke-linecap="round"/></svg></div>
-    <div class="nav-label" data-i18n="nav_search">Поиск</div>
-  </div>
-  <div class="nav-item" id="nav-profile" data-action="switch-tab" data-tab="profile">
-    <div class="nav-icon sg-icon sg-icon--nav">
-      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><circle cx="12" cy="9" r="3.75" stroke="currentColor" stroke-width="1.65"/><path d="M6 19.5v-.75a4.5 4.5 0 014.5-4.5h3a4.5 4.5 0 014.5 4.5v.75" stroke="currentColor" stroke-width="1.65" stroke-linecap="round"/></svg>
-      <span class="nav-badge" id="profileTabBadge" style="display:none"></span>
-    </div>
-    <div class="nav-label" data-i18n="nav_profile">Профиль</div>
-  </div>
-</div>
-
-<!-- ══ ЭКРАН: ЗАГРУЗИТЬ ИГРУ (гайд и FAQ только здесь — лента без отвлечений) ══ -->
-<div id="upload-screen">
-  <div class="screen-header">
-    <h2 class="screen-title" data-i18n="nav_upload">Загрузить</h2>
-    <div class="screen-header-right">
-      <div class="lang-switch-group" role="group">
-        <button type="button" class="lang-switch lang-switch--active" id="langSwitchRu" data-action="set-lang-ru" aria-pressed="true">RU</button>
-        <button type="button" class="lang-switch" id="langSwitchEn" data-action="set-lang-en" aria-pressed="false">EN</button>
-      </div>
-    </div>
-  </div>
-
-  <div class="agent-container" style="flex: 1; height: 100%; overflow: hidden;">
-    <div id="agent-root" style="width: 100%; height: 100%;"></div>
-
-  </div>
-</div>
-
-<!-- ══ ЭКРАН: ПРОФИЛЬ ══ -->
-<div id="profile-screen">
-  <div class="screen-header screen-header--profile">
-    <h2 class="screen-title" data-i18n="nav_profile">Профиль</h2>
-    <div class="screen-header-right">
-      <div class="lang-switch-group" role="group">
-        <button type="button" class="lang-switch lang-switch--active" id="langSwitchRu" data-action="set-lang-ru" aria-pressed="true">RU</button>
-        <button type="button" class="lang-switch" id="langSwitchEn" data-action="set-lang-en" aria-pressed="false">EN</button>
-      </div>
-    </div>
-  </div>
-    <div class="profile-header-main">
-      <div class="profile-avatar-row">
-        <div class="profile-avatar-wrap">
-          <div class="profile-avatar" id="profileAvatar">?</div>
-        </div>
-        <div class="profile-stats-grid">
-          <div class="stat-item">
-            <div class="stat-num" id="statGames">0</div>
-            <div class="stat-lbl" data-i18n="stat_games">Игр</div>
-          </div>
-          <div class="stat-item">
-            <div class="stat-num" id="statFollowers">0</div>
-            <div class="stat-lbl" data-i18n="stat_followers">Подписчиков</div>
-          </div>
-          <div class="stat-item">
-            <div class="stat-num" id="statLikes">0</div>
-            <div class="stat-lbl" data-i18n="stat_likes">Лайки</div>
-          </div>
-        </div>
-      </div>
-
-      <div class="profile-info-block">
-        <div class="profile-name" id="profileName">Гость</div>
-        <div class="profile-handle" id="profileHandle">@—</div>
-        <p class="profile-bio" id="profileBio"></p>
-        <div class="profile-badges">
-          <div class="profile-badge dev" id="devBadge" style="display:none" data-i18n="badge_dev">⚡ Разработчик</div>
-          <div class="profile-badge profile-badge--premium" id="premiumBadge" style="display:none" data-i18n="badge_premium">✦ Премиум</div>
-        </div>
-      </div>
-    </div>
-    <div class="profile-action-buttons">
-      <button type="button" class="profile-btn profile-btn--secondary" id="profileEditOpenBtn" data-action="profile-start-edit" data-i18n="profile_edit">Редактировать профиль</button>
-      <button type="button" class="profile-btn profile-btn--primary" id="profileEditSaveBtn" data-action="profile-finish-edit" data-i18n="profile_save_btn" style="display:none">Сохранить</button>
-      <button type="button" class="profile-btn" id="profileEditDiscardBtn" data-action="profile-discard-edit" data-i18n="profile_discard" style="display:none">Отмена</button>
-    </div>
-    <div id="profile-edit-wrap" class="profile-edit-wrap">
-      <div class="profile-edit-fields">
-        <p class="profile-id-readonly">ID: <strong id="profileSiteHandleRead">—</strong> <span class="profile-id-hint" data-i18n="profile_id_hint">при регистрации</span></p>
-        <label class="profile-field">
-          <span class="profile-field-lbl" data-i18n="profile_display_lbl">Имя в SmolGame</span>
-          <input class="field-input" type="text" id="profileDisplayName" maxlength="60" data-i18n-placeholder="profile_display_ph" placeholder="Как тебя видят другие">
-        </label>
-        <label class="profile-field">
-          <span class="profile-field-lbl" data-i18n="profile_bio_lbl">О себе</span>
-          <textarea class="field-input" id="profileBioInput" maxlength="280" rows="3" data-i18n-placeholder="profile_bio_ph" placeholder="Коротко о себе или своих играх…"></textarea>
-        </label>
-        <div class="profile-field">
-          <span class="profile-field-lbl" data-i18n="profile_theme_lbl">Тема оформления</span>
-          <div class="profile-theme-selector" id="profileThemeSelector">
-            <button type="button" class="theme-btn" data-theme="dark" data-i18n="theme_dark">Тёмная</button>
-            <button type="button" class="theme-btn" data-theme="light" data-i18n="theme_light">Светлая</button>
-          </div>
-        </div>
-        <div class="profile-field">
-          <span class="profile-field-lbl" data-i18n="profile_photo_lbl">Фото профиля</span>
-          <div class="profile-avatar-row">
-            <label class="image-upload profile-avatar-upload">
-              <input type="file" accept="image/*" id="profileAvatarInput">
-              <span data-i18n="profile_photo_upload">Загрузить фото</span>
-            </label>
-            <button type="button" class="profile-text-btn" data-action="reset-profile-photo" data-i18n="profile_photo_reset">Как в Telegram</button>
-          </div>
-          <div class="profile-avatar-hint" data-i18n="profile_photo_max">До 2 МБ</div>
-        </div>
-      </div>
-      <button type="button" class="submit-btn profile-save-btn" data-action="save-profile" data-i18n="profile_save_main">Сохранить профиль</button>
-    </div>
-
-    <!-- Блок для админа: очередь модерации -->
-    <div class="admin-only" style="padding: 0 16px 20px;">
-      <div class="profile-wall-header" style="margin-bottom: 12px;">
-        <h3 class="profile-wall-title">На модерации</h3>
-      </div>
-      <div id="adminPendingList"></div>
-    </div>
-
-    <div class="profile-tabs-segment">
-      <button type="button" class="profile-tab-btn active" data-action="set-profile-tab" data-tab="games">
-        <span class="profile-tab-btn-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg></span>
-        <span class="profile-tab-btn-text" data-i18n="my_games_title">Мои игры</span>
-      </button>
-      <button type="button" class="profile-tab-btn" data-action="set-profile-tab" data-tab="wall">
-        <span class="profile-tab-btn-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span>
-        <span class="profile-tab-btn-text" data-i18n="profile_tab_wall">Стена</span>
-      </button>
-      <button type="button" class="profile-tab-btn" data-action="set-profile-tab" data-tab="activity">
-        <span class="profile-tab-btn-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-          <span class="nav-badge" id="activityTabBadge" style="display:none"></span>
-        </span>
-        <span class="profile-tab-btn-text" data-i18n="activity_title">События</span>
-      </button>
-    </div>
-
-    <div class="profile-tab-content active" id="profile-tab-games">
-      <div class="games-grid" id="myGamesGrid">
-        <div class="my-games-empty-placeholder" style="grid-column:1/-1;text-align:center;padding:40px 0;color:var(--muted);font-size:14px;" data-i18n="no_games_grid">
-          Нет игр
-        </div>
-      </div>
-    </div>
-
-    <div class="profile-tab-content" id="profile-tab-wall">
-      <div id="profileWallCompose" class="profile-wall-compose">
-        <textarea id="profilePostInput" class="profile-post-input" maxlength="1000" placeholder="Что нового?"></textarea>
-        <button type="button" class="sg-btn sg-btn--primary" data-action="submit-profile-post">Опубликовать</button>
-      </div>
-      <div id="profilePostList" class="profile-post-list"></div>
-    </div>
-
-    <div class="profile-tab-content" id="profile-tab-activity">
-      <div class="activity-list" id="activityList">
-        <div class="activity-empty-placeholder" data-i18n="activity_empty">Здесь будут уведомления о лайках и отзывах.</div>
-      </div>
-    </div>
-
-    <div class="profile-danger-zone">
-      <button type="button" class="profile-danger-btn" data-action="delete-account" data-i18n="delete_account_btn">Удалить аккаунт</button>
-      <p class="profile-danger-hint" data-i18n="delete_account_hint">Все твои игры, отзывы и посты будут удалены навсегда.</p>
-    </div>
-</div>
-
-<!-- ══ ЭКРАН: ИГРЫ ══ -->
-<div id="games-library-screen">
-  <div class="screen-header">
-    <h2 class="screen-title" data-i18n="nav_games">Игры</h2>
-    <div class="screen-header-right">
-      <div class="lang-switch-group" role="group">
-        <button type="button" class="lang-switch lang-switch--active" id="langSwitchRu" data-action="set-lang-ru" aria-pressed="true">RU</button>
-        <button type="button" class="lang-switch" id="langSwitchEn" data-action="set-lang-en" aria-pressed="false">EN</button>
-      </div>
-    </div>
-  </div>
-  <div class="games-library-header-sub">
-    <p class="games-library-lead" data-i18n="games_lib_lead">Лайкнул и недавно открывал — в двух списках ниже.</p>
-  </div>
-  <div class="games-library-section">
-    <h2 class="games-library-section-title" data-i18n="games_liked">Лайкнул</h2>
-    <div class="games-grid games-grid--library" id="likedGamesGrid">
-      <div class="games-lib-loading" style="grid-column:1/-1;text-align:center;padding:24px 0;color:var(--muted);font-size:14px;" data-i18n="loading">Загрузка…</div>
-    </div>
-  </div>
-  <div class="games-library-section">
-    <h2 class="games-library-section-title" data-i18n="games_played">Играл</h2>
-    <div class="games-grid games-grid--library" id="playedGamesGrid">
-      <div class="games-lib-loading" style="grid-column:1/-1;text-align:center;padding:24px 0;color:var(--muted);font-size:14px;" data-i18n="loading">Загрузка…</div>
-    </div>
-  </div>
-</div>
-
-<!-- ══ ЭКРАН: ПОИСК ══ -->
-<div id="search-screen">
-  <div class="screen-header">
-    <h2 class="screen-title" data-i18n="nav_search">Поиск</h2>
-    <div class="screen-header-right">
-      <div class="lang-switch-group" role="group">
-        <button type="button" class="lang-switch lang-switch--active" id="langSwitchRu" data-action="set-lang-ru" aria-pressed="true">RU</button>
-        <button type="button" class="lang-switch" id="langSwitchEn" data-action="set-lang-en" aria-pressed="false">EN</button>
-      </div>
-    </div>
-  </div>
-  <div class="search-bar-wrap">
-    <div class="search-bar">
-      <span class="search-icon" aria-hidden="true"><svg class="sg-icon sg-icon--sm" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="11" cy="11" r="6.75" stroke="currentColor" stroke-width="1.65"/><path d="M16.5 16.5L21 21" stroke="currentColor" stroke-width="1.65" stroke-linecap="round"/></svg></span>
-      <input type="search" enterkeyhint="search" autocomplete="off" data-i18n-placeholder="search_ph" placeholder="Название или автор…" id="searchInput" data-input="search">
-    </div>
-    <div id="searchHintBar" class="search-hint-bar"></div>
-  </div>
-  <div class="genre-scroll-wrap">
-    <div class="genre-scroll-label" data-i18n="genre_filter_lbl">Жанр</div>
-    <div class="genre-scroll" id="genreFilter"></div>
-  </div>
-  <div class="search-results" id="searchResults"></div>
-</div>
-
-<!-- ══ ЭКРАН: АВТОР ══ -->
-<div id="author-screen">
-  <div class="screen-header screen-header--profile">
-    <button type="button" class="screen-back sg-back-btn sg-btn sg-btn--ghost" data-action="close-author" data-i18n-aria="author_back_aria" aria-label="Назад" data-i18n="author_screen_back">← Лента</button>
-    <h2 class="screen-title" data-i18n="author_screen_title">Разработчик</h2>
-  </div>
-  <div class="profile-header-main">
-    <div class="profile-avatar-row">
-      <div class="profile-avatar-wrap">
-        <div class="profile-avatar" id="authorProfileAvatar">?</div>
-      </div>
-      <div class="profile-stats-grid">
-        <div class="stat-item">
-          <div class="stat-num" id="authorStatGames">0</div>
-          <div class="stat-label" data-i18n="stat_games">Игр</div>
-        </div>
-        <div class="stat-item">
-          <div class="stat-num" id="authorStatFollowers">0</div>
-          <div class="stat-label" data-i18n="stat_followers">Подписчиков</div>
-        </div>
-        <div class="stat-item">
-          <div class="stat-num" id="authorStatLikes">0</div>
-          <div class="stat-label" data-i18n="stat_likes">Лайки</div>
-        </div>
-      </div>
-    </div>
-    <div class="profile-info-block">
-      <div class="profile-name" id="authorProfileName">—</div>
-      <div class="profile-handle" id="authorProfileHandle">@—</div>
-      <p class="profile-bio" id="authorProfileBio" style="display:none"></p>
-    </div>
-    <button class="author-follow-btn" id="authorFollowBtn" data-action="toggle-author-follow" data-i18n="author_follow">Подписаться</button>
-  </div>
-  <div class="profile-wall-section">
-    <div class="profile-wall-header">
-      <h3 class="profile-wall-title">Стена</h3>
-    </div>
-    <div id="authorPostList" class="profile-post-list"></div>
-  </div>
-  <div class="profile-games-title" data-i18n="author_games_title">Игры автора</div>
-  <div class="games-grid" id="authorGamesGrid"></div>
-</div>
-
-<!-- ══ ЭКРАН: РЕГИСТРАЦИЯ ══ -->
-<div id="onboarding-screen">
-  <div class="onboarding-card tg-glass">
-    <div class="onboarding-body" id="onboardingBody"></div>
-    <div class="onboarding-footer" id="onboardingFooter"></div>
-  </div>
-</div>
-
-<!-- ══ TOAST ══ -->
-<div id="toast"></div>
-
-<!-- ══ SCRIPTS ══ -->
-<!-- Порядок важен: Core (config/utils/telegram → state → api) → Features → UI → Modules → Main. -->
-
-<!-- CORE -->
-<script src="js/core/config.js?v=21000"></script>
-<script src="js/features/genres/genre-icons.js?v=21000"></script>
-<script src="js/core/utils.js?v=21000"></script>
-<script src="js/core/i18n.js?v=21000"></script>
-<script src="js/core/telegram.js?v=21000"></script>
-<script src="js/core/telegram-initdata.js?v=21000"></script>
-<script src="js/core/tg-gate.js?v=21000"></script>
-<script src="js/ui/boot-splash.js?v=21000"></script>
-<script src="js/core/state.js?v=21000"></script>
-<script src="js/core/api.js?v=21000"></script>
-
-<!-- UI & COMMON -->
-<script src="js/ui/onboarding.js?v=21000" hidden></script>
-<script src="js/ui/help-screens.js?v=21000"></script>
-<script src="js/ui/screens.js?v=21000"></script>
-<script src="js/ui/overlay-pull-close.js?v=21000"></script>
-
-<!-- FEATURES -->
-<script src="js/features/feed/feed.js?v=21000"></script>
-<script src="js/features/feed/feed-nav-tip.js?v=21000"></script>
-<script src="js/features/feed/feed-onboarding.js?v=21000"></script>
-<script src="js/features/upload/upload.js?v=21000"></script>
-<script src="js/features/genres/genres.js?v=21000"></script>
-<script src="js/features/search/search.js?v=21000"></script>
-<script src="js/ui/liked-games.js?v=21000"></script>
-<script src="js/ui/game-detail.js?v=21000"></script>
-<script src="js/ui/game-editor.js?v=21000"></script>
-<script src="js/features/activity/activity.js?v=21000"></script>
-<script src="js/features/profile/profile.js?v=21000"></script>
-<script src="js/features/admin/admin.js?v=21000"></script>
-
-<!-- MODULES & EVENTS -->
-<script src="js/modules/actions.js?v=21000"></script>
-<script src="js/modules/events.js?v=21000"></script>
-
-<!-- MAIN -->
+<body>
 <script>
-/** ══════════════════════════════════════════════════════════
- *  EXTENDED LOGIC (Auto-registration & Onboarding)
- *  ══════════════════════════════════════════════════════════ */
-(function() {
-  window.checkOnboarding = async function() {
-    try {
-      const data = await API.checkRegistered();
-      if (data?.registered) {
-        if (data.user?.siteHandle) USER.siteHandle = data.user.siteHandle;
-        return false;
-      }
-      const tgUser = window.Telegram?.WebApp?.initDataUnsafe?.user;
-      if (tgUser) {
-        const handle = tgUser.username || `user_${tgUser.id}`;
-        try {
-          const res = await API.register({
-             siteHandle: handle,
-             dateOfBirth: '2000-01-01',
-             privacyAccepted: true,
-             tosAccepted: true
-          });
-          USER.siteHandle = res?.user?.siteHandle || handle;
-          return false;
-        } catch (regErr) {
-          console.warn('Auto-register failed', regErr);
-          return true;
-        }
-      }
-      return true;
-    } catch (e) { return false; }
-  };
-})();
+/* ═══════════════════════════════════════════════════
+   NEON ARENA — World-Class Combat Shooter
+   Pure high-performance top-down shooter.
+   No XP. No levels. Just skill & survival.
+═══════════════════════════════════════════════════ */
+
+const W = 900, H = 600;
+
+/* ── Physics ── */
+const PLAYER_ACCEL     = 2800;
+const PLAYER_DRAG      = 1400;
+const PLAYER_MAX_SPEED = 300;
+const KNOCKBACK_FORCE  = 420;
+const BULLET_SPEED     = 520;
+const BULLET_RATE      = 160;   // ms between shots
+const BULLET_LIFETIME  = 1800;  // ms
+
+/* ── Difficulty wave scaling ── */
+const WAVE_DURATION    = 18000; // ms per wave
+const ENEMY_BASE_HP    = 2;
+const ENEMY_BASE_SPEED = 80;
+const ENEMY_SPEED_SCALE= 8;     // per wave
+const ENEMY_HP_SCALE   = 2.0;   // per wave
+
+/* ── Player ── */
+const PLAYER_MAX_HP    = 100;
+const PLAYER_IFRAMES   = 900;   // invulnerability ms after hit
+const PLAYER_HURT_DMG  = 20;
+
+/* ── Hit-stop ── */
+const HITSTOP_KILL     = 55;
+const HITSTOP_HIT      = 28;
+
+/* ── Neon palette ── */
+const C = {
+  bg:       0x000814,
+  grid:     0x050530,
+  border:   0x0033ff,
+  player:   0x00ffff,
+  playerGl: 0x00ffff,
+  bullet:   0xffff00,
+  bulletGl: 0xffee00,
+  enemy:    0xff1e5a,
+  enemyGl:  0xff1e5a,
+  hitFlash: 0xffffff,
+  joy:      0x00ffff,
+  joyKnob:  0xffffff,
+  hp:       0x00ff88,
+  hpLow:    0xff3344,
+  score:    0xffff00,
+  wave:     0xff88ff,
+  kill:     0xff4488,
+};
+
+/* ═══════════════════════════════════════════════════
+   PHASER CONFIG
+═══════════════════════════════════════════════════ */
+const config = {
+  type: Phaser.AUTO,
+  width: W, height: H,
+  backgroundColor: '#000814',
+  physics: {
+    default: 'arcade',
+    arcade: { gravity: { x: 0, y: 0 }, debug: false, fps: 120 },
+  },
+  scene: [BootScene, GameScene],
+  scale: {
+    mode: Phaser.Scale.FIT,
+    autoCenter: Phaser.Scale.CENTER_BOTH,
+  },
+  render: {
+    antialias: true,
+    powerPreference: 'high-performance',
+    pixelArt: false,
+  },
+  fps: { target: 60, forceSetTimeOut: false },
+};
+
+const game = new Phaser.Game(config);
 </script>
-<script src="js/main.js?v=21000"></script>
-<!-- Agent script is injected lazily when the Create tab is first opened (see screens.js) -->
 </body>
 </html>
