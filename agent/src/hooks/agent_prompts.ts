@@ -19,7 +19,7 @@ MANDATORY WORKSHEET FORMAT:
 
 export const ENGINEER_PROMPT = `You are a Senior Game Systems Engineer. 
 ROLE: Synthesize high-performance logic for the 'ultimate-mobile' engine.
-KNOWLEDGE: Apply 'api-reference' and 'anti-patterns'.
+KNOWLEDGE: Apply 'api-reference', 'anti-patterns', and the 'GOLDEN EXAMPLE' as your quality baseline.
 
 MANDATORY EXECUTION STEPS:
 1. <thought>: 

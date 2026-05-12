@@ -62,6 +62,43 @@ MANDATORY: Reject any code with JUICE_SCORE < 8.`
     'report-format': `Structure: Summary -> Changes -> Status -> Action. Tone: Pro & Concise.`,
     'error-escalation': `Stop and ask if: Ambiguity, Technical Impossibility, or 3x Loop Fail.`
   },
+  reference: {
+    'golden-example': `[GOLDEN EXAMPLE - PRO QUALITY]
+<game_logic>
+let p, obs=[], score=0;
+function init(){
+  p={x:0, y:0, v:0, r:15*scale};
+  obs=[]; score=0; joy.enabled=true;
+}
+function update(){
+  p.v += 0.5 * dt; p.y += p.v * dt;
+  if(joy.active) p.x += joy.x * 5 * dt;
+  if(swipe.up){ p.v = -8; swipe.up=false; sfx(440,0.1); shake=5; }
+  if(p.y > H/2){ p.y=H/2; p.v=0; }
+  
+  if(Math.random()<0.05) obs.push({x:W, y:Math.random()*H, s:20*scale});
+  obs.forEach((o,i)=>{
+    o.x -= 4*dt;
+    if(Math.hypot(p.x-o.x, p.y-o.y) < p.r+o.s){
+      shake=20; sfx(100,0.5,'sawtooth'); gameOver();
+    }
+    if(o.x < -100) obs.splice(i,1);
+  });
+}
+function draw(){
+  glow('#0f0', 20); ctx.fillStyle='#0f0';
+  ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, 7); ctx.fill();
+  obs.forEach(o=>{
+    glow('#f0f', 10); ctx.fillStyle='#f0f';
+    ctx.fillRect(o.x, o.y, o.s, o.s);
+    if(Math.random()<0.1) parts.push(new Part(o.x, o.y, '#f0f'));
+  });
+  nglow();
+  parts.forEach((pa,i)=>{ pa.u(); pa.d(); if(pa.a<=0)parts.splice(i,1); });
+}
+function onTouch(e){ if(state==='over') startGame(); }
+</game_logic>`
+  },
   debugging: {
     'systematic-phases': `1. ROOT CAUSE: Read stack trace, reproduce 100%, check git diff. 2. PATTERN: Compare with working examples. 3. HYPOTHESIS: Specific theory + minimal test. 4. FIX: Address root, not symptom.`,
     'iron-law': `NO FIXES WITHOUT INVESTIGATION. If 3 fixes fail, the architecture is wrong - STOP and RE-EVALUATE.`,
@@ -70,13 +107,13 @@ MANDATORY: Reject any code with JUICE_SCORE < 8.`
   }
 };
 
-export type KnowledgeCategory = 'planning' | 'core' | 'genres' | 'code' | 'quality' | 'process' | 'debugging';
+export type KnowledgeCategory = 'planning' | 'core' | 'genres' | 'code' | 'quality' | 'process' | 'debugging' | 'reference';
 
 export const getFullKnowledgePrompt = (genre?: string) => {
   let prompt = "--- TECHNICAL KNOWLEDGE BASE ---\n";
   
-  // Always include Core, Code, Quality, and Debugging
-  for (const cat of ['core', 'code', 'quality', 'debugging'] as KnowledgeCategory[]) {
+  // Always include Core, Code, Quality, Debugging, and Reference
+  for (const cat of ['core', 'code', 'quality', 'debugging', 'reference'] as KnowledgeCategory[]) {
     prompt += `\n[${cat.toUpperCase()}]\n`;
     for (const [id, content] of Object.entries(KNOWLEDGE_BASE[cat])) {
       prompt += `- ${id}: ${content}\n`;
