@@ -119,6 +119,7 @@ function showScreen(id){
   document.getElementById('joy-base').style.display=(!id && joy.enabled)?'block':'none';
 }
 
+let _stateLocked = false;
 function smolStartGame(){
   if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();
   if(audioCtx.state==='suspended')audioCtx.resume();
@@ -126,16 +127,21 @@ function smolStartGame(){
   score=0;
   parts=[];
   showScreen(null);
+  
+  _stateLocked = true; // Lock state during init to prevent accidental resets
   if(typeof init==='function')init();
+  _stateLocked = false;
 }
 
 // --- IDIOT-PROOF BRIDGE ---
-// If agent hallucinates 'currentState' or 'myScore', we map them to engine globals.
 window.currentState = smolState; 
 Object.defineProperty(window, 'currentState', {
   get: () => smolState,
-  set: (v) => { smolState = v; }
+  set: (v) => { if(!_stateLocked) smolState = v; }
 });
+
+// Also protect smolState itself if possible
+const _origSetState = (v) => { if(!_stateLocked) smolState = v; else console.warn("Attempted to reset state during init() - blocked."); };
 
 function smolTriggerGameOver(){
   smolState='over';
