@@ -1,4 +1,5 @@
 import { json, error, newId } from './http.js';
+import { validateCode, extractScripts } from '../../agent/src/lib/sep/ast-analyzer.js';
 import { authenticate, upsertUser } from './auth.js';
 import { decryptGithubToken } from './github-token-crypto.js';
 import { githubClientSecret } from './github-oauth.js';
@@ -52,7 +53,7 @@ export async function publishGameToGithub(req, env) {
   await upsertUser(env.DB, user);
 
   let token = env.COMMITS_GITHUB_TOKEN;
-  let owner = 'dorokhin731-commits';
+  let owner = env.GITHUB_REPO_OWNER || 'dorokhin731-commits'; // Use environment variable or default
 
   if (!token) {
     let row;
@@ -105,10 +106,21 @@ export async function publishGameToGithub(req, env) {
     if (file.path.endsWith('.js') || file.path.endsWith('.html')) {
        const content = String(file.content);
        // Simple check for common failure: empty code or obvious syntax errors
-       if (content.length < 50) return error(`Файл ${file.path} слишком короткий или пустой. Продвижение отменено.`);
-       if (file.path.endsWith('.js') && !content.includes('function')) {
-          return error(`Файл ${file.path} не содержит функций. Похоже на битый код.`);
+       if (file.path.endsWith(".js")) {
+         const validation = validateCode(content);
+         if (!validation.ok) {
+           return error(`Файл ${file.path} содержит синтаксические ошибки: ${validation.error}. Продвижение отменено.`);
+         }
+       } else if (file.path.endsWith(".html")) {
+         const scripts = extractScripts(content);
+         for (const scriptContent of scripts) {
+           const validation = validateCode(scriptContent);
+           if (!validation.ok) {
+             return error(`Файл ${file.path} содержит синтаксические ошибки в скрипте: ${validation.error}. Продвижение отменено.`);
+           }
+         }
        }
+       if (content.length < 50) return error(`Файл ${file.path} слишком короткий или пустой. Продвижение отменено.`);
     }
   }
 

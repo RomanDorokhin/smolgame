@@ -116,7 +116,7 @@ ${this.plan.length === 0 ? 'No plan yet. Create one in your first "thought".' : 
 
 ENGINEERING PRINCIPLES:
 1. PLANNING: Always maintain and update your PLAN.
-2. SEMANTIC PATCHING: Use PATCH_CODE/REWRITE_FUNCTION. Avoid REPLACE_BLOCK if possible.
+2. SEMANTIC PATCHING: Use PATCH_CODE/REWRITE_FUNCTION for precise changes. Avoid REPLACE_BLOCK due to its fragility.
 3. REAL VALIDATION: Use VALIDATE_RUNTIME to test interaction.
 4. ZERO TOLERANCE: If a button doesn't work in Playwright, your task is NOT done.
 
@@ -135,7 +135,7 @@ GLOBALS (DO NOT REDEFINE): smolState, score, hi, shake, W, H, ctx, scale, cam, j
 CORE FUNCTIONS: checkAABB(a, b), checkCircle(a, b), applyShake(v), burst(x, y, c, n), smolTriggerGameOver().
 
 HISTORY:
-${this.history.map((s, i) => `[Step ${i}] Action: ${s.action.type} | Observation: ${s.observation}`).join('\n')}
+${this.history.slice(-5).map((s, i) => `[Step ${i}] Action: ${s.action.type} | Observation: ${s.observation.slice(0, 100)}...`).join('\n')}
 
 INSTRUCTIONS:
 1. Output ONLY a valid JSON object.
@@ -161,10 +161,14 @@ OUTPUT:
       }
 
       // Robust JSON extraction
-      const jsonMatch = fullResponse.match(/\{[\s\S]*\}/);
-      if (!jsonMatch) throw new Error("LLM failed to output JSON");
+      const jsonStartIndex = fullResponse.indexOf('{');
+      const jsonEndIndex = fullResponse.lastIndexOf('}');
+      if (jsonStartIndex === -1 || jsonEndIndex === -1) {
+        throw new Error("LLM failed to output valid JSON. No curly braces found.");
+      }
+      const jsonString = fullResponse.substring(jsonStartIndex, jsonEndIndex + 1);
       
-      const parsed = AgentResponseSchema.parse(JSON.parse(jsonMatch[0]));
+      const parsed = AgentResponseSchema.parse(JSON.parse(jsonString));
       const observation = await this.performAction(parsed.action);
 
       return {
