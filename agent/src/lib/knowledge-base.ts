@@ -26,11 +26,27 @@ export const KNOWLEDGE_BASE = {
     'tower-defense': `Waypoint pathing, tower range visualization, closest-to-exit targeting.`
   },
   code: {
-    'code-debugging': `Check ctx.save/restore symmetry, check beginPath usage, verify W/H relative coords.`,
-    'code-refactoring': `Modular structure: Config -> State -> Systems -> Loop. Idempotent reset().`,
-    'single-file-constraints': `NO imports, NO external assets. Use Procedural Gen or Data URIs.`,
-    'performance-budget': `Limit particles to 200, pool objects, avoid heavy ctx.filter or huge shadowBlur.`,
-    'anti-patterns': `CRITICAL: NEVER create your own canvas. NEVER add event listeners. NEVER write a main loop. DO NOT use 'document.getElementById'. DO NOT use 'addEventListener'. These are handled by the skeleton. REJECT any tutorial-style 'Step 1/2/3' text.`
+    'api-reference': `SKELETON GLOBALS:
+- W, H: Canvas width/height (use these for all positions).
+- ctx: 2D Context.
+- scale: DPR multiplier (multiply all sizes/distances by this).
+- score, hi: Current and high score.
+- shake: Number (set shake=10 for impact).
+- cam: {x, y, zoom} (change to move camera).
+- joy: {x, y, active, enabled} (READ ONLY, joy handles itself).
+- swipe: {up, down, left, right} (READ flags, RESET to false after).
+- glow(color, blur): Apply neon effect.
+- nglow(): Stop neon effect.
+- sfx(freq, time, type): Play sound.
+- Part: class for particles (new Part(x, y, color)).
+- safeStorage: {set(k, v), get(k, d)}.`,
+    'anti-patterns': `CRITICAL: 
+1. NO document.getElementById('canvas'). Use 'c' or 'canvas' global.
+2. NO addEventListener. Use 'onTouch(e)' function.
+3. NO requestAnimationFrame loop. Engine handles it.
+4. NO joy.x = ... manual overrides. Read from 'joy' object.
+5. NO tutorial text. Use ONLY <plan> or <game_logic> tags.`,
+    'mandatory-cot': `THINK BEFORE CODE: You must start your response by recalling the specific rules for the genre and the 35-point checklist. If you ignore 'dt' or 'shake', you have failed.`
   },
   quality: {
     'qa-checklist': `35-Point Standard: touch-action:none, safeStorage, 60fps, 9:16, Screen Shake, Neon Glow, Particles, Parallax, Procedural Audio.`,

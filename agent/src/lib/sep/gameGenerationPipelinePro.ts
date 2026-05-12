@@ -135,9 +135,13 @@ NEVER use window.alert() or confirm(). Use DOM/Canvas overlays instead.`,
             { role: 'user', content: lastHtml },
           ];
 
-      const response = await generateFn(messages);
       const logicMatch = response.match(/<game_logic>([\s\S]*?)<\/game_logic>/i);
-      const logic = logicMatch ? logicMatch[1].trim() : response;
+      let logic = logicMatch ? logicMatch[1].trim() : response;
+      
+      // Clean up if the agent didn't use tags correctly but included a thought block
+      if (!logicMatch && logic.includes('</thought>')) {
+        logic = logic.split('</thought>').pop()?.trim() || logic;
+      }
       
       // Inject logic into skeleton
       const html = ultimateArcadeSkeleton.replace(
