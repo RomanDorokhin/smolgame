@@ -130,27 +130,75 @@ export async function publishGameToGithub(req, env) {
   }
   const fullName = cr.data?.full_name || `${owner}/${repoName}`;
 
-  for (const f of files) {
-    const path = String(f.path).trim().replace(/^\/+/, '');
-    const content = String(f.content);
-    const b64 = utf8ToBase64(content);
-    const put = await ghJson(
-      `https://api.github.com/repos/${fullName}/contents/${path.split('/').map(encodeURIComponent).join('/')}`,
+  // 1. Create a Tree with all files
+  const treeItems = files.map(f => ({
+    path: String(f.path).trim().replace(/^\/+/, ''),
+    mode: '100644',
+    type: 'blob',
+    content: String(f.content)
+  }));
+
+  const treeRes = await ghJson(
+    `https://api.github.com/repos/${fullName}/git/trees`,
+    {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ tree: treeItems }),
+    },
+    token
+  );
+
+  if (!treeRes.ok) {
+    return error(`Failed to create tree: ${treeRes.data?.message}`, 502);
+  }
+
+  // 2. Create a Commit
+  const commitRes = await ghJson(
+    `https://api.github.com/repos/${fullName}/git/commits`,
+    {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        message: `Initial commit: ${rawTitle}`,
+        tree: treeRes.data.sha,
+      }),
+    },
+    token
+  );
+
+  if (!commitRes.ok) {
+    return error(`Failed to create commit: ${commitRes.data?.message}`, 502);
+  }
+
+  // 3. Create/Update Ref (main)
+  const refRes = await ghJson(
+    `https://api.github.com/repos/${fullName}/git/refs/heads/main`,
+    {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        ref: 'refs/heads/main',
+        sha: commitRes.data.sha,
+      }),
+    },
+    token
+  );
+
+  if (!refRes.ok) {
+    const patchRes = await ghJson(
+      `https://api.github.com/repos/${fullName}/git/refs/heads/main`,
       {
-        method: 'PUT',
+        method: 'PATCH',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({
-          message: `Add ${path}`,
-          content: b64,
-          branch: 'main',
-        }),
+        body: JSON.stringify({ sha: commitRes.data.sha, force: true }),
       },
       token
     );
-    if (!put.ok) {
-      return error(`${path}: ${String(put.data?.message || 'upload failed').slice(0, 180)}`, put.status >= 400 ? put.status : 502);
+    if (!patchRes.ok) {
+      return error(`Failed to update ref: ${patchRes.data?.message}`, 502);
     }
   }
+
 
   const pages = await ghJson(
     `https://api.github.com/repos/${fullName}/pages`,

@@ -61,44 +61,48 @@ export const KNOWLEDGE_BASE = {
   }
 };
 
-export type KnowledgeCategory = keyof typeof KNOWLEDGE_BASE;
-
 /**
  * Returns a subset of the knowledge base based on relevant tags or categories.
- * Prevents prompt bloat by only including what's necessary.
+ * Uses a simple keyword scoring to prevent prompt bloat.
  */
-export function getRelevantKnowledge(tags: string[] = []): string {
+export function getRelevantKnowledge(tags: string[] = [], contextText: string = ""): string {
   let prompt = "--- TECHNICAL KNOWLEDGE BASE (CONTEXTUAL) ---\n";
-  const used = new Set<string>();
+  const scoredItems: Array<{ cat: string, id: string, text: string, score: number }> = [];
 
-  const add = (cat: string, id: string, item: { text: string, tags: string[] }) => {
-    const key = `${cat}:${id}`;
-    if (used.has(key)) return;
-    prompt += `[${cat.toUpperCase()}] ${id}: ${item.text}\n`;
-    used.has(key);
-  };
+  const contextKeywords = contextText.toLowerCase().split(/\W+/);
+  const targetTags = tags.map(t => t.toLowerCase());
 
-  // Always include Core API and Anti-patterns
-  Object.entries(KNOWLEDGE_BASE.code).forEach(([id, item]) => add('code', id, item));
-  
-  // Search for matching tags
   for (const [cat, items] of Object.entries(KNOWLEDGE_BASE)) {
     for (const [id, item] of Object.entries(items as any)) {
       const it = item as { text: string, tags: string[] };
-      if (tags.some(t => it.tags.includes(t.toLowerCase()))) {
-        add(cat, id, it);
+      let score = 0;
+      
+      // Tag match (high priority)
+      if (targetTags.some(t => it.tags.includes(t))) score += 10;
+      
+      // Keyword match (medium priority)
+      const itemText = it.text.toLowerCase();
+      contextKeywords.forEach(kw => {
+        if (kw.length > 3 && itemText.includes(kw)) score += 2;
+      });
+
+      if (score > 0 || cat === 'code') { // Always include code/api
+        scoredItems.push({ cat, id, text: it.text, score: cat === 'code' ? 100 : score });
       }
     }
   }
 
-  // Fallback to basic Core if prompt is too small
-  if (used.size < 5) {
-     Object.entries(KNOWLEDGE_BASE.core).forEach(([id, item]) => add('core', id, item as any));
-  }
+  // Sort by score and take top 10
+  const topItems = scoredItems.sort((a, b) => b.score - a.score).slice(0, 10);
+
+  topItems.forEach(it => {
+    prompt += `[${it.cat.toUpperCase()}] ${it.id}: ${it.text}\n`;
+  });
 
   return prompt;
 }
 
-export const getFullKnowledgePrompt = (genre?: string) => {
-  return getRelevantKnowledge(genre ? [genre, 'plan', 'juice', 'mobile'] : ['plan', 'juice', 'mobile']);
+export const getFullKnowledgePrompt = (genre?: string, context?: string) => {
+  return getRelevantKnowledge(genre ? [genre, 'plan', 'juice', 'mobile'] : ['plan', 'juice', 'mobile'], context);
 };
+

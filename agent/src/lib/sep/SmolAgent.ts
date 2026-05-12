@@ -1,12 +1,50 @@
 import { LLMConfig, generateStream } from "../llm-api";
-import { analyzeGameJS, extractScripts, replaceFunctionInCode } from "./ast-analyzer";
+import { analyzeGameJS, replaceFunctionInCode, validateCode, replaceNodeInCode } from "./ast-analyzer";
 import { getRelevantKnowledge } from "../knowledge-base";
+import { z } from "zod";
+
+const AgentActionSchema = z.discriminatedUnion("type", [
+  z.object({
+    type: z.literal("REPLACE_BLOCK"),
+    search: z.string(),
+    replace: z.string()
+  }),
+  z.object({
+    type: z.literal("REWRITE_FUNCTION"),
+    name: z.string(),
+    code: z.string()
+  }),
+  z.object({
+    type: z.literal("PATCH_CODE"),
+    nodeType: z.enum(["FunctionDeclaration", "ObjectProperty"]),
+    name: z.string(),
+    code: z.string()
+  }),
+  z.object({
+    type: z.literal("VALIDATE"),
+  }),
+  z.object({
+    type: z.literal("FINISH"),
+    reason: z.string()
+  })
+]);
+
+const AgentResponseSchema = z.object({
+  thought: z.string(),
+  action: AgentActionSchema
+});
+
+export type AgentAction = z.infer<typeof AgentActionSchema>;
 
 export interface AgentStep {
   thought: string;
-  action: string;
+  action: AgentAction;
   observation: string;
   codeSnapshot?: string;
+  metrics?: {
+    tokens?: number;
+    duration?: number;
+  };
 }
 
 export interface SmolAgentConfig {
@@ -24,28 +62,28 @@ export class SmolAgent {
     this.config = config;
   }
 
-  /**
-   * Main entry point for modifying or fixing code.
-   */
   async runFixLoop(task: string, initialCode: string, runtimeError?: string): Promise<string> {
     this.currentCode = initialCode;
-    const maxIterations = 5;
+    const maxIterations = 7;
     
     for (let i = 0; i < maxIterations; i++) {
       this.config.onProgress(`Анализирую (итерация ${i + 1}/${maxIterations})...`);
       
+      const startTime = Date.now();
       const step = await this.executeStep(task, runtimeError);
+      step.metrics = { duration: Date.now() - startTime };
+      
       this.history.push(step);
       
-      if (step.action.includes('FINISH')) {
-        this.config.onProgress(`Изменения применены успешно.`);
+      if (step.action.type === 'FINISH') {
+        this.config.onProgress(`✅ Завершено: ${step.action.reason}`);
         break;
       }
 
-      if (step.observation.includes('ERROR')) {
-         this.config.onProgress(`⚠️ Ошибка инструмента: ${step.observation}. Пробую исправить...`);
+      if (step.observation.startsWith('ERROR')) {
+         this.config.onProgress(`⚠️ Ошибка: ${step.observation.slice(0, 100)}...`);
       } else {
-         this.config.onProgress(`✅ Успех: ${step.observation.slice(0, 50)}...`);
+         this.config.onProgress(`✅ OK: ${step.observation.slice(0, 50)}...`);
       }
     }
 
@@ -53,98 +91,119 @@ export class SmolAgent {
   }
 
   private async executeStep(task: string, runtimeError?: string): Promise<AgentStep> {
-    const systemPrompt = `You are a Senior Autonomous AI Game Developer. 
-Your goal is to fulfill the <task> by analyzing code and applying precise fixes.
+    const systemPrompt = `You are a World-Class Autonomous AI Software Engineer specializing in Game Dev.
+Your goal: Fulfill the <task> by applying precise, verified code transformations.
 
-CORE PRINCIPLES:
-1. THINK before you act. Use <thought> tags. Describe WHAT is wrong and HOW you will fix it.
-2. USE TOOLS. Use <action> tags with one of:
-   - REPLACE_BLOCK: search_string ---REPLACE--- replacement_string
-   - REWRITE_FUNCTION: Full new function code (init, update, draw, onTouch).
-   - INJECT_JUICE: Add screen shake or particles to existing logic.
-   - FINISH: Stop if the task is done.
-3. BE PRECISE. Use exact string matching for search.
-4. MOBILE FIRST. Always consider touch-action:none and 9:16 aspect ratio.
+OPERATIONAL PROTOCOL:
+1. INTERNAL MONOLOGUE: Reason deeply about the architecture and current state.
+2. STRUCTURED ACTION: You MUST output a valid JSON object matching the schema.
+3. ATOMICITY: Apply one logical change per step.
+4. VALIDATION: Every change is automatically verified for syntax. If you break it, you must fix it.
 
-KNOWLEDGE:
+AVAILABLE TOOLS:
+- REPLACE_BLOCK: Precise string replacement (use for unique blocks).
+- REWRITE_FUNCTION: Replace a whole function body by name.
+- PATCH_CODE: Replace an AST node (FunctionDeclaration or ObjectProperty).
+- VALIDATE: Explicitly run syntax and logic analysis.
+- FINISH: Stop when the task is fully completed.
+
+KNOWLEDGE BASE:
 ${getRelevantKnowledge(['juice', 'logic', 'physics', 'mobile'])}
 
-AVAILABLE GLOBALS: W, H, ctx, scale, score, hi, shake, cam, joy, swipe, glow, nglow, sfx, Part.
+GLOBALS: W, H, ctx, scale, score, hi, shake, cam, joy, swipe, glow, nglow, sfx, Part.
 
 CURRENT CODE:
+\`\`\`javascript
 ${this.currentCode}
+\`\`\`
 
-${runtimeError ? `RUNTIME ERROR DETECTED IN IFRAME:\n${runtimeError}` : ''}
+${runtimeError ? `RUNTIME ERROR FROM IFRAME:\n${runtimeError}` : ''}
 
-HISTORY OF ACTIONS:
-${this.history.map((s, i) => `Step ${i+1}: Action=${s.action}, Observation=${s.observation}`).join('\n')}
+HISTORY:
+${this.history.map((s, i) => `[${i}] ${s.action.type}: ${s.observation}`).join('\n')}
 
-Format your output exactly as:
-<thought> your reasoning </thought>
-<action> TOOL_NAME: payload </action>`;
+OUTPUT FORMAT:
+{
+  "thought": "Reasoning about why this change is needed...",
+  "action": { "type": "TOOL_NAME", ...params }
+}`;
 
     let fullResponse = "";
-    const msgs = [{ role: "system" as const, content: systemPrompt }, { role: "user" as const, content: task }];
+    const msgs = [
+      { role: "system" as const, content: systemPrompt },
+      { role: "user" as const, content: task }
+    ];
     
-    const stream = generateStream(msgs, this.config.llm, this.config.signal);
-    for await (const chunk of stream) {
-      fullResponse += chunk;
+    try {
+      const stream = generateStream(msgs, this.config.llm, this.config.signal);
+      for await (const chunk of stream) {
+        fullResponse += chunk;
+      }
+
+      // Robust JSON extraction
+      const jsonMatch = fullResponse.match(/\{[\s\S]*\}/);
+      if (!jsonMatch) throw new Error("LLM failed to output JSON");
+      
+      const parsed = AgentResponseSchema.parse(JSON.parse(jsonMatch[0]));
+      const observation = await this.performAction(parsed.action);
+
+      return {
+        thought: parsed.thought,
+        action: parsed.action,
+        observation,
+        codeSnapshot: this.currentCode
+      };
+    } catch (e) {
+      return {
+        thought: "Internal parsing error",
+        action: { type: "FINISH", reason: "Error" },
+        observation: `CRITICAL ERROR: ${(e as Error).message}`
+      };
     }
-
-    const thought = fullResponse.match(/<thought>([\s\S]*?)<\/thought>/i)?.[1].trim() || "";
-    const actionMatch = fullResponse.match(/<action>([\s\S]*?)<\/action>/i);
-    const actionRaw = actionMatch ? actionMatch[1].trim() : "FINISH";
-
-    const observation = await this.performAction(actionRaw);
-
-    return {
-      thought,
-      action: actionRaw,
-      observation,
-      codeSnapshot: this.currentCode
-    };
   }
 
-  private async performAction(actionRaw: string): Promise<string> {
-    const [tool, ...payloadArr] = actionRaw.split(':');
-    const toolName = tool.trim();
-    const payload = payloadArr.join(':').trim();
-
+  private async performAction(action: AgentAction): Promise<string> {
     try {
-      switch (toolName) {
+      let result = "";
+      switch (action.type) {
         case 'REPLACE_BLOCK': {
-           const parts = payload.split('---REPLACE---');
-           if (parts.length !== 2) return "ERROR: REPLACE_BLOCK requires 'search ---REPLACE--- replacement'";
-           const search = parts[0].trim();
-           const replace = parts[1].trim();
-           if (!this.currentCode.includes(search)) return "ERROR: Search text not found in code.";
-           this.currentCode = this.currentCode.replace(search, replace);
-           return "SUCCESS: Block replaced.";
+           if (!this.currentCode.includes(action.search)) return "ERROR: Search text not found.";
+           this.currentCode = this.currentCode.replace(action.search, action.replace);
+           result = "SUCCESS: Block replaced.";
+           break;
         }
         case 'REWRITE_FUNCTION': {
-           const funcMatch = payload.match(/function\s+(\w+)\s*\(/);
-           if (!funcMatch) return "ERROR: Could not find function name in payload. Use 'function name() { ... }'";
-           const funcName = funcMatch[1];
-           
-           // Use AST replacement for accuracy
-           const newCode = replaceFunctionInCode(this.currentCode, funcName, payload);
-           if (newCode === this.currentCode) {
-              return `ERROR: Function ${funcName} not found in code or AST parse failed.`;
-           }
+           const newCode = replaceFunctionInCode(this.currentCode, action.name, action.code);
+           if (newCode === this.currentCode) return `ERROR: Function ${action.name} not found or AST failed.`;
            this.currentCode = newCode;
-           return `SUCCESS: Function ${funcName} rewritten via AST.`;
+           result = `SUCCESS: Function ${action.name} rewritten.`;
+           break;
         }
-        case 'INJECT_JUICE': {
-           this.currentCode = this.currentCode.replace(/update\(\)\s*{/i, `update() {\n  if(Math.random()<0.05) shake=5; // Injected Juice\n`);
-           return "SUCCESS: Juice injected into update().";
+        case 'PATCH_CODE': {
+           const newCode = replaceNodeInCode(this.currentCode, action.nodeType, 'name', action.name, action.code);
+           if (newCode === this.currentCode) return `ERROR: Node ${action.name} of type ${action.nodeType} not found.`;
+           this.currentCode = newCode;
+           result = `SUCCESS: Node ${action.name} patched.`;
+           break;
+        }
+        case 'VALIDATE': {
+           const analysis = analyzeGameJS(this.currentCode);
+           return `ANALYSIS: Score ${analysis.score}/100. Errors: ${analysis.errors.join(', ')}. Features: ${analysis.features.join(', ')}`;
         }
         case 'FINISH':
            return "DONE";
-        default:
-           return `ERROR: Unknown tool ${toolName}`;
       }
+
+      // Automatic Validation Loop
+      const validation = validateCode(this.currentCode);
+      if (!validation.ok) {
+        return `ERROR: Last change introduced a SYNTAX ERROR: ${validation.error}. PLEASE FIX IMMEDIATELY.`;
+      }
+
+      return result;
     } catch (e) {
       return `ERROR: Tool execution failed: ${(e as Error).message}`;
     }
   }
 }
+

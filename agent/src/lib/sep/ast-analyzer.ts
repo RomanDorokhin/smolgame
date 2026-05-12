@@ -109,34 +109,54 @@ export function extractScripts(html: string): string[] {
   }
   return scripts;
 }
-export function replaceFunctionInCode(code: string, funcName: string, newFunctionCode: string): string {
+export function replaceNodeInCode(code: string, nodeType: string, searchKey: string, searchValue: string, newNodeCode: string): string {
   try {
     const ast = acorn.parse(code, { ecmaVersion: 2020, sourceType: 'script' }) as any;
     let start = -1;
     let end = -1;
 
-    function findFunc(node: any) {
-      if (node.type === 'FunctionDeclaration' && node.id && node.id.name === funcName) {
-        start = node.start;
-        end = node.end;
-        return;
+    function findNode(node: any) {
+      if (node.type === nodeType) {
+        if (nodeType === 'FunctionDeclaration' && node.id && node.id.name === searchValue) {
+           start = node.start; end = node.end; return;
+        }
+        if (nodeType === 'ObjectProperty' && node.key && node.key.name === searchValue) {
+           start = node.start; end = node.end; return;
+        }
       }
       for (const key in node) {
         if (node[key] && typeof node[key] === 'object') {
-          if (Array.isArray(node[key])) node[key].forEach(findFunc);
-          else findFunc(node[key]);
+          if (Array.isArray(node[key])) node[key].forEach(findNode);
+          else findNode(node[key]);
         }
       }
     }
 
-    findFunc(ast);
+    findNode(ast);
 
     if (start !== -1 && end !== -1) {
-      return code.slice(0, start) + newFunctionCode + code.slice(end);
+      return code.slice(0, start) + newNodeCode + code.slice(end);
     }
-    return code; // Fallback
+    return code;
   } catch (e) {
     console.error("AST Replace failed", e);
     return code;
   }
 }
+
+/**
+ * Validates code for syntax errors and common issues.
+ */
+export function validateCode(code: string): { ok: boolean; error?: string } {
+  try {
+    acorn.parse(code, { ecmaVersion: 2020, sourceType: 'script' });
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: (e as Error).message };
+  }
+}
+
+export function replaceFunctionInCode(code: string, funcName: string, newFunctionCode: string): string {
+  return replaceNodeInCode(code, 'FunctionDeclaration', 'name', funcName, newFunctionCode);
+}
+
