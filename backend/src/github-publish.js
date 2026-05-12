@@ -1,5 +1,5 @@
 import { json, error, newId } from './http.js';
-import { validateCode, extractScripts } from '../../agent/src/lib/sep/ast-analyzer.js';
+import { validateCode, extractScripts } from './ast-analyzer.js';
 import { authenticate, upsertUser } from './auth.js';
 import { decryptGithubToken } from './github-token-crypto.js';
 import { githubClientSecret } from './github-oauth.js';
