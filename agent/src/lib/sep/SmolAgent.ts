@@ -249,13 +249,36 @@ OUTPUT:
            return "DONE";
       }
 
-      // Automatic Validation Loop
-      const validation = validateCode(this.currentCode);
-      if (!validation.ok) {
-        return `ERROR: Last change introduced a SYNTAX ERROR: ${validation.error}. PLEASE FIX IMMEDIATELY.`;
+      // Automatic Verification Loop
+      let finalObservation = result;
+
+      // 1. Static AST Analysis
+      const analysis = analyzeGameJS(this.currentCode);
+      if (analysis.errors.length > 0) {
+        return `CRITICAL ERROR (AST): ${analysis.errors.join('\n')}. PLEASE FIX IMMEDIATELY.`;
       }
 
-      return result;
+      // 2. Automatic Runtime Validation (Only for code changes)
+      if (action.type === 'REPLACE_BLOCK' || action.type === 'REWRITE_FUNCTION' || action.type === 'PATCH_CODE') {
+        this.config.onProgress(`🔍 Автоматическая проверка рантайма...`);
+        try {
+          const response = await fetch('http://localhost:3001/api/validate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ html: this.currentCode })
+          });
+          const valResult = await response.json();
+          if (!valResult.ok) {
+            finalObservation = `ERROR (RUNTIME):\n${valResult.errors.join('\n')}\n\nYour last change broke the game. Analyze the errors and fix them in the next step.`;
+          } else {
+             finalObservation += `\nRUNTIME VERIFIED: No errors found. Score: ${analysis.score}/100.`;
+          }
+        } catch (e: any) {
+          finalObservation += `\nWARNING: Runtime validation skipped (server unreachable: ${e.message})`;
+        }
+      }
+
+      return finalObservation;
     } catch (e) {
       return `ERROR: Tool execution failed: ${(e as Error).message}`;
     }

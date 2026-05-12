@@ -156,7 +156,7 @@ app.post('/api/validate', async (req, res) => {
     await page.waitForTimeout(500);
     const screen2 = await getScreenshot();
 
-    if (screen1 === screen2 && ok) {
+    if (screen1 === screen2) {
       errors.push("VALIDATION FAILED: Game appears to be frozen. No visual changes detected on canvas after 500ms of 'play' state.");
     }
 
