@@ -1,3 +1,33 @@
+export const PATTERNS = {
+  physics: {
+    'aabb-collision': `
+function checkAABB(a, b) {
+  return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
+}`,
+    'circle-collision': `
+function checkCircle(a, b) {
+  const dx = a.x - b.x;
+  const dy = a.y - b.y;
+  const distance = Math.sqrt(dx * dx + dy * dy);
+  return distance < a.r + b.r;
+}`
+  },
+  juice: {
+    'screen-shake': `
+function applyShake() {
+  shake = 10;
+  cam.x += Math.random() * shake - shake/2;
+  cam.y += Math.random() * shake - shake/2;
+}`,
+    'particle-burst': `
+function burst(x, y, color) {
+  for(let i=0; i<15; i++) {
+    state.entities.push(new Part(x, y, color, Math.random()*Math.PI*2, Math.random()*5));
+  }
+}`
+  }
+};
+
 export const KNOWLEDGE_BASE = {
   planning: {
     'task-decomposition': {
@@ -63,40 +93,50 @@ export const KNOWLEDGE_BASE = {
 
 /**
  * Returns a subset of the knowledge base based on relevant tags or categories.
- * Uses a simple keyword scoring to prevent prompt bloat.
+ * Uses keyword scoring to prevent prompt bloat.
  */
 export function getRelevantKnowledge(tags: string[] = [], contextText: string = ""): string {
-  let prompt = "--- TECHNICAL KNOWLEDGE BASE (CONTEXTUAL) ---\n";
-  const scoredItems: Array<{ cat: string, id: string, text: string, score: number }> = [];
+  let prompt = "--- TECHNICAL KNOWLEDGE BASE & PATTERNS ---\n";
+  const scoredItems: Array<{ cat: string, id: string, text: string, score: number, isPattern?: boolean }> = [];
 
   const contextKeywords = contextText.toLowerCase().split(/\W+/);
   const targetTags = tags.map(t => t.toLowerCase());
 
+  // Search in Knowledge Base
   for (const [cat, items] of Object.entries(KNOWLEDGE_BASE)) {
     for (const [id, item] of Object.entries(items as any)) {
       const it = item as { text: string, tags: string[] };
       let score = 0;
-      
-      // Tag match (high priority)
-      if (targetTags.some(t => it.tags.includes(t))) score += 10;
-      
-      // Keyword match (medium priority)
-      const itemText = it.text.toLowerCase();
+      if (targetTags.some(t => it.tags.includes(t))) score += 20;
       contextKeywords.forEach(kw => {
-        if (kw.length > 3 && itemText.includes(kw)) score += 2;
+        if (kw.length > 3 && it.text.toLowerCase().includes(kw)) score += 5;
       });
-
-      if (score > 0 || cat === 'code') { // Always include code/api
+      if (score > 0 || cat === 'code') {
         scoredItems.push({ cat, id, text: it.text, score: cat === 'code' ? 100 : score });
       }
     }
   }
 
-  // Sort by score and take top 10
-  const topItems = scoredItems.sort((a, b) => b.score - a.score).slice(0, 10);
+  // Search in Patterns
+  for (const [cat, items] of Object.entries(PATTERNS)) {
+    for (const [id, code] of Object.entries(items as any)) {
+      let score = 0;
+      if (contextKeywords.some(kw => id.includes(kw) || cat.includes(kw))) score += 30;
+      if (score > 0) {
+        scoredItems.push({ cat: `PATTERN:${cat}`, id, text: code as string, score, isPattern: true });
+      }
+    }
+  }
+
+  // Sort and take top 12
+  const topItems = scoredItems.sort((a, b) => b.score - a.score).slice(0, 12);
 
   topItems.forEach(it => {
-    prompt += `[${it.cat.toUpperCase()}] ${it.id}: ${it.text}\n`;
+    if (it.isPattern) {
+      prompt += `[CODE_${it.cat}] ${it.id}:\n${it.text}\n`;
+    } else {
+      prompt += `[${it.cat.toUpperCase()}] ${it.id}: ${it.text}\n`;
+    }
   });
 
   return prompt;
@@ -105,4 +145,3 @@ export function getRelevantKnowledge(tags: string[] = [], contextText: string = 
 export const getFullKnowledgePrompt = (genre?: string, context?: string) => {
   return getRelevantKnowledge(genre ? [genre, 'plan', 'juice', 'mobile'] : ['plan', 'juice', 'mobile'], context);
 };
-

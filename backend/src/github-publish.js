@@ -100,6 +100,18 @@ export async function publishGameToGithub(req, env) {
   const files = Array.isArray(body.files) ? body.files : [];
   if (files.length === 0) return error('Добавь хотя бы один файл.');
 
+  // --- PRE-PUSH VALIDATION ---
+  for (const file of files) {
+    if (file.path.endsWith('.js') || file.path.endsWith('.html')) {
+       const content = String(file.content);
+       // Simple check for common failure: empty code or obvious syntax errors
+       if (content.length < 50) return error(`Файл ${file.path} слишком короткий или пустой. Продвижение отменено.`);
+       if (file.path.endsWith('.js') && !content.includes('function')) {
+          return error(`Файл ${file.path} не содержит функций. Похоже на битый код.`);
+       }
+    }
+  }
+
   let repoName = '';
   let cr = { ok: false, status: 0, data: null };
   for (let attempt = 0; attempt < 10; attempt++) {

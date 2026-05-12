@@ -21,7 +21,11 @@ const AgentActionSchema = z.discriminatedUnion("type", [
     code: z.string()
   }),
   z.object({
-    type: z.literal("VALIDATE"),
+    type: z.literal("VALIDATE_RUNTIME"),
+  }),
+  z.object({
+    type: z.literal("RESEARCH"),
+    query: z.string()
   }),
   z.object({
     type: z.literal("FINISH"),
@@ -64,10 +68,10 @@ export class SmolAgent {
 
   async runFixLoop(task: string, initialCode: string, runtimeError?: string): Promise<string> {
     this.currentCode = initialCode;
-    const maxIterations = 7;
+    const maxIterations = 15; // Increased for complex tasks
     
     for (let i = 0; i < maxIterations; i++) {
-      this.config.onProgress(`Анализирую (итерация ${i + 1}/${maxIterations})...`);
+      this.config.onProgress(`⚙️ Инженерная итерация ${i + 1}/${maxIterations}...`);
       
       const startTime = Date.now();
       const step = await this.executeStep(task, runtimeError);
@@ -76,14 +80,14 @@ export class SmolAgent {
       this.history.push(step);
       
       if (step.action.type === 'FINISH') {
-        this.config.onProgress(`✅ Завершено: ${step.action.reason}`);
+        this.config.onProgress(`🏁 Завершено: ${step.action.reason}`);
         break;
       }
 
       if (step.observation.startsWith('ERROR')) {
-         this.config.onProgress(`⚠️ Ошибка: ${step.observation.slice(0, 100)}...`);
+         this.config.onProgress(`❌ Провал: ${step.observation.slice(0, 100)}...`);
       } else {
-         this.config.onProgress(`✅ OK: ${step.observation.slice(0, 50)}...`);
+         this.config.onProgress(`🛠 Применено: ${step.observation.slice(0, 50)}...`);
       }
     }
 
@@ -91,40 +95,49 @@ export class SmolAgent {
   }
 
   private async executeStep(task: string, runtimeError?: string): Promise<AgentStep> {
-    const systemPrompt = `You are a World-Class Autonomous AI Software Engineer specializing in Game Dev.
-Your goal: Fulfill the <task> by applying precise, verified code transformations.
+    const systemPrompt = `You are a World-Class Autonomous Game Engineer.
+Your goal: Solve the task by applying precise, verified code transformations.
 
-OPERATIONAL PROTOCOL:
-1. INTERNAL MONOLOGUE: Reason deeply about the architecture and current state.
-2. STRUCTURED ACTION: You MUST output a valid JSON object matching the schema.
-3. ATOMICITY: Apply one logical change per step.
-4. VALIDATION: Every change is automatically verified for syntax. If you break it, you must fix it.
+ENGINEERING PRINCIPLES:
+1. DEEP REASONING: Analyze the architecture before making changes.
+2. FEEDBACK LOOP: Use Observations from previous steps to correct your course.
+3. ATOMICITY: One logical change per step.
+4. ZERO REGRESSION: Every change must be syntactically correct and logical.
 
 AVAILABLE TOOLS:
-- REPLACE_BLOCK: Precise string replacement (use for unique blocks).
-- REWRITE_FUNCTION: Replace a whole function body by name.
+- REPLACE_BLOCK: String replacement for unique code blocks. Use only if SEARCH is 100% unique.
+- REWRITE_FUNCTION: Replace a whole function body by its name.
 - PATCH_CODE: Replace an AST node (FunctionDeclaration or ObjectProperty).
-- VALIDATE: Explicitly run syntax and logic analysis.
-- FINISH: Stop when the task is fully completed.
+- VALIDATE: Run semantic analysis (features, score, errors).
+- VALIDATE_RUNTIME: Execute code in a sandbox to catch crashes and check for #start-button.
+- RESEARCH: Search the Knowledge Base and Pattern Library for specific implementation details.
+- FINISH: Signal task completion with a brief summary of what you did.
 
-KNOWLEDGE BASE:
+CONTEXT:
 ${getRelevantKnowledge(['juice', 'logic', 'physics', 'mobile'])}
 
 GLOBALS: W, H, ctx, scale, score, hi, shake, cam, joy, swipe, glow, nglow, sfx, Part.
 
-CURRENT CODE:
+CURRENT CODEBASE:
 \`\`\`javascript
 ${this.currentCode}
 \`\`\`
 
-${runtimeError ? `RUNTIME ERROR FROM IFRAME:\n${runtimeError}` : ''}
+${runtimeError ? `CRITICAL RUNTIME ERROR:\n${runtimeError}` : ''}
 
-HISTORY:
-${this.history.map((s, i) => `[${i}] ${s.action.type}: ${s.observation}`).join('\n')}
+EXECUTION HISTORY:
+${this.history.length === 0 ? 'No steps taken yet.' : this.history.map((s, i) => `[Step ${i}] Action: ${s.action.type} | Observation: ${s.observation}`).join('\n')}
+
+INSTRUCTIONS:
+1. Output ONLY a valid JSON object.
+2. Your "thought" should contain:
+   - Analysis of the current problem.
+   - Plan for this specific step.
+   - How you will verify the result.
 
 OUTPUT FORMAT:
 {
-  "thought": "Reasoning about why this change is needed...",
+  "thought": "Deep engineering analysis...",
   "action": { "type": "TOOL_NAME", ...params }
 }`;
 
@@ -189,6 +202,15 @@ OUTPUT FORMAT:
         case 'VALIDATE': {
            const analysis = analyzeGameJS(this.currentCode);
            return `ANALYSIS: Score ${analysis.score}/100. Errors: ${analysis.errors.join(', ')}. Features: ${analysis.features.join(', ')}`;
+        }
+        case 'VALIDATE_RUNTIME': {
+           const { validateRuntime } = await import("./runtime-validator");
+           const runtime = await validateRuntime(this.currentCode);
+           if (!runtime.ok) return `RUNTIME ERROR: ${runtime.error}`;
+           return "RUNTIME SUCCESS: Code executes without crashes. required functions [init, update, draw] are present.";
+        }
+        case 'RESEARCH': {
+           return getRelevantKnowledge([], action.query);
         }
         case 'FINISH':
            return "DONE";

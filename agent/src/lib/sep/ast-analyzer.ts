@@ -70,19 +70,46 @@ export function analyzeGameJS(code: string): AnalysisResult {
       result.errors.push(`Temporal Dead Zone Detected: Calling ${usedBeforeDeclaration.join(', ')} before declaration.`);
     }
 
-    // Feature detection (Juice)
-    if (code.includes('Math.random() * 2 - 1') && code.includes('shake')) {
-      result.features.push('Screen Shake');
+    // Robust Feature Detection via AST
+    const featuresFound = new Set<string>();
+    
+    function findFeatures(node: any) {
+      if (!node) return;
+      
+      // Detection for Screen Shake (Math.random in update/shake)
+      if (node.type === 'CallExpression' && 
+          node.callee.type === 'MemberExpression' &&
+          node.callee.object.name === 'Math' &&
+          node.callee.property.name === 'random') {
+        featuresFound.add('Screen Shake');
+      }
+
+      // Detection for Particle System (new Part or particles array)
+      if (node.type === 'NewExpression' && node.callee.name === 'Part') {
+        featuresFound.add('Particle System');
+      }
+
+      // Detection for Audio System
+      if (node.type === 'CallExpression' && node.callee.name === 'playSound') {
+        featuresFound.add('Audio System');
+      }
+
+      // Detection for Persistence
+      if (node.type === 'MemberExpression' && node.object.name === 'localStorage') {
+        featuresFound.add('Persistence');
+      }
+
+      // Recursive walk
+      for (const key in node) {
+        if (node[key] && typeof node[key] === 'object') {
+          if (Array.isArray(node[key])) node[key].forEach(findFeatures);
+          else findFeatures(node[key]);
+        }
+      }
     }
-    if (code.includes('particles') || code.includes('Particle')) {
-      result.features.push('Particle System');
-    }
-    if (code.includes('AudioContext') || code.includes('new Audio') || code.includes('playSound')) {
-      result.features.push('Audio System');
-    }
-    if (code.includes('localStorage') || code.includes('safeStorage')) {
-      result.features.push('Persistence');
-    }
+
+    findFeatures(ast);
+    result.features = Array.from(featuresFound);
 
     // Scoring
     let score = 50;
