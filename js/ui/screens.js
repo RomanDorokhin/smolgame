@@ -295,43 +295,9 @@ function switchTab(tab) {
     }
     if (typeof maybeShowWelcomeOnUploadOpen === 'function') maybeShowWelcomeOnUploadOpen();
 
-    // ── Lazy-load React agent on first open ─────────────────────────────
-    // The screen is display:none until here → React would mount into a
-    // zero-size container and render blank.  We inject the script AFTER
-    // the screen becomes display:flex so layout is correct.
+    // ── Lazy-load React agent ──────────────────────────────────────────
     if (!window._agentScriptLoaded) {
-      window._agentScriptLoaded = true;
-
-      // Inject CSS
-      const link = document.createElement('link');
-      link.rel = 'stylesheet';
-      link.crossOrigin = 'anonymous';
-      link.href = 'agent-v3/assets/index.css?v=30671-DIAGNOSTIC';
-      document.head.appendChild(link);
-
-      const agentRoot = document.getElementById('agent-root');
-      if (!agentRoot) return;
-
-      if (!agentRoot.hasChildNodes()) {
-        agentRoot.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--muted,#888);font-size:14px;gap:8px;"><span style="width:18px;height:18px;border:2px solid currentColor;border-top-color:transparent;border-radius:50%;animation:spin 0.7s linear infinite;display:inline-block;"></span>Загрузка архитектора v4...</div><style>@keyframes spin{to{transform:rotate(360deg)}}</style>';
-      }
-
-      // Inject JS module
-      const script = document.createElement('script');
-      script.type = 'module';
-      script.crossOrigin = 'anonymous';
-      script.src = 'agent-v3/assets/index.js?v=30671-DIAGNOSTIC';
-      document.head.appendChild(script);
-      
-      script.onload = () => {
-        console.log('[Agent] Script loaded successfully');
-      };
-
-      script.onerror = () => {
-        const r = document.getElementById('agent-root');
-        if (r) r.innerHTML = '<div style="padding:20px;color:#f87171;text-align:center;">❌ Не удалось загрузить агент. Попробуйте перезагрузить страницу.</div>';
-      };
-      document.body.appendChild(script);
+      window.injectAgent();
     } else {
       // On subsequent opens, just trigger resize so React recalculates layout
       requestAnimationFrame(() => window.dispatchEvent(new Event('resize')));
@@ -346,6 +312,48 @@ function switchTab(tab) {
     tab === 'feed' || tab === 'games' || tab === 'search' || tab === 'profile' || tab === 'upload'
   );
 }
+
+/** 
+ * Инъекция React-агента (Архитектора).
+ * Можно вызывать заранее для прелоада.
+ */
+window.injectAgent = function() {
+  if (window._agentScriptLoaded && document.querySelector('script[src*="agent-v3/assets/index.js"]')) return;
+  window._agentScriptLoaded = true;
+
+  console.log('[Agent] Injecting Architect assets...');
+
+  // Inject CSS
+  const link = document.createElement('link');
+  link.rel = 'stylesheet';
+  link.crossOrigin = 'anonymous';
+  link.href = 'agent-v3/assets/index.css?v=30671-DIAGNOSTIC';
+  document.head.appendChild(link);
+
+  const agentRoot = document.getElementById('agent-root');
+  if (!agentRoot) return;
+
+  if (!agentRoot.hasChildNodes()) {
+    agentRoot.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--muted,#888);font-size:14px;gap:8px;"><span style="width:18px;height:18px;border:2px solid currentColor;border-top-color:transparent;border-radius:50%;animation:spin 0.7s linear infinite;display:inline-block;"></span>Загрузка архитектора v4...</div><style>@keyframes spin{to{transform:rotate(360deg)}}</style>';
+  }
+
+  // Inject JS module
+  const script = document.createElement('script');
+  script.type = 'module';
+  script.crossOrigin = 'anonymous';
+  script.src = 'agent-v3/assets/index.js?v=30671-DIAGNOSTIC';
+  document.head.appendChild(script);
+  
+  script.onload = () => {
+    console.log('[Agent] Script loaded successfully');
+  };
+
+  script.onerror = () => {
+    const r = document.getElementById('agent-root');
+    if (r) r.innerHTML = '<div style="padding:20px;color:#f87171;text-align:center;">❌ Не удалось загрузить агент. Попробуйте перезагрузить страницу.</div>';
+  };
+  document.body.appendChild(script);
+};
 
 window.openUpload = openUpload;
 window.closeUpload = closeUpload;

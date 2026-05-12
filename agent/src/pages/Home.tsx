@@ -10,9 +10,10 @@ import { Menu, Github, Layout, MessageSquare, Play, Pencil, RotateCcw, X, Chevro
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { SmolGameAPI } from "@/lib/smolgame-api";
-import { Component, type ReactNode } from "react";
+import { Component, type ReactNode, lazy, Suspense } from "react";
 import type { ChatSettings, APIProvider } from "@/types/chat";
-import Editor from "@monaco-editor/react";
+
+const Editor = lazy(() => import("@monaco-editor/react"));
 import { Panel, Group, Separator } from "react-resizable-panels";
 import { Progress } from "@/components/ui/progress";
 import { OpenGameBuilder } from "@/components/OpenGameBuilder";
@@ -667,22 +668,24 @@ export default function Home() {
                       {(studioMode === "code" || studioMode === "split") && (
                         <>
                           <Panel defaultSize={50} minSize={20}>
-                            <Editor
-                              theme="vs-dark"
-                              defaultLanguage="html"
-                              value={studioGame.code}
-                              onChange={(val) => setStudioGame({ ...studioGame, code: val || "" })}
-                              options={{
-                                minimap: { enabled: false },
-                                fontSize: 13,
-                                lineNumbers: "on",
-                                roundedSelection: true,
-                                scrollBeyondLastLine: false,
-                                automaticLayout: true,
-                                padding: { top: 20 },
-                                fontFamily: "JetBrains Mono, Menlo, monospace"
-                              }}
-                            />
+                            <Suspense fallback={<div className="h-full flex items-center justify-center bg-[#1e1e1e] text-white/20 text-xs font-mono uppercase tracking-widest animate-pulse">Инициализация редактора...</div>}>
+                              <Editor
+                                theme="vs-dark"
+                                defaultLanguage="html"
+                                value={studioGame.code}
+                                onChange={(val) => setStudioGame({ ...studioGame, code: val || "" })}
+                                options={{
+                                  minimap: { enabled: false },
+                                  fontSize: 13,
+                                  lineNumbers: "on",
+                                  roundedSelection: true,
+                                  scrollBeyondLastLine: false,
+                                  automaticLayout: true,
+                                  padding: { top: 20 },
+                                  fontFamily: "JetBrains Mono, Menlo, monospace"
+                                }}
+                              />
+                            </Suspense>
                           </Panel>
                           {studioMode === "split" && <Separator className="w-1 bg-white/5 hover:bg-blue-500/50 transition-colors" />}
                         </>

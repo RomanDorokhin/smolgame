@@ -50,6 +50,13 @@ async function bootstrap() {
     }
     if (typeof refreshFeedCoachState === 'function') refreshFeedCoachState();
 
+    // Прелоад архитектора в фоне, чтобы вкладка "Создать" открывалась мгновенно
+    if (typeof window.injectAgent === 'function') {
+      setTimeout(() => {
+        window.injectAgent();
+      }, 2000); // Даем 2 секунды на загрузку основного контента
+    }
+
     if (typeof window.syncUSERFromTelegramInit === 'function') {
       window.syncUSERFromTelegramInit();
       setTimeout(() => window.syncUSERFromTelegramInit && window.syncUSERFromTelegramInit(), 400);
