@@ -7,6 +7,8 @@ import { INTERVIEWER_PROMPT, AIDER_EDITOR_PROMPT } from "./agent_prompts";
 import { generateGame } from "@/lib/sep/gameGenerationPipelinePro";
 import { analyzeGameCode } from "@/lib/sep/game-code-analyzer";
 import { getFullKnowledgePrompt } from "@/lib/knowledge-base";
+import { SmolAgent } from "@/lib/sep/SmolAgent";
+import { getIframeError } from "@/pages/Home"; // I'll need to export this or find a way to get it
 
 // ──────────────────────────────────────────────
 // ТИПЫ
@@ -302,58 +304,24 @@ export function useGameAgent(settings: ChatSettings) {
       let finalCode = "";
 
       if (isModification) {
-        setStep("🤖 Редактирую код...");
-        updateMessage(assistantId, {
-          content: (beforeTag ? beforeTag + "\n\n" : "") + `🤖 **Редактирую код...**`,
-          isStreaming: true
+        setStep("🤖 Агент: Анализирую и вношу правки...");
+        
+        // Get last error from global state (Home.tsx reports it)
+        const runtimeError = (window as any).lastSmolError || "";
+
+        const agent = new SmolAgent({
+          llm: getLLMConfig(usedProvider),
+          onProgress: (msg) => {
+            updateMessage(assistantId, {
+              content: (beforeTag ? beforeTag + "\n\n" : "") + `🤖 **${msg}**`,
+              isStreaming: true
+            });
+          },
+          signal
         });
 
-        const { text: modificationText } = await streamWithFallback(
-          [
-            { role: "system", content: AIDER_EDITOR_PROMPT + `\n\nCURRENT FILE CONTENT:\n${previousCode}` },
-            { role: "user", content: `Modify the code:\n\n${gameSpec}` }
-          ],
-          () => {},
-          signal,
-          usedProvider
-        );
-
-        const blocks = parseAiderBlocks(modificationText);
-        if (blocks.length > 0) {
-          finalCode = applyAiderBlocks(previousCode!, blocks).code;
-        } else {
-          const matchHtml = modificationText.match(/<html[\s\S]*<\/html>/i);
-          const matchLogic = modificationText.match(/<game_logic>([\s\S]*?)<\/game_logic>/i);
-          
-          if (matchHtml) {
-            finalCode = matchHtml[0];
-          } else if (matchLogic) {
-            const logicContent = matchLogic[1].trim();
-            // Try different markers for injection
-            const markers = [
-              /\/\/ ─── INJECTED LOGIC ──────────────────────────────────────────\n[\s\S]*?(?=<\/script>)/i,
-              /\/\* INJECT_LOGIC_HERE \*\//i,
-              /\/\/ CUSTOM_UPDATE_LOGIC_HOOK/i
-            ];
-            
-            let replaced = false;
-            for (const marker of markers) {
-              if (marker.test(previousCode!)) {
-                finalCode = previousCode!.replace(marker, `// ─── INJECTED LOGIC ──────────────────────────────────────────\n${logicContent}\n`);
-                replaced = true;
-                break;
-              }
-            }
-            
-            if (!replaced) {
-              console.warn("No injection marker found. Appending to end of script.");
-              finalCode = previousCode!.replace(/<\/script>/i, `\n// ─── INJECTED LOGIC ──────────────────────────────────────────\n${logicContent}\n</script>`);
-            }
-          } else {
-            console.warn("Failed to parse modification. Falling back to previous code.");
-            finalCode = previousCode!;
-          }
-        }
+        finalCode = await agent.runFixLoop(gameSpec, previousCode!, runtimeError);
+        (window as any).lastSmolError = ""; // Clear after fix
       } else {
         // --- 5-STAGE SEP PIPELINE ---
         setStep("🚀 Запуск SEP Pipeline...");
@@ -382,6 +350,7 @@ export function useGameAgent(settings: ChatSettings) {
 
         const result = await generateGame(gameSpec, {
           generateFn: pipelineGenerateFn,
+          llmConfig: config,
           onProgress: (msg) => {
             // Убираем вывод в bash формат, парсим сообщение
             let cleanStatus = msg;

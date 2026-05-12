@@ -12,6 +12,7 @@ export interface PipelineOptions {
   onProgress?: (message: string) => void;
   generateFn: (messages: any[]) => Promise<string>;
   previousCode?: string;
+  llmConfig?: any; // Added for SmolAgent
 }
 
 // ─── GENRE → SKELETON MAPPING ────────────────────────────────
@@ -154,24 +155,18 @@ STRICT: Reset swipe flags. Use 'scale' for all sizes. Output ONLY <game_logic>.`
 
   const errors = validate(finalHtml);
   if (errors.length > 0) {
-    onProgress?.(`🔧 AUTO-FIX: Resolving ${errors.length} mechanical discrepancies & boosting Juice...`);
-    const fixedResponse = await generateFn([
-      { 
-        role: 'system', 
-        content: `You are the Head of QA. 
-TASK: 
-1. Fix technical errors.
-2. Boost the JUICE_SCORE to 9/10. Add more screen shake, particles, and neon glow.
-3. Verify alignment with <plan>.
+    onProgress?.(`🔧 AUTO-FIX: Разрешаю ${errors.length} технических несоответствий...`);
+    
+    const agent = new SmolAgent({
+      llm: options.llmConfig!, // I'll need to pass this in options
+      onProgress: (m) => onProgress?.(`QA: ${m}`),
+    });
 
-KNOWLEDGE: ${getFullKnowledgePrompt(genre)}
-STRICT: Output ONLY updated <game_logic>.` 
-      },
-      { role: 'system', content: `<plan>\n${plan}\n</plan>` },
-      { role: 'system', content: `ERRORS TO FIX:\n${errors.join('\n')}` },
-      { role: 'user', content: logic }
-    ]);
-    const fixedLogic = fixedResponse.match(/<game_logic>([\s\S]*?)<\/game_logic>/i)?.[1].trim() || fixedResponse;
+    const fixedLogic = await agent.runFixLoop(
+      `Fix these errors and boost juice to 9/10: ${errors.join(', ')}`,
+      logic
+    );
+
     const finalPolishedHtml = ultimateArcadeSkeleton.replace(
       '/* INJECT_LOGIC_HERE */',
       `// ─── INJECTED LOGIC ──────────────────────────────────────────\n${fixedLogic}`

@@ -1,130 +1,104 @@
-/**
- * SmolGame Knowledge Base
- * This file contains the consolidated technical skills and standards 
- * for injection into the AI Agent's prompt context.
- */
-
 export const KNOWLEDGE_BASE = {
   planning: {
-    'task-decomposition': `Break complex prompts into: 1. Skeleton (FSM, Canvas), 2. Logic (update/draw), 3. Mobile (touch/input), 4. Juice (particles, shake), 5. Validation.`,
-    'self-review': `Checklist: localStorage try/catch, touch-action:none, no location.reload, swipe reset, screen shake on impact, 9:16 portrait.`,
-    'prompt-self-check': `Verify intent (new vs mod), genre, controls (Joystick vs Swipe), and vibe before starting.`
+    'task-decomposition': {
+      text: `Break complex prompts into: 1. Skeleton (FSM, Canvas), 2. Logic (update/draw), 3. Mobile (touch/input), 4. Juice (particles, shake), 5. Validation.`,
+      tags: ['plan', 'architecture']
+    },
+    'self-review': {
+      text: `Checklist: localStorage try/catch, touch-action:none, no location.reload, swipe reset, screen shake on impact, 9:16 portrait.`,
+      tags: ['qa', 'mobile']
+    }
   },
   core: {
-    'html5-canvas': `Use requestAnimationFrame, delta time (dt), layers (BG, Mid, FG, HUD), and ctx.save/restore. floor() coords for performance.`,
-    'game-architecture': `FSM states: MENU, PLAYING, GAMEOVER. Use reset() instead of reload(). Keep update() and draw() separate.`,
-    'collision-detection': `AABB for boxes, Distance for circles. Spatial grid for >50 objects. Resolve Y then X for platforms.`,
-    'input-handling': `Pointer events, virtual joystick (normalized -1 to 1), swipe detection (dist > 50px). Reset swipe flags after use.`,
-    'audio': `Web Audio API. Unlock on first tap. Oscillator SFX: Jump (sine sweep), Boom (noise), Beep (triangle).`
+    'html5-canvas': {
+      text: `Use requestAnimationFrame, delta time (dt), layers (BG, Mid, FG, HUD), and ctx.save/restore. floor() coords for performance.`,
+      tags: ['render', 'canvas']
+    },
+    'game-architecture': {
+      text: `FSM states: MENU, PLAYING, GAMEOVER. Use reset() instead of reload(). Keep update() and draw() separate.`,
+      tags: ['logic', 'fsm']
+    },
+    'collision-detection': {
+      text: `AABB for boxes, Distance for circles. Spatial grid for >50 objects. Resolve Y then X for platforms.`,
+      tags: ['physics', 'math']
+    },
+    'input-handling': {
+      text: `Pointer events, virtual joystick (normalized -1 to 1), swipe detection (dist > 50px). Reset swipe flags after use.`,
+      tags: ['input', 'mobile']
+    },
+    'audio': {
+      text: `Web Audio API. Unlock on first tap. Oscillator SFX: Jump (sine sweep), Boom (noise), Beep (triangle).`,
+      tags: ['sfx', 'audio']
+    }
   },
   genres: {
-    'snake': `Grid-based logic, direction queueing, body segment array, particle pop on eat.`,
-    'platformer': `Gravity (0.5), Friction (0.8), Coyote Time, Jump Buffering, Resolve Y then X.`,
-    'puzzle': `Grid array vs Visual lerp, state-based input locking during animations.`,
-    'shooter': `Bullet pooling, auto-culling offscreen, sine/spread patterns, impact flash.`,
-    'runner': `Parallax (3-5 layers), infinite floor swapping, increasing scrollSpeed.`,
-    'tower-defense': `Waypoint pathing, tower range visualization, closest-to-exit targeting.`
+    'snake': { text: `Grid-based logic, direction queueing, body segment array, particle pop on eat.`, tags: ['snake'] },
+    'platformer': { text: `Gravity (0.5), Friction (0.8), Coyote Time, Jump Buffering, Resolve Y then X.`, tags: ['platformer'] },
+    'puzzle': { text: `Grid array vs Visual lerp, state-based input locking during animations.`, tags: ['puzzle'] },
+    'shooter': { text: `Bullet pooling, auto-culling offscreen, sine/spread patterns, impact flash.`, tags: ['shooter'] },
+    'runner': { text: `Parallax (3-5 layers), infinite floor swapping, increasing scrollSpeed.`, tags: ['runner'] },
+    'tower-defense': { text: `Waypoint pathing, tower range visualization, closest-to-exit targeting.`, tags: ['td'] }
   },
   code: {
-    'api-reference': `SKELETON GLOBALS:
-- W, H: Canvas width/height (use these for all positions).
-- ctx: 2D Context.
-- scale: DPR multiplier (multiply all sizes/distances by this).
-- score, hi: Current and high score.
-- shake: Number (set shake=10 for impact).
-- cam: {x, y, zoom} (change to move camera).
-- joy: {x, y, active, enabled} (READ ONLY, joy handles itself).
-- swipe: {up, down, left, right} (READ flags, RESET to false after).
-- glow(color, blur): Apply neon effect.
-- nglow(): Stop neon effect.
-- sfx(freq, time, type): Play sound.
-- Part: class for particles (new Part(x, y, color)).
-- safeStorage: {set(k, v), get(k, d)}.`,
-    'anti-patterns': `CRITICAL: 
-1. NO document.getElementById('canvas'). Use 'c' or 'canvas' global.
-2. NO addEventListener. Use 'onTouch(e)' function.
-3. NO requestAnimationFrame loop. Engine handles it.
-4. NO joy.x = ... manual overrides. Read from 'joy' object.
-5. NO tutorial text. Use ONLY <plan> or <game_logic> tags.`,
-    'mandatory-cot': `THINK BEFORE CODE: You must start your response by recalling the specific rules for the genre and the 35-point checklist. If you ignore 'dt' or 'shake', you have failed.`
+    'api-reference': {
+      text: `SKELETON GLOBALS: W, H, ctx, scale (DPR), score, hi, shake, cam, joy, swipe, glow(c,b), nglow(), sfx(f,t,ty), Part, safeStorage.`,
+      tags: ['api', 'reference']
+    },
+    'anti-patterns': {
+      text: `CRITICAL: NO getElementById, NO addEventListener (use onTouch), NO manual loop, NO joy overrides.`,
+      tags: ['safety', 'errors']
+    }
   },
   quality: {
-    'qa-checklist': `35-Point Standard: touch-action:none, safeStorage, 60fps, 9:16, Screen Shake, Neon Glow, Particles, Parallax, Procedural Audio.`,
-    'mobile-first': `Portrait focus, thumb-zone controls, min 44px tap targets, no :hover dependency.`,
-    'telegram-webview': `CSS fixed position scroll fix, roundRect polyfill, safeStorage try/catch.`,
-    'scoring-criteria': `JUICE_SCORE (1-10):
-- 1-4: Trash/Husk. Minimal logic, no effects.
-- 5-7: Functional. Good logic, but lacks "polish" or "juice".
-- 8-10: Pro. High-end visuals, smooth animations, perfect mobile input.
-MANDATORY: Reject any code with JUICE_SCORE < 8.`
-  },
-  process: {
-    'report-format': `Structure: Summary -> Changes -> Status -> Action. Tone: Pro & Concise.`,
-    'error-escalation': `Stop and ask if: Ambiguity, Technical Impossibility, or 3x Loop Fail.`
-  },
-  reference: {
-    'golden-example': `[GOLDEN EXAMPLE - PRO QUALITY]
-<game_logic>
-let p, obs=[], score=0;
-function init(){
-  p={x:0, y:0, v:0, r:15*scale};
-  obs=[]; score=0; joy.enabled=true;
-}
-function update(){
-  p.v += 0.5 * dt; p.y += p.v * dt;
-  if(joy.active) p.x += joy.x * 5 * dt;
-  if(swipe.up){ p.v = -8; swipe.up=false; sfx(440,0.1); shake=5; }
-  if(p.y > H/2){ p.y=H/2; p.v=0; }
-  
-  if(Math.random()<0.05) obs.push({x:W, y:Math.random()*H, s:20*scale});
-  obs.forEach((o,i)=>{
-    o.x -= 4*dt;
-    if(Math.hypot(p.x-o.x, p.y-o.y) < p.r+o.s){
-      shake=20; sfx(100,0.5,'sawtooth'); gameOver();
+    'juice-standards': {
+      text: `JUICE (8-10/10): Screen Shake on impact, Neon Glow for active items, Particle bursts on death/collect, Parallax backgrounds, Procedural SFX.`,
+      tags: ['juice', 'polish']
+    },
+    'mobile-ux': {
+      text: `Thumb-zone controls, min 44px tap targets, no :hover dependency, CSS fixed position scroll fix.`,
+      tags: ['mobile', 'ux']
     }
-    if(o.x < -100) obs.splice(i,1);
-  });
-}
-function draw(){
-  glow('#0f0', 20); ctx.fillStyle='#0f0';
-  ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, 7); ctx.fill();
-  obs.forEach(o=>{
-    glow('#f0f', 10); ctx.fillStyle='#f0f';
-    ctx.fillRect(o.x, o.y, o.s, o.s);
-    if(Math.random()<0.1) parts.push(new Part(o.x, o.y, '#f0f'));
-  });
-  nglow();
-  parts.forEach((pa,i)=>{ pa.u(); pa.d(); if(pa.a<=0)parts.splice(i,1); });
-}
-function onTouch(e){ if(state==='over') startGame(); }
-</game_logic>`
-  },
-  debugging: {
-    'systematic-phases': `1. ROOT CAUSE: Read stack trace, reproduce 100%, check git diff. 2. PATTERN: Compare with working examples. 3. HYPOTHESIS: Specific theory + minimal test. 4. FIX: Address root, not symptom.`,
-    'iron-law': `NO FIXES WITHOUT INVESTIGATION. If 3 fixes fail, the architecture is wrong - STOP and RE-EVALUATE.`,
-    'diagnostic-logs': `When stuck, add logs at component boundaries to isolate WHERE data flow breaks.`,
-    'systematic-debugging': `Always follow phases: 1. Root Cause, 2. Pattern, 3. Hypothesis, 4. Fix. If 3 fixes fail, Re-Evaluate.`
   }
 };
 
-export type KnowledgeCategory = 'planning' | 'core' | 'genres' | 'code' | 'quality' | 'process' | 'debugging' | 'reference';
+export type KnowledgeCategory = keyof typeof KNOWLEDGE_BASE;
 
-export const getFullKnowledgePrompt = (genre?: string) => {
-  let prompt = "--- TECHNICAL KNOWLEDGE BASE ---\n";
+/**
+ * Returns a subset of the knowledge base based on relevant tags or categories.
+ * Prevents prompt bloat by only including what's necessary.
+ */
+export function getRelevantKnowledge(tags: string[] = []): string {
+  let prompt = "--- TECHNICAL KNOWLEDGE BASE (CONTEXTUAL) ---\n";
+  const used = new Set<string>();
+
+  const add = (cat: string, id: string, item: { text: string, tags: string[] }) => {
+    const key = `${cat}:${id}`;
+    if (used.has(key)) return;
+    prompt += `[${cat.toUpperCase()}] ${id}: ${item.text}\n`;
+    used.has(key);
+  };
+
+  // Always include Core API and Anti-patterns
+  Object.entries(KNOWLEDGE_BASE.code).forEach(([id, item]) => add('code', id, item));
   
-  // Always include Core, Code, Quality, Debugging, and Reference
-  for (const cat of ['core', 'code', 'quality', 'debugging', 'reference'] as KnowledgeCategory[]) {
-    prompt += `\n[${cat.toUpperCase()}]\n`;
-    for (const [id, content] of Object.entries(KNOWLEDGE_BASE[cat])) {
-      prompt += `- ${id}: ${content}\n`;
+  // Search for matching tags
+  for (const [cat, items] of Object.entries(KNOWLEDGE_BASE)) {
+    for (const [id, item] of Object.entries(items as any)) {
+      const it = item as { text: string, tags: string[] };
+      if (tags.some(t => it.tags.includes(t.toLowerCase()))) {
+        add(cat, id, it);
+      }
     }
   }
 
-  // Selective Genre Knowledge
-  if (genre && KNOWLEDGE_BASE.genres[genre as keyof typeof KNOWLEDGE_BASE.genres]) {
-    prompt += `\n[GENRE: ${genre.toUpperCase()}]\n`;
-    prompt += `- ${genre}: ${KNOWLEDGE_BASE.genres[genre as keyof typeof KNOWLEDGE_BASE.genres]}\n`;
+  // Fallback to basic Core if prompt is too small
+  if (used.size < 5) {
+     Object.entries(KNOWLEDGE_BASE.core).forEach(([id, item]) => add('core', id, item as any));
   }
 
   return prompt;
+}
+
+export const getFullKnowledgePrompt = (genre?: string) => {
+  return getRelevantKnowledge(genre ? [genre, 'plan', 'juice', 'mobile'] : ['plan', 'juice', 'mobile']);
 };
