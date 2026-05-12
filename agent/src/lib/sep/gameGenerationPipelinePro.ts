@@ -1,5 +1,6 @@
 import ultimateArcadeSkeleton from '../skeletons/ultimate-arcade.html?raw';
 import { analyzeGameJS, extractScripts } from './ast-analyzer';
+import { getFullKnowledgePrompt } from '../knowledge-base';
 
 export interface PipelineResult {
   isSuccess: boolean;
@@ -23,36 +24,12 @@ function pickSkeleton(request: string) {
   return SKELETON;
 }
 
-// ─── ADVANCED VALIDATOR (AST-BASED) ──────────────────────────
-function validate(html: string): string[] {
-  const errors: string[] = [];
-  if (html.length < 1500)              errors.push('Output too short — incomplete game.');
-  if (!html.includes('<canvas'))       errors.push('Missing <canvas> element.');
-  
-  // Extract and analyze scripts
-  const scripts = extractScripts(html);
-  if (scripts.length === 0) {
-    errors.push('No <script> tags found in HTML.');
-  } else {
-    let hasSeriousJsError = false;
-    scripts.forEach(js => {
-      const analysis = analyzeGameJS(js);
-      if (analysis.errors.length > 0) {
-        errors.push(...analysis.errors);
-        hasSeriousJsError = true;
-      }
-      if (analysis.score < 60) {
-        console.warn('Game quality score low:', analysis.score);
-      }
-    });
-  }
+import { analyzeGameCode } from './game-code-analyzer';
 
-  if (!html.includes('requestAnimationFrame') && !html.includes('Engine.update'))
-                                       errors.push('Must use requestAnimationFrame for game loop.');
-  if (/location\.reload\s*\(\)/.test(html)) errors.push('FORBIDDEN: location.reload() — use resetGame() instead.');
-  if (!html.includes('pointerdown'))   errors.push('Missing pointerdown — required for mobile touch.');
-  
-  return errors;
+// ─── ADVANCED VALIDATOR ──────────────────────────
+function validate(html: string): string[] {
+  const report = analyzeGameCode(html);
+  return report.errors;
 }
 
 // ─── AUTO-REPAIR MECHANISM ────────────────────────────────────
@@ -137,15 +114,15 @@ NEVER use window.alert() or confirm(). Use DOM/Canvas overlays instead.`,
             {
               role: 'system',
               content:
-                `You are a God-Level Mobile Game Logic Architect.\n` +
-                `You ONLY provide the core gameplay logic. DO NOT write HTML, CSS, or Engine boilerplate.\n` +
+                `You are a God-Level Mobile Game Logic Architect. You provide only the core gameplay logic.\n\n` +
+                getFullKnowledgePrompt() +
                 `You must provide exactly 4 functions inside a <game_logic> block:\n` +
                 `1. function init() { /* setup objects, set joy.enabled=true if needed */ }\n` +
-                `2. function update() { /* physics, check swipe.up/down/left/right, use cam.x/y */ }\n` +
-                `3. function draw() { /* render ctx objects, use glow(color, blur) */ }\n` +
+                `2. function update() { /* physics, check swipe, apply 'Juice' */ }\n` +
+                `3. function draw() { /* render ctx, use glow/particles, parallax */ }\n` +
                 `4. function onTouch(e) { /* handle taps */ }\n\n` +
                 `AVAILABLE GLOBALS: W, H, ctx, scale, score, state, shake, cam (x,y,zoom), joy (x,y,active,enabled), swipe (up,down,left,right), safeStorage, Part class, glow/nglow functions.\n` +
-                `CRITICAL: Reset swipe flags (e.g. swipe.up=false) after reading them in update().\n` +
+                `CRITICAL: Reset swipe flags (swipe.up=false) after reading. Adhere to qa-checklist.md.\n` +
                 `Output ONLY the <game_logic> block.`,
             },
             { role: 'user', content: `Create logic for: ${userRequest}` },

@@ -14,47 +14,48 @@ The agent operates in three sequential phases for every new game request:
 
 For modification requests (when previous code exists), Phase 1 and 3 are preserved; Phase 2 uses `AIDER_EDITOR_PROMPT`.
 
-## Game Templates
+## Knowledge Base (Skills)
 
-When the Interviewer selects a template in the `<plan>` block, the Engineer uses the corresponding skeleton from `skeletons/` as a structural reference:
+The agent uses a multi-layered knowledge base in `agent/knowledge/` to ensure professional, high-performance output:
 
-| Template ID | File | Best For |
-|-------------|------|----------|
-| `arcade-canvas` | `skeletons/arcade-canvas.html` | Runners, shooters, dodge games |
-| `physics-puzzle` | `skeletons/physics-puzzle.html` | Ball puzzles, stacking, Angry Birds-style |
-| `narrative-mystery` | `skeletons/narrative-mystery.html` | Text adventures, visual novels, escape rooms |
+| Category | Skills / Files |
+|----------|----------------|
+| **Planning** | `task-decomposition.md`, `self-review.md`, `prompt-self-check.md` |
+| **Core Logic** | `html5-canvas.md`, `game-architecture.md`, `collision-detection.md`, `input-handling.md`, `audio.md` |
+| **Genres** | `genre-snake.md`, `genre-platformer.md`, `genre-puzzle.md`, `genre-shooter.md`, `genre-runner.md`, `genre-tower-defense.md` |
+| **Code Quality** | `code-debugging.md`, `code-refactoring.md`, `single-file-constraints.md`, `performance-budget.md` |
+| **Standards** | `qa-checklist.md` (35 pts), `mobile-first.md`, `telegram-webview.md` |
+| **Process** | `report-format.md`, `error-escalation.md` |
 
 ## Quality Standards
 
-All generated games MUST comply with the rules defined in `GAME_DESIGN_CHECKLIST.md`. The `game-code-analyzer.ts` module performs automated static analysis before the game is shown to the user.
+All generated games MUST comply with the **35-Point Checklist** in `knowledge/quality/qa-checklist.md`.
 
-### Critical Rules (auto-rejected if violated)
-
-1. **`touch-action: none`** on the canvas element — prevents Telegram feed scroll during gameplay.
-2. **Safe localStorage** — all storage access wrapped in `try/catch` to prevent `SecurityError` in Telegram WebView.
-3. **Complete game loop** — START screen → PLAYING state → GAME OVER screen → `restart()` without `location.reload()`.
-4. **No absolute paths** — breaks GitHub Pages deployment.
-5. **No iframe escape** — `top.location` and `window.parent.location` are forbidden.
+### Professional Workflow
+1. **Plan:** Decompose the request (`task-decomposition.md`).
+2. **Draft:** Implement using core and genre-specific skills.
+3. **Refine:** Apply mobile-first principles and performance budgets.
+4. **Review:** Run the `self-review.md` protocol.
+5. **Report:** Provide output in the standard `report-format.md`.
 
 ## File Structure
 
 ```
-smolgame_fixes/
-├── useGameAgent.ts          ← Drop-in replacement for agent/src/hooks/useGameAgent.ts
-├── agent_prompts.ts         ← Exported prompt constants (optional separate import)
-├── game-code-analyzer.ts    ← Static analysis utility
-├── AGENTS.md                ← This file (replaces root AGENTS.md)
-├── GAME_DESIGN_CHECKLIST.md ← Quality checklist referenced by prompts
-└── skeletons/
-    ├── arcade-canvas.html   ← Arcade game template
-    ├── physics-puzzle.html  ← Physics puzzle template
-    └── narrative-mystery.html ← Narrative/text game template
+agent/
+├── knowledge/
+│   ├── planning/      # Meta-cognition and task breakdown
+│   ├── core/          # Fundamental engine logic
+│   ├── genres/        # Genre-specific rules
+│   ├── code/          # Best practices and refactoring
+│   ├── quality/       # QA and mobile standards
+│   └── communication/ # Reporting and escalation
+├── src/hooks/
+│   ├── useGameAgent.ts
+│   └── agent_prompts.ts
+└── AGENTS.md
 ```
+
 
 ## Integration Instructions
 
-1. Copy `useGameAgent.ts` → `agent/src/hooks/useGameAgent.ts` (replaces existing file).
-2. Copy `game-code-analyzer.ts` → `agent/src/lib/game-code-analyzer.ts`.
-3. Copy `GAME_DESIGN_CHECKLIST.md` → project root (same level as `AGENTS.md`).
-4. Copy `skeletons/` directory → `agent/src/skeletons/` or `docs/skeletons/`.
-5. Copy `AGENTS.md` → project root (replaces existing `AGENTS.md`).
+The `ENGINEER_PROMPT` in `agent_prompts.ts` should be configured to "Recall skills from /agent/knowledge/" to ensure the AI applies these patterns during generation.

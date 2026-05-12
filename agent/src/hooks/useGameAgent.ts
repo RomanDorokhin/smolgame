@@ -6,6 +6,7 @@ import { pool } from "@/lib/llm-api";
 import { INTERVIEWER_PROMPT, AIDER_EDITOR_PROMPT } from "./agent_prompts";
 import { generateGame } from "@/lib/sep/gameGenerationPipelinePro";
 import { analyzeGameCode } from "@/lib/sep/game-code-analyzer";
+import { getFullKnowledgePrompt } from "@/lib/knowledge-base";
 
 // ──────────────────────────────────────────────
 // ТИПЫ
@@ -237,7 +238,10 @@ export function useGameAgent(settings: ChatSettings) {
       // ── PHASE 1: INTERVIEWER ────────────────────────────
       setStep("💬 Думаю...");
       const interviewMsgs = [
-        { role: "system" as const, content: INTERVIEWER_PROMPT },
+        { 
+          role: "system" as const, 
+          content: INTERVIEWER_PROMPT + "\n\n" + getFullKnowledgePrompt() 
+        },
         ...chatHistory.current.slice(-15),
       ];
 

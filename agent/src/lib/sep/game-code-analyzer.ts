@@ -1,5 +1,6 @@
 /**
- * Game Code Analyzer for SEP - Ultra-Strict "Honest" Version
+ * SmolGame Ultra-Strict Code Analyzer (35-Point Standard)
+ * Enforces technical and visual excellence for the "YouTube of Games".
  */
 
 export interface ValidationReport {
@@ -10,7 +11,7 @@ export interface ValidationReport {
   features: string[];
 }
 
-export function analyzeGameCode(htmlContent: string): ValidationReport {
+export function analyzeGameCode(html: string): ValidationReport {
   const report: ValidationReport = {
     isValid: true,
     juiceScore: 0,
@@ -19,55 +20,67 @@ export function analyzeGameCode(htmlContent: string): ValidationReport {
     features: []
   };
 
-  if (!htmlContent || htmlContent.length < 100) {
+  const check = (regex: RegExp, error: string, critical = true) => {
+    if (!regex.test(html)) {
+      if (critical) {
+        report.isValid = false;
+        report.errors.push(error);
+      } else {
+        report.warnings.push(error);
+      }
+      return false;
+    }
+    return true;
+  };
+
+  // 1. Technical Core (Critical)
+  check(/touch-action:\s*none/i, "Missing 'touch-action: none' - necessary for Telegram WebView stability.");
+  check(/try\s*\{[\s\S]*?localStorage[\s\S]*?\}\s*catch/i, "localStorage must be wrapped in try/catch to prevent SecurityError on iOS.");
+  check(/requestAnimationFrame/i, "Must use requestAnimationFrame for a smooth 60fps game loop.");
+  check(/pointerdown/i, "Missing 'pointerdown' event - required for mobile-first touch interaction.");
+  check(/viewport[\s\S]*?user-scalable=no/i, "Viewport must prevent scaling for professional mobile feel.");
+
+  // 2. Logic Structure
+  check(/function\s+init\s*\(/, "Missing init() function.");
+  check(/function\s+update\s*\(/, "Missing update() function.");
+  check(/function\s+draw\s*\(/, "Missing draw() function.");
+
+  // 3. Anti-Patterns
+  if (/location\.reload\s*\(\)/.test(html)) {
     report.isValid = false;
-    report.errors.push("HTML content is too short or empty.");
-    return report;
+    report.errors.push("FORBIDDEN: location.reload(). Use an internal reset() function instead.");
   }
-
-  // CRITICAL HALLUCINATION CHECKS
-  if (htmlContent.includes("click:") && htmlContent.includes("Smol.init")) {
+  if (/<iframe/i.test(html)) {
     report.isValid = false;
-    report.errors.push("API Error: Smol.init does NOT support a 'click' property. Use Smol.Input.bind() instead.");
+    report.errors.push("FORBIDDEN: Nested iframes are not allowed.");
   }
 
-  if (htmlContent.includes("f.input") || htmlContent.includes("dt.input")) {
-    report.isValid = false;
-    report.errors.push("API Error: update() arguments 'dt' and 'f' are numbers, not objects. Use Smol.Input global.");
-  }
-
-  if (htmlContent.includes("gy.shakeX") || htmlContent.includes("gy.shakeY")) {
-    report.isValid = false;
-    report.errors.push("API Error: 'gy' is a GroundY number, not an object. Use Smol.Effects.applyScreenShake() instead.");
-  }
-
-  if (!htmlContent.includes("Smol.init")) {
-    report.isValid = false;
-    report.errors.push("Missing 'Smol.init' - the game engine is not initialized.");
-  }
-
-  // Force juice to 0 if invalid
-  if (!report.isValid) {
-    report.juiceScore = 0;
-    return report;
-  }
-
-  // Feature detection for juice score
-  const features = [
-    { key: 'Smol.Effects.shakeScreen', score: 30, name: 'Screen Shake' },
-    { key: 'Smol.Effects.burst', score: 30, name: 'Particles' },
-    { key: 'Smol.Audio.tone', score: 20, name: 'SFX' },
-    { key: 'vignette', score: 20, name: 'Post-Processing' }
+  // 4. Juice & Visuals (Scoring)
+  const juiceFeatures = [
+    { regex: /shadowBlur|glow\s*\(/, name: "Neon Glow", score: 20 },
+    { regex: /shake\s*=|shakeScreen/, name: "Screen Shake", score: 20 },
+    { regex: /new\s+Part\(|particles/, name: "Particle System", score: 20 },
+    { regex: /AudioContext|createOscillator/, name: "Procedural Audio", score: 20 },
+    { regex: /translate\(|parallax/, name: "Parallax/Camera", score: 20 }
   ];
 
-  let juice = 20; 
-  features.forEach(f => {
-    if (htmlContent.includes(f.key)) {
-      juice += f.score;
+  let score = 0;
+  juiceFeatures.forEach(f => {
+    if (f.regex.test(html)) {
+      score += f.score;
       report.features.push(f.name);
     }
   });
 
-  report.juiceScore = Math.min(juice, 100);
+  // 5. Performance & Mobile
+  if (html.length > 500000) { // 500kb
+    report.warnings.push("File size is large (>500KB). Ensure you are not inlining heavy assets.");
+  }
+
+  report.juiceScore = score;
+  if (score < 40) {
+    report.warnings.push("Low Juice Score. Add more visual effects (glow, particles, shake).");
+  }
+
   return report;
 }
