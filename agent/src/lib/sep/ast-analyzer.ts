@@ -136,44 +136,60 @@ export function extractScripts(html: string): string[] {
   }
   return scripts;
 }
+import * as escodegen from 'escodegen';
+
 export function replaceNodeInCode(code: string, nodeType: string, searchKey: string, searchValue: string, newNodeCode: string): string {
   try {
     const ast = acorn.parse(code, { ecmaVersion: 2020, sourceType: 'script' }) as any;
-    let start = -1;
-    let end = -1;
+    const newNodeAst = acorn.parse(newNodeCode, { ecmaVersion: 2020, sourceType: 'script' }) as any;
+    
+    // We expect the newNodeCode to be a single declaration/expression
+    const replacementNode = newNodeAst.body[0];
 
-    function findNode(node: any) {
+    function walkAndReplace(node: any, parent: any, key: any) {
+      if (!node) return;
+
+      let match = false;
       if (node.type === nodeType) {
-        if (nodeType === 'FunctionDeclaration' && node.id && node.id.name === searchValue) {
-           start = node.start; end = node.end; return;
+        if (nodeType === 'FunctionDeclaration' && node.id && node.id.name === searchValue) match = true;
+        if (nodeType === 'ObjectProperty' && node.key && node.key.name === searchValue) match = true;
+      }
+
+      if (match) {
+        if (Array.isArray(parent[key])) {
+          parent[key] = parent[key].map((item: any) => item === node ? replacementNode : item);
+        } else {
+          parent[key] = replacementNode;
         }
-        if (nodeType === 'ObjectProperty' && node.key && node.key.name === searchValue) {
-           start = node.start; end = node.end; return;
+        return true;
+      }
+
+      for (const k in node) {
+        if (node[k] && typeof node[k] === 'object') {
+          if (Array.isArray(node[k])) {
+            for (let i = 0; i < node[k].length; i++) {
+              if (walkAndReplace(node[k][i], node, k)) return true;
+            }
+          } else {
+            if (walkAndReplace(node[k], node, k)) return true;
+          }
         }
       }
-      for (const key in node) {
-        if (node[key] && typeof node[key] === 'object') {
-          if (Array.isArray(node[key])) node[key].forEach(findNode);
-          else findNode(node[key]);
-        }
-      }
+      return false;
     }
 
-    findNode(ast);
+    walkAndReplace(ast, null, null);
 
-    if (start !== -1 && end !== -1) {
-      return code.slice(0, start) + newNodeCode + code.slice(end);
-    }
-    return code;
+    return escodegen.generate(ast, {
+      format: { indent: { style: '  ' }, quotes: 'single' },
+      comment: true
+    });
   } catch (e) {
-    console.error("AST Replace failed", e);
+    console.error("Semantic AST Replace failed", e);
     return code;
   }
 }
 
-/**
- * Validates code for syntax errors and common issues.
- */
 export function validateCode(code: string): { ok: boolean; error?: string } {
   try {
     acorn.parse(code, { ecmaVersion: 2020, sourceType: 'script' });

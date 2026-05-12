@@ -28,6 +28,13 @@ const AgentActionSchema = z.discriminatedUnion("type", [
     query: z.string()
   }),
   z.object({
+    type: z.literal("UPDATE_PLAN"),
+    newPlan: z.array(z.object({
+      task: z.string(),
+      status: z.enum(["pending", "completed", "failed"])
+    }))
+  }),
+  z.object({
     type: z.literal("FINISH"),
     reason: z.string()
   })
@@ -40,7 +47,12 @@ const AgentResponseSchema = z.object({
 
 export type AgentAction = z.infer<typeof AgentActionSchema>;
 
-export interface AgentStep {
+export interface PlanStep {
+  task: string;
+  status: 'pending' | 'completed' | 'failed';
+}
+
+export interface AgentHistoryStep {
   thought: string;
   action: AgentAction;
   observation: string;
@@ -58,7 +70,8 @@ export interface SmolAgentConfig {
 }
 
 export class SmolAgent {
-  private history: AgentStep[] = [];
+  private history: AgentHistoryStep[] = [];
+  private plan: PlanStep[] = [];
   private currentCode: string = "";
   private config: SmolAgentConfig;
 
@@ -94,62 +107,42 @@ export class SmolAgent {
     return this.currentCode;
   }
 
-  private async executeStep(task: string, runtimeError?: string): Promise<AgentStep> {
-    const systemPrompt = `You are a World-Class Autonomous Game Engineer.
+  private async executeStep(task: string, runtimeError?: string): Promise<AgentHistoryStep> {
+    const systemPrompt = `You are a World-Class Autonomous Game Engineer (ENGINEER-1).
 Your goal: Solve the task by applying precise, verified code transformations.
 
-ENGINEERING PRINCIPLES:
-1. DEEP REASONING: Analyze the architecture before making changes.
-2. FEEDBACK LOOP: Use Observations from previous steps to correct your course.
-3. ATOMICITY: One logical change per step.
-4. ZERO REGRESSION: Every change must be syntactically correct and logical.
+CURRENT PLAN:
+${this.plan.length === 0 ? 'No plan yet. Create one in your first "thought".' : this.plan.map((p, i) => `${i+1}. [${p.status}] ${p.task}`).join('\n')}
 
-AVAILABLE TOOLS:
-- REPLACE_BLOCK: String replacement for unique code blocks. Use only if SEARCH is 100% unique.
+ENGINEERING PRINCIPLES:
+1. PLANNING: Always maintain and update your PLAN.
+2. SEMANTIC PATCHING: Use PATCH_CODE/REWRITE_FUNCTION. Avoid REPLACE_BLOCK if possible.
+3. REAL VALIDATION: Use VALIDATE_RUNTIME to test interaction.
+4. ZERO TOLERANCE: If a button doesn't work in Playwright, your task is NOT done.
+
+TOOLS:
+- PATCH_CODE: Replace an AST node (FunctionDeclaration or ObjectProperty). Use this for semantic fixes.
 - REWRITE_FUNCTION: Replace a whole function body by its name.
-- PATCH_CODE: Replace an AST node (FunctionDeclaration or ObjectProperty).
-- VALIDATE: Run semantic analysis (features, score, errors).
-- VALIDATE_RUNTIME: Execute code in a sandbox to catch crashes and check for #start-button.
-- RESEARCH: Search the Knowledge Base and Pattern Library for specific implementation details.
-- FINISH: Signal task completion with a brief summary of what you did.
+- UPDATE_PLAN: { newPlan: [{ task: string, status: 'pending'|'completed'|'failed' }] }
+- VALIDATE_RUNTIME: Runs code in Playwright (Headless Chrome). CLICKS 'START' BUTTON.
+- RESEARCH: { query: string }
+- FINISH: Signal task completion with a brief summary.
 
 CONTEXT:
 ${getRelevantKnowledge(['juice', 'logic', 'physics', 'mobile'])}
 
-GLOBALS (DO NOT REDEFINE, USE THEM):
-- smolState: 'start', 'play', 'over' (Control game flow with this)
-- score, hi, shake (shake = 10 for screen shake)
-- W, H, ctx, scale, cam, joy, swipe, Part.
+GLOBALS (DO NOT REDEFINE): smolState, score, hi, shake, W, H, ctx, scale, cam, joy, swipe, Part.
+CORE FUNCTIONS: checkAABB(a, b), checkCircle(a, b), applyShake(v), burst(x, y, c, n), smolTriggerGameOver().
 
-CORE FUNCTIONS (AVAILABLE GLOBALLY):
-- checkAABB(a, b), checkCircle(a, b)
-- applyShake(value)
-- burst(x, y, color, count)
-- smolTriggerGameOver() (Call this when player dies)
-
-STRICT RULES:
-1. NEVER use 'let smolState', 'let score', etc.
-2. NEVER use 'currentState'. Use 'smolState'.
-3. Use 'scale' for all sizes/speeds to ensure mobile responsiveness.
-
-CURRENT CODEBASE:
-\`\`\`javascript
-${this.currentCode}
-\`\`\`
-
-${runtimeError ? `CRITICAL RUNTIME ERROR:\n${runtimeError}` : ''}
-
-EXECUTION HISTORY:
-${this.history.length === 0 ? 'No steps taken yet.' : this.history.map((s, i) => `[Step ${i}] Action: ${s.action.type} | Observation: ${s.observation}`).join('\n')}
+HISTORY:
+${this.history.map((s, i) => `[Step ${i}] Action: ${s.action.type} | Observation: ${s.observation}`).join('\n')}
 
 INSTRUCTIONS:
 1. Output ONLY a valid JSON object.
-2. Your "thought" should contain:
-   - Analysis of the current problem.
-   - Plan for this specific step.
-   - How you will verify the result.
+2. Always reflect on your PLAN in your "thought".
+3. If validation fails, update the PLAN to fix it.
 
-OUTPUT FORMAT:
+OUTPUT:
 {
   "thought": "Deep engineering analysis...",
   "action": { "type": "TOOL_NAME", ...params }
@@ -218,13 +211,25 @@ OUTPUT FORMAT:
            return `ANALYSIS: Score ${analysis.score}/100. Errors: ${analysis.errors.join(', ')}. Features: ${analysis.features.join(', ')}`;
         }
         case 'VALIDATE_RUNTIME': {
-           const { validateRuntime } = await import("./runtime-validator");
-           const runtime = await validateRuntime(this.currentCode);
-           if (!runtime.ok) return `RUNTIME ERROR: ${runtime.error}`;
-           return "RUNTIME SUCCESS: Code executes without crashes. required functions [init, update, draw] are present.";
+            try {
+              const response = await fetch('http://localhost:3001/api/validate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ html: this.currentCode })
+              });
+              const result = await response.json();
+              if (result.ok) {
+                return "RUNTIME SUCCESS: Playwright verified the 'START' button and found no console errors.";
+              } else {
+                return `RUNTIME FAILURE (Playwright):\n${result.errors.join('\n')}`;
+              }
+            } catch (e: any) {
+              return `ERROR: Could not connect to Playwright Validation Server: ${e.message}`;
+            }
         }
-        case 'RESEARCH': {
-           return getRelevantKnowledge([], action.query);
+        case 'UPDATE_PLAN': {
+            this.plan = action.newPlan;
+            return `SUCCESS: Plan updated to ${this.plan.length} steps.`;
         }
         case 'FINISH':
            return "DONE";

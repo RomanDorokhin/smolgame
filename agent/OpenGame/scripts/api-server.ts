@@ -105,6 +105,57 @@ app.post('/api/generate', async (req, res) => {
   }
 });
 
+import { chromium } from 'playwright';
+
+app.post('/api/validate', async (req, res) => {
+  const { html } = req.body;
+  if (!html) return res.status(400).json({ error: 'HTML is required' });
+
+  let browser;
+  try {
+    browser = await chromium.launch({ headless: true });
+    const page = await browser.newPage();
+    
+    const errors: string[] = [];
+    const logs: string[] = [];
+
+    page.on('pageerror', (err) => errors.push(`RUNTIME ERROR: ${err.message}`));
+    page.on('console', (msg) => {
+      if (msg.type() === 'error') logs.push(`CONSOLE ERROR: ${msg.text()}`);
+    });
+
+    await page.setContent(html, { waitUntil: 'load' });
+    
+    // Wait for a bit to see if any immediate errors occur
+    await page.waitForTimeout(1000);
+
+    // Test START button
+    try {
+      const startBtn = await page.$('button:has-text("START")');
+      if (startBtn) {
+        await startBtn.click();
+        await page.waitForTimeout(500);
+        const state = await page.evaluate(() => (window as any).smolState);
+        if (state !== 'play') {
+          errors.push("VALIDATION FAILED: Clicked 'START' but smolState is not 'play'.");
+        }
+      } else {
+        errors.push("VALIDATION FAILED: 'START' button not found.");
+      }
+    } catch (e: any) {
+      errors.push(`VALIDATION ERROR during interaction: ${e.message}`);
+    }
+
+    const ok = errors.length === 0;
+    res.json({ ok, errors: [...errors, ...logs] });
+  } catch (error: any) {
+    console.error(`[OpenGame API] Validation Error:`, error);
+    res.status(500).json({ error: error.message });
+  } finally {
+    if (browser) await browser.close();
+  }
+});
+
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
   console.log(`🚀 OpenGame API Server running on http://localhost:${PORT}`);
