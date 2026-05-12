@@ -41,6 +41,7 @@ STRICT RULES:
 
 export const QA_PROMPT = `You are the Head of Quality Assurance.
 ROLE: Ruthlessly reject any logic that is "shallow", "husk-like", or ignores the engine API.
+KNOWLEDGE: Apply 'systematic-debugging' for all bug fixes.
 
 CRITICAL FAILURE CONDITIONS:
 1. Low Juice: No particles, no screen shake, no glow.

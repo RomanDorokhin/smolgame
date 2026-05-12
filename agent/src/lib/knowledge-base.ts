@@ -61,16 +61,22 @@ MANDATORY: Reject any code with JUICE_SCORE < 8.`
   process: {
     'report-format': `Structure: Summary -> Changes -> Status -> Action. Tone: Pro & Concise.`,
     'error-escalation': `Stop and ask if: Ambiguity, Technical Impossibility, or 3x Loop Fail.`
+  },
+  debugging: {
+    'systematic-phases': `1. ROOT CAUSE: Read stack trace, reproduce 100%, check git diff. 2. PATTERN: Compare with working examples. 3. HYPOTHESIS: Specific theory + minimal test. 4. FIX: Address root, not symptom.`,
+    'iron-law': `NO FIXES WITHOUT INVESTIGATION. If 3 fixes fail, the architecture is wrong - STOP and RE-EVALUATE.`,
+    'diagnostic-logs': `When stuck, add logs at component boundaries to isolate WHERE data flow breaks.`,
+    'systematic-debugging': `Always follow phases: 1. Root Cause, 2. Pattern, 3. Hypothesis, 4. Fix. If 3 fixes fail, Re-Evaluate.`
   }
 };
 
-export type KnowledgeCategory = 'planning' | 'core' | 'genres' | 'code' | 'quality' | 'process';
+export type KnowledgeCategory = 'planning' | 'core' | 'genres' | 'code' | 'quality' | 'process' | 'debugging';
 
 export const getFullKnowledgePrompt = (genre?: string) => {
   let prompt = "--- TECHNICAL KNOWLEDGE BASE ---\n";
   
-  // Always include Core, Code, and Quality
-  for (const cat of ['core', 'code', 'quality'] as KnowledgeCategory[]) {
+  // Always include Core, Code, Quality, and Debugging
+  for (const cat of ['core', 'code', 'quality', 'debugging'] as KnowledgeCategory[]) {
     prompt += `\n[${cat.toUpperCase()}]\n`;
     for (const [id, content] of Object.entries(KNOWLEDGE_BASE[cat])) {
       prompt += `- ${id}: ${content}\n`;
