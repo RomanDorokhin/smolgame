@@ -146,8 +146,22 @@ app.post('/api/validate', async (req, res) => {
       errors.push(`VALIDATION ERROR during interaction: ${e.message}`);
     }
 
-    const ok = errors.length === 0;
-    res.json({ ok, errors: [...errors, ...logs] });
+    // Test Visual Activity (Ensure game isn't frozen)
+    const getScreenshot = async () => await page.evaluate(() => {
+      const canvas = document.getElementById('c') as HTMLCanvasElement;
+      return canvas.toDataURL();
+    });
+
+    const screen1 = await getScreenshot();
+    await page.waitForTimeout(500);
+    const screen2 = await getScreenshot();
+
+    if (screen1 === screen2 && ok) {
+      errors.push("VALIDATION FAILED: Game appears to be frozen. No visual changes detected on canvas after 500ms of 'play' state.");
+    }
+
+    const finalOk = errors.length === 0;
+    res.json({ ok: finalOk, errors: [...errors, ...logs] });
   } catch (error: any) {
     console.error(`[OpenGame API] Validation Error:`, error);
     res.status(500).json({ error: error.message });

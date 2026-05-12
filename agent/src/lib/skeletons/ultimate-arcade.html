@@ -76,11 +76,25 @@ hi=safeStorage.get('smol_hi',0);
 const glow=(c,b)=>{ctx.shadowColor=c;ctx.shadowBlur=b*scale;};
 const nglow=()=>{ctx.shadowBlur=0;};
 
-// --- CORE HELPERS (GLOBAL) ---
-const checkAABB=(a,b)=>a.x<b.x+b.w&&a.x+a.w>b.x&&a.y<b.y+b.h&&a.y+a.h>b.y;
-const checkCircle=(a,b)=>{const dx=a.x-b.x,dy=a.y-b.y,d=Math.sqrt(dx*dx+dy*dy);return d<a.r+b.r;};
-const applyShake=(v=10)=>shake=v;
-const burst=(x,y,c,n=15)=>{for(let i=0;i<n;i++)parts.push(new Part(x,y,c))};
+// --- CORE HELPERS (GLOBAL & FROZEN) ---
+const checkAABB=Object.freeze((a,b)=>a.x<b.x+b.w&&a.x+a.w>b.x&&a.y<b.y+b.h&&a.y+a.h>b.y);
+const checkCircle=Object.freeze((a,b)=>{const dx=a.x-b.x,dy=a.y-b.y,d=Math.sqrt(dx*dx+dy*dy);return d<a.r+b.r;});
+const applyShake=Object.freeze((v=10)=>shake=v);
+const burst=Object.freeze((x,y,c,n=15)=>{for(let i=0;i<n;i++)parts.push(new Part(x,y,c))});
+
+// --- COMPATIBILITY LAYER ---
+// Agents often hallucinate 'state.entities' or 'state.score'. We map them here.
+window.state = new Proxy({ entities: parts }, {
+  get: (target, prop) => {
+    if (prop === 'entities') return parts;
+    if (prop === 'score') return score;
+    return target[prop];
+  },
+  set: (target, prop, val) => {
+    if (prop === 'score') { score = val; return true; }
+    target[prop] = val; return true;
+  }
+});
 
 class Part{
   constructor(x,y,c){
