@@ -248,9 +248,11 @@ export function useGameAgent(settings: ChatSettings) {
       const stripPromptTag = (text: string) =>
         text
           .replace(/<thought>([\s\S]*?)<\/thought>/gi, "")
+          .replace(/<qa_self_audit>([\s\S]*?)<\/qa_self_audit>/gi, "")
           .replace(/<plan>([\s\S]*?)<\/plan>/gi, "")
           .replace(/<\/?plan>/gi, "")
           .replace(/<\/?thought>/gi, "")
+          .replace(/<\/?qa_self_audit>/gi, "")
           .replace(/plan[\s\S]*/i, "")
           .trim();
 

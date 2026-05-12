@@ -51,7 +51,12 @@ export const KNOWLEDGE_BASE = {
   quality: {
     'qa-checklist': `35-Point Standard: touch-action:none, safeStorage, 60fps, 9:16, Screen Shake, Neon Glow, Particles, Parallax, Procedural Audio.`,
     'mobile-first': `Portrait focus, thumb-zone controls, min 44px tap targets, no :hover dependency.`,
-    'telegram-webview': `CSS fixed position scroll fix, roundRect polyfill, safeStorage try/catch.`
+    'telegram-webview': `CSS fixed position scroll fix, roundRect polyfill, safeStorage try/catch.`,
+    'scoring-criteria': `JUICE_SCORE (1-10):
+- 1-4: Trash/Husk. Minimal logic, no effects.
+- 5-7: Functional. Good logic, but lacks "polish" or "juice".
+- 8-10: Pro. High-end visuals, smooth animations, perfect mobile input.
+MANDATORY: Reject any code with JUICE_SCORE < 8.`
   },
   process: {
     'report-format': `Structure: Summary -> Changes -> Status -> Action. Tone: Pro & Concise.`,
@@ -59,14 +64,24 @@ export const KNOWLEDGE_BASE = {
   }
 };
 
-export function getFullKnowledgePrompt(): string {
-  let p = "SmolGame Knowledge Base:\n\n";
-  for (const [cat, skills] of Object.entries(KNOWLEDGE_BASE)) {
-    p += `## ${cat.toUpperCase()}\n`;
-    for (const [name, content] of Object.entries(skills)) {
-      p += `- ${name}: ${content}\n`;
+export type KnowledgeCategory = 'planning' | 'core' | 'genres' | 'code' | 'quality' | 'process';
+
+export const getFullKnowledgePrompt = (genre?: string) => {
+  let prompt = "--- TECHNICAL KNOWLEDGE BASE ---\n";
+  
+  // Always include Core, Code, and Quality
+  for (const cat of ['core', 'code', 'quality'] as KnowledgeCategory[]) {
+    prompt += `\n[${cat.toUpperCase()}]\n`;
+    for (const [id, content] of Object.entries(KNOWLEDGE_BASE[cat])) {
+      prompt += `- ${id}: ${content}\n`;
     }
-    p += "\n";
   }
-  return p;
-}
+
+  // Selective Genre Knowledge
+  if (genre && KNOWLEDGE_BASE.genres[genre as keyof typeof KNOWLEDGE_BASE.genres]) {
+    prompt += `\n[GENRE: ${genre.toUpperCase()}]\n`;
+    prompt += `- ${genre}: ${KNOWLEDGE_BASE.genres[genre as keyof typeof KNOWLEDGE_BASE.genres]}\n`;
+  }
+
+  return prompt;
+};

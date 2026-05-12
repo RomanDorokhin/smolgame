@@ -68,108 +68,107 @@ function autoRepair(html: string): string {
   return repaired;
 }
 
-// ─── MAIN PIPELINE ────────────────────────────────────────────
+// ─── MAIN PIPELINE (MULTI-STAGE) ──────────────────────────────
 export async function generateGame(
   userRequest: string,
   options: PipelineOptions
 ): Promise<PipelineResult> {
   const { generateFn, previousCode, onProgress } = options;
-  if (typeof generateFn !== 'function') {
-    throw new Error('Pipeline error: generateFn is not a function. Check your interface implementation.');
-  }
+  if (typeof generateFn !== 'function') throw new Error('generateFn is required');
 
-  // EDIT MODE — user is tweaking an existing game
+  // EDIT MODE (Legacy fallback for simple tweaks)
   if (previousCode) {
-    onProgress?.('🛠 Applying changes...');
-    try {
-      const response = await generateFn([
-        {
-          role: 'system',
-          content: `You are a Senior Game Developer. Modify the game based on user instructions.
-Use SEARCH/REPLACE blocks or output the full new HTML. Code only, no explanations.
-NEVER use window.alert() or confirm(). Use DOM/Canvas overlays instead.`,
-        },
-        { role: 'system', content: `CURRENT CODE:\n${previousCode}` },
-        { role: 'user',   content: `Apply these changes: ${userRequest}` },
-      ]);
-      return { isSuccess: true, generatedCode: cleanHtml(response), errors: [] };
-    } catch (e) {
-      return { isSuccess: false, generatedCode: null, errors: [(e as Error).message] };
-    }
+    onProgress?.('🛠 Refining existing game...');
+    const response = await generateFn([
+      { role: 'system', content: 'You are a Senior Fullstack Game Developer. Edit the code in <game_spec>. No talk.' },
+      { role: 'system', content: `CURRENT_CODE:\n${previousCode}` },
+      { role: 'user', content: userRequest }
+    ]);
+    return { isSuccess: true, generatedCode: cleanHtml(response), errors: [] };
   }
 
-  // GENERATE MODE — new game
-  const skeleton = pickSkeleton(userRequest);
-  onProgress?.(`🎮 Generating ${skeleton.name}...`);
+  // --- STAGE 1: THE ARCHITECT (SPECIFICATION) ---
+  onProgress?.('🏗 ARCHITECT: Designing technical specification...');
+  const specResponse = await generateFn([
+    { 
+      role: 'system', 
+      content: `You are the Lead Game Architect. 
+KNOWLEDGE: ${getFullKnowledgePrompt()}
+TASK: Decompose the request into a technical <plan>. Focus on 9:16 mobile, Physics (AABB/Circle), and Juice (Glow, Particles, Shake).` 
+    },
+    { role: 'user', content: userRequest }
+  ]);
+  const planMatch = specResponse.match(/<plan>([\s\S]*?)<\/plan>/i);
+  const plan = planMatch ? planMatch[1].trim() : specResponse;
 
-  let lastHtml = '';
-  let lastErrors: string[] = [];
+  // --- STAGE 2: THE ENGINEER (IMPLEMENTATION) ---
+  onProgress?.('💻 ENGINEER: Implementing high-performance logic...');
+  
+  // RAG: Extract genre to filter knowledge
+  const genreMatch = plan.match(/Genre:\s*(\w+)/i);
+  const genre = genreMatch ? genreMatch[1].toLowerCase() : undefined;
 
-  for (let attempt = 0; attempt <= 2; attempt++) {
-    if (attempt > 0) onProgress?.(`🔧 Fixing issues (attempt ${attempt}/2)...`);
+  const engineerResponse = await generateFn([
+    { 
+      role: 'system', 
+      content: `You are a Senior Systems Engineer.
+KNOWLEDGE: ${getFullKnowledgePrompt(genre)}
+ENGINE: ultimate-mobile (Globals: W, H, scale, ctx, joy, swipe, cam, Part, glow, sfx).
+STRICT: DO NOT define 'class Part'. It is already provided.
+STRICT: DO NOT define 'class Joystick' or 'class Camera'.
+TASK: Implement 4 functions (init, update, draw, onTouch) based on the <plan>.
+STRICT: Reset swipe flags. Use 'scale' for all sizes. Output ONLY <game_logic>.` 
+    },
+    { role: 'system', content: `<plan>\n${plan}\n</plan>` },
+    { role: 'user', content: 'Implement the logic now.' }
+  ]);
+  
+  let logic = engineerResponse.match(/<game_logic>([\s\S]*?)<\/game_logic>/i)?.[1].trim() || engineerResponse;
+  logic = logic.replace(/<thought>[\s\S]*?<\/thought>/gi, '').replace(/<qa_self_audit>[\s\S]*?<\/qa_self_audit>/gi, '').trim();
 
-    try {
-      const messages: any[] = attempt === 0
-        ? [
-            {
-              role: 'system',
-              content:
-                `You are a God-Level Mobile Game Logic Architect. You provide only the core gameplay logic.\n\n` +
-                getFullKnowledgePrompt() +
-                `You must provide exactly 4 functions inside a <game_logic> block:\n` +
-                `1. function init() { /* setup objects, set joy.enabled=true if needed */ }\n` +
-                `2. function update() { /* physics, check swipe, apply 'Juice' */ }\n` +
-                `3. function draw() { /* render ctx, use glow/particles, parallax */ }\n` +
-                `4. function onTouch(e) { /* handle taps */ }\n\n` +
-                `AVAILABLE GLOBALS: W, H, ctx, scale, score, state, shake, cam (x,y,zoom), joy (x,y,active,enabled), swipe (up,down,left,right), safeStorage, Part class, glow/nglow functions.\n` +
-                `CRITICAL: Reset swipe flags (swipe.up=false) after reading. Adhere to qa-checklist.md.\n` +
-                `Output ONLY the <game_logic> block.`,
-            },
-            { role: 'user', content: `Create logic for: ${userRequest}` },
-          ]
-        : [
-            {
-              role: 'system',
-              content: `Fix the errors in your <game_logic> and output the corrected block:\n${lastErrors.join('\n')}`,
-            },
-            { role: 'user', content: lastHtml },
-          ];
-
-      const logicMatch = response.match(/<game_logic>([\s\S]*?)<\/game_logic>/i);
-      let logic = logicMatch ? logicMatch[1].trim() : response;
-      
-      // Clean up if the agent didn't use tags correctly but included a thought block
-      if (!logicMatch && logic.includes('</thought>')) {
-        logic = logic.split('</thought>').pop()?.trim() || logic;
-      }
-      
-      // Inject logic into skeleton
-      const html = ultimateArcadeSkeleton.replace(
-        /\/\/ ─── OVERRIDE THESE ──────────────────────────────────────────[\s\S]*?function draw\(\)\{\}/i,
-        `// ─── INJECTED LOGIC ──────────────────────────────────────────\n${logic}`
-      );
-      
-      lastHtml = logic; // store only logic for next attempt
-      const errors = validate(html);
-      lastErrors = errors;
-
-      if (errors.length === 0) {
-        onProgress?.('✅ Validation passed! Finalizing world-class code.');
-        return { isSuccess: true, generatedCode: html, errors: [] };
-      }
-
-      onProgress?.(`⚠️ ${errors[0]}`);
-      if (attempt === 2) {
-        // Return best effort even with minor issues
-        return { isSuccess: true, generatedCode: html, errors };
-      }
-    } catch (e) {
-      lastErrors = [(e as Error).message];
-      if (attempt === 2) return { isSuccess: false, generatedCode: null, errors: lastErrors };
-    }
+  // Sanity check
+  const required = ['function init', 'function update', 'function draw', 'function onTouch'];
+  const missing = required.filter(fn => !logic.includes(fn));
+  if (missing.length > 0) {
+    onProgress?.(`❌ ERROR: Engineer missed ${missing.length} functions. Retrying Implementation...`);
+    throw new Error(`Engineer hallucinated a partial response. Missing: ${missing.join(', ')}`);
   }
 
-  return { isSuccess: false, generatedCode: null, errors: lastErrors };
+  // --- STAGE 3: THE CRITIC (REFINEMENT & JUICE) ---
+  onProgress?.('✨ CRITIC: Validating alignment with plan & injecting juice...');
+  const finalHtml = ultimateArcadeSkeleton.replace(
+    /\/\/ ─── OVERRIDE THESE ──────────────────────────────────────────[\s\S]*?function draw\(\)\{\}/i,
+    `// ─── INJECTED LOGIC ──────────────────────────────────────────\n${logic}`
+  );
+
+  const errors = validate(finalHtml);
+  if (errors.length > 0) {
+    onProgress?.(`🔧 AUTO-FIX: Resolving ${errors.length} mechanical discrepancies & boosting Juice...`);
+    const fixedResponse = await generateFn([
+      { 
+        role: 'system', 
+        content: `You are the Head of QA. 
+TASK: 
+1. Fix technical errors.
+2. Boost the JUICE_SCORE to 9/10. Add more screen shake, particles, and neon glow.
+3. Verify alignment with <plan>.
+
+KNOWLEDGE: ${getFullKnowledgePrompt(genre)}
+STRICT: Output ONLY updated <game_logic>.` 
+      },
+      { role: 'system', content: `<plan>\n${plan}\n</plan>` },
+      { role: 'system', content: `ERRORS TO FIX:\n${errors.join('\n')}` },
+      { role: 'user', content: logic }
+    ]);
+    const fixedLogic = fixedResponse.match(/<game_logic>([\s\S]*?)<\/game_logic>/i)?.[1].trim() || fixedResponse;
+    const finalPolishedHtml = ultimateArcadeSkeleton.replace(
+      /\/\/ ─── OVERRIDE THESE ──────────────────────────────────────────[\s\S]*?function draw\(\)\{\}/i,
+      `// ─── INJECTED LOGIC ──────────────────────────────────────────\n${fixedLogic}`
+    );
+    return { isSuccess: true, generatedCode: finalPolishedHtml, errors: validate(finalPolishedHtml) };
+  }
+
+  return { isSuccess: true, generatedCode: finalHtml, errors: [] };
 }
 
 // ─── HELPERS ──────────────────────────────────────────────────
