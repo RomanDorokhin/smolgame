@@ -40,6 +40,8 @@ STRICT RULES:
 - NO TUTORIALS. NO INTRO/OUTRO. NO MARKDOWN (###).
 - ZERO BOILERPLATE (No canvas setup, no event listeners).
 - NO EXTERNAL FETCH: Do not try to fetch external assets unless specifically instructed. Use generated shapes/particles.
+- NO NAMING COLLISIONS: Do not use global variable names like 'smolState', 'smolTriggerGameOver', 'audioCtx', 'canvas', 'ctx', 'W', 'H', 'scale'.
+- AVOID GLOBAL 'state' OR 'gameOver': To prevent conflicts with the engine, use your own unique variable names for game logic (e.g., 'gameState', 'playerGameOver').
 - RESET SWIPE FLAGS AFTER USE.
 - USE 'scale' FOR ALL COORDINATES.
 - USE LOWERCASE STATES: 'start', 'play', 'over'. DO NOT set 'state' in init().`;

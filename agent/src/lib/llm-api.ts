@@ -87,6 +87,7 @@ const PROVIDER_URLS: Record<string, string> = {
   together: "https://api.together.xyz/v1/chat/completions",
   sambanova: "https://api.sambanova.ai/v1/chat/completions",
   glhf: "https://glhf.chat/api/openai/v1/chat/completions",
+  smolbackend: "https://smolgame.ru/api/opengame/chat",
   huggingface: "https://api-inference.huggingface.co/v1/chat/completions",
   deepseek: "https://api.deepseek.com/chat/completions",
 };
@@ -192,7 +193,7 @@ export async function* generateStream(
     throw new Error(`Provider ${config.provider} is temporarily disabled due to rate limits.`);
   }
 
-  if (!config.apiKey || config.apiKey.trim().length === 0) {
+  if (config.provider !== 'smolbackend' && (!config.apiKey || config.apiKey.trim().length === 0)) {
     throw new Error(`API Key for ${config.provider} is empty or invalid.`);
   }
 
@@ -209,7 +210,7 @@ export async function* generateStream(
     "Content-Type": "application/json",
   };
 
-  if (config.provider !== "gemini") {
+  if (config.provider !== "gemini" && config.provider !== "smolbackend") {
     headers["Authorization"] = `Bearer ${config.apiKey}`;
   }
 

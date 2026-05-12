@@ -52,7 +52,7 @@ export async function publishGameToGithub(req, env) {
   await upsertUser(env.DB, user);
 
   let token = env.COMMITS_GITHUB_TOKEN;
-  let owner = 'orokhin731-commits';
+  let owner = 'dorokhin731-commits';
 
   if (!token) {
     let row;
@@ -67,20 +67,14 @@ export async function publishGameToGithub(req, env) {
       if (row) row.enc = null;
     }
 
-    if (!row?.login) {
-      return error('Сначала привяжи GitHub (кнопка «Войти через GitHub») или настрой COMMITS_GITHUB_TOKEN на сервере.', 403);
-    }
-    if (!row.enc) {
-      return error(
-        'На сервере не хранится токен GitHub (нужна миграция D1: колонка github_access_token_enc). Выполни в консоли D1 SQL из backend/migrations/0003_github_access_token.sql и снова войди через GitHub.',
-        503
-      );
+    if (!row?.login || !row.enc) {
+      return error('GitHub не привязан. Настрой COMMITS_GITHUB_TOKEN на сервере или войди через GitHub в профиле.', 403);
     }
 
     const secret = githubClientSecret(env);
     token = await decryptGithubToken(String(row.enc), secret);
     if (!token) {
-      return error('Сессия GitHub устарела. Отвяжи и снова войди через GitHub.', 401);
+      return error('Сессия GitHub устарела. Перепривяжи аккаунт.', 401);
     }
     owner = String(row.login);
   }

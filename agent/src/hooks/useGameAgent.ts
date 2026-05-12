@@ -30,7 +30,7 @@ export interface AgentMessage {
   };
 }
 
-const FALLBACK_ORDER: APIProvider[] = ["gemini", "groq", "openrouter", "together", "deepseek", "huggingface"];
+const FALLBACK_ORDER: APIProvider[] = ["smolbackend", "gemini", "groq", "openrouter", "together", "deepseek", "huggingface"];
 
 const DEFAULT_MODELS: Record<string, string[]> = {
   gemini: ["gemini-2.5-flash"],
@@ -39,6 +39,7 @@ const DEFAULT_MODELS: Record<string, string[]> = {
   together: ["meta-llama/Llama-3.3-70B-Instruct-Turbo"],
   deepseek: ["deepseek-chat"],
   huggingface: ["meta-llama/Llama-3.2-11B-Vision-Instruct"],
+  smolbackend: ["gemini-1.5-pro"],
 };
 
 const makeId = () => Math.random().toString(36).substring(2, 9);
@@ -152,6 +153,7 @@ export function useGameAgent(settings: ChatSettings) {
 
   const getActiveProviders = useCallback(() => {
     return FALLBACK_ORDER.filter(p => {
+      if (p === 'smolbackend') return true;
       const key = settings.keys[p as keyof typeof settings.keys] as string | undefined;
       return key && key.trim().length > 0;
     });

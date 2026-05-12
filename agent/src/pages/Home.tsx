@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import { toast } from "sonner";
 import { useGameAgent } from "@/hooks/useGameAgent";
 import { ChatMessageItem } from "@/components/ChatMessageItem";
 import { ChatInput } from "@/components/ChatInput";
@@ -26,6 +27,7 @@ function saveSettings(s: ChatSettings) {
 }
 
 const PROVIDERS: { id: APIProvider; name: string; url: string }[] = [
+  { id: "smolbackend", name: "Google AI Studio", url: "https://aistudio.google.com/app/apikey" },
   { id: "groq", name: "Groq", url: "https://console.groq.com/keys" },
   { id: "gemini", name: "Google Gemini", url: "https://aistudio.google.com/app/apikey" },
   { id: "openrouter", name: "OpenRouter", url: "https://openrouter.ai/keys" },
@@ -113,7 +115,17 @@ export default function Home() {
           })();
         </script>
       </body>`)
-        : `<html><body>${studioGame.code}</body></html>`;
+        : `<html><head>
+          <script>
+            window.onerror = function(msg, url, line, col, error) {
+              window.parent.postMessage({ type: 'GAME_ERROR', error: msg, line, col }, '*');
+              return false;
+            };
+            window.onunhandledrejection = function(event) {
+              window.parent.postMessage({ type: 'GAME_ERROR', error: event.reason?.message || 'Unhandled Rejection' }, '*');
+            };
+          </script>
+        </head><body>${studioGame.code}</body></html>`;
         
       const blob = new Blob([injectedCode], { type: 'text/html' });
       const url = URL.createObjectURL(blob);
@@ -144,6 +156,19 @@ export default function Home() {
       timestamp: m.timestamp
     }))
     .reverse();
+
+  // Слушаем ошибки из iframe
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      if (event.data?.type === 'GAME_ERROR') {
+        toast.error(`Ошибка в коде игры: ${event.data.error}`, {
+          description: `Строка: ${event.data.line || '?'}, Кол: ${event.data.col || '?'}`
+        });
+      }
+    };
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, []);
 
   // Сохраняем состояние Студии и вкладки
   useEffect(() => {
@@ -253,7 +278,7 @@ export default function Home() {
                 <div className="space-y-2">
                   {PROVIDERS.map(p => {
                     const isExpanded = expandedProvider === p.id;
-                    const hasKey = !!(settings.keys[p.id] as string | undefined)?.trim();
+                    const hasKey = p.id === 'smolbackend' || !!(settings.keys[p.id] as string | undefined)?.trim();
                     return (
                       <div key={p.id} className={`rounded-xl border transition-all ${hasKey ? "border-green-500/20 bg-green-500/5" : "border-white/5 bg-[#13141a]"}`}>
                         <button
@@ -270,7 +295,7 @@ export default function Home() {
                           <div className="px-4 pb-4 space-y-3">
                             <Input
                               type="password"
-                              placeholder="Вставь ключ сюда..."
+                              placeholder="Вставь ключ от Google AI Studio..."
                               value={(settings.keys[p.id] as string | undefined) || ""}
                               onChange={e => updateKey(p.id, e.target.value)}
                               className="bg-[#0a0b0e] border-white/10 text-white text-sm h-10 rounded-xl font-mono"
