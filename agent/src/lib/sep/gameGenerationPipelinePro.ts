@@ -102,6 +102,31 @@ TASK: Decompose the request into a technical <plan>. Focus on 9:16 mobile, Physi
   const planMatch = specResponse.match(/<plan>([\s\S]*?)<\/plan>/i);
   const plan = planMatch ? planMatch[1].trim() : specResponse;
 
+  // --- STAGE 1.5: THE DESIGNER (THEMING) ---
+  onProgress?.('🎨 DESIGNER: Creating unique visual identity...');
+  const designResponse = await generateFn([
+    {
+      role: 'system',
+      content: `You are a Senior UI/UX Designer. Create a unique visual theme for this game.
+Output ONLY a <theme> block with CSS variables and UI text.
+Example:
+<theme>
+:root {
+  --primary: #ff0055;
+  --secondary: #ffaa00;
+  --bg: #1a000d;
+}
+#title { content: "Neon Runner" }
+#subtitle { content: "Cyberpunk Action" }
+</theme>`
+    },
+    { role: 'system', content: `<plan>\n${plan}\n</plan>` },
+    { role: 'user', content: 'Design the theme now.' }
+  ]);
+
+  const themeMatch = designResponse.match(/<theme>([\s\S]*?)<\/theme>/i);
+  const theme = themeMatch ? themeMatch[1].trim() : '';
+
   // --- STAGE 2: THE ENGINEER (IMPLEMENTATION) ---
   onProgress?.('💻 ENGINEER: Implementing high-performance logic...');
   
@@ -148,10 +173,29 @@ STRICT: Reset swipe flags. Use 'scale' for all sizes. Output ONLY <game_logic>.`
 
   // --- STAGE 3: THE CRITIC (REFINEMENT & JUICE) ---
   onProgress?.('✨ CRITIC: Validating alignment with plan & injecting juice...');
-  const finalHtml = ultimateArcadeSkeleton.replace(
+  
+  // Parse theme into CSS and JS calls
+  let themeCss = '';
+  let themeJs = '';
+  if (theme) {
+    const cssMatch = theme.match(/:root\s*{[\s\S]*?}/);
+    if (cssMatch) themeCss = cssMatch[0];
+    
+    const titleMatch = theme.match(/#title\s*{\s*content:\s*"([^"]+)"\s*}/);
+    if (titleMatch) themeJs += `document.getElementById('title').innerText = "${titleMatch[1]}";\n`;
+    
+    const subMatch = theme.match(/#subtitle\s*{\s*content:\s*"([^"]+)"\s*}/);
+    if (subMatch) themeJs += `document.getElementById('subtitle').innerText = "${subMatch[1]}";\n`;
+  }
+
+  let finalHtml = ultimateArcadeSkeleton.replace(
     '/* INJECT_LOGIC_HERE */',
-    `// ─── INJECTED LOGIC ──────────────────────────────────────────\n${logic}`
+    `// ─── THEME ───────────────────────────────────────────────────\n${themeJs}\n// ─── INJECTED LOGIC ──────────────────────────────────────────\n${logic}`
   );
+
+  if (themeCss) {
+    finalHtml = finalHtml.replace('</style>', `${themeCss}\n</style>`);
+  }
 
   const errors = validate(finalHtml);
   if (errors.length > 0) {
@@ -169,9 +213,15 @@ STRICT: Reset swipe flags. Use 'scale' for all sizes. Output ONLY <game_logic>.`
 
     const finalPolishedHtml = ultimateArcadeSkeleton.replace(
       '/* INJECT_LOGIC_HERE */',
-      `// ─── INJECTED LOGIC ──────────────────────────────────────────\n${fixedLogic}`
+      `// ─── THEME ───────────────────────────────────────────────────\n${themeJs}\n// ─── INJECTED LOGIC ──────────────────────────────────────────\n${fixedLogic}`
     );
-    return { isSuccess: true, generatedCode: finalPolishedHtml, errors: validate(finalPolishedHtml) };
+
+    let resultHtml = finalPolishedHtml;
+    if (themeCss) {
+      resultHtml = resultHtml.replace('</style>', `${themeCss}\n</style>`);
+    }
+
+    return { isSuccess: true, generatedCode: resultHtml, errors: validate(resultHtml) };
   }
 
   return { isSuccess: true, generatedCode: finalHtml, errors: [] };
