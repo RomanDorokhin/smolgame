@@ -326,11 +326,27 @@ export function useGameAgent(settings: ChatSettings) {
           if (matchHtml) {
             finalCode = matchHtml[0];
           } else if (matchLogic) {
-            // Replace the logic block in the previous code
-            finalCode = previousCode!.replace(
+            const logicContent = matchLogic[1].trim();
+            // Try different markers for injection
+            const markers = [
               /\/\/ ─── INJECTED LOGIC ──────────────────────────────────────────\n[\s\S]*?(?=<\/script>)/i,
-              `// ─── INJECTED LOGIC ──────────────────────────────────────────\n${matchLogic[1].trim()}\n`
-            );
+              /\/\* INJECT_LOGIC_HERE \*\//i,
+              /\/\/ CUSTOM_UPDATE_LOGIC_HOOK/i
+            ];
+            
+            let replaced = false;
+            for (const marker of markers) {
+              if (marker.test(previousCode!)) {
+                finalCode = previousCode!.replace(marker, `// ─── INJECTED LOGIC ──────────────────────────────────────────\n${logicContent}\n`);
+                replaced = true;
+                break;
+              }
+            }
+            
+            if (!replaced) {
+              console.warn("No injection marker found. Appending to end of script.");
+              finalCode = previousCode!.replace(/<\/script>/i, `\n// ─── INJECTED LOGIC ──────────────────────────────────────────\n${logicContent}\n</script>`);
+            }
           } else {
             console.warn("Failed to parse modification. Falling back to previous code.");
             finalCode = previousCode!;

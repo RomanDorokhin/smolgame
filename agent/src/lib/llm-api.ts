@@ -105,8 +105,8 @@ export const DEFAULT_MODELS: Record<string, string[]> = {
   sambanova: ["Meta-Llama-3.3-70B-Instruct", "Meta-Llama-3.1-70B-Instruct-Reference"],
   glhf: ["hf:meta-llama/Llama-3.1-405B-Instruct", "hf:meta-llama/Llama-3.3-70B-Instruct"],
   huggingface: ["meta-llama/Llama-3.2-11B-Vision-Instruct", "Qwen/Qwen2.5-72B-Instruct"],
-  deepseek: ["deepseek-chat"],
-  custom: ["gpt-3.5-turbo"],
+  mistral: ["mistral-large-latest"],
+  smolbackend: ["google-gemini-pro-managed"],
 };
 
 export interface ModelInfo {

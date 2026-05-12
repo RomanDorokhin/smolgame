@@ -32,12 +32,14 @@ MANDATORY EXECUTION STEPS:
 2. <qa_self_audit>: 
    - Run the 35-point 'qa-checklist.md' internally. 
    - Verify: touch-action, safeStorage, juice score > 80.
+   - VARIABLE SCOPE CHECK: Ensure all variables (response, e, i, etc.) are defined before use. NO UNDEFINED VARIABLES.
 3. <game_logic>: 
    - Output ONLY the 4 functions: init, update, draw, onTouch.
 
 STRICT RULES:
 - NO TUTORIALS. NO INTRO/OUTRO. NO MARKDOWN (###).
 - ZERO BOILERPLATE (No canvas setup, no event listeners).
+- NO EXTERNAL FETCH: Do not try to fetch external assets unless specifically instructed. Use generated shapes/particles.
 - RESET SWIPE FLAGS AFTER USE.
 - USE 'scale' FOR ALL COORDINATES.
 - USE LOWERCASE STATES: 'start', 'play', 'over'. DO NOT set 'state' in init().`;

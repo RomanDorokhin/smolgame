@@ -655,7 +655,7 @@ export default function Home() {
                           <div className="h-full flex flex-col items-center justify-center bg-[#07080a] p-8">
                             <div className="relative w-full max-w-[380px] aspect-[9/16] rounded-[2.5rem] border-[10px] border-[#1a1b26] bg-black shadow-2xl overflow-hidden group">
                                 <iframe
-                                  key={`preview-${studioGame.title}`}
+                                  key={`preview-${studioGame.title}-${studioGame.code.length}-${studioGame.code.slice(-100).length}`}
                                   title="Studio Live Preview"
                                   src={previewUrl || "about:blank"}
                                   width="100%"
