@@ -6,6 +6,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Wand2, RefreshCcw, Copy, Check, Terminal, Info, X, ChevronRight, Gamepad2, Palette, Zap, Clock, Sparkles } from "lucide-react";
 import { SmolGameAPI } from "@/lib/smolgame-api";
+import { generateStream, type ChatSettings } from "@/lib/llm-api";
 import { toast } from "sonner";
 
 const GENRES = [
@@ -49,10 +50,6 @@ const SYSTEM_PROMPT = `You are an expert prompt engineer for OpenGame — an age
 
 Your job: transform user game concepts into a single, richly-detailed OpenGame prompt in English.
 
-Study these real OpenGame prompt examples:
-- "Build an epic side-scrolling action platformer starring the Avengers. I want to select between Iron Man (lasers & flight), Thor (hammer melee & lightning), or Hulk (smash attacks) to fight through 3 distinct levels: a ruined City, a SHIELD Helicarrier, and finally Titan. Each hero needs a basic attack, a special skill, and a screen-clearing Ultimate move. The final boss must be Thanos using Infinity Stone powers. The art style should be hardcore 90s Capcom arcade pixel art, not cute/chibi."
-- "Create a turn-based card battle game set in a pixel art Hogwarts. Play as a wizard student dueling a rival in the Dueling Club. The twist: to cast spell cards you must answer trivia questions correctly. Include a Magic Resonance combo system where consecutive right answers boost spell damage. Gothic fantasy pixel art with parchment-style UI and magical particle effects."
-
 Rules for your output:
 1. Write ONE dense, vivid paragraph — no bullet points, no headers
 2. Be concrete: name mechanics, describe controls, specify visual style, mention win/loss conditions
@@ -62,10 +59,10 @@ Rules for your output:
 interface Props {
   onStart: (prompt: string) => void;
   onCancel: () => void;
-  provider?: string;
+  settings: ChatSettings;
 }
 
-export function OpenGameBuilder({ onStart, onCancel, provider = "gemini" }: Props) {
+export function OpenGameBuilder({ onStart, onCancel, settings }: Props) {
   const [concept, setConcept] = useState("");
   const [genre, setGenre] = useState("");
   const [session, setSession] = useState("");
@@ -87,6 +84,15 @@ export function OpenGameBuilder({ onStart, onCancel, provider = "gemini" }: Prop
       toast.error("Опишите концепцию игры");
       return;
     }
+    
+    const provider = settings.primaryProvider;
+    const apiKey = settings.keys[provider];
+    
+    if (!apiKey && provider !== 'smolbackend') {
+      toast.error(`Необходим API ключ для ${provider}. Перейдите в настройки.`);
+      return;
+    }
+
     setLoading(true);
     setResultPrompt("");
     
@@ -99,16 +105,21 @@ export function OpenGameBuilder({ onStart, onCancel, provider = "gemini" }: Prop
     const userMsg = `Game concept: ${concept.trim()}\n\nParameters:\nGenre: ${genreEn}\nSession: ${sessionEn}\nControls: ${controlsEn.join(", ")}\nArt: ${artStyleEn}\nMechanics: ${mechanicsEn.join(", ")}`;
 
     try {
-      let full = "";
-      const stream = SmolGameAPI.chatStream({
-        provider,
-        messages: [
+      setStep("result");
+      const stream = generateStream(
+        [
           { role: "system", content: SYSTEM_PROMPT },
           { role: "user", content: userMsg }
-        ]
-      });
+        ],
+        { 
+          provider, 
+          apiKey: apiKey || "", 
+          model: settings.models[provider] || "" 
+        },
+        new AbortController().signal
+      );
 
-      setStep("result");
+      let full = "";
       for await (const chunk of stream) {
         full += chunk;
         setResultPrompt(full);

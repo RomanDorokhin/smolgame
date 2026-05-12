@@ -7,8 +7,15 @@ export function useAuth() {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [loginError, setLoginError] = useState<string | null>(null);
 
-  const checkAuth = async () => {
+  const [lastCheckTime, setLastCheckTime] = useState<number>(0);
+
+  const checkAuth = async (force = false) => {
+    // Throttle checks to once every 30 seconds unless forced
+    const now = Date.now();
+    if (!force && now - lastCheckTime < 30000) return;
+    
     try {
+      setLastCheckTime(now);
       const resp = await SmolGameAPI.getMe();
       // Backend returns { user: {...}, stats: {...} } OR a flat SmolGameUser object
       const userData: SmolGameUser = (resp as any).user ?? resp;
@@ -23,16 +30,18 @@ export function useAuth() {
         });
         setIsAuthenticated(true);
       } else {
-        throw new Error("No valid user in response");
+        throw new Error("No valid user");
       }
     } catch (error) {
-      console.warn("[useAuth] Not authenticated via SmolGame Worker — Guest Mode.", error);
-      setUser({
-        id: 'guest',
-        username: 'Guest',
-        first_name: 'Guest',
-        isGithubConnected: false
-      });
+      // Quiet fail for guest mode to avoid console spam
+      if (!user || user.id !== 'guest') {
+        setUser({
+          id: 'guest',
+          username: 'Guest',
+          first_name: 'Guest',
+          isGithubConnected: false
+        });
+      }
       setIsAuthenticated(false);
     } finally {
       setIsLoading(false);
@@ -40,7 +49,7 @@ export function useAuth() {
   };
 
   useEffect(() => {
-    checkAuth();
+    checkAuth(true);
 
     const handleFocus = () => checkAuth();
     const handleBypass = () => {

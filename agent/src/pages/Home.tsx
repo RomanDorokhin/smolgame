@@ -897,7 +897,7 @@ export default function Home() {
                 <OpenGameBuilder 
                   onStart={handleStartBuilderGame} 
                   onCancel={() => setIsBuilderOpen(false)}
-                  provider={settings.primaryProvider}
+                  settings={settings}
                 />
               </div>
             </div>
