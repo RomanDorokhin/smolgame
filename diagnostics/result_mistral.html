@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Сияющий Кристалл</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background: linear-gradient(135deg, #0a0a1a 0%, #1a0b2e 50%, #0a0a1a 100%);
+            font-family: 'Arial', sans-serif;
+        }
+        #game-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container"></div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/phaser/3.60.0/phaser.min.js"></script>
+    <script>
+        const config = {
+            type: Phaser.AUTO,
+            width: window.innerWidth,
+            height: window.innerHeight,
+            backgroundColor: '#000000',
+            parent: 'game-container',
+            physics: {
+                default: 'arcade',
+                arcade: {
+                    gravity: { y: 0 },
+                    debug: false
+                }
+            },
+            scene: {
+                preload: preload,
+                create: create,
+                update: update
+            }
+        };
+
+        const game = new Phaser.Game(config);
+        let player;
+        let cursors;
+        let particles;
+        let glow;
+        let screenShake = false;
+        let shakeTimer = 0;
+        let score = 0;
+        let scoreText;
+        let particlesPool = [];
+        let maxParticles = 50;
+
+        function preload() {
+            this.load.image('particle', 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMCIgaGVpZ2h0PSIxMCI+PHBhdGggZmlsbD0iI0ZGRkZGRiIgZD0iTTUgNS41TDIuNSA3SDcgMi41SDUuNVoiLz48L3N2Zz4=');
+        }
+
+        function create() {
+            // Создаем темный фон
+            this.add.rectangle(0, 0, config.width, config.height, 0x0a0a1a).setOrigin(0);
+
+            // Создаем частицы для фона
+            for (let i = 0; i < 100; i++) {
+                const x = Phaser.Math.Between(0, config.width);
+                const y = Phaser.Math.Between(0, config.height);
+                const size = Phaser.Math.FloatBetween(0.5, 2);
+                const alpha = Phaser.Math.FloatBetween(0.1, 0.5);
+                const color = Phaser.Math.RND.pick([0x6a5acd, 0x9370db, 0x48d1cc, 0xff69b4]);
+
+                const star = this.add.circle(x, y, size, color, alpha);
+                star.setAlpha(alpha);
+                this.tweens.add({
+                    targets: star,
+                    alpha: { from: alpha, to: 0 },
+                    duration: Phaser.Math.FloatBetween(2000, 5000),
+                    ease: 'Sine.easeInOut',
+                    loop: -1,
+                    loopDelay: Phaser.Math.FloatBetween(0, 3000)
+                });
+            }
+
+            // Создаем игрока - сияющий кристалл
+            player = this.add.circle(400, 300, 30, 0x6a5acd);
+            player.setStrokeStyle(4, 0xffffff, 0.8);
+
+            // Добавляем свечение
+            glow = this.add.graphics();
+            glow.fillStyle(0x6a5acd, 0.2);
+            glow.fillCircle(400, 300, 50);
+            glow.setAlpha(0.7);
+
+            // Добавляем анимацию пульсации
+            this.tweens.add({
+                targets: glow,
+                alpha: { from: 0.7, to: 0.3 },
+                duration: 1500,
+                ease: 'Sine.easeInOut',
+                loop: -1,
+                yoyo: true
+            });
+
+            // Настраиваем частицы
+            particles = this.add.particles('particle');
+
+            const emitter = particles.createEmitter({
+                speed: 100,
+                scale: { start: 0.8, end: 0 },
+                blendMode: 'ADD',
+                lifespan: 800,
+                frequency: 50,
+                maxParticles: maxParticles,
+                emitCallback: function(emitter) {
+                    particlesPool.push(emitter);
+                }
+            });
+
+            emitter.setPosition(player.x, player.y);
+            emitter.setAlpha({ start: 0.8, end: 0 });
+            emitter.setTint(0x6a5acd, 0x9370db, 0x48d1cc, 0xff69b4);
+
+            // Управление
+            cursors = this.input.keyboard.createCursorKeys();
+            this.input.keyboard.addKeys({
+                'W': Phaser.Input.Keyboard.KeyCodes.W,
+                'A': Phaser.Input.Keyboard.KeyCodes.A,
+                'S': Phaser.Input.Keyboard.KeyCodes.S,
+                'D': Phaser.Input.Keyboard.KeyCodes.D
+            });
+
+            // Экранное сотрясение
+            this.input.on('pointerdown', function() {
+                screenShake = true;
+                shakeTimer = 0.3;
+
+                // Увеличиваем кристалл
+                this.tweens.add({
+                    targets: player,
+                    scale: 1.2,
+                    duration: 100,
+                    yoyo: true,
+                    ease: 'Power2'
+                });
+            }, this);
+
+            // Текст счета
+            scoreText = this.add.text(20, 20, 'Счет: 0', {
+                fontSize: '24px',
+                fontFamily: 'Arial',
+                color: '#ffffff',
+                stroke: '#000000',
+                strokeThickness: 4
+            });
+
+            // Анимация звездного поля
+            this.time.addEvent({
+                delay: 100,
+                callback: function() {
+                    const x = Phaser.Math.Between(0, config.width);
+                    const y = Phaser.Math.Between(0, config.height);
+                    const star = this.add.circle(x, y, 1, 0xffffff, 0.8);
+                    this.tweens.add({
+                        targets: star,
+                        alpha: 0,
+                        y: y + 200,
+                        duration: 2000,
+                        ease: 'Power2'
+                    });
+                },
+                callbackScope: this,
+                loop: true
+            });
+        }
+
+        function update(time, delta) {
+            if (screenShake) {
+                shakeTimer -= delta / 1000;
+                if (shakeTimer <= 0) {
+                    screenShake = false;
+                } else {
+                    const intensity = shakeTimer * 5;
+                    this.cameras.main.setShake(intensity, intensity);
+                }
+            }
+
+            // Движение игрока
+            const speed = 300;
+            const prevX = player.x;
+            const prevY = player.y;
+
+            if (cursors.left.isDown || this.input.keyboard.checkDown(this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A))) {
+                player.x -= speed * (delta / 1000);
+            } else if (cursors.right.isDown || this.input.keyboard.checkDown(this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D))) {
+                player.x += speed * (delta / 1000);
+            }
+
+            if (cursors.up.isDown || this.input.keyboard.checkDown(this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.W))) {
+                player.y -= speed * (delta / 1000);
+            } else if (cursors.down.isDown || this.input.keyboard.checkDown(this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.S))) {
+                player.y += speed * (delta / 1000);
+            }
+
+            // Ограничиваем движение по краям экрана
+            player.x = Phaser.Math.Clamp(player.x, 30, config.width - 30);
+            player.y = Phaser.Math.Clamp(player.y, 30, config.height - 30);
+
+            // Обновляем позицию частиц
+            particles.setPosition(player.x, player.y);
+
+            // Обновляем позицию свечения
+            glow.x = player.x;
+            glow.y = player.y;
+
+            // Увеличиваем счет при движении
+            if (Phaser.Math.Distance.Between(prevX, prevY, player.x, player.y) > 1) {
+                score += 1;
+                scoreText.setText('Счет: ' + score);
+            }
+        }
+    </script>
+</body>
+</html>

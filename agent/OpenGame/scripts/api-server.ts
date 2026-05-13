@@ -53,6 +53,7 @@ app.post('/api/generate', async (req, res) => {
     if (provider === 'sambanova') baseUrl = 'https://api.sambanova.ai/v1';
     if (provider === 'together') baseUrl = 'https://api.together.xyz/v1';
     if (provider === 'cerebras') baseUrl = 'https://api.cerebras.ai/v1';
+    if (provider === 'llm7') baseUrl = 'https://api.llm7.io/v1';
 
     config.updateCredentials({
       apiKey,
@@ -69,67 +70,122 @@ app.post('/api/generate', async (req, res) => {
     const client = new GeminiClient(config);
     await client.initialize();
     
-    // CRITICAL: Enable tools for the engine to be "smart"
-    await client.setTools();
+    // For Gemini: use full agentic tool loop
+    // For OpenAI-compatible: use direct text mode (no tools)
+    const isGemini = provider === 'gemini';
 
-    // 3. Send the prompt and handle the agentic loop
-    const fullPrompt = `TASK: Create a professional, single-file web game.
-    REQUIREMENTS:
-    ${prompt}
-    
-    CONSTRAINTS:
-    - Language: Russian for UI, English for code.
-    - Style: Premium, modern, animated.
-    - File: MUST be index.html only.
-    - Quality: Adhere to all 35 SmolGame quality standards.
-    
-    Use your tools to create the game in the current directory.`;
+    if (isGemini) {
+      // GEMINI AGENTIC LOOP — supports tools natively
+      await client.setTools();
 
-    let currentRequest: any = [{ text: fullPrompt }];
-    let iterations = 0;
-    const MAX_ITERATIONS = 20;
+      const fullPrompt = `TASK: Create a professional, single-file web game.
+REQUIREMENTS: ${prompt}
+CONSTRAINTS:
+- Language: Russian for UI, English for code.
+- Style: Premium, modern, animated.
+- File: MUST be index.html only.
+Use your write_file tool to save the game as index.html in the current directory.`;
 
-    while (iterations < MAX_ITERATIONS) {
-      iterations++;
-      console.log(`[OpenGame API] Iteration ${iterations}...`);
-      
-      const stream = client.sendMessageStream(currentRequest, new AbortController().signal, gameId, {
-        isContinuation: iterations > 1
-      });
+      let currentRequest: any = [{ text: fullPrompt }];
+      let iterations = 0;
+      const MAX_ITERATIONS = 20;
 
-      const toolCalls: ToolCallRequestInfo[] = [];
-      let finished = false;
+      while (iterations < MAX_ITERATIONS) {
+        iterations++;
+        console.log(`[OpenGame API] Gemini iteration ${iterations}...`);
 
+        const stream = client.sendMessageStream(currentRequest, new AbortController().signal, gameId, {
+          isContinuation: iterations > 1
+        });
+
+        const toolCalls: ToolCallRequestInfo[] = [];
+        let finished = false;
+
+        for await (const event of stream) {
+          if (event.type === GeminiEventType.Error) throw new Error(JSON.stringify(event.value));
+          if (event.type === GeminiEventType.ToolCallRequest) toolCalls.push(event.value);
+          if (event.type === GeminiEventType.Finished) finished = true;
+        }
+
+        if (toolCalls.length > 0) {
+          const results = [];
+          for (const toolCall of toolCalls) {
+            console.log(`[OpenGame API] Tool: ${toolCall.name}`);
+            const response = await executeToolCall(config, toolCall, new AbortController().signal);
+            results.push({
+              functionResponse: {
+                name: toolCall.name,
+                response: response.responseParts[0].functionResponse?.response
+              }
+            });
+          }
+          currentRequest = results;
+        } else if (finished) {
+          break;
+        } else {
+          break;
+        }
+      }
+    } else {
+      // DIRECT TEXT MODE — for SambaNova, Mistral, Cerebras, OpenRouter, etc.
+      // CRITICAL: Clear tools so non-Gemini providers don't reject the request
+      (client as any).getChat().setTools([]);
+      console.log(`[OpenGame API] Using direct text mode for provider: ${provider} (tools cleared)`);
+
+      const fullPrompt = `You are an expert web game developer. Create a complete, self-contained HTML5 game.
+
+TASK: ${prompt}
+
+REQUIREMENTS:
+- Output ONLY a single valid HTML file, nothing else
+- No markdown, no explanation, no code blocks — just the raw HTML starting with <!DOCTYPE html>
+- Include Phaser 3 via CDN: https://cdnjs.cloudflare.com/ajax/libs/phaser/3.60.0/phaser.min.js
+- Language: Russian for any UI text
+- Style: dark background, premium look with gradients and animations
+- The game must be fully playable and fun
+
+Output the complete index.html file now:`;
+
+      const stream = client.sendMessageStream(
+        [{ text: fullPrompt }],
+        new AbortController().signal,
+        gameId
+      );
+
+      let fullText = '';
+      let eventCount = 0;
       for await (const event of stream) {
-        if (event.type === GeminiEventType.Error) throw new Error(JSON.stringify(event.value));
-        if (event.type === GeminiEventType.ToolCallRequest) {
-          toolCalls.push(event.value);
+        eventCount++;
+        const ev = event as any;
+        // Log first 5 events to debug
+        if (eventCount <= 5) {
+          console.log(`[OpenGame API] Event #${eventCount}: type=${ev.type}, valueType=${typeof ev.value}, valueSample=${JSON.stringify(ev.value)?.substring(0, 100)}`);
         }
-        if (event.type === GeminiEventType.Finished) {
-          finished = true;
+        if (ev.type === GeminiEventType.Error) throw new Error(JSON.stringify(ev.value));
+        if (ev.type === GeminiEventType.Content) {
+          fullText += ev.value || '';
         }
+        // Also try collecting raw text from value if it's a string
+        if (typeof ev.value === 'string' && ev.type !== GeminiEventType.Error) {
+          if (ev.type !== GeminiEventType.Content) fullText += ev.value;
+        }
+      }
+      console.log(`[OpenGame API] Stream done. Total events: ${eventCount}, text length: ${fullText.length}`);
+
+      // Extract HTML from the response (model may wrap it anyway)
+      let html = fullText.trim();
+      const htmlMatch = html.match(/<!DOCTYPE html[\s\S]*<\/html>/i);
+      if (htmlMatch) html = htmlMatch[0];
+
+      if (!html || !html.includes('</html>')) {
+        console.log('[OpenGame API] Raw output:', html.substring(0, 500));
+        throw new Error('Model did not return valid HTML. Output: ' + html.substring(0, 200));
       }
 
-      if (toolCalls.length > 0) {
-        const results = [];
-        for (const toolCall of toolCalls) {
-          console.log(`[OpenGame API] Executing tool: ${toolCall.name}`);
-          const response = await executeToolCall(config, toolCall, new AbortController().signal);
-          results.push({
-            functionResponse: {
-              name: toolCall.name,
-              response: response.responseParts[0].functionResponse?.response
-            }
-          });
-        }
-        currentRequest = results;
-      } else if (finished) {
-        console.log(`[OpenGame API] Generation finished.`);
-        break;
-      } else {
-        // No tool calls and not finished? Something is wrong.
-        break;
-      }
+      // Save directly
+      const indexPath = join(workspacePath, 'index.html');
+      fs.writeFileSync(indexPath, html, 'utf8');
+      console.log(`[OpenGame API] Saved ${html.length} chars to ${indexPath}`);
     }
 
     // 4. Read the generated file
@@ -138,22 +194,18 @@ app.post('/api/generate', async (req, res) => {
       const code = fs.readFileSync(indexPath, 'utf8');
       res.json({ success: true, code, gameId });
     } else {
-      // Fallback: try to find any html file
       const files = fs.readdirSync(workspacePath);
       const htmlFile = files.find(f => f.endsWith('.html'));
       if (htmlFile) {
         const code = fs.readFileSync(join(workspacePath, htmlFile), 'utf8');
         res.json({ success: true, code, gameId });
       } else {
-        throw new Error('No HTML file was generated by OpenGame engine.');
+        throw new Error('No HTML file was generated.');
       }
     }
   } catch (error: any) {
     console.error(`[OpenGame API] Error:`, error);
     res.status(500).json({ error: error.message });
-  } finally {
-    // Cleanup workspace (optional)
-    // fs.rmSync(workspacePath, { recursive: true, force: true });
   }
 });
 
