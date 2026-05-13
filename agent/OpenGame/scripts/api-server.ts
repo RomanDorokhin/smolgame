@@ -8,7 +8,10 @@ import {
   GeminiClient, 
   createContentGenerator, 
   createContentGeneratorConfig,
-  AuthType
+  AuthType,
+  GeminiEventType,
+  type ToolCallRequestInfo,
+  executeToolCall
 } from '../packages/core/src/index.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -32,26 +35,36 @@ app.post('/api/generate', async (req, res) => {
 
   try {
     // 2. Initialize OpenGame Config
-    const config = new Config();
-    config.setSessionId(gameId);
+    const config = new Config({
+      targetDir: workspacePath,
+      cwd: workspacePath,
+      debugMode: true,
+      sessionId: gameId
+    });
     
     let authType = AuthType.USE_OPENAI;
     if (provider === 'gemini') authType = AuthType.USE_GEMINI;
     if (provider === 'anthropic') authType = AuthType.USE_ANTHROPIC;
     
-    const generatorConfig = createContentGeneratorConfig(config, authType, {
-      model: model || 'gpt-4o',
-      apiKey: apiKey,
-      baseUrl: provider === 'openrouter' ? 'https://openrouter.ai/api/v1' : undefined
+    // 3. Set up Auth & Generator
+    let baseUrl = undefined;
+    if (provider === 'openrouter') baseUrl = 'https://openrouter.ai/api/v1';
+    if (provider === 'mistral') baseUrl = 'https://api.mistral.ai/v1';
+    if (provider === 'sambanova') baseUrl = 'https://api.sambanova.ai/v1';
+    if (provider === 'together') baseUrl = 'https://api.together.xyz/v1';
+    if (provider === 'cerebras') baseUrl = 'https://api.cerebras.ai/v1';
+
+    config.updateCredentials({
+      apiKey,
+      model: model || 'mistral-large-latest',
+      baseUrl,
+      samplingParams: {
+        max_tokens: 8192
+      }
     });
-
-    // Set env keys for OpenGame core to pick up
-    if (authType === AuthType.USE_OPENAI) process.env['OPENAI_API_KEY'] = apiKey;
-    if (authType === AuthType.USE_GEMINI) process.env['GEMINI_API_KEY'] = apiKey;
-    if (provider === 'openrouter') process.env['OPENAI_BASE_URL'] = 'https://openrouter.ai/api/v1';
-
-    const generator = await createContentGenerator(generatorConfig, config);
-    config.setContentGenerator(generator);
+    
+    await config.refreshAuth(authType, true);
+    await config.initialize();
 
     const client = new GeminiClient(config);
     await client.initialize();
@@ -59,7 +72,7 @@ app.post('/api/generate', async (req, res) => {
     // CRITICAL: Enable tools for the engine to be "smart"
     await client.setTools();
 
-    // 3. Send the prompt to OpenGame
+    // 3. Send the prompt and handle the agentic loop
     const fullPrompt = `TASK: Create a professional, single-file web game.
     REQUIREMENTS:
     ${prompt}
@@ -68,16 +81,55 @@ app.post('/api/generate', async (req, res) => {
     - Language: Russian for UI, English for code.
     - Style: Premium, modern, animated.
     - File: MUST be index.html only.
-    - Quality: Adhere to all 35 SmolGame quality standards mentioned in the prompt.
+    - Quality: Adhere to all 35 SmolGame quality standards.
     
-    Use your planning tools (TODO_WRITE) to break this down and verify your work.`;
+    Use your tools to create the game in the current directory.`;
 
-    // This is a simplified version of the CLI loop
-    const stream = client.sendMessageStream([{ text: fullPrompt }], new AbortController().signal, gameId);
-    
-    for await (const event of stream) {
-      // Here we could stream progress back to the client
-      if (event.type === 'error') throw new Error(event.value);
+    let currentRequest: any = [{ text: fullPrompt }];
+    let iterations = 0;
+    const MAX_ITERATIONS = 20;
+
+    while (iterations < MAX_ITERATIONS) {
+      iterations++;
+      console.log(`[OpenGame API] Iteration ${iterations}...`);
+      
+      const stream = client.sendMessageStream(currentRequest, new AbortController().signal, gameId, {
+        isContinuation: iterations > 1
+      });
+
+      const toolCalls: ToolCallRequestInfo[] = [];
+      let finished = false;
+
+      for await (const event of stream) {
+        if (event.type === GeminiEventType.Error) throw new Error(JSON.stringify(event.value));
+        if (event.type === GeminiEventType.ToolCallRequest) {
+          toolCalls.push(event.value);
+        }
+        if (event.type === GeminiEventType.Finished) {
+          finished = true;
+        }
+      }
+
+      if (toolCalls.length > 0) {
+        const results = [];
+        for (const toolCall of toolCalls) {
+          console.log(`[OpenGame API] Executing tool: ${toolCall.name}`);
+          const response = await executeToolCall(config, toolCall, new AbortController().signal);
+          results.push({
+            functionResponse: {
+              name: toolCall.name,
+              response: response.responseParts[0].functionResponse?.response
+            }
+          });
+        }
+        currentRequest = results;
+      } else if (finished) {
+        console.log(`[OpenGame API] Generation finished.`);
+        break;
+      } else {
+        // No tool calls and not finished? Something is wrong.
+        break;
+      }
     }
 
     // 4. Read the generated file

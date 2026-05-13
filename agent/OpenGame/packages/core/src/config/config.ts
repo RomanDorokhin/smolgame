@@ -689,6 +689,7 @@ export class Config {
     apiKey?: string;
     baseUrl?: string;
     model?: string;
+    samplingParams?: Record<string, unknown>;
   }): void {
     if (credentials.apiKey) {
       this._generationConfig.apiKey = credentials.apiKey;
@@ -698,6 +699,9 @@ export class Config {
     }
     if (credentials.model) {
       this._generationConfig.model = credentials.model;
+    }
+    if (credentials.samplingParams) {
+      this._generationConfig.samplingParams = credentials.samplingParams;
     }
   }
 
