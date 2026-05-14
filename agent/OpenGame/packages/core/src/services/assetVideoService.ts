@@ -492,17 +492,19 @@ export function createVideoService(config: VideoModelConfig): IVideoService {
   switch (config.modelType) {
     case 'doubao':
       return new DoubaoVideoService(config);
-    case 'openai-compat':
-      // OpenAI-compatible APIs do not have a stable text-to-video / image-to-video
-      // surface today (Sora and Veo are not part of the public OpenAI shape).
-      // Surface this as an actionable error rather than producing 404s.
-      throw new Error(
-        'OpenGame video generation does not support the "openai-compat" provider yet. ' +
-          'Set OPENGAME_VIDEO_PROVIDER to "tongyi" or "doubao", or skip animation/audio-from-video ' +
-          'generation.',
-      );
     case 'tongyi':
-    default:
       return new TongyiVideoService(config);
+    case 'openai-compat':
+    case 'openrouter':
+    case 'together':
+    case 'mistral':
+    case 'gemini':
+    default:
+      // OpenAI-compatible and other providers often do not have a stable T2V/I2V
+      // API yet. Throw an error so the caller can fall back to other methods.
+      throw new Error(
+        `OpenGame video generation does not support the "${config.modelType}" provider yet. ` +
+          'Use "tongyi" or "doubao" for video, or skip animation/audio-from-video.'
+      );
   }
 }

@@ -679,6 +679,11 @@ export class OpenAIContentConverter {
   convertOpenAIResponseToGemini(
     openaiResponse: OpenAI.Chat.ChatCompletion,
   ): GenerateContentResponse {
+    if (!openaiResponse.choices || openaiResponse.choices.length === 0) {
+      throw new Error(
+        `OpenAI response has no choices. Raw response: ${JSON.stringify(openaiResponse)}`,
+      );
+    }
     const choice = openaiResponse.choices[0];
     const response = new GenerateContentResponse();
 

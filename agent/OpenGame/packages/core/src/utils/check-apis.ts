@@ -24,7 +24,7 @@ async function checkProvider(authType: AuthType, envVar: string) {
   }
 
   // Use the factory to create a fully populated config (with baseUrls and default models)
-  const config = createContentGeneratorConfig(authType);
+  const config = createContentGeneratorConfig(authType, {});
   console.log(`[*] ${providerName}: Checking with model "${config.model}"...`);
   
   try {
@@ -38,6 +38,7 @@ async function checkProvider(authType: AuthType, envVar: string) {
     // Simple test message
     const response = await generator.generateContent(
       { 
+        model: config.model,
         contents: [{ role: 'user', parts: [{ text: 'Respond with "OK" if you can read this.' }] }]
       },
       'diagnostic'
@@ -68,6 +69,8 @@ async function main() {
     { type: AuthType.USE_CEREBRAS, env: 'CEREBRAS_API_KEY' },
     { type: AuthType.USE_COHERE, env: 'COHERE_API_KEY' },
     { type: AuthType.USE_HUGGINGFACE, env: 'HUGGINGFACE_API_KEY' },
+    { type: AuthType.USE_GROQ, env: 'GROQ_API_KEY' },
+    { type: AuthType.USE_DEEPSEEK, env: 'DEEPSEEK_API_KEY' },
   ];
 
   for (const provider of providers) {

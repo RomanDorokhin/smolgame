@@ -127,6 +127,7 @@ export class GeminiContentGenerator implements ContentGenerator {
   ): Promise<GenerateContentResponse> {
     const finalRequest = {
       ...request,
+      model: request.model || this.contentGeneratorConfig?.model || 'gemini-2.0-flash',
       config: this.buildGenerateContentConfig(request),
     };
     return this.googleGenAI.models.generateContent(finalRequest);
@@ -138,6 +139,7 @@ export class GeminiContentGenerator implements ContentGenerator {
   ): Promise<AsyncGenerator<GenerateContentResponse>> {
     const finalRequest = {
       ...request,
+      model: request.model || this.contentGeneratorConfig?.model || 'gemini-2.0-flash',
       config: this.buildGenerateContentConfig(request),
     };
     return this.googleGenAI.models.generateContentStream(finalRequest);

@@ -31,7 +31,14 @@ export abstract class BaseService {
   ): Promise<Response> {
     for (let i = 0; i <= maxRetries; i++) {
       try {
-        const res = await fetch(url, options);
+        const mergedOptions = {
+          ...options,
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            ...options.headers,
+          },
+        };
+        const res = await fetch(url, mergedOptions);
 
         // Rate limit handling
         if (res.status === 429) {
@@ -62,7 +69,11 @@ export abstract class BaseService {
   }
 
   protected async downloadToBuffer(url: string): Promise<Buffer> {
-    const response = await this.fetchWithRetry(url, {});
+    const response = await this.fetchWithRetry(url, {
+      headers: {
+        'Accept': 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8',
+      }
+    });
     if (!response.ok) {
       throw new Error(
         `Failed to download: ${response.status} ${response.statusText}`,
@@ -83,7 +94,12 @@ export abstract class BaseService {
     while (Date.now() - startTime < timeoutMs) {
       await this.sleep(pollInterval);
 
-      const res = await fetch(taskUrl, { headers });
+      const res = await fetch(taskUrl, { 
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          ...headers 
+        }
+      });
       if (!res.ok) {
         this.logger.warn(`Task poll failed: ${res.status}`);
         continue;

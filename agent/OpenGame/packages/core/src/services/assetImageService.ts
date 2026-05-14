@@ -536,6 +536,233 @@ export class OpenAICompatImageService extends BaseService {
   }
 }
 
+// ============== Gemini Image Service ==============
+
+export class GeminiImageService extends BaseService {
+  private config: ImageModelConfig;
+
+  constructor(config: ImageModelConfig) {
+    super();
+    this.config = config;
+  }
+
+  async generateImage(
+    prompt: string,
+    _size: string = '1024x1024',
+  ): Promise<string> {
+    this.log(`Generating image with Gemini: ${prompt.substring(0, 50)}...`);
+
+    // Gemini API for Imagen-3 via Google AI Studio
+    const url = `${this.config.baseUrl}/models/${this.config.modelNameGeneration}:generateImages?key=${this.config.apiKey}`;
+
+    const payload = {
+      instances: [{ prompt }],
+      parameters: {
+        sampleCount: 1,
+      },
+    };
+
+    const response = await this.fetchWithRetry(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      const errorBody = await response.text();
+      throw new Error(
+         `Gemini Image API failed: ${response.status} - ${errorBody}`,
+      );
+    }
+
+    const data = (await response.json()) as {
+      predictions?: Array<{
+        bytesBase64Encoded?: string;
+        mimeType?: string;
+      }>;
+    };
+
+    const prediction = data.predictions?.[0];
+    if (!prediction || !prediction.bytesBase64Encoded) {
+      throw new Error('Gemini returned no results or missing image bytes');
+    }
+
+    const mimeType = prediction.mimeType || 'image/png';
+    return `data:${mimeType};base64,${prediction.bytesBase64Encoded}`;
+  }
+
+  async editImage(
+    _referenceImageUrl: string,
+    prompt: string,
+    _previousFrameUrl?: string | null,
+  ): Promise<string> {
+    this.log('Gemini editImage falls back to plain text-to-image.', 'warn');
+    return this.generateImage(`${prompt} (consistent style)`);
+  }
+}
+
+// ============== HuggingFace Image Service ==============
+
+export class HuggingFaceImageService extends BaseService {
+  private config: ImageModelConfig;
+
+  constructor(config: ImageModelConfig) {
+    super();
+    this.config = config;
+  }
+
+  async generateImage(
+    prompt: string,
+    _size: string = '1024x1024',
+  ): Promise<string> {
+    this.log(`Generating image with HuggingFace: ${prompt.substring(0, 50)}...`);
+
+    // Use the model-specific inference endpoint
+    // If model name is just a model ID like 'black-forest-labs/FLUX.1-schnell'
+    const modelId = this.config.modelNameGeneration;
+    const url = `https://router.huggingface.co/hf-inference/models/${modelId}`;
+
+    const response = await this.fetchWithRetry(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${this.config.apiKey}`,
+      },
+      body: JSON.stringify({ inputs: prompt }),
+    });
+
+    if (!response.ok) {
+      const errorBody = await response.text();
+      throw new Error(
+        `HuggingFace Image API failed: ${response.status} - ${errorBody}`,
+      );
+    }
+
+    const buffer = await response.arrayBuffer();
+    const base64 = Buffer.from(buffer).toString('base64');
+    const contentType = response.headers.get('content-type') || 'image/png';
+    
+    this.log(`Image generated successfully via HuggingFace`);
+    return `data:${contentType};base64,${base64}`;
+  }
+
+  async editImage(
+    _referenceImageUrl: string,
+    prompt: string,
+    _previousFrameUrl?: string | null,
+  ): Promise<string> {
+    this.log('HuggingFace editImage falls back to plain text-to-image.', 'warn');
+    return this.generateImage(`${prompt} (consistent style)`);
+  }
+}
+
+// ============== OpenRouter Image Service ==============
+
+export class OpenRouterImageService extends BaseService {
+  private config: ImageModelConfig;
+
+  constructor(config: ImageModelConfig) {
+    super();
+    this.config = config;
+  }
+
+  async generateImage(
+    prompt: string,
+    _size: string = '1024x1024',
+  ): Promise<string> {
+    this.log(`Generating image via OpenRouter Chat: ${prompt.substring(0, 50)}...`);
+
+    const url = `${this.config.baseUrl}/chat/completions`;
+    
+    const payload = {
+      model: this.config.modelNameGeneration,
+      messages: [{ role: 'user', content: prompt }],
+      modalities: ["image"],
+    };
+
+    const response = await this.fetchWithRetry(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${this.config.apiKey}`,
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      const errorBody = await response.text();
+      throw new Error(`OpenRouter Image API failed: ${response.status} - ${errorBody}`);
+    }
+
+    const data = await response.json();
+    
+    // OpenRouter returns images in an array inside the message or content
+    // Check choices[0].message.content for an array containing image_url
+    const message = data.choices?.[0]?.message;
+    if (!message) {
+      throw new Error('OpenRouter returned no message in response');
+    }
+
+    if (Array.isArray(message.content)) {
+      const imageItem = message.content.find((item: any) => item.type === 'image_url' || item.image_url);
+      if (imageItem?.image_url?.url) {
+        return imageItem.image_url.url;
+      }
+    }
+
+    // Some models return it in message.images
+    if (Array.isArray(message.images) && message.images.length > 0) {
+      return message.images[0];
+    }
+
+    // Fallback for models that return markdown URLs in text content
+    if (typeof message.content === 'string') {
+       const match = message.content.match(/!\[.*?\]\((.*?)\)/);
+       if (match) return match[1];
+    }
+
+    throw new Error('OpenRouter returned no image in response');
+  }
+
+  async editImage(
+    referenceImageUrl: string,
+    prompt: string,
+    previousFrameUrl?: string | null,
+  ): Promise<string> {
+     this.log('OpenRouter editImage falls back to plain text-to-image.', 'warn');
+     return this.generateImage(`${prompt} (consistent with reference style)`);
+  }
+}
+
+// ============== Pollinations.AI Image Service (free, no key) ==============
+
+export class PollinationsImageService extends BaseService {
+  async generateImage(
+    prompt: string,
+    _size: string = '1024x1024',
+  ): Promise<string> {
+    // Clean prompt: remove newlines and extra spaces
+    const cleanPrompt = prompt.replace(/\s+/g, ' ').trim();
+    this.log(`Generating image via Pollinations.AI: ${cleanPrompt.substring(0, 50)}...`);
+    
+    // Add a larger jittered delay to avoid rate limits
+    await new Promise(resolve => setTimeout(resolve, 3000 + Math.random() * 5000));
+    
+    const encoded = encodeURIComponent(cleanPrompt);
+    return `https://image.pollinations.ai/prompt/${encoded}?width=512&height=512&nologo=true&seed=${Date.now()}`;
+  }
+
+  async editImage(
+    _referenceImageUrl: string,
+    prompt: string,
+    _previousFrameUrl?: string | null,
+  ): Promise<string> {
+    return this.generateImage(prompt);
+  }
+}
+
 // ============== Image Service Interface ==============
 
 export interface IImageService {
@@ -553,8 +780,22 @@ export function createImageService(config: ImageModelConfig): IImageService {
   switch (config.modelType) {
     case 'doubao':
       return new DoubaoImageService(config);
+    case 'gemini':
+      return new GeminiImageService(config);
+    case 'pollinations':
+      return new PollinationsImageService();
     case 'openai-compat':
+    case 'together':
+    case 'mistral':
+    case 'sambanova':
+    case 'cerebras':
+    case 'groq':
+    case 'cohere':
       return new OpenAICompatImageService(config);
+    case 'openrouter':
+      return new OpenRouterImageService(config);
+    case 'huggingface':
+      return new HuggingFaceImageService(config);
     case 'tongyi':
     default:
       return new TongyiImageService(config);

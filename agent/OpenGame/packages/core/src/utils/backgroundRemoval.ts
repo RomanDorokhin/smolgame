@@ -94,7 +94,12 @@ export class BackgroundRemovalService {
     // Download image FIRST - only once
     let imageBuffer: Buffer;
     try {
-      const response = await fetch(imageUrl);
+      const response = await fetch(imageUrl, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          'Accept': 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8',
+        }
+      });
       if (!response.ok) {
         throw new Error(`Failed to download image: ${response.status}`);
       }

@@ -353,6 +353,12 @@ export class AudioRenderService extends BaseService {
 
       const pythonScript = `
 import sys
+import ssl
+import os
+
+# Bypass SSL verification for soundfont downloads
+ssl._create_default_https_context = ssl._create_unverified_context
+
 from symusic import Score, Synthesizer, dump_wav
 
 abc_path = sys.argv[1]
@@ -671,6 +677,91 @@ export class OpenAICompatAudioService extends BaseService {
   }
 }
 
+// ============== Gemini Audio Service ==============
+
+export class GeminiAudioService extends BaseService {
+  private config: AudioModelConfig;
+
+  constructor(config: AudioModelConfig) {
+    super();
+    this.config = config;
+  }
+
+  async generateABC(request: AudioRequest): Promise<string> {
+    this.log(
+      `Generating ABC notation with Gemini: ${request.description.substring(0, 50)}...`,
+    );
+
+    const url = `${this.config.baseUrl}/models/${this.config.modelNameChat}:generateContent?key=${this.config.apiKey}`;
+
+    const userPrompt = ABC_GEN_PROMPT.replace(
+      '{duration}',
+      String(request.duration || 30),
+    )
+      .replace('{audioType}', request.audioType)
+      .replace('{genre}', request.genre || 'electronic')
+      .replace('{tempo}', request.tempo || 'medium')
+      .replace('{description}', request.description);
+
+    const payload = {
+      contents: [
+        {
+          role: 'user',
+          parts: [{ text: ABC_SYSTEM_PROMPT + '\n\n' + userPrompt }],
+        },
+      ],
+      generationConfig: {
+        maxOutputTokens: this.config.maxTokens || 2048,
+        temperature: 1.5,
+        responseMimeType: 'application/json',
+      },
+    };
+
+    const response = await this.fetchWithRetry(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      const errorBody = await response.text();
+      throw new Error(
+        `Gemini Chat API failed: ${response.status} - ${errorBody}`,
+      );
+    }
+
+    const data = (await response.json()) as {
+      candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
+    };
+    const content = data.candidates?.[0]?.content?.parts?.[0]?.text;
+
+    if (!content) {
+      throw new Error('Gemini returned no content');
+    }
+
+    let notation = content;
+    try {
+      const parsed = JSON.parse(content);
+      notation = parsed.notation || content;
+    } catch {
+      this.log('Failed to parse JSON, extracting ABC directly', 'warn');
+    }
+
+    notation = normalizeABCNotation(notation);
+
+    if (!isValidABCNotation(notation)) {
+      this.log(`Invalid ABC notation generated, will use fallback`, 'warn');
+      throw new Error(
+        'Generated ABC notation is invalid (missing notes or headers)',
+      );
+    }
+
+    return notation;
+  }
+}
+
 // ============== Audio Service Interface ==============
 
 export interface IAudioService {
@@ -683,7 +774,16 @@ export function createAudioService(config: AudioModelConfig): IAudioService {
   switch (config.modelType) {
     case 'doubao':
       return new DoubaoAudioService(config);
+    case 'gemini':
+      return new GeminiAudioService(config);
     case 'openai-compat':
+    case 'openrouter':
+    case 'together':
+    case 'mistral':
+    case 'sambanova':
+    case 'cerebras':
+    case 'groq':
+    case 'cohere':
       return new OpenAICompatAudioService(config);
     case 'tongyi':
     default:

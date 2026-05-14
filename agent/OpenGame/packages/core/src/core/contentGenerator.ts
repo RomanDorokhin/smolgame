@@ -138,7 +138,7 @@ export function createContentGeneratorConfig(
         newContentGeneratorConfig.baseUrl ||
         process.env['SAMBANOVA_BASE_URL'] ||
         'https://api.sambanova.ai/v1',
-      model: newContentGeneratorConfig.model || process.env['SAMBANOVA_MODEL'] || 'Meta-Llama-3.1-70B-Instruct',
+      model: newContentGeneratorConfig.model || process.env['SAMBANOVA_MODEL'] || 'Meta-Llama-3.1-8B-Instruct',
     };
   }
 
@@ -162,7 +162,7 @@ export function createContentGeneratorConfig(
       baseUrl:
         newContentGeneratorConfig.baseUrl ||
         process.env['COHERE_BASE_URL'] ||
-        'https://api.cohere.ai/v1',
+        'https://api.cohere.com/v1',
       model: newContentGeneratorConfig.model || process.env['COHERE_MODEL'] || 'command-r-plus',
     };
   }

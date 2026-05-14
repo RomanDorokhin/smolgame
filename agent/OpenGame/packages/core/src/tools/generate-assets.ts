@@ -41,7 +41,7 @@ import { TilesetProcessor } from '../services/tileset-processor.js';
 
 // ============== Constants ==============
 
-const MAX_CONCURRENCY = 2;
+const MAX_CONCURRENCY = 1;
 
 // ============== Invocation Class ==============
 
@@ -881,12 +881,40 @@ isometric, 3D, perspective, vignette, dark corners.
     }
   }
 
-  private async downloadImage(url: string): Promise<Buffer> {
-    const response = await fetch(url);
-    if (!response.ok) {
-      throw new Error(`Download failed: ${response.status}`);
+  private async downloadImage(url: string, retries: number = 3): Promise<Buffer> {
+    for (let i = 0; i <= retries; i++) {
+      try {
+        const response = await fetch(url, {
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'Accept': 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8',
+          }
+        });
+
+        if (response.status === 429) {
+          const delay = 5000 * Math.pow(2, i);
+          console.warn(`[GenerateAssets] Rate limited downloading image, retrying in ${delay}ms...`);
+          await new Promise(resolve => setTimeout(resolve, delay));
+          continue;
+        }
+
+        if (!response.ok) {
+          if (i < retries) {
+            console.warn(`[GenerateAssets] Download failed with ${response.status}, retrying...`);
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            continue;
+          }
+          throw new Error(`Download failed: ${response.status}`);
+        }
+
+        return Buffer.from(await response.arrayBuffer());
+      } catch (error) {
+        if (i === retries) throw error;
+        console.warn(`[GenerateAssets] Download error: ${error}. Retrying...`);
+        await new Promise(resolve => setTimeout(resolve, 2000));
+      }
     }
-    return Buffer.from(await response.arrayBuffer());
+    throw new Error('Download failed after max retries');
   }
 
   private async saveAsset(

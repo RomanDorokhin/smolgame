@@ -37,7 +37,22 @@
 
 export type Modality = 'reasoning' | 'image' | 'video' | 'audio';
 
-export type ProviderName = 'tongyi' | 'doubao' | 'openai-compat';
+export type ProviderName =
+  | 'tongyi'
+  | 'doubao'
+  | 'openai-compat'
+  | 'openrouter'
+  | 'together'
+  | 'mistral'
+  | 'cerebras'
+  | 'sambanova'
+  | 'cohere'
+  | 'groq'
+  | 'deepseek'
+  | 'huggingface'
+  | 'gemini'
+  | 'gigachat'
+  | 'pollinations';
 
 export interface ResolvedProviderConfig {
   /** Which provider family this modality talks to. */
@@ -131,6 +146,189 @@ const DOUBAO_DEFAULTS: Record<Modality, { baseUrl: string; model: string }> = {
   },
 };
 
+const OPENROUTER_DEFAULTS: Record<Modality, { baseUrl: string; model: string }> =
+  {
+    reasoning: {
+      baseUrl: 'https://openrouter.ai/api/v1',
+      model: 'google/gemini-2.0-flash-001',
+    },
+    image: {
+      baseUrl: 'https://openrouter.ai/api/v1',
+      model: 'google/imagen-3',
+    },
+    video: {
+      baseUrl: 'https://openrouter.ai/api/v1',
+      model: 'luma/ray-v1',
+    },
+    audio: {
+      baseUrl: 'https://openrouter.ai/api/v1',
+      model: 'google/gemini-2.0-flash-001',
+    },
+  };
+
+const TOGETHER_DEFAULTS: Record<Modality, { baseUrl: string; model: string }> = {
+  reasoning: {
+    baseUrl: 'https://api.together.xyz/v1',
+    model: 'meta-llama/Llama-3.3-70B-Instruct-Turbo',
+  },
+  image: {
+    baseUrl: 'https://api.together.xyz/v1',
+    model: 'black-forest-labs/FLUX.1-schnell',
+  },
+  video: {
+    baseUrl: 'https://api.together.xyz/v1',
+    model: 'meta-llama/Llama-3.3-70B-Instruct-Turbo',
+  },
+  audio: {
+    baseUrl: 'https://api.together.xyz/v1',
+    model: 'meta-llama/Llama-3.3-70B-Instruct-Turbo',
+  },
+};
+
+const MISTRAL_DEFAULTS: Record<Modality, { baseUrl: string; model: string }> = {
+  reasoning: {
+    baseUrl: 'https://api.mistral.ai/v1',
+    model: 'mistral-large-latest',
+  },
+  image: {
+    baseUrl: 'https://api.mistral.ai/v1',
+    model: 'pixtral-large-latest',
+  },
+  video: {
+    baseUrl: 'https://api.mistral.ai/v1',
+    model: 'mistral-large-latest',
+  },
+  audio: {
+    baseUrl: 'https://api.mistral.ai/v1',
+    model: 'mistral-large-latest',
+  },
+};
+
+const GEMINI_DEFAULTS: Record<Modality, { baseUrl: string; model: string }> = {
+  reasoning: {
+    baseUrl: 'https://generativelanguage.googleapis.com/v1beta',
+    model: 'gemini-2.0-flash',
+  },
+  image: {
+    baseUrl: 'https://generativelanguage.googleapis.com/v1beta',
+    model: 'imagen-3',
+  },
+  video: {
+    baseUrl: 'https://generativelanguage.googleapis.com/v1beta',
+    model: 'gemini-2.0-flash',
+  },
+  audio: {
+    baseUrl: 'https://generativelanguage.googleapis.com/v1beta',
+    model: 'gemini-2.0-flash',
+  },
+};
+
+const CEREBRAS_DEFAULTS: Record<Modality, { baseUrl: string; model: string }> = {
+  reasoning: {
+    baseUrl: 'https://api.cerebras.ai/v1',
+    model: 'llama-3.3-70b',
+  },
+  image: { baseUrl: 'https://api.cerebras.ai/v1', model: 'llama-3.3-70b' },
+  video: { baseUrl: 'https://api.cerebras.ai/v1', model: 'llama-3.3-70b' },
+  audio: { baseUrl: 'https://api.cerebras.ai/v1', model: 'llama-3.3-70b' },
+};
+
+const SAMBANOVA_DEFAULTS: Record<Modality, { baseUrl: string; model: string }> =
+  {
+    reasoning: {
+      baseUrl: 'https://api.sambanova.ai/v1',
+      model: 'Meta-Llama-3.1-8B-Instruct',
+    },
+    image: {
+      baseUrl: 'https://api.sambanova.ai/v1',
+      model: 'Meta-Llama-3.1-8B-Instruct',
+    },
+    video: {
+      baseUrl: 'https://api.sambanova.ai/v1',
+      model: 'Meta-Llama-3.1-8B-Instruct',
+    },
+    audio: {
+      baseUrl: 'https://api.sambanova.ai/v1',
+      model: 'Meta-Llama-3.1-8B-Instruct',
+    },
+  };
+
+const COHERE_DEFAULTS: Record<Modality, { baseUrl: string; model: string }> = {
+  reasoning: {
+    baseUrl: 'https://api.cohere.com/v1',
+    model: 'command-r-plus',
+  },
+  image: {
+    baseUrl: 'https://api.cohere.com/v1',
+    model: 'command-r-plus',
+  },
+  video: {
+    baseUrl: 'https://api.cohere.com/v1',
+    model: 'command-r-plus',
+  },
+  audio: {
+    baseUrl: 'https://api.cohere.com/v1',
+    model: 'command-r-plus',
+  },
+};
+
+const GROQ_DEFAULTS: Record<Modality, { baseUrl: string; model: string }> = {
+  reasoning: {
+    baseUrl: 'https://api.groq.com/openai/v1',
+    model: 'llama-3.3-70b-versatile',
+  },
+  image: {
+    baseUrl: 'https://api.groq.com/openai/v1',
+    model: 'llama-3.3-70b-versatile',
+  },
+  video: {
+    baseUrl: 'https://api.groq.com/openai/v1',
+    model: 'llama-3.3-70b-versatile',
+  },
+  audio: {
+    baseUrl: 'https://api.groq.com/openai/v1',
+    model: 'llama-3.3-70b-versatile',
+  },
+};
+
+const DEEPSEEK_DEFAULTS: Record<Modality, { baseUrl: string; model: string }> = {
+  reasoning: {
+    baseUrl: 'https://api.deepseek.com/v1',
+    model: 'deepseek-chat',
+  },
+  image: {
+    baseUrl: 'https://api.deepseek.com/v1',
+    model: 'deepseek-chat',
+  },
+  video: {
+    baseUrl: 'https://api.deepseek.com/v1',
+    model: 'deepseek-chat',
+  },
+  audio: {
+    baseUrl: 'https://api.deepseek.com/v1',
+    model: 'deepseek-chat',
+  },
+};
+
+const HUGGINGFACE_DEFAULTS: Record<Modality, { baseUrl: string; model: string }> = {
+  reasoning: {
+    baseUrl: 'https://api-inference.huggingface.co/v1',
+    model: 'meta-llama/Llama-3.2-3B-Instruct',
+  },
+  image: {
+    baseUrl: 'https://api-inference.huggingface.co/v1',
+    model: 'black-forest-labs/FLUX.1-schnell',
+  },
+  video: {
+    baseUrl: 'https://api-inference.huggingface.co/v1',
+    model: 'meta-llama/Llama-3.2-3B-Instruct',
+  },
+  audio: {
+    baseUrl: 'https://api-inference.huggingface.co/v1',
+    model: 'meta-llama/Llama-3.2-3B-Instruct',
+  },
+};
+
 // openai-compat has no sensible default model — the user MUST supply one,
 // because the right choice depends entirely on which compatible API they
 // point us at (OpenAI, OpenRouter, Together, Stability proxy, fal, ...).
@@ -186,7 +384,23 @@ function trimSlashes(url: string): string {
 }
 
 function isProviderName(value: unknown): value is ProviderName {
-  return value === 'tongyi' || value === 'doubao' || value === 'openai-compat';
+  return [
+    'tongyi',
+    'doubao',
+    'openai-compat',
+    'openrouter',
+    'together',
+    'mistral',
+    'cerebras',
+    'sambanova',
+    'cohere',
+    'groq',
+    'deepseek',
+    'huggingface',
+    'gemini',
+    'gigachat',
+    'pollinations',
+  ].includes(value as string);
 }
 
 /**
@@ -235,7 +449,9 @@ export function resolveProviderConfig(
     firstEnv(env, LEGACY_KEY_FALLBACKS[modality]) ??
     '';
 
-  if (!apiKey) {
+  // Providers that don't require an API key (e.g. Pollinations.AI)
+  const keylessProviders: ProviderName[] = ['pollinations'];
+  if (!apiKey && !keylessProviders.includes(provider)) {
     throw new MissingProviderConfigError(
       modality,
       `No API key found for "${modality}". Set ${envName(modality, 'API_KEY')} ` +
@@ -249,7 +465,29 @@ export function resolveProviderConfig(
       ? DOUBAO_DEFAULTS[modality]
       : provider === 'tongyi'
         ? TONGYI_DEFAULTS[modality]
-        : undefined;
+        : provider === 'openrouter'
+          ? OPENROUTER_DEFAULTS[modality]
+          : provider === 'together'
+            ? TOGETHER_DEFAULTS[modality]
+            : provider === 'mistral'
+              ? MISTRAL_DEFAULTS[modality]
+              : provider === 'gemini'
+                ? GEMINI_DEFAULTS[modality]
+                : provider === 'cerebras'
+                  ? CEREBRAS_DEFAULTS[modality]
+                  : provider === 'sambanova'
+                    ? SAMBANOVA_DEFAULTS[modality]
+                    : provider === 'cohere'
+                      ? COHERE_DEFAULTS[modality]
+                      : provider === 'groq'
+                        ? GROQ_DEFAULTS[modality]
+                        : provider === 'deepseek'
+                          ? DEEPSEEK_DEFAULTS[modality]
+                          : provider === 'huggingface'
+                            ? HUGGINGFACE_DEFAULTS[modality]
+                            : provider === 'pollinations'
+                              ? { baseUrl: 'https://image.pollinations.ai', model: '' }
+                              : undefined;
 
   const baseUrl =
     env[envName(modality, 'BASE_URL')] ??
@@ -273,7 +511,7 @@ export function resolveProviderConfig(
     firstEnv(env, LEGACY_MODEL_FALLBACKS[modality]) ??
     defaults?.model;
 
-  if (!model) {
+  if (!model && !keylessProviders.includes(provider)) {
     throw new MissingProviderConfigError(
       modality,
       `No model name configured for "${modality}". Set ${envName(modality, 'MODEL')} ` +
