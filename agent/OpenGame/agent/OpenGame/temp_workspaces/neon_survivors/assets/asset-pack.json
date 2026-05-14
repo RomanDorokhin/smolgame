@@ -1,0 +1,49 @@
+{
+  "backgrounds": {
+    "files": [
+      {
+        "type": "image",
+        "key": "arena_corridor",
+        "url": "assets/arena_corridor.png"
+      }
+    ]
+  },
+  "images": {
+    "files": [
+      {
+        "type": "image",
+        "key": "player_idle_front",
+        "url": "assets/player_idle_front.png"
+      },
+      {
+        "type": "image",
+        "key": "enemy_zombie_idle",
+        "url": "assets/enemy_zombie_idle.png"
+      },
+      {
+        "type": "image",
+        "key": "boss_drone_idle",
+        "url": "assets/boss_drone_idle.png"
+      },
+      {
+        "type": "image",
+        "key": "obstacle_crate",
+        "url": "assets/obstacle_crate.png"
+      }
+    ]
+  },
+  "tilesets": {
+    "files": [
+      {
+        "type": "image",
+        "key": "ruins_floor",
+        "url": "assets/ruins_floor.png"
+      },
+      {
+        "type": "image",
+        "key": "ruins_walls",
+        "url": "assets/ruins_walls.png"
+      }
+    ]
+  }
+}

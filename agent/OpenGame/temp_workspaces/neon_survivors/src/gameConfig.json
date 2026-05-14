@@ -1,0 +1,22 @@
+{
+  "playerConfig": {
+    "maxHealth": { "value": 100 },
+    "walkSpeed": { "value": 300 },
+    "attackDamage": { "value": 20 },
+    "hurtingDuration": { "value": 100 },
+    "invulnerableTime": { "value": 1000 },
+    "dashSpeed": { "value": 600 },
+    "dashDuration": { "value": 200 },
+    "dashCooldown": { "value": 1500 }
+  },
+  "enemyConfig": {
+    "maxHealth": { "value": 30 },
+    "walkSpeed": { "value": 200 },
+    "damage": { "value": 10 }
+  },
+  "bossConfig": {
+    "maxHealth": { "value": 500 },
+    "walkSpeed": { "value": 150 },
+    "damage": { "value": 30 }
+  }
+}

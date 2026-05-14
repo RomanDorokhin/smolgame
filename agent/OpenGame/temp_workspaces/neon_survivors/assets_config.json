@@ -1,0 +1,70 @@
+
+{
+  "style_anchor": "Cyberpunk neon city, pixel art style, high contrast, vibrant blue and pink colors",
+  "composition_env": "Top-down perspective",
+  "output_dir_name": "neon_survivors",
+  "assets": [
+    {
+      "key": "city_bg",
+      "type": "background",
+      "description": "Seamless tileable cyberpunk city ground texture, neon lights, metallic grates",
+      "resolution": "1536*1024"
+    },
+    {
+      "key": "player",
+      "type": "animation",
+      "description": "Cyberpunk soldier with neon armor",
+      "animations": [
+        { "name": "idle", "frameCount": 1, "action_desc": "Standing idle" },
+        { "name": "walk", "frameCount": 1, "action_desc": "Walking cycle" },
+        { "name": "shoot", "frameCount": 1, "action_desc": "Firing a plasma rifle" },
+        { "name": "dash", "frameCount": 1, "action_desc": "Quick dashing move" },
+        { "name": "die", "frameCount": 1, "action_desc": "Falling down deactivated" }
+      ],
+      "useI2V": false
+    },
+    {
+      "key": "enemy",
+      "type": "animation",
+      "description": "Aggressive drone with red glowing sensors",
+      "animations": [
+        { "name": "idle", "frameCount": 1, "action_desc": "Hovering idle" },
+        { "name": "walk", "frameCount": 1, "action_desc": "Moving forward" },
+        { "name": "attack", "frameCount": 1, "action_desc": "Charging energy blast" },
+        { "name": "die", "frameCount": 1, "action_desc": "Exploding into scrap" }
+      ],
+      "useI2V": false
+    },
+    {
+      "key": "robot",
+      "type": "image",
+      "description": "Stationary industrial robot arm, obstacle"
+    },
+    {
+      "key": "scrap",
+      "type": "image",
+      "description": "Glistening metal scrap, collectible item"
+    },
+    {
+      "key": "bgm",
+      "type": "audio",
+      "audioType": "bgm",
+      "duration": 20,
+      "genre": "synthwave",
+      "tempo": "medium",
+      "description": "Catchy cyberpunk synthwave track with heavy bass and retro synths"
+    },
+    {
+      "key": "shoot_sfx",
+      "type": "audio",
+      "audioType": "sfx",
+      "description": "High-pitched plasma shot sound"
+    },
+    {
+      "key": "enemy_die_sfx",
+      "type": "audio",
+      "audioType": "sfx",
+      "description": "Explosion and metallic crash sound"
+    }
+  ]
+}
