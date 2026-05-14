@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Сияющий Кристалл</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background: linear-gradient(135deg, #0a0a1a 0%, #1a1a3a 50%, #0a0a1a 100%);
+            font-family: 'Arial', sans-serif;
+        }
+        #game-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container"></div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/phaser/3.60.0/phaser.min.js"></script>
+    <script>
+        const config = {
+            type: Phaser.AUTO,
+            width: window.innerWidth,
+            height: window.innerHeight,
+            parent: 'game-container',
+            backgroundColor: '#000000',
+            scene: {
+                preload: preload,
+                create: create,
+                update: update
+            },
+            physics: {
+                default: 'arcade',
+                arcade: {
+                    gravity: { y: 0 },
+                    debug: false
+                }
+            }
+        };
+
+        const game = new Phaser.Game(config);
+        let player;
+        let cursors;
+        let particles;
+        let glow;
+        let screenShake = false;
+        let shakeTimer = 0;
+        let score = 0;
+        let scoreText;
+        let bgMusic;
+
+        function preload() {
+            this.load.image('particle', 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0IiBoZWlnaHQ9IjQiPjxjaXJjbGUgY3g9IjIiIGN5PSIyIiByPSIyIiBmaWxsPSJ3aGl0ZSIvPjwvc3ZnPg==');
+        }
+
+        function create() {
+            const centerX = this.cameras.main.centerX;
+            const centerY = this.cameras.main.centerY;
+
+            this.add.rectangle(0, 0, this.cameras.main.width, this.cameras.main.height, 0x0a0a1a).setOrigin(0);
+
+            particles = this.add.particles('particle');
+
+            player = this.physics.add.sprite(centerX, centerY, null);
+            player.setDisplaySize(60, 60);
+
+            const crystal = this.add.ellipse(0, 0, 60, 60, 0x6a5acd);
+            crystal.setStrokeStyle(4, 0x9370db, 0.8);
+
+            const innerGlow = this.add.ellipse(0, 0, 40, 40, 0x9370db, 0.6);
+            innerGlow.setStrokeStyle(2, 0xffffff, 0.5);
+
+            const outerGlow = this.add.ellipse(0, 0, 80, 80, 0x6a5acd, 0.2);
+            outerGlow.setStrokeStyle(1, 0xffffff, 0.3);
+
+            player.addChild(crystal);
+            player.addChild(innerGlow);
+            player.addChild(outerGlow);
+
+            const emitter = particles.createEmitter({
+                speed: 100,
+                scale: { start: 0.5, end: 0 },
+                blendMode: 'ADD',
+                lifespan: 500,
+                frequency: 50,
+                maxParticles: 50
+            });
+
+            emitter.startFollow(player);
+
+            cursors = this.input.keyboard.createCursorKeys();
+            this.input.keyboard.addKey('W');
+            this.input.keyboard.addKey('A');
+            this.input.keyboard.addKey('S');
+            this.input.keyboard.addKey('D');
+
+            this.input.on('pointerdown', function() {
+                screenShake = true;
+                shakeTimer = 0.3;
+
+                const particles = [];
+                for (let i = 0; i < 30; i++) {
+                    particles.push({
+                        x: player.x,
+                        y: player.y,
+                        vx: Phaser.Math.FloatBetween(-200, 200),
+                        vy: Phaser.Math.FloatBetween(-200, 200),
+                        life: 1
+                    });
+                }
+
+                this.time.addEvent({
+                    delay: 16,
+                    callback: function() {
+                        particles.forEach(p => {
+                            p.x += p.vx * 0.016;
+                            p.y += p.vy * 0.016;
+                            p.life -= 0.016;
+
+                            const size = p.life * 20;
+                            this.add.rectangle(p.x, p.y, size, size, 0xffffff, p.life).setAlpha(0.8);
+                        });
+                    },
+                    callbackScope: this,
+                    repeat: 15
+                });
+            }, this);
+
+            scoreText = this.add.text(20, 20, 'Счёт: 0', {
+                fontSize: '32px',
+                fontFamily: 'Arial',
+                color: '#ffffff',
+                stroke: '#000000',
+                strokeThickness: 4
+            });
+
+            this.tweens.add({
+                targets: player,
+                angle: 360,
+                duration: 10000,
+                repeat: -1,
+                ease: 'Linear'
+            });
+
+            this.tweens.add({
+                targets: innerGlow,
+                alpha: 0.3,
+                duration: 1000,
+                yoyo: true,
+                repeat: -1
+            });
+
+            this.tweens.add({
+                targets: outerGlow,
+                alpha: 0.1,
+                duration: 1500,
+                yoyo: true,
+                repeat: -1
+            });
+        }
+
+        function update(time, delta) {
+            if (screenShake) {
+                shakeTimer -= delta / 1000;
+                if (shakeTimer <= 0) {
+                    screenShake = false;
+                    this.cameras.main.setShake(0, 0);
+                } else {
+                    const intensity = shakeTimer * 10;
+                    this.cameras.main.setShake(intensity, intensity);
+                }
+            }
+
+            const speed = 300;
+            const velocity = player.body.velocity;
+
+            velocity.x = 0;
+            velocity.y = 0;
+
+            if (cursors.left.isDown || this.input.keyboard.checkDown(this.input.keyboard.addKey('A'))) {
+                velocity.x = -speed;
+            } else if (cursors.right.isDown || this.input.keyboard.checkDown(this.input.keyboard.addKey('D'))) {
+                velocity.x = speed;
+            }
+
+            if (cursors.up.isDown || this.input.keyboard.checkDown(this.input.keyboard.addKey('W'))) {
+                velocity.y = -speed;
+            } else if (cursors.down.isDown || this.input.keyboard.checkDown(this.input.keyboard.addKey('S'))) {
+                velocity.y = speed;
+            }
+
+            if (velocity.x !== 0 || velocity.y !== 0) {
+                score += delta / 16;
+                scoreText.setText(`Счёт: ${Math.floor(score)}`);
+            }
+        }
+    </script>
+</body>
+</html>

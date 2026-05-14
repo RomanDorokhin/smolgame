@@ -34,6 +34,7 @@ import type {
 } from './modifiable-tool.js';
 import { IdeClient } from '../ide/ide-client.js';
 import { safeLiteralReplace } from '../utils/textUtils.js';
+import { sanitizeFileContent } from '../utils/outputSanitizer.js';
 import {
   countOccurrences,
   extractEditSnippet,
@@ -47,8 +48,9 @@ export function applyReplacement(
   newString: string,
   isNewFile: boolean,
 ): string {
+  const sanitizedNewString = sanitizeFileContent(newString);
   if (isNewFile) {
-    return newString;
+    return sanitizedNewString;
   }
   if (currentContent === null) {
     // Should not happen if not a new file, but defensively return empty or newString if oldString is also empty
@@ -60,7 +62,7 @@ export function applyReplacement(
   }
 
   // Use intelligent replacement that handles $ sequences safely
-  return safeLiteralReplace(currentContent, oldString, newString);
+  return safeLiteralReplace(currentContent, oldString, sanitizedNewString);
 }
 
 /**

@@ -7,6 +7,7 @@
 import type { Content, Part } from '@google/genai';
 import type { Config } from '../config/config.js';
 import { getFolderStructure } from './getFolderStructure.js';
+import { EnvironmentService } from '../services/environmentService.js';
 
 /**
  * Generates a string describing the current workspace directories and their structures.
@@ -59,12 +60,15 @@ export async function getEnvironmentContext(config: Config): Promise<Part[]> {
   });
   const platform = process.platform;
   const directoryContext = await getDirectoryContextString(config);
+  const dependencyReport = await EnvironmentService.getMarkdownReport();
 
   const context = `
 This is the OpenGame. We are setting up the context for our chat.
 Today's date is ${today} (formatted according to the user's locale).
 My operating system is: ${platform}
 ${directoryContext}
+
+${dependencyReport}
         `.trim();
 
   const initialParts: Part[] = [{ text: context }];

@@ -128,9 +128,13 @@ Use your write_file tool to save the game as index.html in the current directory
       }
     } else {
       // DIRECT TEXT MODE — for SambaNova, Mistral, Cerebras, OpenRouter, etc.
-      // CRITICAL: Clear tools so non-Gemini providers don't reject the request
-      (client as any).getChat().setTools([]);
-      console.log(`[OpenGame API] Using direct text mode for provider: ${provider} (tools cleared)`);
+      // CRITICAL: Clear tools and toolConfig so non-Gemini providers don't reject the request
+      const chat = (client as any).getChat();
+      if (chat.generationConfig) {
+        delete chat.generationConfig.tools;
+        delete chat.generationConfig.toolConfig;
+      }
+      console.log(`[OpenGame API] Using direct text mode for provider: ${provider} (tools & toolConfig cleared)`);
 
       const fullPrompt = `You are an expert web game developer. Create a complete, self-contained HTML5 game.
 
@@ -159,7 +163,7 @@ Output the complete index.html file now:`;
         const ev = event as any;
         // Log first 5 events to debug
         if (eventCount <= 5) {
-          console.log(`[OpenGame API] Event #${eventCount}: type=${ev.type}, valueType=${typeof ev.value}, valueSample=${JSON.stringify(ev.value)?.substring(0, 100)}`);
+          console.log(`[OpenGame API] Event #${eventCount}: ${JSON.stringify(ev)}`);
         }
         if (ev.type === GeminiEventType.Error) throw new Error(JSON.stringify(ev.value));
         if (ev.type === GeminiEventType.Content) {

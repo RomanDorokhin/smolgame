@@ -9,6 +9,8 @@ import { AuthType } from '../core/contentGenerator.js';
 import {
   isQwenQuotaExceededError,
   isQwenThrottlingError,
+  isRateLimitError,
+  isInsufficientFundsError,
 } from './quotaErrorDetection.js';
 
 export interface HttpError extends Error {
@@ -145,6 +147,16 @@ export async function retryWithBackoff<T>(
 
       // Check if we've exhausted retries or shouldn't retry
       if (attempt >= maxAttempts || !shouldRetryOnError(error as Error)) {
+        if (isInsufficientFundsError(error)) {
+          throw new Error(
+            `Insufficient funds for provider ${authType || 'unknown'}: Please top up your balance or check your credit limit.`
+          );
+        }
+        if (isRateLimitError(error)) {
+          throw new Error(
+            `Rate limit exceeded for provider ${authType || 'unknown'} after ${attempt} attempts. Please wait before trying again or use a different provider.`
+          );
+        }
         throw error;
       }
 

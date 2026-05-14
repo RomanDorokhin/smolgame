@@ -165,3 +165,66 @@ export function isQwenThrottlingError(error: unknown): boolean {
 
   return false;
 }
+
+/**
+ * Checks if the error is a rate limit error (429).
+ */
+export function isRateLimitError(error: unknown): boolean {
+  const statusCode = getStatusCode(error);
+  if (statusCode === 429) return true;
+
+  const checkMessage = (message: string): boolean => {
+    const lowerMessage = message.toLowerCase();
+    return (
+      lowerMessage.includes('rate limit') ||
+      lowerMessage.includes('too many requests') ||
+      lowerMessage.includes('throttling') ||
+      lowerMessage.includes('429')
+    );
+  };
+
+  if (typeof error === 'string') return checkMessage(error);
+  if (isStructuredError(error)) return checkMessage(error.message);
+  if (isApiError(error)) return checkMessage(error.error.message);
+
+  return false;
+}
+
+/**
+ * Checks if the error is due to insufficient funds/credits (402).
+ */
+export function isInsufficientFundsError(error: unknown): boolean {
+  const statusCode = getStatusCode(error);
+  if (statusCode === 402) return true;
+
+  const checkMessage = (message: string): boolean => {
+    const lowerMessage = message.toLowerCase();
+    return (
+      lowerMessage.includes('insufficient funds') ||
+      lowerMessage.includes('insufficient credits') ||
+      lowerMessage.includes('balance is too low') ||
+      lowerMessage.includes('credit limit exceeded') ||
+      lowerMessage.includes('402')
+    );
+  };
+
+  if (typeof error === 'string') return checkMessage(error);
+  if (isStructuredError(error)) return checkMessage(error.message);
+  if (isApiError(error)) return checkMessage(error.error.message);
+
+  return false;
+}
+
+function getStatusCode(error: unknown): number | undefined {
+  if (error && typeof error === 'object') {
+    const errorObj = error as {
+      status?: number;
+      code?: number;
+      response?: { status?: number };
+    };
+    return (
+      errorObj.status || errorObj.code || errorObj.response?.status
+    );
+  }
+  return undefined;
+}

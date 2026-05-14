@@ -18,6 +18,7 @@ import type {
 } from '@google/genai';
 import { ApiError, createUserContent } from '@google/genai';
 import { retryWithBackoff } from '../utils/retry.js';
+import { isRateLimitError } from '../utils/quotaErrorDetection.js';
 import type { Config } from '../config/config.js';
 import {
   DEFAULT_GEMINI_FLASH_MODEL,
@@ -389,11 +390,17 @@ export class GeminiChat {
 
     const streamResponse = await retryWithBackoff(apiCall, {
       shouldRetryOnError: (error: unknown) => {
+        if (isRateLimitError(error)) return true;
         if (error instanceof ApiError && error.message) {
           if (error.status === 400) return false;
           if (isSchemaDepthError(error.message)) return false;
           if (error.status === 429) return true;
           if (error.status >= 500 && error.status < 600) return true;
+        }
+        // For other types of errors (like OpenAI.Error), if it looks transient, retry
+        if (error && typeof error === 'object' && 'status' in error) {
+          const status = (error as { status: number }).status;
+          if (status === 429 || (status >= 500 && status < 600)) return true;
         }
         return false;
       },

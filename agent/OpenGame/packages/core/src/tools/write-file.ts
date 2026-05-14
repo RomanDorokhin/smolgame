@@ -38,6 +38,7 @@ import { FileOperationEvent } from '../telemetry/types.js';
 import { FileOperation } from '../telemetry/metrics.js';
 import { getSpecificMimeType } from '../utils/fileUtils.js';
 import { getLanguageFromFilePath } from '../utils/language-detection.js';
+import { sanitizeFileContent } from '../utils/outputSanitizer.js';
 
 /**
  * Parameters for the WriteFile tool
@@ -78,7 +79,7 @@ export async function getCorrectedFileContent(
 ): Promise<GetCorrectedFileContentResult> {
   let originalContent = '';
   let fileExists = false;
-  const correctedContent = proposedContent;
+  const correctedContent = sanitizeFileContent(proposedContent);
 
   try {
     originalContent = await config
