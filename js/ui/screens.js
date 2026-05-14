@@ -318,7 +318,7 @@ function switchTab(tab) {
  * Можно вызывать заранее для прелоада.
  */
 window.injectAgent = function() {
-  if (window._agentScriptLoaded && document.querySelector('script[src*="agent-v3/assets/index.js"]')) return;
+  if (window._agentScriptLoaded) return;
   window._agentScriptLoaded = true;
 
   console.log('[Agent] Injecting Architect assets...');
@@ -327,7 +327,7 @@ window.injectAgent = function() {
   const link = document.createElement('link');
   link.rel = 'stylesheet';
   link.crossOrigin = 'anonymous';
-  link.href = 'agent-v3/assets/index.css?v=30671-DIAGNOSTIC';
+  link.href = 'agent-v3/assets/index.css?v=' + Date.now();
   document.head.appendChild(link);
 
   const agentRoot = document.getElementById('agent-root');
@@ -341,8 +341,7 @@ window.injectAgent = function() {
   const script = document.createElement('script');
   script.type = 'module';
   script.crossOrigin = 'anonymous';
-  script.src = 'agent-v3/assets/index.js?v=30671-DIAGNOSTIC';
-  document.head.appendChild(script);
+  script.src = 'agent-v3/assets/index.js?v=' + Date.now();
   
   script.onload = () => {
     console.log('[Agent] Script loaded successfully');
@@ -351,8 +350,9 @@ window.injectAgent = function() {
   script.onerror = () => {
     const r = document.getElementById('agent-root');
     if (r) r.innerHTML = '<div style="padding:20px;color:#f87171;text-align:center;">❌ Не удалось загрузить агент. Попробуйте перезагрузить страницу.</div>';
+    window._agentScriptLoaded = false;
   };
-  document.body.appendChild(script);
+  document.head.appendChild(script);
 };
 
 window.openUpload = openUpload;

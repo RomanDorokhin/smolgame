@@ -66,8 +66,14 @@ export default function Home() {
   const [myGames, setMyGames] = useState<any[]>([]);
   const [loadingGames, setLoadingGames] = useState(false);
   const [studioGame, setStudioGame] = useState<{ title: string; code: string } | null>(() => {
-    const saved = localStorage.getItem("smol_studio_game_v1");
-    return saved ? JSON.parse(saved) : null;
+    try {
+      const saved = localStorage.getItem("smol_studio_game_v1");
+      return saved ? JSON.parse(saved) : null;
+    } catch (e) {
+      console.warn("[Studio] Corrupted save found, clearing...", e);
+      localStorage.removeItem("smol_studio_game_v1");
+      return null;
+    }
   });
 
   // Sync activeTab to localStorage
@@ -216,6 +222,15 @@ export default function Home() {
       alert("Ошибка при очистке");
     } finally {
       setIsCleaning(false);
+    }
+  };
+
+  const handleFactoryReset = () => {
+    if (window.confirm("ВНИМАНИЕ: Это полностью сбросит Architect! Все API ключи, настройки и текущий черновик будут удалены. Приложение перезагрузится. Продолжить?")) {
+      localStorage.removeItem("smol_chat_settings_v3");
+      localStorage.removeItem("smol_studio_game_v1");
+      localStorage.removeItem("smolgame_active_tab");
+      window.location.reload();
     }
   };
 
@@ -368,6 +383,13 @@ export default function Home() {
                   className="w-full justify-start gap-3 bg-red-500/5 border-red-500/10 hover:bg-red-500/10 text-red-400/70 h-10 rounded-xl text-[10px] font-bold uppercase"
                 >
                   <Trash2 size={16} /> {isCleaning ? "Удаляю..." : "Очистить репозитории"}
+                </Button>
+                <Button
+                  onClick={handleFactoryReset}
+                  variant="outline"
+                  className="w-full justify-start gap-3 bg-red-600/10 border-red-500/20 hover:bg-red-600/20 text-red-400 h-10 rounded-xl text-[10px] font-bold uppercase"
+                >
+                  <RotateCcw size={16} /> Сброс Architect (Factory Reset)
                 </Button>
                 <p className="text-[10px] text-white/20 text-center uppercase tracking-widest font-bold mt-2">Опасная зона</p>
               </div>
