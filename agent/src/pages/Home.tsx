@@ -56,25 +56,35 @@ class ErrorBoundary extends Component<{ children: ReactNode }, { hasError: boole
 }
 
 export default function Home() {
-  const [settings, setSettings] = useState<ChatSettings>(loadSettings);
+  const [settings, setSettings] = useState<ChatSettings>({ primaryProvider: "openrouter", keys: {}, models: {}, autoFailover: true, maxRetries: 3 });
+  const [isInitialized, setIsInitialized] = useState(false);
   const { messages, isRunning, step, sendMessage, stop, reset } = useGameAgent(settings);
   const { user, isAuthenticated, isLoading: authLoading, login } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<"chat" | "studio">(() => {
-    return (localStorage.getItem("smolgame_active_tab") as "chat" | "studio") || "chat";
-  });
+  const [activeTab, setActiveTab] = useState<"chat" | "studio">("chat");
   const [myGames, setMyGames] = useState<any[]>([]);
   const [loadingGames, setLoadingGames] = useState(false);
-  const [studioGame, setStudioGame] = useState<{ title: string; code: string } | null>(() => {
+  const [studioGame, setStudioGame] = useState<{ title: string; code: string } | null>(null);
+
+  // Initial load
+  useEffect(() => {
     try {
+      const s = loadSettings();
+      setSettings(s);
+      
+      const tab = (localStorage.getItem("smolgame_active_tab") as "chat" | "studio") || "chat";
+      setActiveTab(tab);
+      
       const saved = localStorage.getItem("smol_studio_game_v1");
-      return saved ? JSON.parse(saved) : null;
+      if (saved) {
+        setStudioGame(JSON.parse(saved));
+      }
     } catch (e) {
-      console.warn("[Studio] Corrupted save found, clearing...", e);
-      localStorage.removeItem("smol_studio_game_v1");
-      return null;
+      console.warn("[Studio] Initialization error:", e);
+    } finally {
+      setIsInitialized(true);
     }
-  });
+  }, []);
 
   // Sync activeTab to localStorage
   useEffect(() => {
@@ -398,9 +408,10 @@ export default function Home() {
         )}
 
         <main className="flex-1 flex flex-col min-w-0 relative h-full">
-          {authLoading && (
-            <div className="absolute inset-0 z-50 flex items-center justify-center bg-[#0a0b0e]">
-              <div className="w-6 h-6 border-2 border-[#a3b8d4] border-t-transparent rounded-full animate-spin" />
+          {(!isInitialized || authLoading) && (
+            <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-[#0a0b0e] gap-4">
+              <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+              <p className="text-[10px] text-white/30 uppercase tracking-[0.2em] font-bold">Инициализация...</p>
             </div>
           )}
 
@@ -908,7 +919,7 @@ export default function Home() {
               </div>
             </div>
             <div className="mt-3 text-[9px] text-center text-white/10 uppercase tracking-[0.2em] font-black">
-              agent-smol v4.4-GODMODE • Phase: Plan + Code • Engine: LLM-API v3
+              agent-smol v4.5-STABLE • Phase: Plan + Code • Engine: LLM-API v3
             </div>
           </div>
 
